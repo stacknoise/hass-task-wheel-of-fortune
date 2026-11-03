@@ -81,17 +81,58 @@ a{color:#0262a0}a:hover{color:#01497a}
             </sc-for>
           </div>
         </div>
-        <div style="padding: 8px 24px; border-bottom: 1px solid #eef0f3;">
+        <div style="padding: 12px 24px; border-bottom: 1px solid #eef0f3; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 13px; font-weight: 500;">Anwesenheit</span>
+          <span style="font-size: 12px; color: #5a616b;">Wer an einem Tag nicht da ist, kommt bei Auslosungen für Aufgaben mit Frist an diesem Tag nicht ins Rad.</span>
+
           <button type="button" role="switch" aria-checked="{{sel.absent}}" onClick="{{toggleAbsent}}" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 16px; min-height: 52px; padding: 0; border: none; background: transparent; font: 400 14px Roboto, sans-serif; color: #1f2328; text-align: left; cursor: pointer;">
-            <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500;">Abwesend</span><span style="font-size: 12px; color: #5a616b;">{{absentHint}}</span></span>
+            <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500;">Einmalig abwesend</span><span style="font-size: 12px; color: #5a616b;">Urlaub, krank, Klassenfahrt …</span></span>
             <span style="width: 40px; height: 22px; border-radius: 11px; background: {{absTrack}}; position: relative; flex: none;"><span style="position: absolute; top: 3px; left: {{absKnob}}px; width: 16px; height: 16px; border-radius: 50%; background: #ffffff;"></span></span>
           </button>
           <sc-if value="{{sel.absent}}" hint-placeholder-val="{{ false }}">
-            <div style="display: flex; gap: 12px; padding-bottom: 12px;">
+            <div style="display: flex; gap: 12px; padding-bottom: 8px;">
               <label style="flex: 1 1 0; display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #5a616b;">Von<input type="date" value="2026-11-02" style="font: 400 14px Roboto, sans-serif; padding: 8px; border: 1px solid #c4c9d0; border-radius: 8px;"></label>
               <label style="flex: 1 1 0; display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #5a616b;">Bis<input type="date" value="2026-11-12" style="font: 400 14px Roboto, sans-serif; padding: 8px; border: 1px solid #c4c9d0; border-radius: 8px;"></label>
             </div>
           </sc-if>
+
+          <button type="button" role="switch" aria-checked="{{weeklyOn}}" onClick="{{toggleWeekly}}" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 16px; min-height: 52px; padding: 0; border: none; border-top: 1px solid #eef0f3; background: transparent; font: 400 14px Roboto, sans-serif; color: #1f2328; text-align: left; cursor: pointer;">
+            <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500;">Jede Woche an bestimmten Tagen weg</span><span style="font-size: 12px; color: #5a616b;">z. B. mittwochs auf Dienstreise</span></span>
+            <span style="width: 40px; height: 22px; border-radius: 11px; background: {{wkTrack}}; position: relative; flex: none;"><span style="position: absolute; top: 3px; left: {{wkKnob}}px; width: 16px; height: 16px; border-radius: 50%; background: #ffffff;"></span></span>
+          </button>
+          <sc-if value="{{weeklyOn}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 8px;">
+              <sc-for list="{{weekDays}}" as="d" hint-placeholder-count="7">
+                <button type="button" onClick="{{d.toggle}}" aria-pressed="{{d.on}}" aria-label="{{d.full}} abwesend" style="width: 40px; height: 40px; border-radius: 50%; border: 1px solid {{d.border}}; background: {{d.bg}}; color: {{d.fg}}; font: 500 13px Roboto, sans-serif; cursor: pointer;">{{d.label}}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <button type="button" role="switch" aria-checked="{{sel.alt}}" onClick="{{toggleAlt}}" style="display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 16px; min-height: 52px; padding: 0; border: none; border-top: 1px solid #eef0f3; background: transparent; font: 400 14px Roboto, sans-serif; color: #1f2328; text-align: left; cursor: pointer;">
+            <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500;">Im Wochenrhythmus da</span><span style="font-size: 12px; color: #5a616b;">z. B. jede zweite Woche von Freitag bis Freitag</span></span>
+            <span style="width: 40px; height: 22px; border-radius: 11px; background: {{altTrack}}; position: relative; flex: none;"><span style="position: absolute; top: 3px; left: {{altKnob}}px; width: 16px; height: 16px; border-radius: 50%; background: #ffffff;"></span></span>
+          </button>
+          <sc-if value="{{sel.alt}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; padding-bottom: 8px; align-items: flex-end;">
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #5a616b;">Anwesend<select style="font: 400 14px Roboto, sans-serif; padding: 8px; border: 1px solid #c4c9d0; border-radius: 8px; background: #ffffff;"><option>jede 2. Woche</option><option>jede 3. Woche</option><option>2 von 4 Wochen</option></select></label>
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #5a616b;">Wechsel am<select style="font: 400 14px Roboto, sans-serif; padding: 8px; border: 1px solid #c4c9d0; border-radius: 8px; background: #ffffff;"><option>Freitag</option><option>Sonntag</option><option>Montag</option></select></label>
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #5a616b;">Erste Woche ab<input type="date" value="2026-11-06" style="font: 400 14px Roboto, sans-serif; padding: 8px; border: 1px solid #c4c9d0; border-radius: 8px;"></label>
+            </div>
+          </sc-if>
+
+          <span style="font-size: 12px; font-weight: 500; color: #5a616b; padding-top: 10px; border-top: 1px solid #eef0f3;">Vorschau nächste 4 Wochen</span>
+          <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px;">
+            <sc-for list="{{calHead}}" as="h" hint-placeholder-count="7">
+              <span style="font-size: 10px; color: #5a616b; text-align: center;">{{h}}</span>
+            </sc-for>
+            <sc-for list="{{cal}}" as="c" hint-placeholder-count="28">
+              <span title="{{c.title}}" style="height: 26px; border-radius: 4px; background: {{c.bg}}; color: {{c.fg}}; font-size: 11px; display: flex; align-items: center; justify-content: center; opacity: {{c.op}};">{{c.label}}</span>
+            </sc-for>
+          </div>
+          <div style="display: flex; gap: 14px; font-size: 11px; color: #5a616b; padding-top: 4px;">
+            <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #cfe8d6;"></span>da</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; border-radius: 2px; background: #5a616b;"></span>nicht da</span>
+          </div>
         </div>
         <div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid #eef0f3;">
           <span style="font-size: 13px; font-weight: 500;">Belastbarkeit</span>
@@ -127,11 +168,11 @@ class Component extends DCLogic {
     this.state = {
       sel: 3,
       people: [
-        { name: 'Anna', color: '#c05600', absent: false, load: 'voll', points: 42, open: 2, rate: 94, tasks: 'Katzenklo, Spülmaschine' },
-        { name: 'Ben', color: '#1a5fd0', absent: false, load: 'voll', points: 38, open: 0, rate: 88, tasks: 'Müll rausbringen ✓' },
-        { name: 'Clara', color: '#137333', absent: false, load: 'voll', points: 45, open: 1, rate: 97, tasks: 'Bad putzen' },
-        { name: 'David', color: '#7b2cbf', absent: true, load: 'voll', points: 31, open: 1, rate: 76, tasks: 'Rasen mähen' },
-        { name: 'Emma', color: '#b0136f', absent: false, load: 'halb', points: 24, open: 1, rate: 91, tasks: 'Staubsaugen' }
+        { name: 'Anna', color: '#c05600', absent: false, weekly: [], alt: false, load: 'voll', points: 42, open: 2, rate: 94, tasks: 'Katzenklo, Spülmaschine' },
+        { name: 'Ben', color: '#1a5fd0', absent: false, weekly: [2], alt: false, load: 'voll', points: 38, open: 0, rate: 88, tasks: 'Müll rausbringen ✓' },
+        { name: 'Clara', color: '#137333', absent: false, weekly: [], alt: false, load: 'voll', points: 45, open: 1, rate: 97, tasks: 'Bad putzen' },
+        { name: 'David', color: '#7b2cbf', absent: true, weekly: [], alt: false, load: 'voll', points: 31, open: 1, rate: 76, tasks: 'Rasen mähen' },
+        { name: 'Emma', color: '#b0136f', absent: false, weekly: [], alt: true, load: 'halb', points: 24, open: 1, rate: 91, tasks: 'Staubsaugen' }
       ]
     };
   }
@@ -149,13 +190,14 @@ class Component extends DCLogic {
     var tabs = [['Übersicht', 'Main.dc.html'], ['Auslosung', 'Auslosung.dc.html'], ['Aufgaben', 'Aufgaben.dc.html'], ['Personen', 'Personen.dc.html'], ['Zeitpläne', 'Zeitplan.dc.html'], ['Historie', 'Historie.dc.html'], ['Statistik', 'Statistik.dc.html']]
       .map(function (t) { var on = t[1] === current; return { label: t[0], href: t[1], fg: on ? '#0262a0' : '#5a616b', line: on ? '#0262a0' : 'transparent' }; });
 
+    var DN = [['Mo', 'Montag'], ['Di', 'Dienstag'], ['Mi', 'Mittwoch'], ['Do', 'Donnerstag'], ['Fr', 'Freitag'], ['Sa', 'Samstag'], ['So', 'Sonntag']];
     function update(fn) { var ps = s.people.slice(); var p = Object.assign({}, ps[s.sel]); fn(p); ps[s.sel] = p; self.setState({ people: ps }); }
     var people = s.people.map(function (p, i) {
       var on = i === s.sel;
       return Object.assign({}, p, {
         initial: p.name.charAt(0), on: on, border: on ? '#0262a0' : '#e3e6ea',
-        status: p.absent ? 'Abwesend bis 12.11.' : (p.load === 'halb' ? 'Aktiv · halbe Last' : 'Aktiv'),
-        stBg: p.absent ? '#fdf0dc' : '#e3f1e6', stFg: p.absent ? '#7a4a00' : '#0f5c28',
+        status: p.absent ? 'Abwesend bis 12.11.' : (p.alt ? 'Jede 2. Woche da' : (p.weekly.length ? DN[p.weekly[0]][1] + 's nicht da' : (p.load === 'halb' ? 'Aktiv · halbe Last' : 'Aktiv'))),
+        stBg: p.absent ? '#fdf0dc' : ((p.alt || p.weekly.length) ? '#e6eef7' : '#e3f1e6'), stFg: p.absent ? '#7a4a00' : ((p.alt || p.weekly.length) ? '#01497a' : '#0f5c28'),
         select: function () { self.setState({ sel: i }); }
       });
     });
@@ -170,11 +212,31 @@ class Component extends DCLogic {
       var on = p.load === l[0];
       return { label: l[1], on: on, bg: on ? '#0262a0' : '#ffffff', fg: on ? '#ffffff' : '#1f2328', pick: function () { update(function (x) { x.load = l[0]; }); } };
     });
+    var weeklyOn = p.weekly.length > 0 || !!p.weeklyOpen;
+    var weekDays = DN.map(function (d, i) {
+      var on = p.weekly.indexOf(i) >= 0;
+      return { label: d[0], full: d[1], on: on, bg: on ? '#5a616b' : '#ffffff', fg: on ? '#ffffff' : '#1f2328', border: on ? '#5a616b' : '#c4c9d0',
+        toggle: function () { update(function (x) { var a = x.weekly.slice(); var k = a.indexOf(i); if (k >= 0) a.splice(k, 1); else a.push(i); a.sort(); x.weekly = a; x.weeklyOpen = true; }); } };
+    });
+    // Heute = Di, 3. Nov 2026 (Wochentag-Index 1)
+    var cal = [];
+    for (var d = -1; d < 27; d++) {
+      var wd = (1 + d + 7) % 7, date = 3 + d, month = date > 30 ? 12 : 11, day = date > 30 ? date - 30 : date;
+      var away = false;
+      if (p.absent && d <= 9) away = true;
+      if (p.weekly.indexOf(wd) >= 0) away = true;
+      if (p.alt) { var per = Math.floor((d - 3) / 7); if (per < 0 || per % 2 === 1) away = true; }
+      cal.push({ label: day, title: day + '.' + month + '. ' + (away ? 'nicht da' : 'da'), bg: away ? '#5a616b' : '#cfe8d6', fg: away ? '#ffffff' : '#0f3d1f', op: d < 0 ? 0.45 : 1 });
+    }
     return {
       haNav: haNav, tabs: tabs, people: people, sel: sel, swatches: swatches, loads: loads,
       absTrack: p.absent ? '#0262a0' : '#a3aab3', absKnob: p.absent ? 21 : 3,
-      absentHint: p.absent ? 'Wird bei Auslosungen in diesem Zeitraum übersprungen' : 'Urlaub, krank, Klassenfahrt …',
-      toggleAbsent: function () { update(function (x) { x.absent = !x.absent; }); }
+      toggleAbsent: function () { update(function (x) { x.absent = !x.absent; }); },
+      weeklyOn: weeklyOn, weekDays: weekDays, wkTrack: weeklyOn ? '#0262a0' : '#a3aab3', wkKnob: weeklyOn ? 21 : 3,
+      toggleWeekly: function () { update(function (x) { if (weeklyOn) { x.weekly = []; x.weeklyOpen = false; } else { x.weeklyOpen = true; } }); },
+      altTrack: p.alt ? '#0262a0' : '#a3aab3', altKnob: p.alt ? 21 : 3,
+      toggleAlt: function () { update(function (x) { x.alt = !x.alt; }); },
+      calHead: DN.map(function (x) { return x[0]; }), cal: cal
     };
   }
 }
