@@ -89,7 +89,6 @@ def _with_types(
     types = tuple(
         replace(
             t,
-            refs=frozenset(),
             uses=tuple(used[module.path, t.name]),
             ce=len(used[module.path, t.name]),
             ca=dependents[t.name],

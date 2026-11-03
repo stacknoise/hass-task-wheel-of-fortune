@@ -23,7 +23,7 @@ from .constants import (
     NEWLINE,
 )
 from .project import ScanError, build_report
-from .render import render
+from .render import TemplateError, render
 from .thresholds import load_thresholds
 
 if TYPE_CHECKING:
@@ -61,11 +61,20 @@ def run(argv: Sequence[str] | None, root: Path) -> int:
         report = build_report(base)
         thresholds = load_thresholds(_under(base, args.doc))
         output = _under(base, args.output)
-        render(_under(base, args.template), output, report, thresholds)
-    except (ScanError, OSError) as error:
+        counts = render(_under(base, args.template), output, report, base)
+    except (ScanError, TemplateError, OSError) as error:
         sys.stderr.write(MSG_ERROR.format(error=error) + NEWLINE)
         return EXIT_ERROR
-    sys.stdout.write(MSG_WRITTEN.format(path=output, modules=len(report.modules)) + NEWLINE)
+    sys.stdout.write(
+        MSG_WRITTEN.format(
+            path=output,
+            types=counts.types,
+            methods=counts.methods,
+            props=counts.props,
+            files=counts.files,
+        )
+        + NEWLINE
+    )
     return _check(report, thresholds, args.doc) if args.check else EXIT_OK
 
 
