@@ -1,2 +1,2 @@
-/** Platzhalter für die Schicht `views`; wird in AP-14 gefüllt. */
-export {};
+export { VIEW_LOADERS, routeFromPath } from './registry.ts';
+export type { SectionView } from './section-view.ts';

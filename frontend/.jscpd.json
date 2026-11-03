@@ -4,5 +4,5 @@
   "minTokens": 50,
   "threshold": 0,
   "gitignore": true,
-  "ignore": ["**/*.test.ts"]
+  "ignore": ["**/*.test.ts", "**/*.testing.ts"]
 }
