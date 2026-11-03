@@ -47,9 +47,8 @@ from .constants import (
     TS_TYPE_KEYWORDS,
     TS_VARIABLE_KEYWORDS,
 )
-from .metrics import build_metrics
 from .models import ModuleInfo
-from .segments import Source
+from .segments import Source, module_metrics
 from .ts_tokens import Comment, match_brackets, tokenize_typescript
 
 if TYPE_CHECKING:
@@ -293,16 +292,14 @@ def scan_typescript(path: str, text: str, layer: str) -> ModuleInfo:
     """Analysiert eine TypeScript-Datei."""
     analyzer = _Analyzer(path, text)
     analyzer.run()
-    cc = sum(m.metrics.cc for t in analyzer.types for m in t.methods) + sum(
-        f.metrics.cc for f in analyzer.functions
-    )
+    methods = [*analyzer.functions, *(m for t in analyzer.types for m in t.methods)]
     head = [c for c in analyzer.comments if c.end_line <= TS_MODULE_DOC_MAX_LINE]
     return ModuleInfo(
         path=path,
         language=LANG_TYPESCRIPT,
         layer=layer,
         doc=_clean_doc(head[0]) if head else EMPTY,
-        metrics=build_metrics(analyzer.tokens, cc, TS_KEYWORDS),
+        metrics=module_metrics(analyzer.tokens, methods, TS_KEYWORDS),
         types=tuple(analyzer.types),
         functions=tuple(analyzer.functions),
         imports=analyzer.imports(),

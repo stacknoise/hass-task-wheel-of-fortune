@@ -70,3 +70,11 @@ def instability(ca: int, ce: int) -> float:
     """Instabilität `Ce / (Ca + Ce)`; 0 bei isolierten Elementen."""
     total = ca + ce
     return round(ce / total, INSTABILITY_DIGITS) if total else 0.0
+
+
+def weighted_maintainability(parts: Sequence[Metrics]) -> float | None:
+    """LOC-gewichteter Mittelwert der Wartbarkeitsindizes; `None` ohne Teile mit Code."""
+    weight = sum(part.loc for part in parts)
+    if not weight:
+        return None
+    return round(sum(part.mi * part.loc for part in parts) / weight, MI_DIGITS)

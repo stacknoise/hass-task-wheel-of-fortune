@@ -3,12 +3,14 @@
 import pytest
 
 from tools.code_doku import constants as c
+from tools.code_doku.models import Metrics
 from tools.code_doku.layers import is_allowed, layer_of
 from tools.code_doku.metrics import (
     code_lines,
     halstead_volume,
     instability,
     maintainability,
+    weighted_maintainability,
 )
 from tools.code_doku.python_scanner import (
     cyclomatic,
@@ -166,3 +168,17 @@ def test_is_allowed() -> None:
     assert is_allowed(c.LAYER_APP, c.LAYER_APP)
     assert not is_allowed(c.LAYER_DOMAIN, c.LAYER_APP)
     assert not is_allowed("unbekannt", c.LAYER_APP)
+
+
+def test_weighted_maintainability() -> None:
+    assert weighted_maintainability([]) is None
+    assert weighted_maintainability([Metrics(0, 1, 50.0)]) is None
+    parts = [Metrics(10, 1, 80.0), Metrics(30, 1, 40.0)]
+    assert weighted_maintainability(parts) == 50.0
+
+
+def test_module_mi_is_weighted_over_methods() -> None:
+    source = "A = 1\n\n\ndef f(x):\n    return x + 1\n"
+    module = scan_python("pkg/m.py", source, c.LAYER_DOMAIN)
+    assert module.metrics.mi == module.functions[0].metrics.mi
+    assert scan_python("pkg/k.py", "A = 1\n", c.LAYER_CONST).metrics.mi < c.MI_EMPTY

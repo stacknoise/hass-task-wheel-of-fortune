@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import textwrap
 from bisect import bisect_left, bisect_right
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from .constants import KIND_NAME, NEWLINE
-from .metrics import build_metrics
+from .metrics import build_metrics, weighted_maintainability
 from .models import MethodInfo, Metrics, TypeInfo
 
 if TYPE_CHECKING:
@@ -91,3 +92,14 @@ class Source:
             for token in self.tokens_between(line_start, line_end)
             if token.kind == KIND_NAME and token.text not in self.keywords
         )
+
+
+def module_metrics(
+    tokens: Sequence[Token],
+    methods: Sequence[MethodInfo],
+    keywords: frozenset[str],
+) -> Metrics:
+    """Modul-Messwerte; der MI ist der LOC-gewichtete Mittelwert der Methoden, falls vorhanden."""
+    raw = build_metrics(tokens, sum(method.metrics.cc for method in methods), keywords)
+    mi = weighted_maintainability([method.metrics for method in methods])
+    return raw if mi is None else replace(raw, mi=mi)

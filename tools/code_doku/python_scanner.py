@@ -24,9 +24,8 @@ from .constants import (
     PY_RETURN_ARROW,
     SUFFIX_PYTHON,
 )
-from .metrics import build_metrics
 from .models import ModuleInfo, Token
-from .segments import Source
+from .segments import Source, module_metrics
 
 if TYPE_CHECKING:
     from .models import MethodInfo, TypeInfo
@@ -173,13 +172,13 @@ def scan_python(path: str, text: str, layer: str) -> ModuleInfo:
         for node in tree.body
         if isinstance(node, FUNCTION_NODES)
     )
-    cc = sum(m.metrics.cc for t in types for m in t.methods) + sum(f.metrics.cc for f in functions)
+    methods = [*functions, *(m for t in types for m in t.methods)]
     return ModuleInfo(
         path=path,
         language=LANG_PYTHON,
         layer=layer,
         doc=ast.get_docstring(tree) or EMPTY,
-        metrics=build_metrics(tokens, cc, PY_KEYWORDS),
+        metrics=module_metrics(tokens, methods, PY_KEYWORDS),
         types=types,
         functions=functions,
         imports=collect_imports(tree, path),

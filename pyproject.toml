@@ -19,6 +19,10 @@ ignore = ["D203", "D213", "PLR0913"]
 [tool.ruff.lint.mccabe]
 max-complexity = 8
 
+[tool.ruff.lint.flake8-bugbear]
+# `spec` erzeugt Dataclass-Felder (dataclasses.field), keinen geteilten Zustand
+extend-immutable-calls = ["custom_components.task_wheel.domain.serialization.spec"]
+
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
 
