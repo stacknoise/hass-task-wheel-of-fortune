@@ -27,3 +27,20 @@ export type {
 export { failureFor, parseFailure } from './errors.ts';
 export type { ApiFailure } from './errors.ts';
 export { personsOf, schedulesOf, tasksOf } from './collections.ts';
+export { modelsOf } from './models.ts';
+export type {
+  AssignmentObject,
+  Highlights,
+  HistoryPage,
+  HistoryQuery,
+  Kpis,
+  Matrix,
+  PersonObject,
+  Reliable,
+  RoundObject,
+  ScheduleObject,
+  Standing,
+  StatisticsReport,
+  TaskObject,
+  WeekRate,
+} from './models.ts';

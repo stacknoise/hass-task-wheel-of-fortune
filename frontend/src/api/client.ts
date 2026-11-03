@@ -1,20 +1,29 @@
 import {
   EVENT_CONNECTION_READY,
+  FIELD_ASSIGNMENT_ID,
+  FIELD_MONTHS,
   FIELD_PANEL_ROUND_ID,
   FIELD_SCHEDULE_ID,
   WS_ACTION_CREATE,
   WS_ACTION_DELETE,
   WS_ACTION_UPDATE,
+  FIELD_TO_PERSON_ID,
+  FIELD_WEEKS,
+  WS_ASSIGNMENT_COMPLETE,
+  WS_ASSIGNMENT_SWAP,
   WS_DRAW_BEGIN,
   WS_DRAW_CANCEL,
   WS_DRAW_COMMIT,
   WS_DRAW_SPIN,
   WS_DRAW_SPIN_REST,
   WS_PREFIX,
+  WS_HISTORY_LIST,
   WS_SNAPSHOT,
+  WS_STATISTICS_GET,
   WS_SUBSCRIBE,
 } from '../constants/index.ts';
 import type { ConfigResource } from '../constants/index.ts';
+import type { HistoryPage, HistoryQuery, StatisticsReport } from './models.ts';
 import type {
   Delta,
   HassApi,
@@ -22,6 +31,7 @@ import type {
   Snapshot,
   SpinReply,
   SpinRestReply,
+  WireObject,
 } from './types.ts';
 
 export type Unsubscribe = () => void;
@@ -61,6 +71,37 @@ export class ApiClient {
     await this.#hass.callWS<unknown>({
       type: `${WS_PREFIX}${resource}/${WS_ACTION_DELETE}`,
       [`${resource}_id`]: id,
+    });
+  }
+
+  /** Eine Seite der Historie (neueste Runde zuerst), optional für eine Person. */
+  history(query: HistoryQuery = {}): Promise<HistoryPage> {
+    return this.#hass.callWS<HistoryPage>({ type: WS_HISTORY_LIST, ...query });
+  }
+
+  /** Auswertung der letzten Kalendermonate und Wochen. */
+  statistics(months: number, weeks: number): Promise<StatisticsReport> {
+    return this.#hass.callWS<StatisticsReport>({
+      type: WS_STATISTICS_GET,
+      [FIELD_MONTHS]: months,
+      [FIELD_WEEKS]: weeks,
+    });
+  }
+
+  /** Erledigt die Zuteilung. */
+  complete(assignmentId: string): Promise<WireObject> {
+    return this.#hass.callWS<WireObject>({
+      type: WS_ASSIGNMENT_COMPLETE,
+      [FIELD_ASSIGNMENT_ID]: assignmentId,
+    });
+  }
+
+  /** Tauscht die Zuteilung gegen einen Joker auf eine andere Person. */
+  swap(assignmentId: string, toPersonId: string): Promise<WireObject> {
+    return this.#hass.callWS<WireObject>({
+      type: WS_ASSIGNMENT_SWAP,
+      [FIELD_ASSIGNMENT_ID]: assignmentId,
+      [FIELD_TO_PERSON_ID]: toPersonId,
     });
   }
 
