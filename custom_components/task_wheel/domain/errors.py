@@ -96,3 +96,7 @@ class InvalidTransitionError(TaskWheelError):
 
 class SwapRejectedError(TaskWheelError):
     """Der Tausch ist nicht erlaubt; der Schlüssel nennt den Grund."""
+
+
+class DrawRejectedError(TaskWheelError):
+    """Die Auslosung ist nicht möglich; der Schlüssel nennt den Grund."""

@@ -1,11 +1,14 @@
-"""Protokolle der Anwendungsschicht: Persistenz (Repository-Muster, KONZEPT §3.2)."""
+"""Protokolle der Anwendungsschicht: Persistenz (KONZEPT §3.2), Zeitgeber, Ereignisse."""
 
 import datetime as dt
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Protocol
 
 from ..domain.models import Assignment, Person, Round, Schedule, Settings, Task
 from ..domain.types import AssignmentId, PersonId, RoundId, ScheduleId, TaskId
+
+type FireCallback = Callable[[dt.datetime], None]
+type IdFactory = Callable[[], str]
 
 
 class ConfigRepository(Protocol):
@@ -120,3 +123,41 @@ class HistoryRepository(Protocol):
     async def async_purge(self, cutoff: dt.datetime) -> int:
         """Entfernt Runden, die vor `cutoff` begonnen haben; liefert die Anzahl."""
         ...
+
+
+class TimerPort(Protocol):
+    """Zeitgeber, die zu einem Zeitpunkt einmal auslösen (Infrastruktur: HA-Zeitgeber)."""
+
+    def schedule(self, key: str, at: dt.datetime, callback: FireCallback) -> None:
+        """Setzt den Zeitgeber `key` neu; ein vorhandener mit demselben Schlüssel entfällt."""
+        ...
+
+    def cancel(self, key: str) -> None:
+        """Meldet den Zeitgeber `key` ab (unbekannte Schlüssel werden ignoriert)."""
+        ...
+
+    def cancel_all(self) -> None:
+        """Meldet alle Zeitgeber ab (Entladen der Integration)."""
+        ...
+
+
+class RoundEvents(Protocol):
+    """Meldungen nach außen (Events, Entitäten, Benachrichtigung); umgesetzt in AP-09/11/12."""
+
+    def round_drawn(self, round_: Round) -> None:
+        """Eine Runde wurde ausgelost und gespeichert."""
+        ...
+
+    def reminder_due(self, schedule: Schedule, days_since: int) -> None:
+        """Ein Zeitplan „nur manuell“ wurde seit `days_since` Tagen nicht ausgelost."""
+        ...
+
+
+class NoEvents:
+    """Standard ohne Empfänger (Tests, solange AP-09 die Ereignisse noch nicht verdrahtet)."""
+
+    def round_drawn(self, round_: Round) -> None:
+        """Tut nichts."""
+
+    def reminder_due(self, schedule: Schedule, days_since: int) -> None:
+        """Tut nichts."""

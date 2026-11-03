@@ -287,15 +287,17 @@ class Schedule(Model):
     enabled: bool = spec(to_bool, default=True)
     notify: bool = spec(to_bool, default=True)
     skip_absent: bool = spec(to_bool, default=True)
+    archived: bool = spec(to_bool, default=False)
 
     def __post_init__(self) -> None:
-        """Prüft Kennung, Namen, Slug und Aufgabenliste."""
+        """Prüft Kennung, Namen, Slug, Aufgabenliste und dass Archivierte nicht aktiv sind."""
         ensure_id("id", self.id)
         ensure_name("name", self.name)
         ensure_length("slug", self.slug, 1, limits.SLUG_MAX_LENGTH)
         ensure_pattern("slug", self.slug, limits.SLUG_PATTERN)
         ensure_size("task_ids", self.task_ids, 1, limits.MAX_TASKS_PER_SCHEDULE)
         ensure_unique("task_ids", self.task_ids)
+        ensure(not (self.archived and self.enabled), "archived", ERR_INCONSISTENT)
 
 
 # --- Runden und Zuteilungen ---------------------------------------------------------------------
