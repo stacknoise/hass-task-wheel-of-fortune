@@ -2,12 +2,8 @@
 
 from typing import TYPE_CHECKING
 
-from homeassistant.components.todo import (
-    TodoItem,
-    TodoItemStatus,
-    TodoListEntity,
-    TodoListEntityFeature,
-)
+from homeassistant.components.todo import TodoItem, TodoListEntity
+from homeassistant.components.todo.const import TodoItemStatus, TodoListEntityFeature
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
