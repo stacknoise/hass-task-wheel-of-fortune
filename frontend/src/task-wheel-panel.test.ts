@@ -41,7 +41,7 @@ describe('task-wheel-panel', () => {
     element.language = 'de';
     await element.updateComplete;
     const heading = element.shadowRoot?.querySelector(`.${PANEL_HEADING_CLASS}`);
-    expect(heading?.textContent).toBe('Aufgaben-Glücksrad');
+    expect(heading?.textContent).toBe('Task Wheel of Fortune');
     expect(element.shadowRoot?.querySelector('main')?.textContent).toContain('geladen');
   });
 

@@ -5,6 +5,10 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+## [0.1.1] – 2026-11-03
+
+- Der Name ist überall englisch: „Task Wheel of Fortune“ in HACS, in der Integrationsliste, im Seitenleisten-Eintrag und im Panel (auch bei deutscher Oberfläche)
+
 ## [0.1.0] – 2026-11-03
 
 Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.

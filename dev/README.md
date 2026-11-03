@@ -24,7 +24,7 @@ wird in die vorhandene eingebunden.
 
 4. Container neu erstellen, die Config bleibt erhalten:
    `docker compose -f dev/docker-compose.yml up -d --force-recreate`
-5. In Home Assistant unter *Einstellungen → Geräte & Dienste → Integration hinzufügen* **Aufgaben-Glücksrad** einrichten.
+5. In Home Assistant unter *Einstellungen → Geräte & Dienste → Integration hinzufügen* **Task Wheel of Fortune** einrichten.
 
 ## Aktualisieren und prüfen
 

@@ -1,4 +1,4 @@
-"""Aufgaben-Glücksrad: Aufgaben per Glücksrad fair an Personen verteilen (Schicht 1: Einstieg)."""
+"""Task Wheel of Fortune: Aufgaben per Glücksrad fair verteilen (Schicht 1: Einstieg)."""
 
 from __future__ import annotations
 

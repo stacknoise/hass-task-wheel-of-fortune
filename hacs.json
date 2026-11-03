@@ -1,5 +1,5 @@
 {
-  "name": "Aufgaben-Glücksrad",
+  "name": "Task Wheel of Fortune",
   "homeassistant": "2025.6.0",
   "zip_release": true,
   "filename": "task_wheel.zip"

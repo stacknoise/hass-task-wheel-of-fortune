@@ -2,12 +2,12 @@
   "config": {
     "step": {
       "user": {
-        "title": "Aufgaben-Glücksrad",
+        "title": "Task Wheel of Fortune",
         "description": "Verteilt Haushaltsaufgaben fair per Glücksrad. Personen, Aufgaben und Zeitpläne werden anschließend im Panel verwaltet."
       }
     },
     "abort": {
-      "already_configured": "Aufgaben-Glücksrad ist bereits eingerichtet.",
+      "already_configured": "Task Wheel of Fortune ist bereits eingerichtet.",
       "single_instance_allowed": "Es wird nur eine Instanz unterstützt.",
       "not_loaded": "Die Integration ist nicht geladen."
     }
@@ -129,7 +129,7 @@
   },
   "exceptions": {
     "not_loaded": {
-      "message": "Das Aufgaben-Glücksrad ist nicht geladen."
+      "message": "Task Wheel of Fortune ist nicht geladen."
     },
     "not_found": {
       "message": "{resource} „{id}“ wurde nicht gefunden."
