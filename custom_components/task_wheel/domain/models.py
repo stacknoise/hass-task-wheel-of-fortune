@@ -323,10 +323,11 @@ _UNDONE_STATUSES = frozenset({AssignmentStatus.OPEN, AssignmentStatus.MISSED})
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class Assignment(Model):
-    """Zuteilung einer Aufgabe an eine Person innerhalb einer Runde."""
+    """Zuteilung einer Aufgabe an eine Person innerhalb einer Runde des auslosenden Zeitplans."""
 
     id: AssignmentId = spec(to_str)
     round_id: RoundId = spec(to_str)
+    schedule_id: ScheduleId = spec(to_str)
     task_id: TaskId = spec(to_str)
     person_id: PersonId = spec(to_str)
     chance: float = spec(to_float)
@@ -338,7 +339,7 @@ class Assignment(Model):
 
     def __post_init__(self) -> None:
         """Prüft Kennungen, Chance, Zeitzonen und die Zuordnung von Status und Erledigungszeit."""
-        for name in ("id", "round_id", "task_id", "person_id"):
+        for name in ("id", "round_id", "schedule_id", "task_id", "person_id"):
             ensure_id(name, getattr(self, name))
         ensure_range("chance", self.chance, limits.CHANCE_MIN, limits.CHANCE_MAX)
         ensure_aware("due_at", self.due_at)
@@ -374,7 +375,10 @@ class Round(Model):
         ensure_size("assignments", self.assignments, 0, limits.MAX_ASSIGNMENTS_PER_ROUND)
         ensure_unique("assignments", (item.id for item in self.assignments))
         ensure(
-            all(item.round_id == self.id for item in self.assignments),
+            all(
+                item.round_id == self.id and item.schedule_id == self.schedule_id
+                for item in self.assignments
+            ),
             "assignments",
             ERR_INCONSISTENT,
         )

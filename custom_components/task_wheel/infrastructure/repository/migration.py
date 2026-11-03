@@ -4,7 +4,13 @@ from collections.abc import Callable, Mapping
 from types import MappingProxyType
 from typing import Final
 
-from ...const.keys import STORE_MINOR_VERSION, STORE_VERSION
+from ...const.keys import (
+    KEY_ASSIGNMENTS,
+    KEY_ROUNDS,
+    KEY_SCHEDULE_ID,
+    STORE_MINOR_VERSION,
+    STORE_VERSION,
+)
 from ...domain.errors import StorageVersionError
 
 type Version = tuple[int, int]
@@ -13,9 +19,37 @@ type Migrations = Mapping[Version, tuple[Version, Migration]]
 
 CURRENT_VERSION: Final[Version] = (STORE_VERSION, STORE_MINOR_VERSION)
 
+
+def _unchanged(data: dict[str, object]) -> dict[str, object]:
+    """Schritt ohne Schemaänderung (beide Stores teilen sich die Versionsnummer)."""
+    return data
+
+
+def _assignment_schedule(data: dict[str, object]) -> dict[str, object]:
+    """1.1 -> 1.2: Zuteilungen erhalten den Zeitplan ihrer Runde (`schedule_id`)."""
+    rounds = data.get(KEY_ROUNDS)
+    if not isinstance(rounds, list):
+        return data
+    return {**data, KEY_ROUNDS: [_with_schedule(item) for item in rounds]}
+
+
+def _with_schedule(round_: object) -> object:
+    """Runde mit `schedule_id` an jeder Zuteilung; Unlesbares bleibt für das Laden stehen."""
+    if not isinstance(round_, dict) or not isinstance(round_.get(KEY_ASSIGNMENTS), list):
+        return round_
+    schedule_id = round_.get(KEY_SCHEDULE_ID)
+    return {
+        **round_,
+        KEY_ASSIGNMENTS: [
+            {KEY_SCHEDULE_ID: schedule_id, **item} if isinstance(item, dict) else item
+            for item in round_[KEY_ASSIGNMENTS]
+        ],
+    }
+
+
 # `von-Version -> (nach-Version, Funktion)`; bei Schemaänderungen hier ergänzen.
-CONFIG_MIGRATIONS: Final[Migrations] = MappingProxyType({})
-HISTORY_MIGRATIONS: Final[Migrations] = MappingProxyType({})
+CONFIG_MIGRATIONS: Final[Migrations] = MappingProxyType({(1, 1): ((1, 2), _unchanged)})
+HISTORY_MIGRATIONS: Final[Migrations] = MappingProxyType({(1, 1): ((1, 2), _assignment_schedule)})
 
 
 def migrate(

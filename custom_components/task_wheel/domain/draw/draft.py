@@ -99,6 +99,7 @@ class RoundDraft:
         return Assignment(
             id=assignment_id,
             round_id=round_id,
+            schedule_id=self.schedule_id,
             task_id=task.id,
             person_id=person_id,
             chance=result.chance,
