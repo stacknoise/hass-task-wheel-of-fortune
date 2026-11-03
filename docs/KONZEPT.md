@@ -331,7 +331,7 @@ Payloads enthalten nur IDs, Namen und Zahlen (keine Konfiguration). Zusätzlich 
 | Sensor offene Aufgaben je Person | `sensor.task_wheel_anna_offen` | Dashboard, Automationen |
 | Sensor Punkte im Monat je Person | `sensor.task_wheel_anna_punkte` | Statistik in HA-Verlauf |
 | To-do-Liste je Person | `todo.task_wheel_anna` | Abhaken per App, Sprachassistent |
-| Sensor nächste Auslosung je Zeitplan | `sensor.task_wheel_wochenplan_naechste` (Zeitstempel) | Anzeige |
+| Sensor nächste Auslosung je Zeitplan | `sensor.task_wheel_wochenplan_naechste_auslosung` (Zeitstempel) | Anzeige |
 | Button je Zeitplan | `button.task_wheel_wochenplan_auslosen` | Dashboard-Button, Automation |
 
 Entitäten lesen nur aus den Indizes des Repositories und werden über einen Dispatcher-Signal-Namen pro Person

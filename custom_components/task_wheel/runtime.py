@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from .application.assignment_service import AssignmentService
 from .application.draw_service import DrawService
+from .application.entity_state import EntityStateService
 from .application.history_service import HistoryService
 from .application.maintenance_service import MaintenanceService, Spawn
 from .application.protocols import ConfigRepository, HistoryRepository, RoundEvents, TimerPort
@@ -33,6 +34,7 @@ class TaskWheelData:
     schedules: ScheduleService
     maintenance: MaintenanceService
     history_service: HistoryService
+    entity_state: EntityStateService
 
 
 def compose(
@@ -49,6 +51,7 @@ def compose(
     statistics = StatisticsService(config, history)
     draws = DrawService(config, history, rng or secure_random(), statistics, events=events)
     assignments = AssignmentService(config, history, statistics, events)
+    schedules = ScheduleService(config, history, draws, timers, events)
     return TaskWheelData(
         config=config,
         history=history,
@@ -58,7 +61,8 @@ def compose(
         draws=draws,
         assignments=assignments,
         swaps=SwapService(config, history, statistics, events),
-        schedules=ScheduleService(config, history, draws, timers, events),
+        schedules=schedules,
         maintenance=MaintenanceService(config, history, assignments, timers, spawn),
         history_service=HistoryService(history),
+        entity_state=EntityStateService(config, history, schedules),
     )

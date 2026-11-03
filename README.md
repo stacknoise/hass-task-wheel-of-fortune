@@ -4,7 +4,7 @@ Verteilt Haushaltsaufgaben fair und mit etwas Spaß: Ein Glücksrad lost aus, we
 richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie belastbar ist.
 
 > **Status:** Entwicklung, Version 0.0.1. Das Projektgerüst steht (Integration lässt sich hinzufügen und
-> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03), Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07), Statistik und Historie (AP-13) Runden und Zeitpläne (AP-08) sowie Einstieg, Dienste, Events und Einstellungen (AP-09) sind umgesetzt, Panel, Entitäten und Benachrichtigungen folgen mit den Arbeitspaketen. Es gibt noch keine Veröffentlichung
+> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03), Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07), Statistik und Historie (AP-13) Runden und Zeitpläne (AP-08), Einstieg, Dienste, Events und Einstellungen (AP-09) sowie Entitäten (AP-11) sind umgesetzt, Panel und Benachrichtigungen folgen mit den Arbeitspaketen. Es gibt noch keine Veröffentlichung
 > über HACS.
 
 ## Funktionen (geplant)
@@ -52,15 +52,19 @@ Zeitplan und Person lassen sich über Kennung oder Kurzname ansprechen, die Aufg
 
 Einstellungen (Joker, Fairness-Fenster, Aufbewahrung, Punktefaktoren, Kulanzzeit, Panel nur für Administratoren) ändert man unter *Einstellungen → Geräte & Dienste → Aufgaben-Glücksrad → Konfigurieren*. Jede Nacht um 03:00 werden verpasste Zuteilungen markiert und Runden nach der Aufbewahrungsfrist gelöscht.
 
-## Entitäten (geplant)
+## Entitäten
 
-| Entität | Beispiel |
-|---|---|
-| Offene Aufgaben je Person | `sensor.task_wheel_anna_offen` |
-| Punkte im Monat je Person | `sensor.task_wheel_anna_punkte` |
-| To-do-Liste je Person | `todo.task_wheel_anna` |
-| Nächste Auslosung je Zeitplan | `sensor.task_wheel_wochenplan_naechste` |
-| Auslosen-Button je Zeitplan | `button.task_wheel_wochenplan_auslosen` |
+Für jede Person und jeden (nicht archivierten) Zeitplan legt die Integration ein Gerät „Task Wheel <Name>“ mit diesen Entitäten an. Sie entstehen und verschwinden mit den Personen und Zeitplänen; die Entity-IDs ergeben sich aus dem Gerätenamen und dem Entitätsnamen (hier mit deutscher Oberfläche):
+
+| Entität | Beispiel | Inhalt |
+|---|---|---|
+| Offene Aufgaben je Person | `sensor.task_wheel_anna_offen` | Anzahl der noch nicht abgeschlossenen Zuteilungen |
+| Punkte im Monat je Person | `sensor.task_wheel_anna_punkte` | gutgeschriebene Punkte im laufenden Monat (Faktoren für verspätet/verpasst aus den Einstellungen) |
+| To-do-Liste je Person | `todo.task_wheel_anna` | offene Aufgaben mit Frist; **Abhaken erledigt die Zuteilung** (App, Sprachassistent), andere Änderungen sind nicht möglich |
+| Nächste Auslosung je Zeitplan | `sensor.task_wheel_wochenplan_naechste_auslosung` | Zeitstempel; leer bei pausiert oder „nur manuell“ |
+| Auslosen-Button je Zeitplan | `button.task_wheel_wochenplan_auslosen` | löst den Zeitplan wie im Panel aus |
+
+Die Entitäten fragen nichts ab, sondern aktualisieren sich, sobald sich etwas für sie ändert (Auslosung, Erledigen, Tausch, Verpasst, geänderte Personen und Zeitpläne).
 
 ## Dokumentation
 

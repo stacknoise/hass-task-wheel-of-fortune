@@ -26,7 +26,7 @@ from .protocols import ConfigRepository
 type Payload = dict[str, Any]
 
 
-def _task_name(config: ConfigRepository, assignment: Assignment) -> str:
+def task_name(config: ConfigRepository, assignment: Assignment) -> str:
     """Name der Aufgabe; eine inzwischen gelöschte Aufgabe wird über ihre Kennung genannt."""
     task = config.tasks.get(assignment.task_id)
     return task.name if task is not None else assignment.task_id
@@ -49,7 +49,7 @@ def assignment_payload(config: ConfigRepository, assignment: Assignment) -> Payl
     return {
         ATTR_ASSIGNMENT_ID: assignment.id,
         ATTR_TASK_ID: assignment.task_id,
-        ATTR_TASK_NAME: _task_name(config, assignment),
+        ATTR_TASK_NAME: task_name(config, assignment),
         ATTR_PERSON_ID: assignment.person_id,
         ATTR_PERSON_NAME: _person_name(config, assignment.person_id),
         ATTR_POINTS: assignment.points,

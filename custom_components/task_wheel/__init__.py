@@ -8,7 +8,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers import config_validation as cv
 from homeassistant.util import dt as dt_util
 
+from .application.fanout import FanOutRoundEvents
 from .const import DOMAIN
+from .entities.factory import PLATFORMS
+from .entities.signals import EntityEvents
 from .infrastructure.events import HassRoundEvents
 from .infrastructure.repository.factory import create_config_store, create_history_store
 from .infrastructure.scheduler import HassTimerScheduler
@@ -40,11 +43,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: TaskWheelConfigEntry) ->
         config,
         history,
         timers=HassTimerScheduler(hass),
-        events=HassRoundEvents(hass, config),
+        events=FanOutRoundEvents(HassRoundEvents(hass, config), EntityEvents(hass)),
         clock=dt_util.now,
         spawn=hass.async_create_task,
     )
     entry.runtime_data = data
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     now = data.clock()
     data.schedules.arm_all(now)
     data.maintenance.start(now)
@@ -53,6 +57,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: TaskWheelConfigEntry) ->
 
 async def async_unload_entry(hass: HomeAssistant, entry: TaskWheelConfigEntry) -> bool:
     """Meldet alle Zeitgeber ab und sichert den Bestand."""
+    if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        return False
     data = entry.runtime_data
     data.schedules.disarm_all()
     await data.config.async_flush()

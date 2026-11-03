@@ -43,6 +43,24 @@
       "base": "Ungültige Einstellung."
     }
   },
+  "entity": {
+    "sensor": {
+      "open": {
+        "name": "Offen"
+      },
+      "points": {
+        "name": "Punkte"
+      },
+      "next_draw": {
+        "name": "Nächste Auslosung"
+      }
+    },
+    "button": {
+      "draw": {
+        "name": "Auslosen"
+      }
+    }
+  },
   "services": {
     "draw": {
       "name": "Auslosen",
@@ -160,6 +178,9 @@
     },
     "out_of_range": {
       "message": "Der Wert ist außerhalb von {low} bis {high}."
+    },
+    "todo_complete_only": {
+      "message": "Die Liste erlaubt nur das Abhaken von Aufgaben."
     }
   }
 }
