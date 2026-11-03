@@ -3,6 +3,7 @@ import datetime as dt
 from custom_components.task_wheel.domain.draw.candidates import (
     CandidateFilterFactory,
     CandidateSelector,
+    MinLoadFilter,
     NoRepeatFilter,
     PausedFilter,
     RoundTakenFilter,
@@ -73,6 +74,30 @@ def test_chain_order_and_conditions():
     chain = CandidateFilterFactory().create_chain(task(no_repeat=True, respect_absence=False))
     assert [type(f) for f in chain] == [PausedFilter, RoundTakenFilter, NoRepeatFilter]
     assert len(CandidateFilterFactory().create_chain(task())) == 3
+
+
+def test_min_load_filter_only_in_chain_when_task_demands_it():
+    chain = CandidateFilterFactory().create_chain(task(min_load=Load.FULL))
+    assert MinLoadFilter in [type(f) for f in chain]
+
+
+def test_min_load_excludes_lower_capacity_and_leaves_unassigned_if_nobody_fits():
+    ctx = make_context([make_person("a", load=Load.HALF), make_person("b", load=Load.FULL)])
+    selection = CandidateSelector().select(task(allowed=AB, min_load=Load.FULL), ctx)
+    assert [p.id for p in selection.candidates] == ["b"]
+    assert reasons(selection) == {("a", ExclusionReason.LOAD)}
+    only_half = make_context([make_person("a", load=Load.HALF)])
+    assert (
+        not CandidateSelector().select(task(allowed=AB, min_load=Load.FULL), only_half).candidates
+    )
+
+
+def test_min_load_half_accepts_half_and_full_but_default_accepts_all():
+    ctx = make_context([make_person("a", load=Load.HALF), make_person("b", load=Load.FULL)])
+    assert (
+        len(CandidateSelector().select(task(allowed=AB, min_load=Load.HALF), ctx).candidates) == 2
+    )
+    assert len(CandidateSelector().select(task(allowed=AB), ctx).candidates) == 2
 
 
 def test_nobody_left_gives_empty_selection():

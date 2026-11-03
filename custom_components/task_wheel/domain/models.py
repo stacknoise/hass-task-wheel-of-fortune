@@ -267,6 +267,7 @@ class Task(Model):
     no_repeat: bool = spec(to_bool, default=False)
     respect_absence: bool = spec(to_bool, default=True)
     swap_allowed: bool = spec(to_bool, default=True)
+    min_load: Load = spec(enum_of(Load), default=Load.PAUSED)
 
     def __post_init__(self) -> None:
         """Prüft Kennung, Namen, Punkte, Frist und erlaubte Personen."""
@@ -281,6 +282,10 @@ class Task(Model):
     def allows(self, person_id: PersonId) -> bool:
         """Ob die Person die Aufgabe bekommen darf (ohne erlaubte Personen: jede)."""
         return not self.allowed or person_id in self.allowed
+
+    def accepts_load(self, load: Load) -> bool:
+        """Ob die Belastbarkeit für die Aufgabe reicht (Standard `paused`: jede)."""
+        return load.factor >= self.min_load.factor
 
 
 DEFAULT_ANIMATIONS: Final = (AnimationKind.WHEEL,)

@@ -155,6 +155,9 @@
     "swap_person_paused": {
       "message": "The person is paused."
     },
+    "swap_person_load_too_low": {
+      "message": "The person's capacity is too low for this task."
+    },
     "swap_person_absent": {
       "message": "The person is absent during the deadline window."
     },

@@ -10,6 +10,7 @@ from ..const.keys import (
     ERR_NO_JOKERS,
     ERR_SWAP_ABSENT,
     ERR_SWAP_DISABLED,
+    ERR_SWAP_LOAD,
     ERR_SWAP_NOT_ALLOWED,
     ERR_SWAP_NOT_IN_ROUND,
     ERR_SWAP_PAUSED,
@@ -52,6 +53,7 @@ _CHECKS: Final[tuple[tuple[Callable[[SwapContext], bool], str], ...]] = (
     (lambda c: c.jokers_left > 0, ERR_NO_JOKERS),
     (lambda c: c.task.allows(c.receiver.id), ERR_SWAP_NOT_ALLOWED),
     (lambda c: c.receiver.load is not Load.PAUSED, ERR_SWAP_PAUSED),
+    (lambda c: c.task.accepts_load(c.receiver.load), ERR_SWAP_LOAD),
     (_present_until_due, ERR_SWAP_ABSENT),
 )
 

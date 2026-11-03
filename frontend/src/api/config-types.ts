@@ -91,6 +91,7 @@ export interface TaskWire {
   readonly no_repeat: boolean;
   readonly respect_absence: boolean;
   readonly swap_allowed: boolean;
+  readonly min_load: Load;
 }
 
 export interface ScheduleWire {

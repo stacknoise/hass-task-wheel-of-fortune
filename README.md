@@ -132,7 +132,7 @@ die Karten, rechts das Formular; Fehler des Backends erscheinen am betroffenen F
 - **Personen:** Farbe im Rad, Belastbarkeit (voll, halb, pausiert), Anwesenheit (einmalig, Wochentage, Wochenrhythmus) mit
   Vorschau der nächsten vier Wochen und optional eine Benachrichtigungs-Entität (`notify.…`, mit Suche über die Entitäten und Dienste von Home Assistant, wird beim Speichern geprüft).
 - **Aufgaben:** erlaubte Personen, Häufigkeit (jede Runde, höchstens n× je Zeitraum, festes Intervall mit Zeitstrahl),
-  Punkte, Frist und die Zusatzregeln „keine Wiederholung“, „Abwesenheit beachten“, „Tausch erlaubt“.
+  Punkte, Frist, Mindest-Belastbarkeit (egal, mindestens halbe oder nur volle Last; wer darunter liegt, kommt für die Aufgabe nicht ins Rad und kann sie nicht per Tausch übernehmen) und die Zusatzregeln „keine Wiederholung“, „Abwesenheit beachten“, „Tausch erlaubt“.
 - **Zeitpläne:** wiederkehrend, einmalig oder nur manuell, Aufgabenwahl, Optionen und ein Beispiel für `task_wheel.draw`
   und das Ereignis `task_wheel_drawn`.
 

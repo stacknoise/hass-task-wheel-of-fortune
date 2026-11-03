@@ -45,6 +45,22 @@ class PausedFilter:
         return frozenset(p.id for p in candidates if p.load is Load.PAUSED)
 
 
+class MinLoadFilter:
+    """Personen, deren Belastbarkeit unter der Mindest-Belastbarkeit der Aufgabe liegt."""
+
+    reason: ClassVar[ExclusionReason] = ExclusionReason.LOAD
+    soft: ClassVar[bool] = False
+
+    def excluded(
+        self,
+        task: Task,
+        candidates: Sequence[Person],
+        context: DrawContext,  # noqa: ARG002
+    ) -> frozenset[str]:
+        """Alle Personen, für die `task.accepts_load` verneint."""
+        return frozenset(p.id for p in candidates if not task.accepts_load(p.load))
+
+
 class AbsenceFilter:
     """Personen, die im Fristfenster an keinem Tag anwesend sind."""
 
@@ -100,6 +116,7 @@ type FilterBuilder = tuple[Callable[[Task], bool], CandidateFilter]
 # Reihenfolge laut KONZEPT §5.2, harte Filter vor weichen; die Bedingung wählt je Aufgabe.
 _FILTERS: tuple[FilterBuilder, ...] = (
     (lambda _task: True, PausedFilter()),
+    (lambda task: task.min_load is not Load.PAUSED, MinLoadFilter()),
     (lambda task: task.respect_absence, AbsenceFilter()),
     (lambda _task: True, RoundTakenFilter()),
     (lambda task: task.no_repeat, NoRepeatFilter()),
