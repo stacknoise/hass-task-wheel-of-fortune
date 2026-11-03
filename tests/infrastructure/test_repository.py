@@ -244,3 +244,34 @@ def test_history_replacing_round_with_new_start_keeps_order() -> None:
     repo.put_round(_round("r2", f.NOW))  # type: ignore[arg-type]
     repo.put_round(_round("r1", f.NOW + DAY))  # type: ignore[arg-type]
     assert list(repo.rounds) == ["r2", "r1"]
+
+
+async def test_config_listeners_are_called_after_each_change_and_can_unsubscribe() -> None:
+    repo = ConfigStore(MemoryStore())
+    calls: list[int] = []
+    unsubscribe = repo.subscribe(lambda: calls.append(len(repo.persons)))
+    repo.put_person(f.person())
+    repo.remove_person("p1")
+    repo.set_settings(f.settings())
+    assert calls == [1, 0, 0]
+    unsubscribe()
+    unsubscribe()
+    repo.put_person(f.person())
+    assert calls == [1, 0, 0]
+
+
+async def test_failing_listener_does_not_break_the_change(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    repo = ConfigStore(MemoryStore())
+    seen: list[int] = []
+
+    def broken() -> None:
+        raise RuntimeError("kaputt")
+
+    repo.subscribe(broken)
+    repo.subscribe(lambda: seen.append(1))
+    repo.put_person(f.person())
+    assert "p1" in repo.persons
+    assert seen == [1]
+    assert "Konfigurationsänderung fehlgeschlagen" in caplog.text
