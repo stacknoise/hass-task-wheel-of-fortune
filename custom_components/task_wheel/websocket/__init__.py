@@ -21,7 +21,7 @@ from .registry import COMMANDS
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from homeassistant.components.websocket_api import ActiveConnection
+    from homeassistant.components.websocket_api.connection import ActiveConnection
 
 
 def _handler(command: Command) -> Callable[[HomeAssistant, ActiveConnection, dict[str, Any]], None]:
