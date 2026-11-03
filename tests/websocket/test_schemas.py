@@ -50,7 +50,7 @@ def api() -> Api:
         ),
         ("person/create", {"person": {"name": object()}}),
         ("person/update", {"person": {"name": "Neu"}}),
-        ("task/create", {"task": {"name": "Neu"}}),
+        ("task/create", {"task": {"allowed": ["p1"]}}),
         ("schedule/create", {"schedule": {"name": "Neu", "task_ids": ["t1"]}}),
         ("schedule/delete", {"schedule_id": "s1", "extra": 1}),
         ("settings/update", {"settings": {"unknown": 1}}),

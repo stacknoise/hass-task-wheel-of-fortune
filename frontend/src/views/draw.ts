@@ -22,7 +22,10 @@ import {
   DrawSession,
   StoreController,
   drawableSchedules,
+  allowsPerson,
+  openCandidates,
   openRoundFor,
+  participantsOf,
   personsById,
   pickAnimation,
   tasksById,
@@ -100,20 +103,26 @@ export class TwDrawView extends LitElement {
     this.#autoSpin(state);
   }
 
+  /** Die Aufgabe, die als Nächstes gezogen wird. */
+  #nextTask(state: DrawState): TaskInfo | undefined {
+    const snapshot = this.#store.state?.snapshot;
+    const taskId = state.taskIds[state.results.length];
+    return snapshot && taskId ? tasksById(snapshot).get(taskId) : undefined;
+  }
+
   /**
    * Bleibt für die nächste Aufgabe höchstens eine Person übrig, gibt es nichts zu drehen: die
    * Ziehung läuft ohne Klick, das Backend entscheidet weiterhin (es prüft auch Pause und Abwesenheit).
    */
   #autoSpin(state: DrawState): void {
     const snapshot = this.#store.state?.snapshot;
-    const taskId = state.taskIds[state.results.length];
-    const task = snapshot && taskId ? tasksById(snapshot).get(taskId) : undefined;
+    const task = this.#nextTask(state);
     const key = `${state.roundId ?? EMPTY_TEXT}:${String(state.results.length)}`;
-    if (state.phase !== 'ready' || !task || key === this.#autoSpun) {
+    if (!snapshot || state.phase !== 'ready' || !task || key === this.#autoSpun) {
       return;
     }
     const taken = new Set(state.results.map((result) => result.winner_id));
-    if ([...task.allowed].filter((id) => !taken.has(id)).length <= 1) {
+    if (openCandidates(personsById(snapshot), task, taken) <= 1) {
       this.#autoSpun = key;
       void this.#session?.spin();
     }
@@ -126,8 +135,8 @@ export class TwDrawView extends LitElement {
       return nothing;
     }
     const state = session.state;
-    const persons = personsById(snapshot);
     const tasks = tasksById(snapshot);
+    const persons = participantsOf(personsById(snapshot), tasks, state.taskIds);
     return html`
       <div class="layout">
         ${this.#side(state, tasks, persons)} ${this.#stagePanel(state, tasks, persons)}
@@ -440,7 +449,7 @@ export class TwDrawView extends LitElement {
       if (chance !== undefined) {
         return { person, inWheel: true, note: percentText(chance) };
       }
-      const allowed = task?.allowed.has(person.id) ?? false;
+      const allowed = task ? allowsPerson(task.allowed, person.id) : false;
       const reason = allowed ? reasons.get(person.id) : NOT_ALLOWED;
       return {
         person,
