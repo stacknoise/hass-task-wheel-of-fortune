@@ -21,6 +21,19 @@ richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie b
 - **Historie** mit CSV-Export und **Statistiken** (fairer Anteil, Erledigungsquote, Matrix Aufgabe × Person)
 - **Home-Assistant-Anbindung**: Dienste, Events, Sensoren, To-do-Listen je Person, Buttons je Zeitplan
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Overview](docs/screenshots/overview.png) | ![Draw with the wheel](docs/screenshots/draw-wheel.png) |
+| **Overview:** open assignments, points this month, next draw | **Draw:** wheel of fortune, size = chance |
+| ![Draw with the slot machine](docs/screenshots/draw-slot.png) | ![Tasks](docs/screenshots/tasks.png) |
+| **Draw:** the slot machine, one of five animations | **Tasks:** points, deadline, frequency, rules |
+| ![Schedules](docs/screenshots/schedules.png) | ![History](docs/screenshots/history.png) |
+| **Schedules:** recurring, once or manual | **History:** every draw with CSV export |
+| ![Statistics](docs/screenshots/statistics.png) | |
+| **Statistics:** fair share, completion rate, task × person | |
+
 ## Installation über HACS
 
 Die Integration ist (noch) nicht im HACS-Standardverzeichnis. Sie wird als **benutzerdefiniertes Repository**
@@ -180,6 +193,9 @@ cd frontend && npm ci && npm run lint && npm run typecheck && npm test && npm ru
 # End-to-End-Test (Playwright gegen eine echte, frische HA-Instanz mit der Integration; läuft in CI als Job `e2e`)
 # Ablauf: Frontend bauen, `hass -c <config>` mit `custom_components/task_wheel` starten, dann
 cd e2e && npm ci && npx playwright install chromium && HA_URL=http://localhost:8123 npx playwright test
+
+# Screenshots der README neu erzeugen (frische HA-Instanz mit der Integration läuft auf :8123, englische Oberfläche)
+cd e2e && npm ci && HA_LANGUAGE=en SHOT_DIR=../docs/screenshots npm run screenshots
 
 # Code-Doku erzeugen (docs/code-doku/index.html) und Schwellwerte prüfen
 python3 docs/code-doku/generate.py --check
