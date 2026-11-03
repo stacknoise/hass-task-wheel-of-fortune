@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Glücksrad – Übersicht</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f2f4f7;font-family:Roboto,system-ui,sans-serif;color:#1f2328}
+a{color:#0262a0}a:hover{color:#01497a}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 900px; background: #f2f4f7; font-family: Roboto, system-ui, sans-serif; color: #1f2328;">
+  <nav aria-label="Home Assistant Seitenleiste" style="flex: 1 1 220px; max-width: 256px; background: #ffffff; border-right: 1px solid #e3e6ea; display: flex; flex-direction: column; padding: 12px 8px; gap: 2px; box-sizing: border-box;">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px 16px; font-size: 20px; font-weight: 400;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5f6670" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      <span>Home Assistant</span>
+    </div>
+    <sc-for list="{{haNav}}" as="n" hint-placeholder-count="7">
+      <a href="{{n.href}}" style="display: flex; align-items: center; gap: 20px; min-height: 44px; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 500; color: {{n.fg}}; background: {{n.bg}};">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.icon}}"></path></svg>
+        <span>{{n.label}}</span>
+      </a>
+    </sc-for>
+  </nav>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+    <header style="background: #ffffff; border-bottom: 1px solid #e3e6ea;">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px;">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 400; flex: 1 1 auto;">Aufgaben-Glücksrad</h1>
+        <a href="Auslosung.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 18px; border-radius: 20px; background: #0262a0; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 3v18M3 12h18"></path></svg>
+          Jetzt auslosen
+        </a>
+      </div>
+      <div role="tablist" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 0 16px;">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="7">
+          <a href="{{t.href}}" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; text-decoration: none; font-size: 14px; font-weight: 500; color: {{t.fg}}; border-bottom: 3px solid {{t.line}};">{{t.label}}</a>
+        </sc-for>
+      </div>
+    </header>
+
+    <div style="padding: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; max-width: 1200px; box-sizing: border-box; width: 100%;">
+
+      <section style="grid-column: 1 / -1; background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 24px;">
+        <div style="width: 72px; height: 72px; border-radius: 50%; background: conic-gradient(#c05600 0 72deg, #1a5fd0 72deg 144deg, #137333 144deg 216deg, #7b2cbf 216deg 288deg, #b0136f 288deg 360deg); border: 4px solid #ffffff; box-shadow: 0 0 0 1px #e3e6ea;" aria-hidden="true"></div>
+        <button type="button" onClick="{{prevPlan}}" aria-label="Vorheriger Zeitplan" style="width: 44px; height: 44px; border-radius: 50%; border: 1px solid #c4c9d0; background: #ffffff; color: #0262a0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+        </button>
+        <div aria-live="polite" style="flex: 1 1 260px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0;">
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5a616b; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">
+            {{np.kicker}}
+            <span style="text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 500; border-radius: 10px; padding: 2px 8px; background: {{np.stBg}}; color: {{np.stFg}};">{{np.state}}</span>
+          </span>
+          <span style="font-size: 24px; font-weight: 500; line-height: 1.2; margin-left: -2px;">{{np.name}}</span>
+          <span style="font-size: 15px; font-weight: 500; color: #1f2328;">{{np.when}}</span>
+          <span style="font-size: 14px; color: #5a616b;">{{np.detail}}</span>
+          <span style="display: flex; gap: 6px; padding-top: 6px;" aria-label="Zeitplan {{np.pos}} von {{np.count}}">
+            <sc-for list="{{planDots}}" as="d" hint-placeholder-count="4">
+              <button type="button" onClick="{{d.pick}}" aria-label="{{d.label}}" aria-current="{{d.on}}" style="width: {{d.w}}px; height: 8px; border-radius: 4px; border: none; padding: 0; background: {{d.bg}}; cursor: pointer;"></button>
+            </sc-for>
+          </span>
+        </div>
+        <button type="button" onClick="{{nextPlan}}" aria-label="Nächster Zeitplan" style="width: 44px; height: 44px; border-radius: 50%; border: 1px solid #c4c9d0; background: #ffffff; color: #0262a0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+        </button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a href="Zeitplan.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid #c4c9d0; color: #0262a0; text-decoration: none; font-size: 14px; font-weight: 500;">Zeitplan bearbeiten</a>
+          <a href="Auslosung.dc.html" onClick="{{rememberPlan}}" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 20px; background: #0262a0; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500;">Manuell auslosen</a>
+        </div>
+      </section>
+
+      <section style="grid-column: span 2; background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 8px 0;">
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; padding: 12px 24px 4px;">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 500;">Aktuelle Zuteilungen</h2>
+          <span style="font-size: 13px; color: #5a616b;">{{doneCount}} von {{totalCount}} erledigt</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 24px 12px;">
+          <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+            <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.on}}" style="min-height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid {{f.border}}; background: {{f.bg}}; color: {{f.fg}}; font: 500 13px Roboto, sans-serif; cursor: pointer;">{{f.label}}</button>
+          </sc-for>
+        </div>
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 24px; background: #f6f8fa; border-top: 1px solid #eef0f3;">
+            <span style="width: 28px; height: 28px; border-radius: 8px; background: {{g.iconBg}}; color: {{g.iconFg}}; display: inline-flex; align-items: center; justify-content: center; flex: none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{g.icon}}"></path></svg>
+            </span>
+            <span style="font-size: 14px; font-weight: 500;">{{g.name}}</span>
+            <span style="font-size: 12px; color: #5a616b; flex: 1 1 auto;">{{g.meta}}</span>
+            <span style="font-size: 12px; color: #5a616b;">{{g.progress}}</span>
+          </div>
+          <sc-for list="{{g.rows}}" as="a" hint-placeholder-count="3">
+            <div style="border-top: 1px solid #eef0f3;">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 10px 24px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: {{a.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex: none;">{{a.initial}}</div>
+                <div style="flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                  <span style="font-size: 15px; font-weight: 500; text-decoration: {{a.strike}};">{{a.task}}</span>
+                  <span style="font-size: 13px; color: #5a616b;">{{a.person}} · {{a.due}}</span>
+                  <sc-if value="{{a.swapped}}" hint-placeholder-val="{{ false }}">
+                    <span style="align-self: flex-start; font-size: 12px; font-weight: 500; color: #5b1f99; background: #f1e7fb; border-radius: 10px; padding: 2px 8px; margin-top: 2px;">{{a.swapNote}}</span>
+                  </sc-if>
+                </div>
+                <button type="button" onClick="{{a.openSwap}}" aria-expanded="{{a.swapOpen}}" disabled="{{a.done}}" style="min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid #c4c9d0; background: #ffffff; color: {{a.swapFg}}; font: 500 13px Roboto, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"></path></svg>
+                  Tauschen
+                </button>
+                <button type="button" onClick="{{a.toggle}}" aria-pressed="{{a.done}}" style="min-height: 36px; min-width: 104px; padding: 0 14px; border-radius: 18px; border: 1px solid {{a.btnBorder}}; background: {{a.btnBg}}; color: {{a.btnFg}}; font: 500 13px Roboto, sans-serif; cursor: pointer;">{{a.btnLabel}}</button>
+              </div>
+              <sc-if value="{{a.swapOpen}}" hint-placeholder-val="{{ false }}">
+                <div style="margin: 0 24px 12px 80px; padding: 12px 14px; border-radius: 10px; background: #f6f2fc; display: flex; flex-direction: column; gap: 10px;">
+                  <span style="font-size: 13px;">Mit wem soll <strong>{{a.person}}</strong> „{{a.task}}" tauschen? Es werden nur Personen angezeigt, die diese Aufgabe laut Regel bekommen dürfen.</span>
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <sc-for list="{{a.candidates}}" as="c" hint-placeholder-count="3">
+                      <button type="button" onClick="{{c.pick}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px 0 4px; border-radius: 19px; border: 1px solid #c4c9d0; background: #ffffff; color: #1f2328; font: 500 13px Roboto, sans-serif; cursor: pointer;">
+                        <span style="width: 30px; height: 30px; border-radius: 50%; background: {{c.color}}; color: #ffffff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">{{c.initial}}</span>{{c.name}}
+                      </button>
+                    </sc-for>
+                    <button type="button" onClick="{{a.closeSwap}}" style="min-height: 38px; padding: 0 14px; border-radius: 19px; border: none; background: transparent; color: #0262a0; font: 500 13px Roboto, sans-serif; cursor: pointer;">Abbrechen</button>
+                  </div>
+                  <span style="font-size: 12px; color: #5a616b;">{{a.blockedNote}} Ein Tausch kostet {{a.person}} 1 Joker (noch {{a.jokers}} diesen Monat), die Punkte gehen an die neue Person.</span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </sc-for>
+      </section>
+
+      <section style="background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px;">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 500;">Punkte im Oktober</h2>
+        <sc-for list="{{points}}" as="p" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; justify-content: space-between; font-size: 14px;"><span>{{p.name}}</span><span style="font-weight: 500;">{{p.value}} P</span></div>
+            <div style="height: 8px; border-radius: 4px; background: #eef0f3;"><div style="height: 8px; border-radius: 4px; width: {{p.pct}}%; background: {{p.color}};"></div></div>
+          </div>
+        </sc-for>
+        <a href="Statistik.dc.html" style="font-size: 14px; font-weight: 500; text-decoration: none; padding-top: 4px;">Alle Statistiken ansehen</a>
+      </section>
+
+      <section style="grid-column: 1 / -1; background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 8px 0;">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 500; padding: 12px 24px;">Letzte Aktivität</h2>
+        <div style="display: flex; flex-direction: column;">
+          <div style="display: flex; gap: 16px; padding: 10px 24px; border-top: 1px solid #eef0f3; font-size: 14px;"><span style="color: #5a616b; width: 120px; flex: none;">Mo, 07:00</span><span>Geplante Auslosung „Wochenplan" · 6 Aufgaben verteilt</span></div>
+          <div style="display: flex; gap: 16px; padding: 10px 24px; border-top: 1px solid #eef0f3; font-size: 14px;"><span style="color: #5a616b; width: 120px; flex: none;">Mo, 18:42</span><span>Ben hat „Müll rausbringen" erledigt</span></div>
+          <div style="display: flex; gap: 16px; padding: 10px 24px; border-top: 1px solid #eef0f3; font-size: 14px;"><span style="color: #5a616b; width: 120px; flex: none;">So, 20:15</span><span>Clara hat „Bad putzen" mit Emma getauscht (Joker eingesetzt)</span></div>
+          <div style="display: flex; gap: 16px; padding: 10px 24px; border-top: 1px solid #eef0f3; font-size: 14px;"><span style="color: #5a616b; width: 120px; flex: none;">Sa, 11:03</span><span>Manuelle Auslosung „Rasen mähen" → David</span></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { done: { 1: true, 4: true }, filter: 'all', swapOpen: null, swaps: { 2: { from: 'B', to: 'C' } } };
+  }
+  renderVals() {
+    var ICONS = {
+      home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
+      map: 'M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
+      energy: 'M13 2L4 14h7l-1 8 9-12h-7z',
+      log: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+      history: 'M3 3v18h18M7 15l4-4 3 3 5-6',
+      wheel: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4',
+      media: 'M6 4l13 8-13 8z',
+      settings: 'M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6zM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1'
+    };
+    var haNav = [
+      ['Übersicht', 'home'], ['Karte', 'map'], ['Energie', 'energy'], ['Logbuch', 'log'], ['Verlauf', 'history'],
+      ['Glücksrad', 'wheel', true], ['Medien', 'media'], ['Einstellungen', 'settings']
+    ].map(function (n) {
+      return { label: n[0], icon: ICONS[n[1]], href: n[2] ? 'Main.dc.html' : '#', fg: n[2] ? '#01497a' : '#3c424a', bg: n[2] ? '#dcecf8' : 'transparent' };
+    });
+    var current = 'Main.dc.html';
+    var tabs = [
+      ['Übersicht', 'Main.dc.html'], ['Auslosung', 'Auslosung.dc.html'], ['Aufgaben', 'Aufgaben.dc.html'], ['Personen', 'Personen.dc.html'],
+      ['Zeitpläne', 'Zeitplan.dc.html'], ['Historie', 'Historie.dc.html'], ['Statistik', 'Statistik.dc.html']
+    ].map(function (t) {
+      var on = t[1] === current;
+      return { label: t[0], href: t[1], fg: on ? '#0262a0' : '#5a616b', line: on ? '#0262a0' : 'transparent' };
+    });
+    var self = this;
+    var s = this.state;
+    var P = { A: ['Anna', '#c05600', 1], B: ['Ben', '#1a5fd0', 0], C: ['Clara', '#137333', 1], D: ['David', '#7b2cbf', 1], E: ['Emma', '#b0136f', 1] };
+    var ABSENT = { D: true };
+    var G = [
+      { id: 'week', name: 'Wochenplan', meta: 'ausgelost Mo, 2. Nov · 07:00 · gilt bis So, 8. Nov', icon: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2', iconBg: '#e6eef7', iconFg: '#01497a', rows: [
+        [1, 'Müll rausbringen', 'B', 'fällig Di, 3. Nov', 'ABCDE'],
+        [2, 'Bad putzen', 'B', 'fällig Sa, 7. Nov', 'ABCD'],
+        [3, 'Staubsaugen Wohnzimmer', 'E', 'fällig Do, 5. Nov', 'ABCE'],
+        [5, 'Rasen mähen', 'D', 'fällig Sa, 7. Nov', 'BCD'],
+        [6, 'Katzenklo reinigen', 'A', 'fällig Mi, 4. Nov', 'ABCE']] },
+      { id: 'daily', name: 'Täglich morgens', meta: 'nur heute · ausgelost Di, 3. Nov · 06:30', icon: 'M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8z', iconBg: '#fdf0dc', iconFg: '#7a4a00', rows: [
+        [4, 'Spülmaschine ausräumen', 'A', 'heute bis 20:00', 'ABCDE']] },
+      { id: 'big', name: 'Großputz', meta: 'nur manuell · ausgelost Sa, 31. Okt · 11:03 von Anna mit Glücksrad', icon: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 3v18M3 12h18', iconBg: '#f1e7fb', iconFg: '#5b1f99', rows: [
+        [7, 'Garage aufräumen', 'B', 'fällig So, 8. Nov', 'BD']] }
+    ];
+    var filters = [['all', 'Alle']].concat(G.map(function (g) { return [g.id, g.name]; })).map(function (f) {
+      var on = s.filter === f[0];
+      return { label: f[1], on: on, bg: on ? '#dcecf8' : '#ffffff', border: on ? '#0262a0' : '#c4c9d0', fg: on ? '#01497a' : '#1f2328', pick: function () { self.setState({ filter: f[0] }); } };
+    });
+    var doneCount = 0, totalCount = 0;
+    var groups = G.filter(function (g) { return s.filter === 'all' || s.filter === g.id; }).map(function (g) {
+      var gDone = 0;
+      var rows = g.rows.map(function (r) {
+        var id = r[0], sw = s.swaps[id], who = sw ? sw.to : r[2];
+        var d = !!s.done[id];
+        if (d) { doneCount++; gDone++; }
+        totalCount++;
+        var open = s.swapOpen === id;
+        var candidates = r[4].split('').filter(function (k) { return k !== who && !ABSENT[k]; }).map(function (k) {
+          return { name: P[k][0], color: P[k][1], initial: P[k][0].charAt(0), pick: function () {
+            var n = Object.assign({}, self.state.swaps); n[id] = { from: (self.state.swaps[id] || {}).from || r[2], to: k };
+            self.setState({ swaps: n, swapOpen: null });
+          } };
+        });
+        var blocked = r[4].split('').filter(function (k) { return ABSENT[k] && k !== who; }).map(function (k) { return P[k][0] + ' ist abwesend.'; }).join(' ');
+        return {
+          task: r[1], person: P[who][0], color: P[who][1], initial: P[who][0].charAt(0), due: r[3], done: d,
+          swapped: !!sw, swapNote: sw ? 'Getauscht: ursprünglich ' + P[sw.from][0] + ' (Joker eingesetzt)' : '',
+          swapOpen: open, candidates: candidates, blockedNote: blocked, jokers: P[who][2],
+          swapFg: d ? '#8a929c' : '#0262a0',
+          openSwap: function () { self.setState({ swapOpen: open ? null : id }); },
+          closeSwap: function () { self.setState({ swapOpen: null }); },
+          strike: d ? 'line-through' : 'none',
+          btnLabel: d ? 'Erledigt' : 'Abhaken',
+          btnBg: d ? '#e3f1e6' : '#ffffff', btnFg: d ? '#0f5c28' : '#0262a0', btnBorder: d ? '#b7dbc0' : '#c4c9d0',
+          toggle: function () { var n = Object.assign({}, self.state.done); n[id] = !n[id]; self.setState({ done: n, swapOpen: null }); }
+        };
+      });
+      return Object.assign({}, g, { rows: rows, progress: gDone + '/' + rows.length + ' erledigt' });
+    });
+    var pts = [['Anna', 42, '#c05600'], ['Ben', 38, '#1a5fd0'], ['Clara', 45, '#137333'], ['David', 31, '#7b2cbf'], ['Emma', 24, '#b0136f']];
+    var points = pts.map(function (p) { return { name: p[0], value: p[1], color: p[2], pct: Math.round(p[1] / 45 * 100) }; });
+    var NP = [
+      { name: 'Wochenplan', kicker: 'Nächste Auslosung', when: 'Montag, 9. November · 07:00', detail: '6 Aufgaben · 5 Personen · Push an alle', state: 'Automatisch', stBg: '#e3f1e6', stFg: '#0f5c28' },
+      { name: 'Täglich morgens', kicker: 'Nächste Auslosung', when: 'Mittwoch, 4. November · 06:30', detail: '1 Aufgabe · 4 Personen (David abwesend)', state: 'Automatisch', stBg: '#e3f1e6', stFg: '#0f5c28' },
+      { name: 'Großputz', kicker: 'Nächste Auslosung', when: 'Kein Termin', detail: '4 Aufgaben · zuletzt ausgelost Sa, 10. Okt', state: 'Manuell', stBg: '#f1e7fb', stFg: '#5b1f99' },
+      { name: 'Vor dem Weihnachtsbesuch', kicker: 'Nächste Auslosung', when: 'Samstag, 19. Dezember · 10:00', detail: '4 Aufgaben · danach archivieren', state: 'Einmalig', stBg: '#fdf0dc', stFg: '#7a4a00' },
+      { name: 'Garten (Sommer)', kicker: 'Nächste Auslosung', when: 'Kein Termin', detail: 'sonst jeden Samstag 09:00 · 1 Aufgabe', state: 'Pausiert', stBg: '#eef0f3', stFg: '#3c424a' }
+    ];
+    var pi = s.planIdx || 0;
+    var np = Object.assign({}, NP[pi], { pos: pi + 1, count: NP.length });
+    var planDots = NP.map(function (p, i) {
+      var on = i === pi;
+      return { label: p.name, on: on, w: on ? 22 : 8, bg: on ? '#0262a0' : '#c4c9d0', pick: function () { self.setState({ planIdx: i }); } };
+    });
+    return { np: np, planDots: planDots,
+      rememberPlan: function () {
+        var v = String(pi) + ':' + Date.now();
+        try { window.localStorage.setItem('tw-draw-plan', v); } catch (e) {}
+        try { window.sessionStorage.setItem('tw-draw-plan', v); } catch (e) {}
+        try { if (window.parent && window.parent !== window) window.parent.postMessage({ twDrawPlan: v }, '*'); } catch (e) {}
+      },
+      prevPlan: function () { self.setState({ planIdx: (pi - 1 + NP.length) % NP.length }); },
+      nextPlan: function () { self.setState({ planIdx: (pi + 1) % NP.length }); },
+      haNav: haNav, tabs: tabs, filters: filters, groups: groups, doneCount: doneCount, totalCount: totalCount, points: points };
+  }
+}
+</script>
+</body>
+</html>

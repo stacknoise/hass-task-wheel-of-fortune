@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Glücksrad – Statistiken</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f2f4f7;font-family:Roboto,system-ui,sans-serif;color:#1f2328}
+a{color:#0262a0}a:hover{color:#01497a}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 900px; background: #f2f4f7; font-family: Roboto, system-ui, sans-serif; color: #1f2328;">
+  <nav aria-label="Home Assistant Seitenleiste" style="flex: 1 1 220px; max-width: 256px; background: #ffffff; border-right: 1px solid #e3e6ea; display: flex; flex-direction: column; padding: 12px 8px; gap: 2px; box-sizing: border-box;">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px 16px; font-size: 20px; font-weight: 400;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5f6670" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      <span>Home Assistant</span>
+    </div>
+    <sc-for list="{{haNav}}" as="n" hint-placeholder-count="7">
+      <a href="{{n.href}}" style="display: flex; align-items: center; gap: 20px; min-height: 44px; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 500; color: {{n.fg}}; background: {{n.bg}};">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.icon}}"></path></svg>
+        <span>{{n.label}}</span>
+      </a>
+    </sc-for>
+  </nav>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+    <header style="background: #ffffff; border-bottom: 1px solid #e3e6ea;">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px;">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 400; flex: 1 1 auto;">Aufgaben-Glücksrad</h1>
+        <div role="radiogroup" aria-label="Zeitraum" style="display: flex; border: 1px solid #c4c9d0; border-radius: 20px; overflow: hidden;">
+          <sc-for list="{{ranges}}" as="r" hint-placeholder-count="3">
+            <button type="button" role="radio" aria-checked="{{r.on}}" onClick="{{r.pick}}" style="min-height: 38px; padding: 0 14px; border: none; border-right: 1px solid #c4c9d0; background: {{r.bg}}; color: {{r.fg}}; font: 500 13px Roboto, sans-serif; cursor: pointer;">{{r.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div role="tablist" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 0 16px;">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="7">
+          <a href="{{t.href}}" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; text-decoration: none; font-size: 14px; font-weight: 500; color: {{t.fg}}; border-bottom: 3px solid {{t.line}};">{{t.label}}</a>
+        </sc-for>
+      </div>
+    </header>
+
+    <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px; max-width: 1200px; box-sizing: border-box; width: 100%;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+        <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+          <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px;">
+            <span style="font-size: 13px; color: #5a616b;">{{k.label}}</span>
+            <span style="font-size: 30px; font-weight: 500;">{{k.value}}</span>
+            <span style="font-size: 12px; color: #5a616b;">{{k.hint}}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch;">
+        <section style="flex: 1 1 340px; background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 500;">Punkte pro Person</h2>
+            <span style="font-size: 13px; color: #5a616b;">Strich = fairer Anteil (berücksichtigt halbe Last und Abwesenheit)</span>
+          </div>
+          <sc-for list="{{bars}}" as="b" hint-placeholder-count="5">
+            <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr) 52px; align-items: center; gap: 12px; font-size: 14px;">
+              <span>{{b.name}}</span>
+              <div style="position: relative; height: 18px; background: #eef0f3; border-radius: 4px;">
+                <div style="height: 18px; width: {{b.pct}}%; background: {{b.color}}; border-radius: 4px;"></div>
+                <div style="position: absolute; top: -4px; bottom: -4px; left: {{b.fair}}%; width: 2px; background: #1f2328;"></div>
+              </div>
+              <span style="text-align: right; font-weight: 500;">{{b.value}}</span>
+            </div>
+          </sc-for>
+        </section>
+
+        <section style="flex: 1 1 340px; background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px;">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 500;">Erledigungsquote pro Woche</h2>
+          <svg viewBox="0 0 400 180" style="width: 100%; height: auto;" role="img" aria-label="Erledigungsquote der letzten 8 Wochen, zuletzt {{lastRate}} Prozent">
+            <line x1="32" y1="20" x2="392" y2="20" stroke="#eef0f3"></line>
+            <line x1="32" y1="80" x2="392" y2="80" stroke="#eef0f3"></line>
+            <line x1="32" y1="140" x2="392" y2="140" stroke="#c4c9d0"></line>
+            <text x="26" y="24" text-anchor="end" fill="#5a616b" style="font: 400 11px Roboto, sans-serif;">100%</text>
+            <text x="26" y="84" text-anchor="end" fill="#5a616b" style="font: 400 11px Roboto, sans-serif;">75%</text>
+            <text x="26" y="144" text-anchor="end" fill="#5a616b" style="font: 400 11px Roboto, sans-serif;">50%</text>
+            <polyline points="{{linePts}}" fill="none" stroke="#0262a0" stroke-width="2.5" stroke-linejoin="round"></polyline>
+            <sc-for list="{{lineDots}}" as="d" hint-placeholder-count="8">
+              <circle cx="{{d.x}}" cy="{{d.y}}" r="4" fill="#ffffff" stroke="#0262a0" stroke-width="2"></circle>
+              <text x="{{d.x}}" y="164" text-anchor="middle" fill="#5a616b" style="font: 400 11px Roboto, sans-serif;">{{d.label}}</text>
+            </sc-for>
+          </svg>
+        </section>
+      </div>
+
+      <section style="background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 20px 24px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 500;">Wer hatte was wie oft?</h2>
+          <span style="font-size: 13px; color: #5a616b;">Anzahl Zuteilungen je Aufgabe und Person · leer = nicht erlaubt</span>
+        </div>
+        <div style="overflow-x: auto;">
+          <table style="border-collapse: separate; border-spacing: 4px; font-size: 13px; min-width: 560px; width: 100%;">
+            <thead>
+              <tr>
+                <th style="text-align: left; font-weight: 500; color: #5a616b; padding: 4px 8px;">Aufgabe</th>
+                <sc-for list="{{heatHead}}" as="h" hint-placeholder-count="5">
+                  <th style="font-weight: 500; color: #5a616b; padding: 4px 8px;">{{h}}</th>
+                </sc-for>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{heat}}" as="row" hint-placeholder-count="7">
+                <tr>
+                  <td style="padding: 4px 8px; white-space: nowrap;">{{row.task}}</td>
+                  <sc-for list="{{row.cells}}" as="c" hint-placeholder-count="5">
+                    <td style="height: 36px; min-width: 56px; text-align: center; border-radius: 6px; background: {{c.bg}}; color: {{c.fg}}; font-weight: 500;">{{c.label}}</td>
+                  </sc-for>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+        <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 13px; color: #5a616b;">Glückspilz</span>
+          <span style="font-size: 17px; font-weight: 500;">Emma</span>
+          <span style="font-size: 13px; color: #5a616b;">6× in Folge kein „Bad putzen" trotz 26 % Chance</span>
+        </div>
+        <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 13px; color: #5a616b;">Pechvogel</span>
+          <span style="font-size: 17px; font-weight: 500;">Ben</span>
+          <span style="font-size: 13px; color: #5a616b;">3× „Rasen mähen" hintereinander, Chance je 45 %</span>
+        </div>
+        <div style="background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 16px 20px; display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 13px; color: #5a616b;">Zuverlässigste Person</span>
+          <span style="font-size: 17px; font-weight: 500;">Clara</span>
+          <span style="font-size: 13px; color: #5a616b;">97 % pünktlich erledigt · 14 Tage Serie</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1300}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { range: 'month' };
+  }
+  renderVals() {
+    var self = this, s = this.state;
+    var ICONS = {
+      home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z', map: 'M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
+      energy: 'M13 2L4 14h7l-1 8 9-12h-7z', log: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01', history: 'M3 3v18h18M7 15l4-4 3 3 5-6',
+      wheel: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4', media: 'M6 4l13 8-13 8z',
+      settings: 'M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6zM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1'
+    };
+    var haNav = [['Übersicht', 'home'], ['Karte', 'map'], ['Energie', 'energy'], ['Logbuch', 'log'], ['Verlauf', 'history'], ['Glücksrad', 'wheel', true], ['Medien', 'media'], ['Einstellungen', 'settings']]
+      .map(function (n) { return { label: n[0], icon: ICONS[n[1]], href: n[2] ? 'Main.dc.html' : '#', fg: n[2] ? '#01497a' : '#3c424a', bg: n[2] ? '#dcecf8' : 'transparent' }; });
+    var current = 'Statistik.dc.html';
+    var tabs = [['Übersicht', 'Main.dc.html'], ['Auslosung', 'Auslosung.dc.html'], ['Aufgaben', 'Aufgaben.dc.html'], ['Personen', 'Personen.dc.html'], ['Zeitpläne', 'Zeitplan.dc.html'], ['Historie', 'Historie.dc.html'], ['Statistik', 'Statistik.dc.html']]
+      .map(function (t) { var on = t[1] === current; return { label: t[0], href: t[1], fg: on ? '#0262a0' : '#5a616b', line: on ? '#0262a0' : 'transparent' }; });
+
+    var R = {
+      month: { label: '30 Tage', mult: 1, draws: 6, tasks: 27, rate: 89, fair: 0.92 },
+      quarter: { label: '3 Monate', mult: 3, draws: 19, tasks: 84, rate: 86, fair: 0.95 },
+      year: { label: '12 Monate', mult: 12, draws: 71, tasks: 336, rate: 84, fair: 0.97 }
+    };
+    var cur = R[s.range];
+    var ranges = ['month', 'quarter', 'year'].map(function (k) {
+      var on = s.range === k;
+      return { label: R[k].label, on: on, bg: on ? '#0262a0' : '#ffffff', fg: on ? '#ffffff' : '#1f2328', pick: function () { self.setState({ range: k }); } };
+    });
+    var kpis = [
+      { label: 'Auslosungen', value: cur.draws, hint: 'davon ' + Math.round(cur.draws * 0.3) + ' manuell mit Glücksrad' },
+      { label: 'Aufgaben verteilt', value: cur.tasks, hint: 'Ø ' + (cur.tasks / cur.draws).toFixed(1) + ' pro Runde' },
+      { label: 'Erledigungsquote', value: cur.rate + ' %', hint: 'pünktlich oder verspätet erledigt' },
+      { label: 'Fairness-Index', value: cur.fair.toFixed(2), hint: '1,00 = alle genau nach fairem Anteil' }
+    ];
+    var people = [['Anna', '#c05600', 42, 40], ['Ben', '#1a5fd0', 38, 40], ['Clara', '#137333', 45, 40], ['David', '#7b2cbf', 31, 34], ['Emma', '#b0136f', 24, 26]];
+    var max = 50 * cur.mult;
+    var bars = people.map(function (p, i) {
+      var jitter = s.range === 'month' ? 0 : (i % 2 ? -1 : 1) * cur.mult;
+      var v = p[2] * cur.mult + jitter;
+      return { name: p[0], color: p[1], value: v, pct: Math.round(v / max * 100), fair: Math.round(p[3] * cur.mult / max * 100) };
+    });
+    var rates = s.range === 'month' ? [82, 88, 79, 91, 86, 93, 90, 89] : (s.range === 'quarter' ? [78, 84, 81, 88, 85, 90, 87, 86] : [80, 76, 83, 85, 82, 88, 86, 84]);
+    var labels = s.range === 'year' ? ['Dez', 'Feb', 'Mär', 'Mai', 'Jun', 'Aug', 'Sep', 'Okt'] : ['KW38', 'KW39', 'KW40', 'KW41', 'KW42', 'KW43', 'KW44', 'KW45'];
+    var lineDots = rates.map(function (r, i) { return { x: 52 + i * 48, y: (140 - (r - 50) * 2.4).toFixed(1), label: labels[i] }; });
+    var linePts = lineDots.map(function (d) { return d.x + ',' + d.y; }).join(' ');
+
+    var heatHead = people.map(function (p) { return p[0]; });
+    var M = [
+      ['Müll rausbringen', [3, 2, 2, 1, 2]], ['Spülmaschine ausräumen', [6, 5, 7, 4, 6]], ['Bad putzen', [1, 1, 2, 1, null]],
+      ['Staubsaugen Wohnzimmer', [2, 3, 1, null, 2]], ['Rasen mähen', [null, 3, 1, 2, null]], ['Katzenklo reinigen', [3, 2, 2, null, 3]], ['Wocheneinkauf', [2, 1, null, 2, null]]
+    ];
+    var heat = M.map(function (m) {
+      return { task: m[0], cells: m[1].map(function (v) {
+        if (v === null) return { label: '–', bg: '#f6f7f9', fg: '#8a929c' };
+        var n = v * cur.mult;
+        var t = Math.min(1, v / 7);
+        var light = Math.round(95 - t * 55);
+        return { label: n, bg: 'hsl(205, 75%, ' + light + '%)', fg: light < 62 ? '#ffffff' : '#1f2328' };
+      }) };
+    });
+    return { haNav: haNav, tabs: tabs, ranges: ranges, kpis: kpis, bars: bars, lineDots: lineDots, linePts: linePts, lastRate: rates[7], heatHead: heatHead, heat: heat };
+  }
+}
+</script>
+</body>
+</html>
