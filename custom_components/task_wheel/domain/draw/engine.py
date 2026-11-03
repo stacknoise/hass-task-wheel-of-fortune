@@ -69,6 +69,7 @@ class DrawEngine:
         capacity = capacities(context)
         points: dict[PersonId, float] = dict(context.points)
         last_holders = dict(context.last_holders)
+        round_holders = set(context.round_holders)
         results: list[TaskDraw] = []
         for task in tasks:
             current = DrawContext(
@@ -78,17 +79,46 @@ class DrawEngine:
                 points,
                 last_holders,
                 context.fairness_window_days,
+                frozenset(round_holders),
             )
             result = self._draw_task(task, current, capacity, points)
             if result.winner_id is not None:
                 points[result.winner_id] = points.get(result.winner_id, 0) + task.points
                 last_holders[task.id] = result.winner_id
+                round_holders.add(result.winner_id)
             results.append(result)
         return tuple(results)
 
     def draw_task(self, task: Task, context: DrawContext) -> TaskDraw:
         """Zieht für eine einzelne Aufgabe."""
         return self._draw_task(task, context, capacities(context), context.points)
+
+    def preview_task(self, task: Task, context: DrawContext) -> TaskDraw:
+        """Das Rad für eine Aufgabe ohne Ziehung: Segmente und Ausschlüsse, aber kein Gewinner.
+
+        Stimmt mit dem Rad der späteren Ziehung überein, solange sich der Stand nicht ändert.
+        """
+        selection, segments, _weights = self._wheel(
+            task, context, capacities(context), context.points
+        )
+        return TaskDraw(task.id, None, 0.0, segments, selection.exclusions)
+
+    def _wheel(
+        self,
+        task: Task,
+        context: DrawContext,
+        capacity: Mapping[PersonId, float],
+        points: Mapping[PersonId, float],
+    ) -> tuple[CandidateSelection, tuple[Segment, ...], list[float]]:
+        """Filtert und gewichtet: Kandidaten, Segmente des Rads und deren Gewichte."""
+        selection = self._selector.select(task, context)
+        if not selection.candidates:
+            return selection, (), []
+        inputs = [
+            WeightInput(p.id, capacity[p.id], points.get(p.id, 0)) for p in selection.candidates
+        ]
+        weights = self._weighting.weigh(inputs)
+        return selection, build_segments(weights, selection.candidates), weights
 
     def _draw_task(
         self,
@@ -98,14 +128,9 @@ class DrawEngine:
         points: Mapping[PersonId, float],
     ) -> TaskDraw:
         """Filtert, gewichtet und zieht; ohne Kandidaten bleibt die Aufgabe unverteilt."""
-        selection = self._selector.select(task, context)
-        if not selection.candidates:
+        selection, segments, weights = self._wheel(task, context, capacity, points)
+        if not segments:
             return TaskDraw(task.id, None, 0.0, (), selection.exclusions)
-        inputs = [
-            WeightInput(p.id, capacity[p.id], points.get(p.id, 0)) for p in selection.candidates
-        ]
-        weights = self._weighting.weigh(inputs)
-        segments = build_segments(weights, selection.candidates)
         winner = self._pick(segments, weights)
         return self._result(task, selection, segments, winner)
 

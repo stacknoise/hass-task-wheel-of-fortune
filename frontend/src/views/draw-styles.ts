@@ -25,6 +25,9 @@ export const drawStyles: CSSResult[] = [
     .card > * {
       padding: var(--tw-space-s) var(--tw-space-m);
     }
+    .card > ul {
+      padding: 0;
+    }
     label,
     .muted {
       color: var(--tw-color-text-muted);
@@ -51,7 +54,9 @@ export const drawStyles: CSSResult[] = [
     .task {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       gap: var(--tw-space-s);
+      padding: var(--tw-space-m);
       border-top: 1px solid var(--tw-color-divider);
     }
     .task.current {
@@ -63,6 +68,7 @@ export const drawStyles: CSSResult[] = [
     }
     .button {
       min-height: 44px;
+      white-space: nowrap;
       padding: 0 var(--tw-space-l);
       border: 1px solid var(--tw-color-divider);
       border-radius: 22px;
@@ -75,7 +81,7 @@ export const drawStyles: CSSResult[] = [
     .button.primary {
       background: var(--tw-color-primary);
       border-color: var(--tw-color-primary);
-      color: #ffffff;
+      color: var(--tw-color-on-primary);
     }
     .button:disabled {
       opacity: 0.5;
@@ -93,8 +99,7 @@ export const drawStyles: CSSResult[] = [
       justify-content: center;
       padding: var(--tw-space-l);
       border-radius: var(--tw-radius);
-      background: var(--tw-color-stage);
-      color: var(--tw-color-stage-text);
+      background: transparent;
     }
     .heading {
       flex: 1 1 100%;
@@ -102,7 +107,7 @@ export const drawStyles: CSSResult[] = [
     }
     .eyebrow {
       display: block;
-      color: var(--tw-color-stage-muted);
+      color: var(--tw-color-text-muted);
       font-size: 0.8em;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -129,9 +134,9 @@ export const drawStyles: CSSResult[] = [
       height: 104px;
       margin: -52px 0 0 -52px;
       border-radius: 50%;
-      border: 5px solid #ffffff;
+      border: 5px solid var(--tw-color-surface);
       background: var(--tw-color-primary);
-      color: #ffffff;
+      color: var(--tw-color-on-primary);
       font: inherit;
       font-weight: 900;
       letter-spacing: 0.04em;
@@ -162,8 +167,9 @@ export const drawStyles: CSSResult[] = [
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid #ffffff;
+      border: 2px solid var(--tw-color-surface);
       border-radius: 50%;
+      color: #ffffff;
       font-weight: 700;
     }
     .result {
@@ -197,7 +203,7 @@ export const drawStyles: CSSResult[] = [
       justify-content: center;
       gap: var(--tw-space-m);
       padding: var(--tw-space-l);
-      background: var(--tw-color-stage);
+      background: var(--tw-color-background);
     }
     .summary {
       width: 100%;
@@ -209,8 +215,9 @@ export const drawStyles: CSSResult[] = [
       gap: var(--tw-space-s);
       margin-top: var(--tw-space-s);
       padding: var(--tw-space-s) var(--tw-space-m);
+      border: 1px solid var(--tw-color-divider);
       border-radius: var(--tw-radius);
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--tw-color-surface);
     }
     .actions {
       display: flex;
@@ -218,11 +225,16 @@ export const drawStyles: CSSResult[] = [
       justify-content: center;
       gap: var(--tw-space-s);
     }
+    .card .actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .people .hint {
+      display: block;
+      margin-top: var(--tw-space-l);
+    }
     .error {
       color: var(--tw-color-error);
-    }
-    .stage .error {
-      color: #ffb4ab;
     }
   `,
 ];
