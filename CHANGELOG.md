@@ -5,7 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
-## [0.1.0] – geplant
+## [0.1.0] – 2026-11-03
 
 Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.
 
