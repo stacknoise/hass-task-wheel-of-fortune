@@ -134,7 +134,7 @@ async def test_swap_updates_both_persons(hass: HomeAssistant) -> None:
 
 async def test_next_draw_sensor_follows_the_trigger(hass: HomeAssistant) -> None:
     _, data = await _setup(hass)
-    at = data.clock() + DAY
+    at = (data.clock() + DAY).replace(microsecond=0)
     data.schedules.save(f.schedule(trigger=OnceTrigger(at=at), task_ids=("t1",)), data.clock())
     await hass.async_block_till_done()
     assert dt_util.parse_datetime(_state(hass, "sensor", "s1", KEY_SENSOR_NEXT_DRAW)) == at

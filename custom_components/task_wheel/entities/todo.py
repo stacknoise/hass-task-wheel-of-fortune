@@ -61,7 +61,7 @@ class PersonTodo(TaskWheelEntity, TodoListEntity):
             ServiceValidationError: Die Änderung ist kein Abhaken, oder die Zuteilung ist
                 nicht mehr offen.
         """
-        if item.status is not TodoItemStatus.COMPLETED or item.uid is None:
+        if item.status != TodoItemStatus.COMPLETED or item.uid is None:
             raise ServiceValidationError(
                 translation_domain=DOMAIN, translation_key=ERR_TODO_COMPLETE_ONLY
             )
