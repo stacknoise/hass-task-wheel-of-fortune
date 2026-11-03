@@ -11,7 +11,7 @@ Codeänderung**. Es besteht aus zwei Teilen:
 2. **Die generierte Explorer-Seite** `docs/code-doku/index.html` (aus dem Quelltext erzeugt, nicht von Hand
    pflegen): Schichten → Module → Typen → Methoden mit Quelltext, Metriken je Element und Abhängigkeitskarte.
    Erzeugt mit `python3 docs/code-doku/generate.py`, veröffentlicht als Artefakt
-   „Task Wheel Code-Dokumentation“. Generator und Vorlage entstehen in AP-01.
+   „Task Wheel Code-Dokumentation“. Generator: `tools/code_doku/` (Aufruf über `docs/code-doku/generate.py`), Vorlage: `docs/code-doku/template.html`. Die Seite wird nicht eingecheckt (`.gitignore`), CI erzeugt sie bei jedem Lauf; `--check` bricht bei roten Schwellwerten ab.
 
 ---
 
@@ -144,6 +144,7 @@ Module, Art der Änderung, Auswirkung auf Metriken und Abhängigkeiten. CI prüf
 
 | Datum | Version | AP | Module | Änderung | Metriken / Abhängigkeiten |
 |---|---|---|---|---|---|
+| 2026-11-03 | 0.0.1 | AP-01 | `tools/code_doku/` (neu: `constants`, `models`, `metrics`, `segments`, `python_scanner`, `ts_tokens`, `ts_scanner`, `layers`, `dependencies`, `thresholds`, `check`, `project`, `render`, `cli`), `docs/code-doku/generate.py`, `docs/code-doku/template.html` | neu: Code-Doku-Generator. Python über `ast`/`tokenize`, TypeScript über eigenen Token-Scanner; je Modul/Typ/Methode LOC, CC, MI, Ca/Ce/I, „Test nennt Typ“, Signatur, Docstring, Zeilenbereich, Schicht; Explorer-Seite mit Abhängigkeitskarte (Schichtverstöße rot); `--check` liest die Schwellwerte aus §1.1 (CC/LOC je Methode, MI/LOC je Modul, Instabilität Domäne); CI-Job `code-doku`; Tests `tests/test_code_doku_*.py`. Kein Code unter `custom_components/` oder `frontend/src/` geändert | Generator: 14 Module, max. CC je Funktion ≤ 8 (ruff C901), Abdeckung ≈ 95 %; Projekt (21 Module) alle Schwellwerte grün; keine Laufzeitabhängigkeit, nur Standardbibliothek |
 | 2026-11-03 | 0.0.1 | AP-00 | `custom_components/task_wheel/` (`__init__.py`, `config_flow.py` mit Bestätigungsschritt, `brand/` Symbole, `const/`, Schichtpakete `domain/`, `application/`, `infrastructure/`, `websocket/`, `entities/`), `tools/check_docs_changed.py`, `frontend/src/` (`task-wheel-panel.ts`, `constants/`, `i18n/`, Platzhalter `api/`, `state/`, `components/`, `views/`) | neu: Projektgerüst. Einzelinstanz-Config-Flow, `manifest.json`, `hacs.json`, Konstantenpaket (`DOMAIN`, `INTEGRATION_NAME`), leere Schichtpakete; Lit-Panel-Gerüst mit i18n (de/en), Vite-Build mit Inhalts-Hash, Bundle-Budget; CI-Jobs `hassfest`, `HACS validation`, `lint`, `typecheck`, `architecture`, `test-backend`, `test-frontend`, `build-frontend`, `audit`, `docs-check`; Dependabot, Vorlagen, LICENSE (MIT), Docker-Testumgebung `dev/` | Python: 51 Anweisungen, Abdeckung 96 %, max. CC 3; Frontend: 11 Anweisungen, Abdeckung 100 %, Bundle 6,4 kB gzip; import-linter-Verträge: 5 (Schichten, Domäne frei von HA, Anwendung ohne Infrastruktur, Infrastruktur ohne Schnittstellen, Konstanten unabhängig); Duplikate 0 |
 | 2026-11-03 | – | – | – | Annahmen §11 bestätigt; Punkte für verspätet/verpasst einstellbar (Settings, §5.4, AP-07, AP-09) | – |
 | 2026-11-03 | – | – | – | Pattern entschieden: Factory + Strategy + Repository (KONZEPT §3.2, §10, README) | – |

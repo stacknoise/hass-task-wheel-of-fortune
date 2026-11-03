@@ -15,3 +15,4 @@ custom_components/task_wheel/frontend/dist/
 *.zip
 .DS_Store
 .import_linter_cache/
+docs/code-doku/index.html
