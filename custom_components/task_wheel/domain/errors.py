@@ -5,6 +5,7 @@ from types import MappingProxyType
 from typing import Final
 
 from ..const.keys import (
+    ERR_INVALID_TRANSITION,
     ERR_LIMIT_REACHED,
     ERR_NOT_FOUND,
     ERR_STORAGE_CORRUPT,
@@ -83,3 +84,15 @@ class StorageVersionError(TaskWheelError):
     def __init__(self, store: str, version: str) -> None:
         """Merkt sich Speicher und Version als Platzhalter."""
         super().__init__(ERR_STORAGE_VERSION, {"store": store, "version": version})
+
+
+class InvalidTransitionError(TaskWheelError):
+    """Die Aktion ist im aktuellen Status der Zuteilung nicht zulässig."""
+
+    def __init__(self, status: str, action: str) -> None:
+        """Merkt sich Status und Aktion als Platzhalter."""
+        super().__init__(ERR_INVALID_TRANSITION, {"status": status, "action": action})
+
+
+class SwapRejectedError(TaskWheelError):
+    """Der Tausch ist nicht erlaubt; der Schlüssel nennt den Grund."""

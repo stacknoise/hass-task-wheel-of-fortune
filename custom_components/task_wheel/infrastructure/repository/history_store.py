@@ -6,10 +6,10 @@ from types import MappingProxyType
 
 from ...const import defaults, limits
 from ...const.keys import ERR_LIMIT_REACHED, KEY_AGGREGATES, KEY_ROUNDS, STORE_HISTORY
-from ...domain.enums import AssignmentStatus
 from ...domain.errors import LimitReachedError, StorageCorruptError
 from ...domain.models import Assignment, Round
 from ...domain.serialization import as_mapping, model_of, tuple_of
+from ...domain.status import PENDING_STATUSES
 from ...domain.types import AssignmentId, PersonId, RoundId, TaskId
 from .storage import StoreLike, models_by_id, read_root, read_section
 
@@ -134,7 +134,7 @@ class HistoryStore:
         for assignment in round_.assignments:
             self._assignments[assignment.id] = (round_, assignment)
             self._by_task.setdefault(assignment.task_id, {})[assignment.id] = (round_, assignment)
-            if assignment.status is AssignmentStatus.OPEN:
+            if assignment.status in PENDING_STATUSES:
                 self._open.setdefault(assignment.person_id, {})[assignment.id] = assignment
 
     def _unindex(self, round_: Round) -> None:

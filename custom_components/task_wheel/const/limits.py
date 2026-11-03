@@ -62,6 +62,10 @@ MISSED_FACTOR_MAX: Final = 0.0
 GRACE_HOURS_MIN: Final = 0
 GRACE_HOURS_MAX: Final = 168
 
+# Zuteilungen: so lange kann eine Zuteilung höchstens offen sein (Frist plus Kulanzzeit)
+HOURS_PER_DAY: Final = 24
+OPEN_ASSIGNMENT_MAX_AGE_DAYS: Final = DUE_DAYS_MAX + GRACE_HOURS_MAX // HOURS_PER_DAY
+
 # Anwesenheit
 PREVIEW_WEEKS_MIN: Final = 1
 PREVIEW_WEEKS_MAX: Final = 12
