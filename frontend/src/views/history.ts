@@ -20,7 +20,7 @@ import {
 import { formatDateTime, formatPercent } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
-import { AsyncValue, StoreController, indexById } from '../state/index.ts';
+import { AsyncValue, RevisionTracker, StoreController, indexById } from '../state/index.ts';
 import { personChips } from './person-chips.ts';
 import { buildCsv } from './csv.ts';
 import { roundDelete } from './round-delete.ts';
@@ -106,6 +106,7 @@ export class TwHistoryView extends LitElement {
 
   readonly #store = new StoreController(this);
   readonly #data = new AsyncValue<Loaded>(this);
+  readonly #revision = new RevisionTracker();
   #started = false;
 
   constructor() {
@@ -124,7 +125,8 @@ export class TwHistoryView extends LitElement {
   }
 
   protected override willUpdate(): void {
-    if (this.#store.client && !this.#started) {
+    const changed = this.#revision.advance(this.#store.state?.snapshot);
+    if (this.#store.client && (!this.#started || changed)) {
       this.#started = true;
       this.#load(false);
     }
