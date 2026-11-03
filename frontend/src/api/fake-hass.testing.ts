@@ -37,8 +37,21 @@ export class FakeHass implements HassApi {
     },
   };
 
-  callWS<T>(message: { type: string }): Promise<T> {
+  /** Alle Nachrichten mit Feldern, in der Reihenfolge der Aufrufe. */
+  readonly messages: { type: string; [field: string]: unknown }[] = [];
+  /** Fehler, mit dem der nächste Aufruf eines Befehls ungleich `snapshot` scheitert. */
+  rejectNext: unknown;
+
+  callWS<T>(message: { type: string; [field: string]: unknown }): Promise<T> {
     this.calls.push(message.type);
+    this.messages.push(message);
+    if (this.rejectNext !== undefined && !message.type.endsWith('snapshot')) {
+      const error = this.rejectNext;
+      this.rejectNext = undefined;
+      // Home Assistant lehnt mit einfachen Objekten ab (`{ code, message }`), nicht mit `Error`.
+      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+      return Promise.reject(error);
+    }
     return this.failSnapshot
       ? Promise.reject(new Error('offline'))
       : Promise.resolve(this.snapshot as unknown as T);

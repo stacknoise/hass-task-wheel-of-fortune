@@ -1,0 +1,206 @@
+import { css, html, nothing } from 'lit';
+import type { TemplateResult } from 'lit';
+import { repeat } from 'lit/directives/repeat.js';
+
+import { ABSENCE_KINDS, FORM_LIMITS, FORM_TAGS } from '../constants/index.ts';
+import type { AbsenceKind } from '../constants/index.ts';
+import { ABSENCE_BUILDERS, presencePreview } from '../state/index.ts';
+import type { AbsenceWire } from '../state/index.ts';
+import { emitChange, onChange } from './change.ts';
+import './chip-select.ts';
+import './field.ts';
+import { formStyles } from './formStyles.ts';
+import { LocalizedElement } from './localized.ts';
+import { toIds, toNumbers, weekOptions, weekdayOptions } from './options.ts';
+import './segmented.ts';
+import './stepper.ts';
+import { baseStyles, tokenStyles } from './styles.ts';
+import './week-preview.ts';
+
+type Renderer = (absence: never, index: number) => TemplateResult;
+
+/** Liste der Abwesenheitsregeln einer Person mit Vorschau der nächsten Wochen. */
+export class TwAbsenceEditor extends LocalizedElement {
+  static override properties = {
+    ...LocalizedElement.properties,
+    value: { attribute: false },
+    today: { type: String },
+  };
+
+  static override styles = [
+    tokenStyles,
+    baseStyles,
+    formStyles,
+    css`
+      .rule {
+        display: grid;
+        gap: var(--tw-space-s);
+        padding: var(--tw-space-s) 0;
+        border-bottom: 1px solid var(--tw-color-divider);
+      }
+      .head {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: var(--tw-space-s);
+      }
+      button.plain {
+        min-height: 36px;
+        padding: 0 12px;
+        border-radius: 18px;
+        border: 1px solid var(--tw-color-divider);
+        background: var(--tw-color-surface);
+        cursor: pointer;
+      }
+      .actions {
+        margin: var(--tw-space-s) 0;
+      }
+    `,
+  ];
+
+  declare value: readonly AbsenceWire[];
+  declare today: string;
+
+  /** Eingabemaske je Art; die Tabelle ersetzt eine Verzweigung nach `kind`. */
+  readonly #renderers: Readonly<Record<AbsenceKind, Renderer>> = {
+    once: (absence: Extract<AbsenceWire, { kind: 'once' }>, index) => html`
+      <tw-field
+        type="date"
+        .label=${this.text('absence.start')}
+        .value=${absence.start}
+        @tw-change=${onChange<string>((start) => {
+          this.replaceAt(this.value, index, { start });
+        })}
+      ></tw-field>
+      <tw-field
+        type="date"
+        .label=${this.text('absence.end')}
+        .value=${absence.end}
+        @tw-change=${onChange<string>((end) => {
+          this.replaceAt(this.value, index, { end });
+        })}
+      ></tw-field>
+    `,
+    weekly_days: (absence: Extract<AbsenceWire, { kind: 'weekly_days' }>, index) => html`
+      <tw-chip-select
+        .label=${this.text('absence.weekdays')}
+        .options=${weekdayOptions(this.language)}
+        .selected=${toIds(absence.weekdays)}
+        @tw-change=${onChange<string[]>((ids) => {
+          this.replaceAt(this.value, index, { weekdays: toNumbers(ids) });
+        })}
+      ></tw-chip-select>
+    `,
+    week_rhythm: (absence: Extract<AbsenceWire, { kind: 'week_rhythm' }>, index) => html`
+      <tw-stepper
+        .label=${this.text('absence.cycle')}
+        .value=${absence.cycle_weeks}
+        .min=${FORM_LIMITS.rhythmCycle.min}
+        .max=${FORM_LIMITS.rhythmCycle.max}
+        @tw-change=${onChange<number>((cycle) => {
+          this.replaceAt(this.value, index, {
+            cycle_weeks: cycle,
+            present_weeks: absence.present_weeks.filter((week) => week < cycle),
+          });
+        })}
+      ></tw-stepper>
+      <tw-chip-select
+        .label=${this.text('absence.present_weeks')}
+        .options=${weekOptions(absence.cycle_weeks, this.language)}
+        .selected=${toIds(absence.present_weeks)}
+        @tw-change=${onChange<string[]>((ids) => {
+          this.replaceAt(this.value, index, { present_weeks: toNumbers(ids) });
+        })}
+      ></tw-chip-select>
+      <tw-segmented
+        .label=${this.text('absence.change_weekday')}
+        .options=${weekdayOptions(this.language)}
+        .value=${String(absence.change_weekday)}
+        @tw-change=${onChange<string>((day) => {
+          this.replaceAt(this.value, index, { change_weekday: Number(day) });
+        })}
+      ></tw-segmented>
+      <tw-field
+        type="date"
+        .label=${this.text('absence.anchor')}
+        .value=${absence.anchor}
+        @tw-change=${onChange<string>((anchor) => {
+          this.replaceAt(this.value, index, { anchor });
+        })}
+      ></tw-field>
+    `,
+  };
+
+  constructor() {
+    super();
+    this.value = [];
+    this.today = '';
+  }
+
+  protected override render(): TemplateResult {
+    return html`
+      ${this.value.length === 0 ? html`<p>${this.text('persons.no_absences')}</p>` : nothing}
+      ${repeat(
+        this.value,
+        (_, index) => index,
+        (absence, index) => this.#rule(absence, index),
+      )}
+      <div class="actions">
+        <button
+          type="button"
+          class="plain"
+          @click=${() => {
+            this.#set([...this.value, ABSENCE_BUILDERS.once(this.today)]);
+          }}
+        >
+          ${this.text('absence.add')}
+        </button>
+      </div>
+      <tw-week-preview
+        .language=${this.language}
+        .present=${presencePreview(this.value, this.today)}
+      ></tw-week-preview>
+    `;
+  }
+
+  #rule(absence: AbsenceWire, index: number): TemplateResult {
+    return html`
+      <div class="rule">
+        <div class="head">
+          <tw-segmented
+            .label=${this.text('persons.absences')}
+            .options=${this.#kindOptions()}
+            .value=${absence.kind}
+            @tw-change=${onChange<AbsenceKind>((kind) => {
+              this.#set(
+                this.value.map((entry, at) =>
+                  at === index ? ABSENCE_BUILDERS[kind](this.today) : entry,
+                ),
+              );
+            })}
+          ></tw-segmented>
+          <button
+            type="button"
+            class="plain"
+            @click=${() => {
+              this.#set(this.value.filter((_entry, at) => at !== index));
+            }}
+          >
+            ${this.text('form.remove')}
+          </button>
+        </div>
+        ${this.#renderers[absence.kind](absence as never, index)}
+      </div>
+    `;
+  }
+
+  #kindOptions(): readonly { id: string; label: string }[] {
+    return ABSENCE_KINDS.map((kind) => ({ id: kind, label: this.text(`absence.${kind}`) }));
+  }
+
+  #set(next: readonly AbsenceWire[]): void {
+    emitChange(this, next);
+  }
+}
+
+customElements.define(FORM_TAGS.absenceEditor, TwAbsenceEditor);

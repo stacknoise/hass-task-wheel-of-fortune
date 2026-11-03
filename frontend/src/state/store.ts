@@ -34,6 +34,11 @@ export class Store {
     return this.#state;
   }
 
+  /** Der Client, über den Ansichten Änderungen an das Backend senden. */
+  get client(): ApiClient {
+    return this.#client;
+  }
+
   /** Meldet einen Zuhörer an, der nach jeder Änderung des Standes aufgerufen wird. */
   listen(listener: Listener): Unsubscribe {
     this.#listeners.add(listener);

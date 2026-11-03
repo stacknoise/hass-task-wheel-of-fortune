@@ -13,5 +13,12 @@ export const COLLECTIONS = [
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];
 
+/** Konfigurierbare Arten; der Name ist Teil des Befehls (`task_wheel/person/create`) und des Nachrichtenfelds. */
+export const CONFIG_RESOURCES = ['person', 'task', 'schedule'] as const;
+export type ConfigResource = (typeof CONFIG_RESOURCES)[number];
+export const WS_ACTION_CREATE = 'create';
+export const WS_ACTION_UPDATE = 'update';
+export const WS_ACTION_DELETE = 'delete';
+
 export const KEY_ID = 'id';
 export const EVENT_CONNECTION_READY = 'ready';
