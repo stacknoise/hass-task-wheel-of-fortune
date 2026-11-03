@@ -205,6 +205,7 @@ Module, Art der Änderung, Auswirkung auf Metriken und Abhängigkeiten. CI prüf
 | 2026-11-03 | – | – | – | Annahmen §11 bestätigt; Punkte für verspätet/verpasst einstellbar (Settings, §5.4, AP-07, AP-09) | – |
 | 2026-11-03 | – | – | – | Pattern entschieden: Factory + Strategy + Repository (KONZEPT §3.2, §10, README) | – |
 | 2026-11-03 | – | – | – | Konzept, Arbeitspakete, Code-Doku-Struktur und README angelegt; noch kein Code | – |
+| 2026-11-03 | 0.0.1 | AP-15 (Entitätensuche) | `frontend/src/` (geändert: `api/client`, `api/types`, `api/index`, `api/fake-hass.testing`, `constants/forms`, `components/field`, `views/persons`, `i18n/de`, `i18n/en`, `config-views.test`) | neu: `ApiClient.notifyTargets()` liefert die `notify`-Entitäten (mit Anzeigename) und `notify`-Dienste aus `hass.states` und `hass.services`, sortiert und ohne Doppelte (`send_message` ist kein Ziel). `tw-field` bekommt die Eigenschaft `suggestions` (native `datalist`): Tippen sucht nach Kennung und Anzeigename, freie Eingabe bleibt möglich. Im Personen-Dialog nutzt das Feld Benachrichtigungs-Entität diese Vorschläge | Frontend: keine neuen Module, Duplikate 0; keine neuen Abhängigkeiten |
 
 Vorlage für neue Einträge:
 
