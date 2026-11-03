@@ -148,7 +148,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/ha/custom_components"
           ln -s "$GITHUB_WORKSPACE/custom_components/task_wheel" "$RUNNER_TEMP/ha/custom_components/task_wheel"
-          printf 'default_config:\n' > "$RUNNER_TEMP/ha/configuration.yaml"
+          printf 'frontend:\nconfig:\nonboarding:\nhttp:\n' > "$RUNNER_TEMP/ha/configuration.yaml"
           nohup hass -c "$RUNNER_TEMP/ha" > "$RUNNER_TEMP/ha.log" 2>&1 &
           for _ in $(seq 1 90); do
             curl -sf http://localhost:8123/api/onboarding > /dev/null && exit 0
