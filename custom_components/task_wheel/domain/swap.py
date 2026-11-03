@@ -49,7 +49,7 @@ _CHECKS: Final[tuple[tuple[Callable[[SwapContext], bool], str], ...]] = (
     (lambda c: c.receiver.id != c.assignment.person_id, ERR_SWAP_SAME_PERSON),
     (lambda c: c.receiver.id in c.round_persons, ERR_SWAP_NOT_IN_ROUND),
     (lambda c: c.jokers_left > 0, ERR_NO_JOKERS),
-    (lambda c: c.receiver.id in c.task.allowed, ERR_SWAP_NOT_ALLOWED),
+    (lambda c: c.task.allows(c.receiver.id), ERR_SWAP_NOT_ALLOWED),
     (lambda c: c.receiver.load is not Load.PAUSED, ERR_SWAP_PAUSED),
     (_present_until_due, ERR_SWAP_ABSENT),
 )

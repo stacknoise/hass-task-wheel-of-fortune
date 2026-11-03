@@ -14,7 +14,7 @@ import {
   VIEW_TAGS,
 } from '../constants/index.ts';
 import type { Load } from '../constants/index.ts';
-import { dayOf } from '../state/index.ts';
+import { allowsPerson, dayOf } from '../state/index.ts';
 import type { AbsenceWire } from '../state/index.ts';
 import { ConfigView } from './config-view.ts';
 import type { ConfigTexts } from './config-view.ts';
@@ -101,7 +101,9 @@ export class PersonsView extends ConfigView<PersonWire, PersonDraft> {
   }
 
   protected card(person: PersonWire, snapshot: Snapshot): TemplateResult {
-    const tasks = tasksOf(snapshot).filter((task) => task.allowed.includes(person.id)).length;
+    const tasks = tasksOf(snapshot).filter((task) =>
+      allowsPerson(new Set(task.allowed), person.id),
+    ).length;
     return html`
       <span class="avatar" style="background:${person.color}">${person.name.slice(0, 1)}</span>
       <span class="name">${person.name}</span>

@@ -71,7 +71,7 @@ export const de = {
   'tasks.add': 'Aufgabe hinzufügen',
   'tasks.new': 'Neue Aufgabe',
   'tasks.edit': 'Aufgabe bearbeiten',
-  'tasks.allowed': 'Erlaubte Personen',
+  'tasks.allowed': 'Erlaubte Personen (leer = alle)',
   'tasks.points': 'Punkte (Aufwand)',
   'tasks.due_days': 'Frist in Tagen',
   'tasks.rules': 'Zusatzregeln',
