@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Task Wheel Code-Dokumentation</title>
+<style>
+/* Layout: Kopfzeile mit Schicht-Kennzahlen, darunter zwei Ansichten (Explorer mit Baum + Detail, Abhängigkeitskarte). */
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --fg: #1d2330; --muted: #5b6577; --line: #d9dde5;
+  --accent: #1f6f8b; --accent-soft: #e0eff4; --code-bg: #eef1f5;
+  --green: #1f7a4d; --yellow: #9a6a00; --red: #b3261e;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161d; --surface: #1a2029; --fg: #e4e8ef; --muted: #98a2b3; --line: #2c3442;
+    --accent: #6cc1dc; --accent-soft: #1d3440; --code-bg: #10141a;
+    --green: #5fd09a; --yellow: #e5b84a; --red: #ff8a80; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161d; --surface: #1a2029; --fg: #e4e8ef; --muted: #98a2b3; --line: #2c3442;
+  --accent: #6cc1dc; --accent-soft: #1d3440; --code-bg: #10141a;
+  --green: #5fd09a; --yellow: #e5b84a; --red: #ff8a80; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+  margin: 0; padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 1.4rem; margin: 0; text-wrap: balance; }
+h2 { font-size: 1rem; margin: 0 0 8px; }
+.sub { color: var(--muted); margin: 2px 0 12px; }
+.layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.layer { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+.layer b { display: block; }
+.layer span { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+nav { display: flex; gap: 4px; margin-bottom: 12px; }
+button { font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.split { display: grid; grid-template-columns: minmax(240px, 340px) minmax(0, 1fr); gap: 12px; align-items: start; }
+@media (max-width: 760px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; min-width: 0; }
+.tree { max-height: 75vh; overflow: auto; }
+.row { display: flex; justify-content: space-between; gap: 8px; padding: 3px 6px; border-radius: 4px; cursor: pointer; min-width: 0; }
+.row:hover { background: var(--accent-soft); }
+.row[aria-current="true"] { background: var(--accent-soft); font-weight: 600; }
+.row .name { overflow-wrap: anywhere; }
+.row .meta { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.l1 { font-weight: 600; margin-top: 8px; }
+.l2 { padding-left: 12px; } .l3 { padding-left: 24px; } .l4 { padding-left: 36px; font-family: var(--font-mono); font-size: 13px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.chip.green { color: var(--green); border-color: var(--green); }
+.chip.yellow { color: var(--yellow); border-color: var(--yellow); }
+.chip.red { color: var(--red); border-color: var(--red); }
+pre { background: var(--code-bg); border-radius: 6px; padding: 10px; overflow-x: auto; font: 12.5px/1.45 var(--font-mono); margin: 8px 0; }
+.sig { font-family: var(--font-mono); overflow-wrap: anywhere; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+svg text { fill: var(--fg); font: 11px var(--font-mono); }
+.edge { fill: none; stroke: var(--muted); stroke-opacity: .45; stroke-width: 1.2; }
+.edge.bad { stroke: var(--red); stroke-opacity: .9; stroke-width: 2; }
+.edge.dim { stroke-opacity: .08; }
+.node { fill: var(--surface); stroke: var(--accent); stroke-width: 1.5; cursor: pointer; }
+.band { fill: var(--accent-soft); fill-opacity: .35; }
+.legend { color: var(--muted); font-size: 12px; margin: 6px 0; }
+</style>
+</head>
+<body>
+<h1>Task Wheel Code-Dokumentation</h1>
+<p class="sub" id="sub"></p>
+<div class="layers" id="layers"></div>
+<nav role="tablist">
+  <button role="tab" id="tab-explorer" aria-selected="true" data-view="explorer">Explorer</button>
+  <button role="tab" id="tab-deps" aria-selected="false" data-view="deps">Abhängigkeiten</button>
+</nav>
+<section id="explorer" class="split">
+  <div class="panel tree" id="tree"></div>
+  <div class="panel" id="detail"></div>
+</section>
+<section id="deps" hidden>
+  <div class="panel">
+    <h2>Modulkarte</h2>
+    <p class="legend">Pfeile zeigen vom nutzenden zum genutzten Modul. Rote Pfeile verletzen die erlaubte Schichtrichtung (CODE_DOKU.md §2). Klick auf ein Modul hebt seine Verbindungen hervor.</p>
+    <div class="scroll" id="map"></div>
+  </div>
+  <div class="panel" style="margin-top:12px">
+    <h2>Kopplung je Modul</h2>
+    <div class="scroll" id="coupling"></div>
+  </div>
+</section>
+<script type="application/json" id="data">__CODE_DOKU_DATA__</script>
+<script>
+(function () {
+  "use strict";
+  var DATA = JSON.parse(document.getElementById("data").textContent);
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  var NODE_W = 150, NODE_H = 26, GAP_X = 14, ROW_H = 80, PAD = 10;
+
+  function el(tag, cls, text, parent) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+  function svg(tag, attrs, parent) {
+    var node = document.createElementNS(SVG_NS, tag);
+    Object.keys(attrs).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+  function status(scope, value) {
+    var t = DATA.thresholds.find(function (x) { return x.scope === scope; });
+    if (!t) return "";
+    var green = t.direction === "max" ? value <= t.green : value >= t.green;
+    var red = t.direction === "max" ? value > t.red : value < t.red;
+    return green ? "green" : red ? "red" : "yellow";
+  }
+  function chip(parent, label, value, scope) {
+    el("span", "chip " + (scope ? status(scope, value) : ""), label + " " + value, parent);
+  }
+  function short(path) { return path.replace("custom_components/task_wheel/", "").replace("frontend/src/", "fe/"); }
+
+  document.getElementById("sub").textContent = "Version " + DATA.version + " · " + DATA.modules.length + " Module";
+
+  var layerBox = document.getElementById("layers");
+  DATA.layers.forEach(function (l) {
+    var box = el("div", "layer", undefined, layerBox);
+    el("b", "", l.label, box);
+    el("span", "", l.modules + " Module · " + l.loc + " LOC · CC " + l.cc + " · MI Ø " + l.mi, box);
+  });
+
+  /* ---- Explorer ---- */
+  var detail = document.getElementById("detail");
+  var current = null;
+
+  function metricChips(parent, m, extra) {
+    var box = el("div", "chips", undefined, parent);
+    chip(box, "LOC", m.metrics.loc);
+    chip(box, "CC", m.metrics.cc);
+    chip(box, "MI", m.metrics.mi);
+    (extra || []).forEach(function (e) { chip(box, e[0], e[1]); });
+  }
+  function showModule(m) {
+    detail.replaceChildren();
+    el("h2", "", m.path, detail);
+    if (m.doc) el("p", "", m.doc, detail);
+    var box = el("div", "chips", undefined, detail);
+    chip(box, "Schicht", m.layer);
+    chip(box, "LOC", m.metrics.loc, "module.loc");
+    chip(box, "CC", m.metrics.cc);
+    chip(box, "MI", m.metrics.mi, "module.mi");
+    chip(box, "Ca", m.ca); chip(box, "Ce", m.ce);
+    chip(box, "I", m.instability, m.layer === "Domain" ? "domain.instability" : "");
+    chip(box, "Test", m.tested ? "ja" : "nein");
+    if (m.deps.length) el("p", "sig", "nutzt: " + m.deps.map(short).join(", "), detail);
+  }
+  function showMethod(mod, m) {
+    detail.replaceChildren();
+    el("h2", "", mod.path + ":" + m.line_start + "–" + m.line_end, detail);
+    el("p", "sig", m.signature, detail);
+    if (m.doc) el("p", "", m.doc, detail);
+    var box = el("div", "chips", undefined, detail);
+    chip(box, "LOC", m.metrics.loc, "method.loc");
+    chip(box, "CC", m.metrics.cc, "method.cc");
+    chip(box, "MI", m.metrics.mi);
+    el("pre", "", m.source, detail);
+  }
+  function showType(mod, t) {
+    detail.replaceChildren();
+    el("h2", "", t.kind + " " + t.name + " (" + mod.path + ":" + t.line_start + "–" + t.line_end + ")", detail);
+    if (t.doc) el("p", "", t.doc, detail);
+    metricChips(detail, t, [["Ca", t.ca], ["Ce", t.ce], ["I", t.instability], ["Test", t.tested ? "ja" : "nein"]]);
+    if (t.uses.length) el("p", "sig", "nutzt Typen: " + t.uses.join(", "), detail);
+  }
+  function row(parent, level, name, meta, action) {
+    var r = el("div", "row " + level, undefined, parent);
+    r.tabIndex = 0;
+    el("span", "name", name, r);
+    el("span", "meta", meta, r);
+    function go() {
+      if (current) current.removeAttribute("aria-current");
+      r.setAttribute("aria-current", "true");
+      current = r;
+      action();
+    }
+    r.addEventListener("click", go);
+    r.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  }
+  var tree = document.getElementById("tree");
+  DATA.layers.forEach(function (layer) {
+    el("div", "l1", layer.label, tree);
+    DATA.modules.filter(function (m) { return m.layer === layer.id; }).forEach(function (mod) {
+      row(tree, "l2", short(mod.path), mod.metrics.loc + " LOC", function () { showModule(mod); });
+      mod.types.forEach(function (t) {
+        row(tree, "l3", t.name, "CC " + t.metrics.cc, function () { showType(mod, t); });
+        t.methods.forEach(function (m) {
+          row(tree, "l4", m.name, "CC " + m.metrics.cc, function () { showMethod(mod, m); });
+        });
+      });
+      mod.functions.forEach(function (f) {
+        row(tree, "l3", f.name + "()", "CC " + f.metrics.cc, function () { showMethod(mod, f); });
+      });
+    });
+  });
+  if (DATA.modules.length) showModule(DATA.modules[0]);
+
+  /* ---- Abhängigkeiten ---- */
+  function drawMap() {
+    var host = document.getElementById("map");
+    var maxCols = 1, rows = DATA.layers.map(function (l) {
+      var mods = DATA.modules.filter(function (m) { return m.layer === l.id; });
+      maxCols = Math.max(maxCols, mods.length);
+      return { layer: l, mods: mods };
+    });
+    var width = PAD * 2 + maxCols * (NODE_W + GAP_X), height = PAD * 2 + rows.length * ROW_H;
+    var root = svg("svg", { width: width, height: height, viewBox: "0 0 " + width + " " + height, role: "img", "aria-label": "Modulkarte" }, host);
+    var pos = {};
+    rows.forEach(function (r, i) {
+      var y = PAD + i * ROW_H;
+      svg("rect", { x: 0, y: y - 4, width: width, height: ROW_H - 8, class: "band" }, root);
+      svg("text", { x: PAD, y: y + 8 }, root).textContent = r.layer.label;
+      r.mods.forEach(function (m, j) {
+        pos[m.path] = { x: PAD + j * (NODE_W + GAP_X), y: y + 20 };
+      });
+    });
+    var edges = DATA.edges.map(function (e) {
+      var a = pos[e.source], b = pos[e.target];
+      var x1 = a.x + NODE_W / 2, y1 = a.y + NODE_H / 2, x2 = b.x + NODE_W / 2, y2 = b.y + NODE_H / 2;
+      var bend = (y2 - y1) / 2;
+      var path = svg("path", { d: "M" + x1 + "," + y1 + " C" + x1 + "," + (y1 + bend) + " " + x2 + "," + (y2 - bend) + " " + x2 + "," + y2,
+        class: "edge" + (e.allowed ? "" : " bad") }, root);
+      return { e: e, path: path };
+    });
+    Object.keys(pos).forEach(function (p) {
+      var g = svg("g", {}, root), q = pos[p];
+      svg("rect", { x: q.x, y: q.y, width: NODE_W, height: NODE_H, rx: 4, class: "node" }, g);
+      var label = short(p);
+      svg("text", { x: q.x + 6, y: q.y + 17 }, g).textContent = label.length > 22 ? "…" + label.slice(-21) : label;
+      svg("title", {}, g).textContent = p;
+      g.addEventListener("click", function () {
+        edges.forEach(function (x) {
+          x.path.classList.toggle("dim", x.e.source !== p && x.e.target !== p);
+        });
+      });
+    });
+  }
+  function drawTable() {
+    var host = document.getElementById("coupling");
+    var table = el("table", "", undefined, host);
+    var head = el("tr", "", undefined, el("thead", "", undefined, table));
+    ["Modul", "Schicht", "Ca", "Ce", "I", "Test"].forEach(function (h) { el("th", "", h, head); });
+    var body = el("tbody", "", undefined, table);
+    DATA.modules.slice().sort(function (a, b) { return b.instability - a.instability; }).forEach(function (m) {
+      var tr = el("tr", "", undefined, body);
+      [m.path, m.layer, m.ca, m.ce, m.instability, m.tested ? "ja" : "nein"].forEach(function (v) { el("td", "", String(v), tr); });
+    });
+  }
+  drawMap();
+  drawTable();
+
+  /* ---- Tabs ---- */
+  document.querySelectorAll("nav button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("nav button").forEach(function (o) {
+        var active = o === b;
+        o.setAttribute("aria-selected", String(active));
+        document.getElementById(o.dataset.view).hidden = !active;
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

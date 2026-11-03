@@ -88,15 +88,15 @@ ruff check . && ruff format --check . && mypy && lint-imports && pytest
 # Frontend (Node 22)
 cd frontend && npm ci && npm run lint && npm run typecheck && npm test && npm run build && npm run bundle-budget
 
-# Code-Doku erzeugen (ab AP-01)
-python3 docs/code-doku/generate.py
+# Code-Doku erzeugen (docs/code-doku/index.html) und Schwellwerte prüfen
+python3 docs/code-doku/generate.py --check
 ```
 
 ### Continuous Integration
 
 Pull Requests und `main` durchlaufen die Jobs `hassfest`, `HACS validation`, `lint`, `typecheck`, `architecture`
 (Importrichtung, Duplikate), `test-backend`, `test-frontend`, `build-frontend` (inkl. Bundle-Budget), `audit` und
-`docs-check` (Code geändert ⇒ `docs/CODE_DOKU.md` geändert). Dependabot hält pip, npm und GitHub Actions aktuell.
+`docs-check` (Code geändert ⇒ `docs/CODE_DOKU.md` geändert) und `code-doku` (Generator läuft, Schwellwerte aus `docs/CODE_DOKU.md` §1.1 eingehalten). Dependabot hält pip, npm und GitHub Actions aktuell.
 
 Sicherheitslücken bitte vertraulich melden, siehe [SECURITY.md](SECURITY.md).
 
