@@ -28,10 +28,17 @@ export class TwTabBar extends LitElement {
         display: flex;
         gap: var(--tw-space-s);
         overflow-x: auto;
+        scrollbar-width: none;
         border-bottom: 1px solid var(--tw-color-divider);
       }
+      nav::-webkit-scrollbar {
+        display: none;
+      }
       a {
-        padding: var(--tw-space-s) var(--tw-space-m);
+        display: flex;
+        align-items: center;
+        min-height: var(--tw-control-height);
+        padding: 0 var(--tw-space-m);
         color: var(--tw-color-text-muted);
         text-decoration: none;
         white-space: nowrap;
@@ -54,6 +61,14 @@ export class TwTabBar extends LitElement {
     this.tabs = [];
     this.active = '';
     this.label = '';
+  }
+
+  /** Auf schmalen Geräten scrollt die Leiste; der gewählte Tab soll dabei sichtbar bleiben. */
+  protected override updated(): void {
+    const active = this.renderRoot.querySelector<HTMLElement>('a[aria-current="page"]');
+    // jsdom (Tests) kennt scrollIntoView nicht.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    active?.scrollIntoView?.({ block: 'nearest', inline: 'center' });
   }
 
   protected override render(): TemplateResult {

@@ -45,6 +45,16 @@ describe('task-wheel-panel', () => {
     expect(element.shadowRoot?.querySelector('main')?.textContent).toContain('geladen');
   });
 
+  it('zeigt den Menü-Knopf von Home Assistant nur im schmalen Modus', async () => {
+    const element = await mount();
+    const button = (): Element | null | undefined =>
+      element.shadowRoot?.querySelector('ha-menu-button');
+    expect(button()).toBeNull();
+    element.narrow = true;
+    await element.updateComplete;
+    expect(button()).not.toBeNull();
+  });
+
   it('zeigt alle Tabs aus den Mockups in der Sprache von hass', async () => {
     const element = await mount(new FakeHass());
     expect(tabLabels(element)).toEqual([

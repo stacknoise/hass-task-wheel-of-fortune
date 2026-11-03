@@ -1,3 +1,6 @@
+/** Mindesthöhe bedienbarer Elemente auf Touch-Geräten (Richtwert 44 px). */
+export const TOUCH_CONTROL_HEIGHT = '44px';
+
 /** Design-Tokens: eigene Eigenschaften, jeweils auf eine Variable von Home Assistant gemappt. */
 
 export const TOKENS = {
@@ -20,6 +23,8 @@ export const TOKENS = {
   '--tw-space-field': '16px',
   '--tw-space-m': '16px',
   '--tw-space-l': '24px',
+  /** Mindesthöhe bedienbarer Elemente; auf Touch-Geräten vergrößert (`tokenStyles`). */
+  '--tw-control-height': '36px',
   '--tw-radius': 'var(--ha-card-border-radius, 12px)',
   '--tw-duration': '200ms',
 } as const;

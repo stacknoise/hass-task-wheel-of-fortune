@@ -1,7 +1,12 @@
 import { css, unsafeCSS } from 'lit';
 import type { CSSResult } from 'lit';
 
-import { TOKENS } from '../constants/index.ts';
+import {
+  PHONE_MAX_WIDTH,
+  STACKED_MAX_WIDTH,
+  TOKENS,
+  TOUCH_CONTROL_HEIGHT,
+} from '../constants/index.ts';
 
 const DECLARATION_END = ';\n';
 
@@ -9,8 +14,13 @@ const DECLARATION_END = ';\n';
 export const tokenStyles: CSSResult = unsafeCSS(
   `:host {\n${Object.entries(TOKENS)
     .map(([name, value]) => `${name}: ${value}`)
-    .join(DECLARATION_END)}${DECLARATION_END}}`,
+    .join(DECLARATION_END)}${DECLARATION_END}}\n` +
+    `@media (pointer: coarse) {\n:host {\n--tw-control-height: ${TOUCH_CONTROL_HEIGHT};\n}\n}`,
 );
+
+/** Bedingungen für `@container`: schmales Panel (Smartphone) und mittleres Panel (Tablet hochkant). */
+export const phoneQuery: CSSResult = unsafeCSS(`(max-width: ${PHONE_MAX_WIDTH})`);
+export const stackedQuery: CSSResult = unsafeCSS(`(max-width: ${STACKED_MAX_WIDTH})`);
 
 /** Gemeinsame Grundgestaltung der Komponenten. */
 export const baseStyles: CSSResult = css`
@@ -63,7 +73,7 @@ export const viewStyles: CSSResult = css`
     min-width: 0;
   }
   button.action {
-    min-height: 36px;
+    min-height: var(--tw-control-height);
     padding: 0 16px;
     border: 1px solid var(--tw-color-divider);
     border-radius: 18px;

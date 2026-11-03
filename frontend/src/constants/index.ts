@@ -5,6 +5,7 @@ export * from './api.ts';
 export * from './forms.ts';
 export * from './drum.ts';
 export * from './insights.ts';
+export * from './layout.ts';
 export * from './motion.ts';
 export * from './panel.ts';
 export * from './plinko.ts';
