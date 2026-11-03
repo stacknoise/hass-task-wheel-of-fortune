@@ -11,9 +11,34 @@ const READY_MS = 30_000;
 // Budget für das Laden des Panels bis zur ersten Ansicht (Messwert: docs/CODE_DOKU.md §3.2)
 const PANEL_LOAD_BUDGET_MS = 5000;
 
-// Bei einem Fehler steht der Zustand der Seite im Protokoll (der Artefakt-Download ist nicht immer erreichbar)
+// Bei einem Fehler stehen Ereignisse und Zustand der Seite im Protokoll (der Artefakt-Download ist nicht immer erreichbar)
+const events: string[] = [];
+test.beforeEach(({ page }) => {
+  events.length = 0;
+  const note = (text: string): void => {
+    events.push(`${new Date().toISOString()} ${text}`);
+  };
+  page.on('framenavigated', (frame) => {
+    note(`navigiert: ${frame.url()}`);
+  });
+  page.on('console', (message) => {
+    if (message.type() !== 'log') {
+      note(`${message.type()}: ${message.text().slice(0, 300)}`);
+    }
+  });
+  page.on('pageerror', (error) => {
+    note(`Seitenfehler: ${error.message.slice(0, 300)}`);
+  });
+  page.on('websocket', (socket) => {
+    note(`WebSocket geöffnet: ${socket.url()}`);
+    socket.on('close', () => {
+      note(`WebSocket geschlossen: ${socket.url()}`);
+    });
+  });
+});
 test.afterEach(async ({ page }, info) => {
   if (info.status !== info.expectedStatus) {
+    console.log(events.join('\n'));
     console.log(await page.locator('html').ariaSnapshot());
   }
 });
