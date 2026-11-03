@@ -108,6 +108,22 @@ describe('Formularbausteine', () => {
     expect(seen).toEqual(['y']);
   });
 
+  it('Dropdown zeigt die Wahl an und meldet Änderungen', async () => {
+    const select = await mount(FORM_TAGS.select, {
+      options: [
+        { id: 'x', label: 'X' },
+        { id: 'y', label: 'Y' },
+      ],
+      value: 'y',
+    });
+    const seen = changes(select);
+    const box = part(select, 'select') as unknown as HTMLSelectElement;
+    expect(box.value).toBe('y');
+    box.value = 'x';
+    box.dispatchEvent(new Event('change'));
+    expect(seen).toEqual(['x']);
+  });
+
   it('Wochenvorschau und Zeitstrahl zeigen ihre Werte', async () => {
     const preview = await mount(FORM_TAGS.weekPreview, { language: 'de', present: [true, false] });
     expect(preview.shadowRoot?.querySelectorAll('.day.absent')).toHaveLength(1);
@@ -135,16 +151,16 @@ describe('Editoren', () => {
     say(start as El, '2026-11-02');
     expect((seen.at(-1) as { start: string }[])[0]?.start).toBe('2026-11-02');
 
-    say(part(editor, 'tw-segmented'), 'weekly_days');
+    say(part(editor, 'tw-select'), 'weekly_days');
     expect(seen.at(-1)).toEqual([{ kind: 'weekly_days', weekdays: [5, 6] }]);
-    say(part(editor, 'tw-segmented'), 'week_rhythm');
+    say(part(editor, 'tw-select'), 'week_rhythm');
     editor.value = seen.at(-1);
     await editor.updateComplete;
 
     say(part(editor, 'tw-stepper'), 1);
     expect(seen.at(-1)).toMatchObject([{ cycle_weeks: 1, present_weeks: [0] }]);
     say(part(editor, 'tw-chip-select'), ['0']);
-    say(part(editor, '.rule > tw-segmented'), '2');
+    say(part(editor, '.rule > tw-select'), '2');
     (editor.shadowRoot?.querySelector('.head button') as HTMLButtonElement).click();
     expect(seen.at(-1)).toEqual([]);
   });
@@ -166,13 +182,13 @@ describe('Editoren', () => {
       value: { kind: 'every_round' } satisfies FrequencyWire,
     });
     const seen = changes(editor);
-    say(part(editor, 'tw-segmented'), 'max_per_period');
+    say(part(editor, 'tw-select'), 'max_per_period');
     expect(seen.at(-1)).toEqual({ kind: 'max_per_period', count: 1, period: 'week' });
 
     editor.value = seen.at(-1);
     await editor.updateComplete;
     say(part(editor, 'tw-stepper'), 3);
-    say(part(editor, 'tw-segmented:nth-of-type(2)'), 'month');
+    say(part(editor, 'tw-segmented'), 'month');
     expect(seen.slice(-2)).toEqual([
       { kind: 'max_per_period', count: 3, period: 'week' },
       { kind: 'max_per_period', count: 1, period: 'month' },
@@ -224,16 +240,16 @@ describe('Editoren', () => {
     say(fields[1] as El, '');
     expect(seen.slice(-2)).toMatchObject([{ anchor: '2026-11-09' }, { anchor: null }]);
 
-    say(part(editor, 'tw-segmented'), 'once');
+    say(part(editor, 'tw-select'), 'once');
     expect(seen.at(-1)).toMatchObject({ kind: 'once', at: '2026-11-04T12:00:00.000Z' });
     editor.value = seen.at(-1);
     await editor.updateComplete;
     say(part(editor, 'tw-field'), '2026-11-05T08:00');
-    say(part(editor, 'tw-segmented:nth-of-type(2)'), 'archive');
+    say(part(editor, 'tw-select:nth-of-type(2)'), 'archive');
     expect((seen.at(-2) as { at: string }).at.endsWith('Z')).toBe(true);
     expect(seen.at(-1)).toMatchObject({ after: 'archive' });
 
-    say(part(editor, 'tw-segmented'), 'manual');
+    say(part(editor, 'tw-select'), 'manual');
     editor.value = seen.at(-1);
     await editor.updateComplete;
     say(part(editor, 'tw-toggle'), true);

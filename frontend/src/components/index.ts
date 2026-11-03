@@ -7,6 +7,8 @@ export { formStyles } from './formStyles.ts';
 export { TwFrequencyEditor } from './frequency-editor.ts';
 export { LocalizedElement } from './localized.ts';
 export { weekdayOptions } from './options.ts';
+export { TwSelect } from './select.ts';
+export type { SelectOption } from './select.ts';
 export { TwSegmented } from './segmented.ts';
 export type { SegmentOption } from './segmented.ts';
 export { TwStepper } from './stepper.ts';

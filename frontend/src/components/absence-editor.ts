@@ -12,7 +12,7 @@ import './field.ts';
 import { formStyles } from './formStyles.ts';
 import { LocalizedElement } from './localized.ts';
 import { toIds, toNumbers, weekOptions, weekdayOptions } from './options.ts';
-import './segmented.ts';
+import './select.ts';
 import './stepper.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import './week-preview.ts';
@@ -112,14 +112,14 @@ export class TwAbsenceEditor extends LocalizedElement {
           this.replaceAt(this.value, index, { present_weeks: toNumbers(ids) });
         })}
       ></tw-chip-select>
-      <tw-segmented
+      <tw-select
         .label=${this.text('absence.change_weekday')}
         .options=${weekdayOptions(this.language)}
         .value=${String(absence.change_weekday)}
         @tw-change=${onChange<string>((day) => {
           this.replaceAt(this.value, index, { change_weekday: Number(day) });
         })}
-      ></tw-segmented>
+      ></tw-select>
       <tw-field
         type="date"
         .label=${this.text('absence.anchor')}
@@ -167,7 +167,7 @@ export class TwAbsenceEditor extends LocalizedElement {
     return html`
       <div class="rule">
         <div class="head">
-          <tw-segmented
+          <tw-select
             .label=${this.text('persons.absences')}
             .options=${this.#kindOptions()}
             .value=${absence.kind}
@@ -178,7 +178,7 @@ export class TwAbsenceEditor extends LocalizedElement {
                 ),
               );
             })}
-          ></tw-segmented>
+          ></tw-select>
           <button
             type="button"
             class="plain"

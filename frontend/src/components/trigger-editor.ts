@@ -17,7 +17,7 @@ import './field.ts';
 import { formStyles } from './formStyles.ts';
 import { LocalizedElement } from './localized.ts';
 import { toIds, toNumbers, weekdayOptions } from './options.ts';
-import './segmented.ts';
+import './select.ts';
 import './stepper.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import './toggle.ts';
@@ -94,14 +94,14 @@ export class TwTriggerEditor extends LocalizedElement {
           this.#merge({ at: fromLocalInput(value) });
         })}
       ></tw-field>
-      <tw-segmented
+      <tw-select
         .label=${this.text('trigger.after')}
         .options=${AFTER_ONCE.map((after) => ({ id: after, label: this.text(`after.${after}`) }))}
         .value=${trigger.after}
         @tw-change=${onChange<AfterOnce>((after) => {
           this.#merge({ after });
         })}
-      ></tw-segmented>
+      ></tw-select>
     `,
     manual: (trigger: Extract<TriggerWire, { kind: 'manual' }>) => html`
       <tw-toggle
@@ -135,14 +135,14 @@ export class TwTriggerEditor extends LocalizedElement {
 
   protected override render(): TemplateResult {
     return html`
-      <tw-segmented
+      <tw-select
         .label=${this.text('trigger.kind')}
         .options=${TRIGGER_KINDS.map((kind) => ({ id: kind, label: this.text(`trigger.${kind}`) }))}
         .value=${this.value.kind}
         @tw-change=${onChange<TriggerKind>((kind) => {
           emitChange(this, TRIGGER_BUILDERS[kind](this.now));
         })}
-      ></tw-segmented>
+      ></tw-select>
       ${this.#renderers[this.value.kind](this.value as never)}
     `;
   }

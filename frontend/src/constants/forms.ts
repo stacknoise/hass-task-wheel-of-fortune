@@ -8,6 +8,7 @@ export const FORM_TAGS = {
   stepper: 'tw-stepper',
   chipSelect: 'tw-chip-select',
   segmented: 'tw-segmented',
+  select: 'tw-select',
   weekPreview: 'tw-week-preview',
   timeline: 'tw-timeline',
   absenceEditor: 'tw-absence-editor',

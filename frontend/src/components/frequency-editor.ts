@@ -9,6 +9,7 @@ import { emitChange, onChange } from './change.ts';
 import { formStyles } from './formStyles.ts';
 import { LocalizedElement } from './localized.ts';
 import './segmented.ts';
+import './select.ts';
 import './stepper.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import './timeline.ts';
@@ -79,14 +80,14 @@ export class TwFrequencyEditor extends LocalizedElement {
 
   protected override render(): TemplateResult {
     return html`
-      <tw-segmented
+      <tw-select
         .label=${this.text('tasks.frequency')}
         .options=${FREQUENCY_KINDS.map((kind) => ({ id: kind, label: this.text(`frequency.${kind}`) }))}
         .value=${this.value.kind}
         @tw-change=${onChange<FrequencyKind>((kind) => {
           emitChange(this, FREQUENCY_BUILDERS[kind]());
         })}
-      ></tw-segmented>
+      ></tw-select>
       ${this.#renderers[this.value.kind](this.value as never)}
     `;
   }

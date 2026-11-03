@@ -67,6 +67,9 @@ export abstract class ConfigView<
         background: var(--tw-color-surface);
         cursor: pointer;
       }
+      .card > div {
+        margin-top: var(--tw-space-s);
+      }
       .card[aria-pressed='true'] {
         border-color: var(--tw-color-primary);
       }
