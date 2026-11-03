@@ -123,6 +123,10 @@ class HistoryRepository(Protocol):
         """Offene Zuteilungen einer Person über den Index."""
         ...
 
+    def open_for_task(self, task_id: TaskId) -> tuple[Assignment, ...]:
+        """Offene Zuteilungen einer Aufgabe über den Index."""
+        ...
+
     def last_assignment(self, task_id: TaskId) -> Assignment | None:
         """Jüngste Zuteilung einer Aufgabe (nach Rundenbeginn) über den Index."""
         ...

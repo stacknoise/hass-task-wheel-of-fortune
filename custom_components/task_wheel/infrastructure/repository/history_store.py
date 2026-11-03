@@ -102,6 +102,14 @@ class HistoryStore:
         """Offene Zuteilungen einer Person über den Index."""
         return tuple(self._open.get(person_id, {}).values())
 
+    def open_for_task(self, task_id: TaskId) -> tuple[Assignment, ...]:
+        """Offene Zuteilungen einer Aufgabe über den Index."""
+        return tuple(
+            assignment
+            for _, assignment in self._by_task.get(task_id, {}).values()
+            if assignment.status in PENDING_STATUSES
+        )
+
     def last_assignment(self, task_id: TaskId) -> Assignment | None:
         """Jüngste Zuteilung einer Aufgabe (nach Rundenbeginn)."""
         entries = self._by_task.get(task_id)

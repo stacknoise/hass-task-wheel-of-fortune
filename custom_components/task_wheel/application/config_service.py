@@ -8,7 +8,6 @@ import datetime as dt
 import re
 import unicodedata
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import replace
 from typing import Final, Protocol
 
 from ..const.keys import ERR_DUPLICATE
@@ -18,12 +17,13 @@ from ..domain.models import Person, Schedule, Settings, Task
 from ..domain.types import PersonId, ScheduleId, TaskId
 from .draw_service import DrawService
 from .ids import new_id
-from .protocols import ConfigRepository, IdFactory
+from .protocols import ConfigRepository, HistoryRepository, IdFactory
 from .schedule_service import ScheduleService
 
 RESOURCE_PERSON = "person"
 RESOURCE_TASK = "task"
 RESOURCE_SCHEDULE = "schedule"
+RESOURCE_ASSIGNMENT = "assignment"
 
 FIELD_ID: Final = "id"
 FIELD_SLUG: Final = "slug"
@@ -79,14 +79,17 @@ class ConfigService:
     def __init__(
         self,
         config: ConfigRepository,
+        history: HistoryRepository,
         schedules: ScheduleService,
         draws: DrawService,
         check_target: TargetCheck,
+        *,
         id_factory: IdFactory = new_id,
     ) -> None:
-        """Hält Konfiguration, Zeitplan-Dienst, Auslosung, Zielprüfung und Kennungsquelle."""
+        """Hält Konfiguration, Verlauf, Zeitplan-Dienst, Auslosung, Zielprüfung, Kennungsquelle."""
         self._check_target = check_target
         self._config = config
+        self._history = history
         self._schedules = schedules
         self._draws = draws
         self._new_id = id_factory
@@ -112,19 +115,21 @@ class ConfigService:
         return person
 
     def delete_person(self, person_id: PersonId) -> None:
-        """Entfernt die Person und streicht sie aus den erlaubten Personen der Aufgaben.
+        """Entfernt die Person, solange nichts sie mehr braucht.
 
         Raises:
-            InUseError: Eine Aufgabe würde dadurch keine erlaubte Person mehr haben.
+            InUseError: Eine Aufgabe erlaubt sie noch, oder sie hat offene Zuteilungen.
         """
         _require(self._config.persons, person_id, RESOURCE_PERSON)
-        affected = [task for task in self._config.tasks.values() if person_id in task.allowed]
-        for task in affected:
-            if task.allowed == {person_id}:
-                raise InUseError(RESOURCE_PERSON, person_id, RESOURCE_TASK)
+        self._ensure_unused(
+            RESOURCE_PERSON,
+            person_id,
+            (
+                (RESOURCE_TASK, (t for t in self._config.tasks.values() if person_id in t.allowed)),
+                (RESOURCE_ASSIGNMENT, self._history.open_assignments(person_id)),
+            ),
+        )
         self._config.remove_person(person_id)
-        for task in affected:
-            self._config.put_task(replace(task, allowed=task.allowed - {person_id}))
 
     # --- Aufgaben -------------------------------------------------------------------------
 
@@ -143,21 +148,25 @@ class ConfigService:
         self._config.put_task(task)
         return task
 
-    def delete_task(self, task_id: TaskId, now: dt.datetime) -> None:
-        """Entfernt die Aufgabe und streicht sie aus den Zeitplänen.
+    def delete_task(self, task_id: TaskId) -> None:
+        """Entfernt die Aufgabe, solange nichts sie mehr braucht.
 
         Raises:
-            InUseError: Ein Zeitplan bestünde dann aus keiner Aufgabe mehr.
+            InUseError: Ein Zeitplan enthält sie noch, oder sie ist noch offen zugeteilt.
         """
         _require(self._config.tasks, task_id, RESOURCE_TASK)
-        affected = [item for item in self._config.schedules.values() if task_id in item.task_ids]
-        for schedule in affected:
-            if schedule.task_ids == (task_id,):
-                raise InUseError(RESOURCE_TASK, task_id, RESOURCE_SCHEDULE)
+        self._ensure_unused(
+            RESOURCE_TASK,
+            task_id,
+            (
+                (
+                    RESOURCE_SCHEDULE,
+                    (s for s in self._config.schedules.values() if task_id in s.task_ids),
+                ),
+                (RESOURCE_ASSIGNMENT, self._history.open_for_task(task_id)),
+            ),
+        )
         self._config.remove_task(task_id)
-        for schedule in affected:
-            kept = tuple(item for item in schedule.task_ids if item != task_id)
-            self._schedules.save(replace(schedule, task_ids=kept), now)
 
     # --- Zeitpläne ------------------------------------------------------------------------
 
@@ -208,6 +217,15 @@ class ConfigService:
         """Kein anderes Element trägt denselben Kurznamen."""
         if any(other.slug == item.slug and other.id != item.id for other in existing):
             raise ValidationError(FIELD_SLUG, ERR_DUPLICATE)
+
+    @staticmethod
+    def _ensure_unused(
+        resource: str, item_id: str, uses: Iterable[tuple[str, Iterable[object]]]
+    ) -> None:
+        """Nichts der genannten Arten verwendet das Element noch."""
+        for used_by, users in uses:
+            if any(True for _ in users):
+                raise InUseError(resource, item_id, used_by)
 
     @staticmethod
     def _ensure_known(ids: Iterable[str], known: Mapping[str, object], resource: str) -> None:

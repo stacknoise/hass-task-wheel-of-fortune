@@ -151,6 +151,8 @@ def test_history_indexes_follow_changes() -> None:
     assert repo.get_assignment("a2") == done_b
     assert repo.get_assignment("nope") is None
     assert repo.open_assignments("nobody") == ()
+    assert [a.id for a in repo.open_for_task("t1")] == ["a1"]
+    assert repo.open_for_task("zzz") == ()
     assert repo.last_assignment("zzz") is None
 
     finished = f.assignment(

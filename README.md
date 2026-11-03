@@ -114,7 +114,7 @@ Warnung ins Protokoll.
 
 ### Personen, Aufgaben und Zeitpläne im Panel (AP-15)
 
-Die Tabs *Personen*, *Aufgaben* und *Zeitpläne* legen Objekte an, ändern und löschen sie (nur Administratoren). Links stehen
+Die Tabs *Personen*, *Aufgaben* und *Zeitpläne* legen Objekte an, ändern und löschen sie (nur Administratoren). Personen und Aufgaben lassen sich nicht löschen, solange sie noch verwendet werden: eine Person nicht, solange eine Aufgabe sie erlaubt oder sie offene Zuteilungen hat; eine Aufgabe nicht, solange ein Zeitplan sie enthält oder sie noch offen zugeteilt ist. Links stehen
 die Karten, rechts das Formular; Fehler des Backends erscheinen am betroffenen Feld und als Hinweis über den Knöpfen.
 
 - **Personen:** Farbe im Rad, Belastbarkeit (voll, halb, pausiert), Anwesenheit (einmalig, Wochentage, Wochenrhythmus) mit

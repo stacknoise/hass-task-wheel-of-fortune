@@ -1,5 +1,7 @@
 """Konfigurationsbefehle: Anlegen, Ändern, Löschen, Verweise und Zeitgeber."""
 
+import datetime as dt
+
 import pytest
 import voluptuous as vol
 
@@ -11,6 +13,7 @@ from custom_components.task_wheel.domain.errors import (
     ValidationError,
 )
 
+from ..domain import factories as f
 from .harness import Api
 
 RECURRING = {"kind": "recurring", "weekdays": [0, 3], "time": "18:30:00"}
@@ -75,17 +78,49 @@ def test_update_cannot_change_id(api: Api) -> None:
         api.run("person/update", person_id="p1", person={"id": "p9"})
 
 
-def test_delete_person_strips_them_from_tasks(api: Api) -> None:
-    api.run("person/delete", person_id="p2")
-    assert "p2" not in api.config.persons
-    assert api.config.tasks["t1"].allowed == {"p1"}
+def _new_person(api: Api, **fields: object) -> str:
+    return api.result("person/create", person={"name": "Neu", **fields})["id"]
 
 
-def test_delete_person_rejected_when_sole_allowed(api: Api) -> None:
-    api.run("task/update", task_id="t1", task={"allowed": ["p1"]})
+def _open_assignment(api: Api, *, person_id: str, task_id: str) -> None:
+    """Eine eigene Runde mit einer offenen Zuteilung."""
+    started = f.NOW + dt.timedelta(days=1)
+    api.history.put_round(
+        f.finished_round(
+            id="r9",
+            started_at=started,
+            finished_at=started,
+            assignments=(
+                f.assignment(id="a9", round_id="r9", person_id=person_id, task_id=task_id),
+            ),
+        )
+    )
+
+
+def test_delete_unused_person(api: Api) -> None:
+    ident = _new_person(api)
+    api.run("person/delete", person_id=ident)
+    assert ident not in api.config.persons
+
+
+def test_delete_person_rejected_while_a_task_allows_them(api: Api) -> None:
     with pytest.raises(InUseError):
-        api.run("person/delete", person_id="p1")
-    assert "p1" in api.config.persons
+        api.run("person/delete", person_id="p2")
+    ident = _new_person(api)
+    api.run("task/update", task_id="t2", task={"allowed": ["p1", ident]})
+    with pytest.raises(InUseError):
+        api.run("person/delete", person_id=ident)
+    api.run("task/update", task_id="t2", task={"allowed": ["p1"]})
+    api.run("person/delete", person_id=ident)
+    assert ident not in api.config.persons
+
+
+def test_delete_person_rejected_with_open_assignment(api: Api) -> None:
+    ident = _new_person(api)
+    _open_assignment(api, person_id=ident, task_id="t2")
+    with pytest.raises(InUseError):
+        api.run("person/delete", person_id=ident)
+    assert ident in api.config.persons
 
 
 def test_create_task_checks_allowed_persons(api: Api) -> None:
@@ -118,16 +153,31 @@ def test_update_task(api: Api) -> None:
         api.run("task/update", task_id="t1", task={"points": 1000})
 
 
-def test_delete_task_strips_it_from_schedules_and_rearms(api: Api) -> None:
-    api.run("task/delete", task_id="t2")
-    assert api.config.schedules["s1"].task_ids == ("t1",)
+def _new_task(api: Api) -> str:
+    return api.result("task/create", task={"name": "Neu", "allowed": ["p1"]})["id"]
 
 
-def test_delete_task_rejected_when_schedule_would_be_empty(api: Api) -> None:
-    api.run("task/delete", task_id="t2")
+def test_delete_unused_task(api: Api) -> None:
+    ident = _new_task(api)
+    api.run("task/delete", task_id=ident)
+    assert ident not in api.config.tasks
+
+
+def test_delete_task_rejected_while_a_schedule_contains_it(api: Api) -> None:
     with pytest.raises(InUseError):
-        api.run("task/delete", task_id="t1")
-    assert "t1" in api.config.tasks
+        api.run("task/delete", task_id="t2")
+    assert api.config.schedules["s1"].task_ids == ("t1", "t2")
+    api.run("schedule/update", schedule_id="s1", schedule={"task_ids": ["t1"]})
+    api.run("task/delete", task_id="t2")
+    assert "t2" not in api.config.tasks
+
+
+def test_delete_task_rejected_with_open_assignment(api: Api) -> None:
+    ident = _new_task(api)
+    _open_assignment(api, person_id="p1", task_id=ident)
+    with pytest.raises(InUseError):
+        api.run("task/delete", task_id=ident)
+    assert ident in api.config.tasks
 
 
 def test_create_schedule_arms_timer(api: Api) -> None:
