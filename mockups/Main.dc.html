@@ -48,11 +48,25 @@ a{color:#0262a0}a:hover{color:#01497a}
 
       <section style="grid-column: 1 / -1; background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 20px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 24px;">
         <div style="width: 72px; height: 72px; border-radius: 50%; background: conic-gradient(#c05600 0 72deg, #1a5fd0 72deg 144deg, #137333 144deg 216deg, #7b2cbf 216deg 288deg, #b0136f 288deg 360deg); border: 4px solid #ffffff; box-shadow: 0 0 0 1px #e3e6ea;" aria-hidden="true"></div>
-        <div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 4px;">
-          <span style="font-size: 13px; color: #5a616b; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">Nächste Auslosung</span>
-          <span style="font-size: 24px; font-weight: 500;">Montag, 9. November · 07:00</span>
-          <span style="font-size: 14px; color: #5a616b;">Zeitplan „Wochenplan" · 6 Aufgaben · 5 Personen · Benachrichtigung an alle Handys</span>
+        <button type="button" onClick="{{prevPlan}}" aria-label="Vorheriger Zeitplan" style="width: 44px; height: 44px; border-radius: 50%; border: 1px solid #c4c9d0; background: #ffffff; color: #0262a0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+        </button>
+        <div aria-live="polite" style="flex: 1 1 260px; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5a616b; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;">
+            {{np.kicker}}
+            <span style="text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 500; border-radius: 10px; padding: 2px 8px; background: {{np.stBg}}; color: {{np.stFg}};">{{np.state}}</span>
+          </span>
+          <span style="font-size: 24px; font-weight: 500;">{{np.when}}</span>
+          <span style="font-size: 14px; color: #5a616b;">Zeitplan „{{np.name}}" · {{np.detail}}</span>
+          <span style="display: flex; gap: 6px; padding-top: 6px;" aria-label="Zeitplan {{np.pos}} von {{np.count}}">
+            <sc-for list="{{planDots}}" as="d" hint-placeholder-count="4">
+              <button type="button" onClick="{{d.pick}}" aria-label="{{d.label}}" aria-current="{{d.on}}" style="width: {{d.w}}px; height: 8px; border-radius: 4px; border: none; padding: 0; background: {{d.bg}}; cursor: pointer;"></button>
+            </sc-for>
+          </span>
         </div>
+        <button type="button" onClick="{{nextPlan}}" aria-label="Nächster Zeitplan" style="width: 44px; height: 44px; border-radius: 50%; border: 1px solid #c4c9d0; background: #ffffff; color: #0262a0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+        </button>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <a href="Zeitplan.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid #c4c9d0; color: #0262a0; text-decoration: none; font-size: 14px; font-weight: 500;">Zeitplan bearbeiten</a>
           <a href="Auslosung.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 20px; background: #0262a0; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500;">Manuell auslosen</a>
@@ -222,7 +236,22 @@ class Component extends DCLogic {
     });
     var pts = [['Anna', 42, '#c05600'], ['Ben', 38, '#1a5fd0'], ['Clara', 45, '#137333'], ['David', 31, '#7b2cbf'], ['Emma', 24, '#b0136f']];
     var points = pts.map(function (p) { return { name: p[0], value: p[1], color: p[2], pct: Math.round(p[1] / 45 * 100) }; });
-    return { haNav: haNav, tabs: tabs, filters: filters, groups: groups, doneCount: doneCount, totalCount: totalCount, points: points };
+    var NP = [
+      { name: 'Wochenplan', kicker: 'Nächste Auslosung', when: 'Montag, 9. November · 07:00', detail: '6 Aufgaben · 5 Personen · Push an alle', state: 'Automatisch', stBg: '#e3f1e6', stFg: '#0f5c28' },
+      { name: 'Täglich morgens', kicker: 'Nächste Auslosung', when: 'Mittwoch, 4. November · 06:30', detail: '1 Aufgabe · 4 Personen (David abwesend)', state: 'Automatisch', stBg: '#e3f1e6', stFg: '#0f5c28' },
+      { name: 'Großputz', kicker: 'Kein Termin', when: 'Nur manuell', detail: '4 Aufgaben · zuletzt ausgelost Sa, 10. Okt', state: 'Manuell', stBg: '#f1e7fb', stFg: '#5b1f99' },
+      { name: 'Garten (Sommer)', kicker: 'Kein Termin', when: 'Pausiert', detail: 'sonst jeden Samstag 09:00 · 1 Aufgabe', state: 'Pausiert', stBg: '#eef0f3', stFg: '#3c424a' }
+    ];
+    var pi = s.planIdx || 0;
+    var np = Object.assign({}, NP[pi], { pos: pi + 1, count: NP.length });
+    var planDots = NP.map(function (p, i) {
+      var on = i === pi;
+      return { label: p.name, on: on, w: on ? 22 : 8, bg: on ? '#0262a0' : '#c4c9d0', pick: function () { self.setState({ planIdx: i }); } };
+    });
+    return { np: np, planDots: planDots,
+      prevPlan: function () { self.setState({ planIdx: (pi - 1 + NP.length) % NP.length }); },
+      nextPlan: function () { self.setState({ planIdx: (pi + 1) % NP.length }); },
+      haNav: haNav, tabs: tabs, filters: filters, groups: groups, doneCount: doneCount, totalCount: totalCount, points: points };
   }
 }
 </script>
