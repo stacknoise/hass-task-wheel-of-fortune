@@ -253,7 +253,7 @@ Objekt mit `reason`, die Gründe erscheinen im Panel unter „Wer ist im Rad?“
 
 1. **Belastung**: `load == paused`
 2. **Anwesenheit** (wenn `respect_absence`): nicht an mindestens einem Tag im Fristfenster `[jetzt, jetzt + due_days]` anwesend
-3. **Keine Wiederholung** (wenn `no_repeat`): hatte die Aufgabe in der letzten Zuteilung, sofern noch andere Kandidaten übrig sind
+3. **Keine Wiederholung** (wenn `no_repeat`): hatte die Aufgabe in der letzten Zuteilung, sofern noch andere Kandidaten übrig sind (nur Vorliebe: wer sonst unvergeben bliebe, bekommt die Aufgabe trotzdem; vorher sperren harte Filter und eine Zuordnung stellt sicher, dass so viele Aufgaben wie möglich verteilt werden)
 4. **Aufgabe in dieser Runde** (immer): Wer in derselben Runde schon eine Aufgabe gezogen hat, bekommt keine zweite und ist für die weiteren Aufgaben nicht mehr im Rad (`taken`). Gibt es mehr Aufgaben als Personen, bleiben die überzähligen unverteilt
 5. **Ohne Kandidaten** wird die Aufgabe als „nicht verteilbar“ protokolliert, nicht erzwungen
 
