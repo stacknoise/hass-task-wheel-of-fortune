@@ -5,6 +5,7 @@ from types import MappingProxyType
 from typing import Final
 
 from ..const.keys import (
+    ERR_IN_USE,
     ERR_INVALID_TRANSITION,
     ERR_LIMIT_REACHED,
     ERR_NOT_FOUND,
@@ -70,6 +71,14 @@ class NotFoundError(TaskWheelError):
     def __init__(self, resource: str, item_id: str) -> None:
         """Merkt sich Ressource und Kennung als Platzhalter."""
         super().__init__(ERR_NOT_FOUND, {"resource": resource, "id": item_id})
+
+
+class InUseError(TaskWheelError):
+    """Das Element wird noch gebraucht und kann deshalb nicht entfernt werden."""
+
+    def __init__(self, resource: str, item_id: str, used_by: str) -> None:
+        """Merkt sich Ressource, Kennung und die Ressource, die es braucht, als Platzhalter."""
+        super().__init__(ERR_IN_USE, {"resource": resource, "id": item_id, "used_by": used_by})
 
 
 class StorageCorruptError(TaskWheelError):
