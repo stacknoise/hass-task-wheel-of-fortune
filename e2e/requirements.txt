@@ -1,10 +1,10 @@
 # Zusätzlich zu requirements-dev.txt für den Start von Home Assistant im E2E-Test (Importe der Basiskomponenten)
-hassil==3.5.0
-home-assistant-intents==2026.1.28
-mutagen==1.47.0
-pyturbojpeg==1.8.0
-pymicro-vad==1.0.1
+hassil==3.12.1
+home-assistant-intents==2026.10.27
+mutagen==1.48.1
+pyturbojpeg==2.6.1
+pymicro-vad==2.1.0
 go2rtc-client==0.4.0
 ha-ffmpeg==3.2.2
-av==16.0.1
-pyspeex-noise==1.0.2
+av==19.0.2
+pyspeex-noise==2.0.1
