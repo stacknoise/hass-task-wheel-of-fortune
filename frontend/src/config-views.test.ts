@@ -104,6 +104,23 @@ async function addNew(view: El): Promise<void> {
 }
 
 describe('Personen', () => {
+  it('bietet Benachrichtigungsziele zum Suchen an', async () => {
+    const { view } = await open('/persons');
+    await addNew(view);
+    const field = [...q(view.shadowRoot, 'section.editor').querySelectorAll('tw-field')].at(
+      -1,
+    ) as El;
+    await (field as unknown as { updateComplete: Promise<unknown> }).updateComplete;
+    const options = [...(field.shadowRoot?.querySelectorAll('datalist option') ?? [])].map(
+      (option) => [option.getAttribute('value'), option.getAttribute('label')].join('|'),
+    );
+    expect(options).toEqual([
+      'notify.handy_anna|Handy Anna',
+      'notify.kueche|notify.kueche',
+      'notify.mobile_app_ben|mobile_app_ben',
+    ]);
+  });
+
   it('legt eine Person an', async () => {
     const { hass, view } = await open('/persons');
     expect(view.shadowRoot?.textContent).toContain('Anna');

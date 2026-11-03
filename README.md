@@ -80,6 +80,7 @@ vorerst nur Zähler und werden mit AP-15 ausgebaut.
   fairen Anteil und die jüngste Aktivität. Die offenen Zuteilungen sind nach **Auslosung** gruppiert (jüngste zuerst, mit
   Zeitplan und Zeitpunkt); eine Auslosung ohne offene Zuteilungen verschwindet aus der Liste. Eine ganze Auslosung lässt sich
   nach Rückfrage **löschen**, solange keine ihrer Aufgaben erledigt ist; sie verschwindet dann auch aus Historie und Statistik.
+  Ist eine Aufgabe in mehreren Zeitplänen, kann sie mehrfach ausgelost werden; jede Zuteilung wird einzeln erledigt.
 - **Historie:** Runden aufklappbar (Zeitplan, Herkunft, Zuteilungen mit Chance und Status, Löschen einer Runde nach Rückfrage), Filter nach Person, Nachladen in
   Seiten und **CSV-Export** (Semikolon, UTF-8 mit Marke; Felder, die mit `=`, `+`, `-`, `@`, Tabulator oder Zeilenumbruch
   beginnen, werden mit einem Hochkomma entschärft, damit Tabellenprogramme sie nicht als Formel ausführen).
@@ -97,7 +98,7 @@ Die Tabs *Personen*, *Aufgaben* und *Zeitpläne* legen Objekte an, ändern und l
 die Karten, rechts das Formular; Fehler des Backends erscheinen am betroffenen Feld und als Hinweis über den Knöpfen.
 
 - **Personen:** Farbe im Rad, Belastbarkeit (voll, halb, pausiert), Anwesenheit (einmalig, Wochentage, Wochenrhythmus) mit
-  Vorschau der nächsten vier Wochen und optional eine Benachrichtigungs-Entität (`notify.…`, wird beim Speichern geprüft).
+  Vorschau der nächsten vier Wochen und optional eine Benachrichtigungs-Entität (`notify.…`, mit Suche über die Entitäten und Dienste von Home Assistant, wird beim Speichern geprüft).
 - **Aufgaben:** erlaubte Personen, Häufigkeit (jede Runde, höchstens n× je Zeitraum, festes Intervall mit Zeitstrahl),
   Punkte, Frist und die Zusatzregeln „keine Wiederholung“, „Abwesenheit beachten“, „Tausch erlaubt“.
 - **Zeitpläne:** wiederkehrend, einmalig oder nur manuell, Aufgabenwahl, Optionen und ein Beispiel für `task_wheel.draw`

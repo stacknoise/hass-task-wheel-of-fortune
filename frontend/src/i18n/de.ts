@@ -52,7 +52,7 @@ export const de = {
   'load.half': 'Halbe Last',
   'load.paused': 'Pausiert',
   'persons.notify': 'Benachrichtigung',
-  'persons.notify_target': 'Benachrichtigungs-Entität (z. B. notify.handy_anna)',
+  'persons.notify_target': 'Benachrichtigungs-Entität (tippen zum Suchen, z. B. notify.handy_anna)',
   'persons.absences': 'Anwesenheit',
   'persons.no_absences': 'Immer anwesend.',
   'persons.tasks': 'Aufgaben',

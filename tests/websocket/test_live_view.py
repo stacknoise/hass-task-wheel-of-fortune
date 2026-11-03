@@ -95,9 +95,8 @@ def test_subscription_limit(api: Api) -> None:
 
 
 def test_automatic_draw_by_timer_is_pushed(api: Api) -> None:
-    # t1 ist in Zeitplan s1 noch offen und wird hier nicht erneut gezogen; t2 ist frei.
     created = api.result(
-        "schedule/create", schedule={"name": "Plan", "trigger": RECURRING, "task_ids": ["t2"]}
+        "schedule/create", schedule={"name": "Plan", "trigger": RECURRING, "task_ids": ["t1"]}
     )
     api.run("subscribe")
     key = f"schedule:{created['id']}"

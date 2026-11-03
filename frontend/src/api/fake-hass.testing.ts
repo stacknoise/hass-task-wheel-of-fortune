@@ -39,6 +39,12 @@ export const EMPTY_SNAPSHOT: Snapshot = {
 export class FakeHass implements HassApi {
   readonly language = 'de';
   readonly calls: string[] = [];
+  readonly states = {
+    'notify.handy_anna': { attributes: { friendly_name: 'Handy Anna' } },
+    'notify.kueche': {},
+    'light.flur': { attributes: { friendly_name: 'Flur' } },
+  };
+  readonly services = { notify: { send_message: {}, mobile_app_ben: {}, kueche: {} } };
   /** Die vollständigen Nachrichten (mit Feldern), in der Reihenfolge der Aufrufe. */
   readonly messages: { type: string; [field: string]: unknown }[] = [];
   /** Antworten je Befehl; ein Fehlerobjekt wird als Ablehnung geliefert. */

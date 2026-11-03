@@ -53,7 +53,7 @@ export const en: Record<keyof typeof de, string> = {
   'load.half': 'Half load',
   'load.paused': 'Paused',
   'persons.notify': 'Notification',
-  'persons.notify_target': 'Notification entity (e.g. notify.phone_anna)',
+  'persons.notify_target': 'Notification entity (type to search, e.g. notify.phone_anna)',
   'persons.absences': 'Availability',
   'persons.no_absences': 'Always present.',
   'persons.tasks': 'Tasks',
