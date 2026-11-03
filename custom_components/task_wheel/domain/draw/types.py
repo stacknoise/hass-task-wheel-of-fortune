@@ -24,7 +24,8 @@ class DrawContext:
     """Zustand zum Zeitpunkt der Runde.
 
     `points` sind die Punkte je Person im Fairness-Fenster; `last_holders` nennt je Aufgabe die
-    Person der letzten Zuteilung.
+    Person der letzten Zuteilung; `round_holders` sind die Personen, die in dieser Runde schon
+    eine Aufgabe gezogen haben.
     """
 
     now: dt.datetime
@@ -33,6 +34,7 @@ class DrawContext:
     points: Mapping[PersonId, float]
     last_holders: Mapping[TaskId, PersonId]
     fairness_window_days: int
+    round_holders: frozenset[PersonId] = frozenset()
 
 
 @dataclass(slots=True, frozen=True)

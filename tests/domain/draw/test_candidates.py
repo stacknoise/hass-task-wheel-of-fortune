@@ -5,6 +5,7 @@ from custom_components.task_wheel.domain.draw.candidates import (
     CandidateSelector,
     NoRepeatFilter,
     PausedFilter,
+    RoundTakenFilter,
 )
 from custom_components.task_wheel.domain.enums import ExclusionReason, Load
 from custom_components.task_wheel.domain.models import OnceAbsence
@@ -64,11 +65,25 @@ def test_no_repeat_ignores_holder_outside_candidates():
 
 def test_chain_order_and_conditions():
     chain = CandidateFilterFactory().create_chain(task(no_repeat=True, respect_absence=False))
-    assert [type(f) for f in chain] == [PausedFilter, NoRepeatFilter]
-    assert len(CandidateFilterFactory().create_chain(task())) == 2
+    assert [type(f) for f in chain] == [PausedFilter, NoRepeatFilter, RoundTakenFilter]
+    assert len(CandidateFilterFactory().create_chain(task())) == 3
 
 
 def test_nobody_left_gives_empty_selection():
     ctx = make_context([make_person("a", load=Load.PAUSED)])
     selection = CandidateSelector().select(task(allowed=frozenset({"a"})), ctx)
     assert not selection.candidates
+
+
+def test_person_with_a_task_in_this_round_is_not_on_the_wheel():
+    ctx = make_context([make_person("a"), make_person("b")], round_holders=frozenset({"a"}))
+    selection = CandidateSelector().select(task(allowed=AB), ctx)
+    assert [p.id for p in selection.candidates] == ["b"]
+    assert reasons(selection) == {("a", ExclusionReason.TAKEN)}
+
+
+def test_everyone_is_back_on_the_wheel_when_all_candidates_already_have_a_task():
+    ctx = make_context([make_person("a"), make_person("b")], round_holders=AB)
+    selection = CandidateSelector().select(task(allowed=AB), ctx)
+    assert [p.id for p in selection.candidates] == ["a", "b"]
+    assert not selection.exclusions

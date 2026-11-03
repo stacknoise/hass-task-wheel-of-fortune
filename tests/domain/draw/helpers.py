@@ -35,6 +35,7 @@ def make_context(
     *,
     points: Mapping[str, float] | None = None,
     last_holders: Mapping[str, str] | None = None,
+    round_holders: frozenset[str] = frozenset(),
     now: dt.datetime = NOW,
 ) -> DrawContext:
     people = {p.id: p for p in persons}
@@ -45,4 +46,5 @@ def make_context(
         points=points or {},
         last_holders=last_holders or {},
         fairness_window_days=WINDOW,
+        round_holders=round_holders,
     )

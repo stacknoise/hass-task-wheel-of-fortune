@@ -172,6 +172,7 @@ export const de = {
   'draw.reason.paused': 'Pausiert',
   'draw.reason.absent': 'Abwesend',
   'draw.reason.no_repeat': 'Hatte die Aufgabe zuletzt',
+  'draw.reason.taken': 'Hat in dieser Runde schon eine Aufgabe',
   'draw.reason.not_allowed': 'Nicht erlaubt',
   'draw.chance': 'Chance',
   'draw.takes': 'übernimmt',
