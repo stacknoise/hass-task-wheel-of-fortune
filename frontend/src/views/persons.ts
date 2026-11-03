@@ -132,14 +132,14 @@ export class PersonsView extends ConfigView<PersonWire, PersonDraft> {
         this.patch({ name });
       })}
       ${this.#colors(draft.color)}
-      <tw-segmented
+      <tw-select
         .label=${this.text('persons.load')}
         .options=${LOADS.map((load) => ({ id: load, label: this.text(`load.${load}`) }))}
         .value=${draft.load}
         @tw-change=${onChange<Load>((load) => {
           this.patch({ load });
         })}
-      ></tw-segmented>
+      ></tw-select>
       <tw-absence-editor
         .language=${this.language}
         .today=${dayOf(snapshot.now)}

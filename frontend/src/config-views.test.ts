@@ -113,7 +113,7 @@ describe('Personen', () => {
     await addNew(view);
     const editor = q(view.shadowRoot, 'section.editor');
     say(q(editor, 'tw-field'), 'Berta');
-    say(q(editor, 'tw-segmented'), 'half');
+    say(q(editor, 'tw-select'), 'half');
     await view.updateComplete;
     button(view, 'section.editor .swatch:nth-child(2)').click();
     say(q(editor, 'tw-absence-editor'), [{ kind: 'weekly_days', weekdays: [5] }]);

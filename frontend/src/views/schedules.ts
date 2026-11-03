@@ -128,9 +128,11 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
           this.patch({ task_ids });
         })}
       ></tw-chip-select>
-      ${this.toggle('schedules.enabled', 'enabled', draft.enabled)}
-      ${this.toggle('schedules.notify', 'notify', draft.notify)}
-      ${this.toggle('schedules.skip_absent', 'skip_absent', draft.skip_absent)}
+      <div>
+        ${this.toggle('schedules.enabled', 'enabled', draft.enabled)}
+        ${this.toggle('schedules.notify', 'notify', draft.notify)}
+        ${this.toggle('schedules.skip_absent', 'skip_absent', draft.skip_absent)}
+      </div>
       ${draft.slug ? this.#example(draft.slug) : nothing}
     `;
   }

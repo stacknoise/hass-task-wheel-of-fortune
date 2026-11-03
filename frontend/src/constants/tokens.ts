@@ -16,6 +16,8 @@ export const TOKENS = {
   '--tw-color-fill': 'var(--secondary-background-color, #e5e5e5)',
   '--tw-color-rim': '#f5c542',
   '--tw-space-s': '8px',
+  /** Einheitlicher Abstand zwischen den Feldern eines Formulars. */
+  '--tw-space-field': '16px',
   '--tw-space-m': '16px',
   '--tw-space-l': '24px',
   '--tw-radius': 'var(--ha-card-border-radius, 12px)',

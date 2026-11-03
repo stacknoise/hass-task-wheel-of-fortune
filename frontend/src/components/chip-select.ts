@@ -22,6 +22,7 @@ export class TwChipSelect extends LitElement {
     options: { attribute: false },
     selected: { attribute: false },
     error: { type: String },
+    compact: { type: Boolean },
   };
 
   static override styles = [
@@ -49,6 +50,16 @@ export class TwChipSelect extends LitElement {
         border-color: var(--tw-color-primary);
         background: color-mix(in srgb, var(--tw-color-primary) 15%, transparent);
       }
+      .compact {
+        flex-wrap: nowrap;
+        gap: 4px;
+      }
+      .compact button {
+        flex: 1 1 0;
+        min-width: 0;
+        justify-content: center;
+        padding: 0 4px;
+      }
       .dot {
         width: 10px;
         height: 10px;
@@ -61,6 +72,7 @@ export class TwChipSelect extends LitElement {
   declare options: readonly ChipOption[];
   declare selected: readonly string[];
   declare error: string;
+  declare compact: boolean;
 
   constructor() {
     super();
@@ -68,12 +80,13 @@ export class TwChipSelect extends LitElement {
     this.options = [];
     this.selected = [];
     this.error = '';
+    this.compact = false;
   }
 
   protected override render(): TemplateResult {
     return html`
       <span class="label">${this.label}</span>
-      <div class="chips" role="group" aria-label=${this.label}>
+      <div class=${this.compact ? 'chips compact' : 'chips'} role="group" aria-label=${this.label}>
         ${repeat(
           this.options,
           (option) => option.id,
