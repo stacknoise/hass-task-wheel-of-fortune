@@ -130,6 +130,7 @@ describe('Formularbausteine', () => {
     expect(preview.shadowRoot?.textContent).toContain('Mo');
     const line = await mount(FORM_TAGS.timeline, { language: 'de', days: 7, tolerance: 2 });
     expect(line.shadowRoot?.textContent).toContain('frühestens: 5');
+    expect(line.shadowRoot?.textContent).toContain('spätestens: 9');
   });
 });
 

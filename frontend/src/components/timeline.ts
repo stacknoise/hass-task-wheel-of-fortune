@@ -56,7 +56,8 @@ export class TwTimeline extends LitElement {
   }
 
   protected override render(): TemplateResult {
-    const span = Math.max(1, this.days + this.tolerance);
+    const latest = Math.max(1, this.days + this.tolerance);
+    const span = latest;
     const share = (days: number): string => `flex:${String(Math.max(0, days) / span)}`;
     const earliest = Math.max(0, this.days - this.tolerance);
     return html`
@@ -70,6 +71,7 @@ export class TwTimeline extends LitElement {
         <span>${translate('timeline.day', this.language)} 0</span>
         <span>${translate('timeline.earliest', this.language)}: ${earliest}</span>
         <span>${this.days}</span>
+        <span>${translate('timeline.latest', this.language)}: ${latest}</span>
       </div>
     `;
   }
