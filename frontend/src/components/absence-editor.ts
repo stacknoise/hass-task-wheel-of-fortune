@@ -16,6 +16,7 @@ import './segmented.ts';
 import './stepper.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import './week-preview.ts';
+import { defineOnce } from './define.ts';
 
 type Renderer = (absence: never, index: number) => TemplateResult;
 
@@ -203,4 +204,4 @@ export class TwAbsenceEditor extends LocalizedElement {
   }
 }
 
-customElements.define(FORM_TAGS.absenceEditor, TwAbsenceEditor);
+defineOnce(FORM_TAGS.absenceEditor, TwAbsenceEditor);

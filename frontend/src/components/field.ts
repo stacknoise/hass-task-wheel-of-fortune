@@ -5,6 +5,7 @@ import { FORM_TAGS } from '../constants/index.ts';
 import { emitChange } from './change.ts';
 import { formStyles } from './formStyles.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
+import { defineOnce } from './define.ts';
 
 /** Beschriftetes Eingabefeld (Text, Zeit, Datum, Datum mit Uhrzeit); meldet den Text bei jeder Eingabe. */
 export class TwField extends LitElement {
@@ -69,4 +70,4 @@ export class TwField extends LitElement {
   }
 }
 
-customElements.define(FORM_TAGS.field, TwField);
+defineOnce(FORM_TAGS.field, TwField);

@@ -18,6 +18,7 @@ import { AsyncValue, dayOf } from '../state/index.ts';
 import type { AbsenceWire } from '../state/index.ts';
 import { ConfigView } from './config-view.ts';
 import type { ConfigTexts } from './config-view.ts';
+import { defineOnce } from '../components/define.ts';
 
 interface PersonDraft {
   readonly name: string;
@@ -186,4 +187,4 @@ export class PersonsView extends ConfigView<PersonWire, PersonDraft> {
   }
 }
 
-customElements.define(VIEW_TAGS.persons, PersonsView);
+defineOnce(VIEW_TAGS.persons, PersonsView);

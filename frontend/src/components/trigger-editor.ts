@@ -21,6 +21,7 @@ import './segmented.ts';
 import './stepper.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import './toggle.ts';
+import { defineOnce } from './define.ts';
 
 type Renderer = (trigger: never) => TemplateResult | typeof nothing;
 
@@ -152,4 +153,4 @@ export class TwTriggerEditor extends LocalizedElement {
   }
 }
 
-customElements.define(FORM_TAGS.triggerEditor, TwTriggerEditor);
+defineOnce(FORM_TAGS.triggerEditor, TwTriggerEditor);

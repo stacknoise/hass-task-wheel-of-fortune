@@ -26,6 +26,7 @@ import { buildCsv } from './csv.ts';
 import { downloadText } from './download.ts';
 import { csvRows, doneCount, originText } from './history-model.ts';
 import type { HistoryLookups } from './history-model.ts';
+import { defineOnce } from '../components/define.ts';
 
 interface Loaded {
   readonly rounds: readonly RoundObject[];
@@ -330,4 +331,4 @@ export class TwHistoryView extends LitElement {
   }
 }
 
-customElements.define(VIEW_TAGS.history, TwHistoryView);
+defineOnce(VIEW_TAGS.history, TwHistoryView);

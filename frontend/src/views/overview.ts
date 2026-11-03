@@ -37,6 +37,7 @@ import {
   recentActivity,
   upcomingDraws,
 } from './overview-model.ts';
+import { defineOnce } from '../components/define.ts';
 
 /** Übersicht: nächste Auslosung, offene Zuteilungen mit Erledigen und Tauschen, Punkte, Aktivität. */
 export class TwOverviewView extends LitElement {
@@ -377,4 +378,4 @@ export class TwOverviewView extends LitElement {
   }
 }
 
-customElements.define(VIEW_TAGS.overview, TwOverviewView);
+defineOnce(VIEW_TAGS.overview, TwOverviewView);

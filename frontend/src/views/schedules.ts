@@ -11,6 +11,7 @@ import { TRIGGER_BUILDERS } from '../state/index.ts';
 import type { TriggerWire } from '../state/index.ts';
 import { ConfigView } from './config-view.ts';
 import type { ConfigTexts } from './config-view.ts';
+import { defineOnce } from '../components/define.ts';
 
 interface ScheduleDraft {
   readonly name: string;
@@ -150,4 +151,4 @@ event_type: ${EVENT_DRAWN_NAME}</pre>
   }
 }
 
-customElements.define(VIEW_TAGS.schedules, SchedulesView);
+defineOnce(VIEW_TAGS.schedules, SchedulesView);

@@ -6,6 +6,7 @@ import { FORM_TAGS } from '../constants/index.ts';
 import { emitChange } from './change.ts';
 import { formStyles } from './formStyles.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
+import { defineOnce } from './define.ts';
 
 export interface ChipOption {
   readonly id: string;
@@ -110,4 +111,4 @@ export class TwChipSelect extends LitElement {
   }
 }
 
-customElements.define(FORM_TAGS.chipSelect, TwChipSelect);
+defineOnce(FORM_TAGS.chipSelect, TwChipSelect);
