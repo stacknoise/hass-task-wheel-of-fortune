@@ -9,9 +9,9 @@ Codeänderung**. Es besteht aus zwei Teilen:
 1. **Dieses Markdown-Dokument** (von Hand gepflegt): Messgrößen, Schwellwerte, Schichten, Modulübersicht,
    erlaubte Abhängigkeiten, Änderungsprotokoll.
 2. **Die generierte Explorer-Seite** `docs/code-doku/index.html` (aus dem Quelltext erzeugt, nicht von Hand
-   pflegen): Schichten → Module → Typen → Methoden mit Quelltext, Metriken je Element und Abhängigkeitskarte.
+   pflegen): Schichten → Namensräume → Typen → Properties/Felder und Methoden, drei Spalten (Baum, Details, Quelltext), Metriken je Element und Abhängigkeitskarte, nach dem [Leitfaden Code-Dokumentation](https://claude.ai/artifact/9txBo1nQLP7gMmYQfYcLJe) (siehe §5).
    Erzeugt mit `python3 docs/code-doku/generate.py`, veröffentlicht als Artefakt
-   „Task Wheel Code-Dokumentation“. Generator: `tools/code_doku/` (Aufruf über `docs/code-doku/generate.py`), Vorlage: `docs/code-doku/template.html`. Die Seite wird nicht eingecheckt (`.gitignore`), CI erzeugt sie bei jedem Lauf; `--check` bricht bei roten Schwellwerten ab.
+   „Task Wheel Code-Dokumentation“. Generator: `tools/code_doku/` (Aufruf über `docs/code-doku/generate.py`), Vorlage: `docs/code-doku/template.html` (unverändert aus dem Leitfaden, Prüfsumme in `template.sha256`). Die Seite wird nicht eingecheckt (`.gitignore`), CI erzeugt sie bei jedem Lauf; `--check` bricht bei roten Schwellwerten ab.
 
 ---
 
@@ -237,6 +237,7 @@ Module, Art der Änderung, Auswirkung auf Metriken und Abhängigkeiten. CI prüf
 | 2026-11-03 | 0.0.1 | AP-15 (Aufgaben für alle) | `custom_components/task_wheel/` (geändert: `domain/models`, `domain/draw/candidates`, `domain/swap`), `frontend/src/` (geändert: `state/lookup`, `state/index`, `views/draw`, `views/overview-model`, `views/persons`, `i18n/de`, `i18n/en`) | geändert: Eine Aufgabe ohne erlaubte Personen gilt für alle (`Task.allows`; Auslosung, Tausch, Panel). Die Auslosung im Panel zeigt nur Personen, die für mindestens eine Aufgabe der Runde erlaubt sind (`participantsOf`) | Backend und Frontend: keine neuen Module, Duplikate 0; keine neuen Abhängigkeiten |
 | 2026-11-03 | 0.0.1 | – | `domain/{enums,status,models,swap}.py`, `domain/statistics/report.py`, `application/{assignment_service,swap_service,views,protocols,fanout}.py`, `entities/signals.py`, `infrastructure/events.py`, `websocket/actions.py`, `const/{events,keys}.py`, `translations/`, `frontend/src/` (`components/confirm-action.ts` umbenannt aus `confirm-delete.ts`, `views/overview*.ts`, `api/{client,models}.ts`, `constants/insights.ts`, `i18n/`), `README.md`, `docs/KONZEPT.md`, `docs/CODE_DOKU.md` | neu: Tauschen nur innerhalb einer Auslosung und Status „Bleibt unerledigt“. **Tausch:** `SwapContext.round_persons` (Personen mit Zuteilung in der Runde) und neue Prüfregel `swap_person_not_in_round` vor der Jokerprüfung; der Kopf der Runde im Snapshot nennt `person_ids`, das Panel bietet nur diese Personen an (`swapTargets`). **Bleibt unerledigt:** Status `skipped`, Aktion `skip` (offen/getauscht → skipped), `AssignmentService.skip`, Event `RoundEvents.assignment_skipped` (Entitäten aktualisieren sich), WebSocket-Befehl `task_wheel/assignment/skip` (jeder Benutzer); Punkte über `missed_points_factor`; die Statistik zählt `skipped` mit `missed` (Erledigungsquote, Kennzahl, Wochenquote, Zuverlässigkeit), Aggregate führen den Status getrennt. **Panel:** Knopf je Zuteilung mit Rückfrage über die verallgemeinerte Komponente `tw-confirm-action` (Beschriftung der Bestätigung einstellbar), Badge „Bleibt unerledigt“ | Backend 663 Tests, 99 % Abdeckung; Frontend 148 Tests, Duplikate 0; Abhängigkeiten unverändert gerichtet |
 | 2026-11-03 | 0.0.1 | – | `frontend/src/views/overview.ts`, `frontend/src/views/overview-assignments.ts`, `docs/CODE_DOKU.md` | geändert: Gruppenkopf der „Aktuellen Zuteilungen“ (Titelzeile, „Auslosung löschen“, Liste) mit einheitlichem Abstand `--tw-space-field` (`.group-head` als Spalte mit gleichem `gap`, Liste mit gleichem Abstand darunter) statt verschieden enger Ränder | Frontend 243 Tests, keine neue Abhängigkeit |
+| 2026-11-03 | 0.0.1 | Doku | `tools/code_doku/` (neu: `schema`, `schema_models`; geändert: `models`, `constants`, `python_scanner`, `ts_scanner`, `render`, `cli`, `dependencies`), `docs/code-doku/template.html`, `docs/code-doku/template.sha256`, `tests/test_code_doku_*.py` | geändert: Code-Doku-Seite nach dem Leitfaden Code-Dokumentation. Die Vorlage des Leitfadens ersetzt die eigene (drei Spalten, Properties, Hover-Texte, Startzustand eingeklappt); der Generator prüft ihre Prüfsumme und liefert Schema 2 (Typen mit Properties/Feldern/Konstanten/Aufzählungswerten, Methoden inkl. „ohne Rumpf“, Abhängigkeiten auf Typ-Ebene, Quelltext je Datei). Scanner erfassen Properties; Modul-Funktionen und -Konstanten erscheinen als statischer Eintrag je Datei. Schwellwerte und `--check` unverändert (arbeiten auf dem Bericht je Modul) | `tools/code_doku/` +ca. 430 LOC, neue Module `schema`, `schema_models`, keine neue Abhängigkeit, Tests +6 |
 | 2026-11-03 | 0.0.1 | – | `frontend/src/components/{action-menu,confirm-dialog,confirm-action,index}.ts`, `frontend/src/views/{overview,overview-assignments,history}.ts`, `frontend/src/constants/panel.ts`, `frontend/src/i18n/insights.{de,en}.ts`, Tests, `docs/CODE_DOKU.md` | neu: `tw-action-menu` (ein Knopf „Aktionen“ mit Menü, Einträge als `ActionItem`, Rückfrage je Eintrag, Escape und Klick daneben schließen, Ereignis `tw-action`) und `tw-confirm-dialog` (modale Rückfrage, `tw-confirm`/`tw-cancel`); geändert: `tw-confirm-action` nutzt den Dialog (kein doppelter Dialogcode), „Erledigt“, „Tauschen“ und „Bleibt unerledigt“ der Zuteilungen liegen im Aktionsmenü (kein Umbruch mehr, „Erledigt“ und „Bleibt unerledigt“ mit Popup), Chancen-Text in den Zuteilungen entfernt, Rundenkopf der Historie mit einheitlichem Abstand `--tw-space-field`; E2E-Test bedient das Aktionsmenü (`e2e/tests/flow.spec.ts`) | Frontend LOC +190, neue Abhängigkeit `overview-assignments` → `action-menu` |
 
 Vorlage für neue Einträge:
@@ -251,30 +252,42 @@ Vorlage für neue Einträge:
 
 Maßgeblich ist der [Leitfaden Code-Dokumentation](https://claude.ai/artifact/9txBo1nQLP7gMmYQfYcLJe) (Version 1.0, Stand 2026-11-03). Er ist die globale Definition für alle Code-Dokus; dieser Abschnitt hält fest, wo diese Doku ihm folgt und wo sie abweicht.
 
-### 5.1 Übereinstimmung und Abweichung
+### 5.1 Übereinstimmung mit dem Leitfaden
 
 | Thema | Leitfaden | Stand hier |
 |---|---|---|
-| Ergebnis | Eine selbstständige HTML-Datei, aus dem Quelltext erzeugt, nie von Hand gepflegt | wie Leitfaden (`docs/code-doku/index.html`, Generator `docs/code-doku/generate.py`) |
-| Ablageort, Aufruf | `docs/code-doku/index.html`, Generator daneben, Aufruf in der README | wie Leitfaden (README, Abschnitt „Entwicklung“) |
-| Tabs | Explorer und Abhängigkeiten | wie Leitfaden |
-| Explorer | Drei Spalten: Baum, Details, Quelltext | **Abweichung:** zwei Spalten (Baum, Details mit Quelltext je Element) |
-| Typen | Properties, Felder, Konstanten, Enum-Werte, Record-Parameter in Baum, Kacheln und Tabelle (Schema 2) | **Abweichung:** Typen erfassen nur Methoden; Properties und Felder fehlen |
-| Vorlage | `generator/template.html` des Leitfadens, unverändert (Prüfsumme) | **Abweichung:** eigene Vorlage `docs/code-doku/template.html`, Python- und TypeScript-Scanner |
+| Ergebnis | Eine selbstständige HTML-Datei, aus dem Quelltext erzeugt, nie von Hand gepflegt | `docs/code-doku/index.html`, Generator `docs/code-doku/generate.py` |
+| Ablageort, Aufruf | `docs/code-doku/index.html`, Generator daneben, Aufruf in der README | README, Abschnitt „Entwicklung“ |
+| Vorlage | `template.html` des Leitfadens, unverändert (Prüfsumme) | identisch; der Generator bricht bei abweichender Prüfsumme ab (`template.sha256`) |
+| Datenmodell | Schema 2: Typen mit Properties, Methoden, Metriken, Abhängigkeiten, Quelltext je Datei | wie Leitfaden, erzeugt aus Python (`ast`) und TypeScript (Token-Scanner) |
+| Oberfläche | Explorer (drei Spalten) und Abhängigkeiten | wie Leitfaden, weil die Vorlage unverändert ist |
+| Teststatus | Kein erfundener Status | „Test nennt Typ“ wird aus den Testordnern gelesen (`tests/`, `*.test.ts`) |
 | Veröffentlichung | Als Artifact oder im Repo | Artefakt „Task Wheel Code-Dokumentation“, bei Codeänderungen neue Version |
-| Teststatus | Kein erfundener Status („nicht gescannt“) | „Test nennt Typ“ wird aus den Testordnern gelesen |
 
-Die Abweichungen betreffen Generator und Vorlage (Code). Sie werden nicht in der Doku, sondern in einem eigenen Code-Änderungspaket behoben; bis dahin gilt dieser Abschnitt als Stand.
+Die Konsolenausgabe nennt Typen, Methoden, Properties/Felder und Dateien.
 
-### 5.2 Ampelwerte
+### 5.2 Abbildung von Python und TypeScript auf das Schema
+
+| Schema | Python | TypeScript |
+|---|---|---|
+| Projekt / Schicht | Schicht nach §2 (`Const`, `Domain`, `App`, `Infra`, `Api`, `Entry`) | `Panel` |
+| Namensraum | Schicht + Modulpfad (z. B. `Domain.domain.status`) | Schicht + Dateipfad |
+| Typ | Klasse; Aufzählung (nur Enum-Werte) als `enum` | `class`, `interface`, `enum` |
+| Modul-Eintrag | je Datei mit Funktionen oder Konstanten ein statischer Eintrag mit dem Dateinamen (bei `__init__.py` dem Ordnernamen) | ebenso (bei `index.ts` dem Ordnernamen) |
+| Properties und Felder | Klassenattribute (`x: int = 0`), Aufzählungswerte, Konstanten (`Final`, GROSSBUCHSTABEN); eingefrorene Datenklassen und `NamedTuple` als `readonly` | Felder, Schnittstellen-Member, Aufzählungswerte, Konstanten auf oberster Ebene |
+| Methoden | Methoden und Funktionen; `__init__` als Konstruktor; Protokoll-Member (`...`) und `@abstractmethod` als „ohne Rumpf“ | Methoden von Klassen (Funktionen und Pfeilfunktionen im Modul-Eintrag) |
+| Abhängigkeit | Namen, die in einem importierten Modul (oder im eigenen) definiert sind: Typen, Funktionen, Konstanten, Modulname | ebenso |
+
+### 5.3 Ampelwerte
 
 Der Leitfaden färbt CC ≤ 5 grün, ≤ 10 gelb, darüber rot; MI ≥ 55 grün, ≥ 35 gelb; Instabilität ≤ 0,5 grün, ≤ 0,8 gelb. Die Schwellwerte in §1.1 sind bewusst enger (CC rot ab 9, passend zu ruff `C901` ≤ 8) bzw. für die Instabilität weiter gefasst (gelb bis 0,9, siehe dortige Auslegung). Sie bleiben die Quelle für die CI-Prüfung.
 
-### 5.3 Bekannte Grenzen
+### 5.4 Bekannte Grenzen
 
 Wie im Leitfaden (§10) gilt: Der Scanner arbeitet mit Quelltext-Mustern, nicht mit einem Compiler.
 
 - Python wird über `ast` gelesen, TypeScript über einen Token-Scanner; Typauflösung findet nicht statt. Abhängigkeiten entstehen aus Importen und Namen, nicht aus Laufzeitverhalten (Registrierungen in Fabriken, dynamische Importe, Reflection).
 - „Test nennt Typ“ heißt nur: ein Test erwähnt den Namen. Es sagt nichts über die Abdeckung (dafür gibt es `Cov`).
+- Abhängigkeiten sind namensbasiert: Ein gleichnamiger Bezeichner in einem importierten Modul zählt als Nutzung (kann zu viel erfassen).
 - Werte sind Näherungen (siehe §1); die Schwellwerte beurteilen sie, ersetzen aber kein Review.
 - Konfigurationsdateien (`manifest.json`, `services.yaml`, Übersetzungen) und Mockups werden nicht dokumentiert.
