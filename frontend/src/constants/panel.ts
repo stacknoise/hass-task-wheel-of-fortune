@@ -14,6 +14,7 @@ export const COMPONENT_TAGS = {
   confetti: 'tw-confetti',
   confirmAction: 'tw-confirm-action',
   confirmDialog: 'tw-confirm-dialog',
+  dialog: 'tw-dialog',
   actionMenu: 'tw-action-menu',
 } as const;
 
@@ -35,3 +36,10 @@ export const EVENT_CANCEL = 'tw-cancel';
 export const EVENT_ACTION = 'tw-action';
 export const EVENT_TAB_SELECT = 'tw-tab-select';
 export const EVENT_LOCATION_CHANGED = 'location-changed';
+
+/** Breite in Pixeln, bis zu der Dialoge das Fenster ausfüllen (Smartphone). */
+export const DIALOG_COMPACT_MAX_WIDTH = 600;
+/** Höchste Breite eines Dialogs auf größeren Bildschirmen, in `em`. */
+export const DIALOG_MAX_WIDTH_EM = 40;
+/** Taste, die einen Dialog schließt. */
+export const KEY_ESCAPE = 'Escape';

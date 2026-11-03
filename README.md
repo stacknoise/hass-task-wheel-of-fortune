@@ -128,8 +128,8 @@ Warnung ins Protokoll.
 
 ### Personen, Aufgaben und Zeitpläne im Panel (AP-15)
 
-Die Tabs *Personen*, *Aufgaben* und *Zeitpläne* legen Objekte an, ändern und löschen sie (nur Administratoren). Personen und Aufgaben lassen sich nicht löschen, solange sie noch verwendet werden: eine Person nicht, solange eine Aufgabe sie erlaubt oder sie offene Zuteilungen hat; eine Aufgabe nicht, solange ein Zeitplan sie enthält oder sie noch offen zugeteilt ist. Links stehen
-die Karten, rechts das Formular; Fehler des Backends erscheinen am betroffenen Feld und als Hinweis über den Knöpfen.
+Die Tabs *Personen*, *Aufgaben* und *Zeitpläne* legen Objekte an, ändern und löschen sie (nur Administratoren). Personen und Aufgaben lassen sich nicht löschen, solange sie noch verwendet werden: eine Person nicht, solange eine Aufgabe sie erlaubt oder sie offene Zuteilungen hat; eine Aufgabe nicht, solange ein Zeitplan sie enthält oder sie noch offen zugeteilt ist. Die Karten stehen
+im Raster; Hinzufügen und Bearbeiten öffnen ein Popup (auf dem Smartphone im Vollbild, mit Escape oder ✕ zu schließen), das Löschen fragt in einem weiteren Popup nach. Fehler des Backends erscheinen am betroffenen Feld und als Hinweis im Popup.
 
 - **Personen:** Farbe im Rad, Belastbarkeit (voll, halb, pausiert), Anwesenheit (einmalig, Wochentage, Wochenrhythmus) mit
   Vorschau der nächsten vier Wochen und optional eine Benachrichtigungs-Entität (`notify.…`, mit Suche über die Entitäten und Dienste von Home Assistant, wird beim Speichern geprüft).
