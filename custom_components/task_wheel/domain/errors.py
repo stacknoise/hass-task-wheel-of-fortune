@@ -4,7 +4,13 @@ from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Final
 
-from ..const.keys import ERR_UNKNOWN_KIND
+from ..const.keys import (
+    ERR_LIMIT_REACHED,
+    ERR_NOT_FOUND,
+    ERR_STORAGE_CORRUPT,
+    ERR_STORAGE_VERSION,
+    ERR_UNKNOWN_KIND,
+)
 
 _NO_PLACEHOLDERS: Final[Mapping[str, object]] = MappingProxyType({})
 
@@ -45,3 +51,35 @@ class UnknownKindError(ValidationError):
     def __init__(self, field: str, kind: object) -> None:
         """Merkt sich die unbekannte Art als Platzhalter."""
         super().__init__(field, ERR_UNKNOWN_KIND, {"kind": str(kind)})
+
+
+class LimitReachedError(TaskWheelError):
+    """Eine Ressourcengrenze (z. B. Anzahl Personen) ist erreicht."""
+
+    def __init__(self, resource: str, limit: int) -> None:
+        """Merkt sich Ressource und Grenze als Platzhalter."""
+        super().__init__(ERR_LIMIT_REACHED, {"resource": resource, "limit": limit})
+
+
+class NotFoundError(TaskWheelError):
+    """Ein Element mit dieser Kennung gibt es nicht."""
+
+    def __init__(self, resource: str, item_id: str) -> None:
+        """Merkt sich Ressource und Kennung als Platzhalter."""
+        super().__init__(ERR_NOT_FOUND, {"resource": resource, "id": item_id})
+
+
+class StorageCorruptError(TaskWheelError):
+    """Gespeicherte Daten sind unlesbar oder verletzen das Modell."""
+
+    def __init__(self, store: str, reason: str) -> None:
+        """Merkt sich Speicher und Ursache als Platzhalter."""
+        super().__init__(ERR_STORAGE_CORRUPT, {"store": store, "reason": reason})
+
+
+class StorageVersionError(TaskWheelError):
+    """Der Speicher stammt von einer neueren oder unbekannten Version."""
+
+    def __init__(self, store: str, version: str) -> None:
+        """Merkt sich Speicher und Version als Platzhalter."""
+        super().__init__(ERR_STORAGE_VERSION, {"store": store, "version": version})
