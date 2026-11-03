@@ -1,8 +1,15 @@
 name: Release
-# Erstellt aus einem Tag `vX.Y.Z` das GitHub-Release mit `task_wheel.zip` (Panel gebaut, siehe hacs.json).
+# Erstellt das GitHub-Release mit `task_wheel.zip` (Panel gebaut, siehe hacs.json), entweder aus einem
+# gepushten Tag `vX.Y.Z` oder per manuellem Start (Actions -> Release -> Run workflow), der den Tag am gewählten Stand anlegt.
 on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag des neuen Releases, z. B. v0.1.0 (muss zur Version im Manifest passen)"
+        required: true
+        type: string
 permissions:
   contents: write
 env:
@@ -17,7 +24,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Tag muss zur Version im Manifest passen
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           version=$(python3 -c "import json,os; print(json.load(open(os.environ['INTEGRATION_DIR'] + '/manifest.json'))['version'])")
           if [ "v$version" != "$TAG" ]; then
@@ -43,8 +50,14 @@ jobs:
       - name: Release erstellen
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           prerelease=""
           case "$TAG" in *-*) prerelease="--prerelease" ;; esac
-          gh release create "$TAG" "$ARCHIVE" --title "$TAG" --generate-notes --verify-tag $prerelease
+          # Bei einem gepushten Tag existiert er schon (verifizieren), beim manuellen Start wird er am geprüften Stand angelegt
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            target="--verify-tag"
+          else
+            target="--target $GITHUB_SHA"
+          fi
+          gh release create "$TAG" "$ARCHIVE" --title "$TAG" --generate-notes $target $prerelease
