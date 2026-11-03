@@ -15,6 +15,7 @@ import {
 import { numberText, percentText } from './format.ts';
 import type { MotionToken } from './motion.ts';
 import { StageElement, sharesOf } from './stage-base.ts';
+import { defineOnce } from './define.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import { layoutTiles, spotlightDelay, spotlightSequence } from './spotlight-geometry.ts';
 import type { Random, Tile } from './spotlight-geometry.ts';
@@ -209,4 +210,4 @@ export class TwSpotlight extends StageElement {
   }
 }
 
-customElements.define(STAGE_TAGS.spotlight, TwSpotlight);
+defineOnce(STAGE_TAGS.spotlight, TwSpotlight);

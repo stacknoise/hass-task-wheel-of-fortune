@@ -5,6 +5,7 @@ import { DEFAULT_ANIMATIONS, STAGE_TAG, STAGE_TAGS } from '../constants/index.ts
 import type { AnimationKind } from '../constants/index.ts';
 import type { Stage } from './stage-base.ts';
 import type { WheelSegment } from './wheel-geometry.ts';
+import { defineOnce } from './define.ts';
 
 /**
  * Bühne der Auslosung: zeigt je nach `kind` Rad, Lostrommel, Slot-Machine, Plinko oder Scheinwerfer.
@@ -64,4 +65,4 @@ export class TwStage extends LitElement {
   }
 }
 
-customElements.define(STAGE_TAG, TwStage);
+defineOnce(STAGE_TAG, TwStage);
