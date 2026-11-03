@@ -3,9 +3,9 @@ import type { TemplateResult } from 'lit';
 
 import { FORM_TAGS } from '../constants/index.ts';
 import { emitChange } from './change.ts';
+import { defineOnce } from './define.ts';
 import { formStyles } from './formStyles.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
-import { defineOnce } from './define.ts';
 
 const LIST_ID = 'suggestions';
 
