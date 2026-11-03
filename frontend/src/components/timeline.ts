@@ -25,21 +25,31 @@ export class TwTimeline extends LitElement {
         border-radius: 8px;
         overflow: hidden;
       }
-      .blocked {
-        background: var(--tw-color-divider);
+      .outside {
+        background: color-mix(in srgb, var(--tw-color-primary) 30%, transparent);
       }
-      .tolerance {
-        background: color-mix(in srgb, var(--tw-color-primary) 40%, transparent);
-      }
-      .free {
+      .window {
         background: var(--tw-color-primary);
       }
-      .scale {
-        display: flex;
-        justify-content: space-between;
+      .marks {
+        position: relative;
+        height: 1.4em;
         font-size: 0.8em;
         color: var(--tw-color-text-muted);
-        margin-top: 4px;
+      }
+      .marks span {
+        position: absolute;
+        white-space: nowrap;
+      }
+      .target {
+        left: calc(var(--at) * 100%);
+        translate: -50% 0;
+      }
+      .earliest {
+        right: calc((1 - var(--at)) * 100%);
+      }
+      .latest {
+        left: calc(var(--at) * 100%);
       }
     `,
   ];
@@ -55,23 +65,34 @@ export class TwTimeline extends LitElement {
     this.language = '';
   }
 
-  protected override render(): TemplateResult {
-    const latest = Math.max(1, this.days + this.tolerance);
-    const span = latest;
-    const share = (days: number): string => `flex:${String(Math.max(0, days) / span)}`;
+  /** Zeitachse: Anfang, Toleranzfenster und Ende; hinter dem Fenster bleibt ein Stück Skala. */
+  #axis(): { earliest: number; latest: number; total: number } {
     const earliest = Math.max(0, this.days - this.tolerance);
+    const latest = this.days + this.tolerance;
+    return { earliest, latest, total: latest + Math.max(1, this.tolerance) };
+  }
+
+  protected override render(): TemplateResult {
+    const { earliest, latest, total } = this.#axis();
+    const at = (day: number): string => `--at:${String(day / total)}`;
+    const share = (days: number): string => `flex:${String(days / total)}`;
     return html`
       <span class="label">${translate('frequency.timeline', this.language)}</span>
-      <div class="bar" role="img" aria-label=${translate('frequency.timeline', this.language)}>
-        <span class="blocked" style=${share(earliest)}></span>
-        <span class="tolerance" style=${share(Math.min(this.tolerance, this.days))}></span>
-        <span class="free" style=${share(span - this.days)}></span>
+      <div class="marks">
+        <span class="target" style=${at(this.days)}>${this.days}</span>
       </div>
-      <div class="scale">
-        <span>${translate('timeline.day', this.language)} 0</span>
-        <span>${translate('timeline.earliest', this.language)}: ${earliest}</span>
-        <span>${this.days}</span>
-        <span>${translate('timeline.latest', this.language)}: ${latest}</span>
+      <div class="bar" role="img" aria-label=${translate('frequency.timeline', this.language)}>
+        <span class="outside" style=${share(earliest)}></span>
+        <span class="window" style=${share(latest - earliest)}></span>
+        <span class="outside" style=${share(total - latest)}></span>
+      </div>
+      <div class="marks">
+        <span class="earliest" style=${at(earliest)}
+          >${translate('timeline.earliest', this.language)}: ${earliest}</span
+        >
+        <span class="latest" style=${at(latest)}
+          >${translate('timeline.latest', this.language)}: ${latest}</span
+        >
       </div>
     `;
   }
