@@ -180,6 +180,7 @@ export const en: Record<keyof typeof de, string> = {
   'draw.reason.absent': 'Absent',
   'draw.reason.no_repeat': 'Had the task last time',
   'draw.reason.taken': 'Already has a task in this round',
+  'draw.reason.needed': 'Needed for another task',
   'draw.reason.not_allowed': 'Not allowed',
   'draw.chance': 'Chance',
   'draw.takes': 'takes over',

@@ -71,7 +71,7 @@ def test_no_repeat_ignores_holder_outside_candidates():
 
 def test_chain_order_and_conditions():
     chain = CandidateFilterFactory().create_chain(task(no_repeat=True, respect_absence=False))
-    assert [type(f) for f in chain] == [PausedFilter, NoRepeatFilter, RoundTakenFilter]
+    assert [type(f) for f in chain] == [PausedFilter, RoundTakenFilter, NoRepeatFilter]
     assert len(CandidateFilterFactory().create_chain(task())) == 3
 
 
@@ -93,3 +93,28 @@ def test_nobody_is_left_when_every_candidate_already_has_a_task():
     selection = CandidateSelector().select(task(allowed=AB), ctx)
     assert not selection.candidates
     assert reasons(selection) == {("a", ExclusionReason.TAKEN), ("b", ExclusionReason.TAKEN)}
+
+
+def test_last_person_gets_the_task_even_if_they_held_it_before():
+    ctx = make_context(
+        [make_person("a"), make_person("b")],
+        last_holders={"t1": "b"},
+        round_holders=frozenset({"a"}),
+    )
+    selection = CandidateSelector().select(task(allowed=AB, no_repeat=True), ctx)
+    assert [p.id for p in selection.candidates] == ["b"]
+    assert not selection.exclusions or ("b", ExclusionReason.REPEAT) not in reasons(selection)
+
+
+def test_person_needed_for_a_stricter_task_is_not_on_the_wheel():
+    ctx = make_context([make_person("a"), make_person("b")])
+    strict = task(id="t2", allowed=frozenset({"a"}))
+    selection = CandidateSelector().select(task(allowed=AB), ctx, (strict,))
+    assert [p.id for p in selection.candidates] == ["b"]
+    assert reasons(selection) == {("a", ExclusionReason.NEEDED)}
+
+
+def test_nobody_is_held_back_when_the_rest_cannot_use_them():
+    ctx = make_context([make_person("a"), make_person("b")])
+    selection = CandidateSelector().select(task(allowed=AB), ctx, (task(id="t2", allowed=AB),))
+    assert [p.id for p in selection.candidates] == ["a", "b"]

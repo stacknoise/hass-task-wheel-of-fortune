@@ -7,6 +7,7 @@ from typing import ClassVar, Protocol
 
 from ..enums import ExclusionReason, Load
 from ..models import Person, Task
+from .matching import safe_winners
 from .types import CandidateSelection, DrawContext, Exclusion
 
 
@@ -14,11 +15,16 @@ class CandidateFilter(Protocol):
     """Entfernt Personen aus der Kandidatenliste einer Aufgabe."""
 
     reason: ClassVar[ExclusionReason]
+    soft: ClassVar[bool]
 
     def excluded(
         self, task: Task, candidates: Sequence[Person], context: DrawContext
     ) -> frozenset[str]:
-        """Liefert die Kennungen der Personen, die dieser Filter entfernt."""
+        """Liefert die Kennungen der Personen, die dieser Filter entfernt.
+
+        Harte Filter (`soft` falsch) sperren eine Person wirklich; weiche sind nur eine Vorliebe
+        und weichen, wenn sonst niemand übrig bliebe.
+        """
         ...
 
 
@@ -26,6 +32,7 @@ class PausedFilter:
     """Pausierte Personen (Belastung `paused`) bekommen nichts."""
 
     reason: ClassVar[ExclusionReason] = ExclusionReason.PAUSED
+    soft: ClassVar[bool] = False
 
     def excluded(
         self,
@@ -41,6 +48,7 @@ class AbsenceFilter:
     """Personen, die im Fristfenster an keinem Tag anwesend sind."""
 
     reason: ClassVar[ExclusionReason] = ExclusionReason.ABSENT
+    soft: ClassVar[bool] = False
 
     def excluded(
         self, task: Task, candidates: Sequence[Person], context: DrawContext
@@ -57,6 +65,7 @@ class NoRepeatFilter:
     """Wer die Aufgabe zuletzt hatte, bleibt draußen, sofern noch andere übrig sind."""
 
     reason: ClassVar[ExclusionReason] = ExclusionReason.REPEAT
+    soft: ClassVar[bool] = True
 
     def excluded(
         self, task: Task, candidates: Sequence[Person], context: DrawContext
@@ -73,6 +82,7 @@ class RoundTakenFilter:
     """Wer in dieser Runde schon eine Aufgabe hat, bekommt keine zweite."""
 
     reason: ClassVar[ExclusionReason] = ExclusionReason.TAKEN
+    soft: ClassVar[bool] = False
 
     def excluded(
         self,
@@ -86,12 +96,12 @@ class RoundTakenFilter:
 
 type FilterBuilder = tuple[Callable[[Task], bool], CandidateFilter]
 
-# Reihenfolge laut KONZEPT §5.2; die Bedingung entscheidet, ob der Filter für die Aufgabe gilt.
+# Reihenfolge laut KONZEPT §5.2, harte Filter vor weichen; die Bedingung wählt je Aufgabe.
 _FILTERS: tuple[FilterBuilder, ...] = (
     (lambda _task: True, PausedFilter()),
     (lambda task: task.respect_absence, AbsenceFilter()),
-    (lambda task: task.no_repeat, NoRepeatFilter()),
     (lambda _task: True, RoundTakenFilter()),
+    (lambda task: task.no_repeat, NoRepeatFilter()),
 )
 
 
@@ -113,12 +123,60 @@ class CandidateSelector:
 
     factory: CandidateFilterFactory = CandidateFilterFactory()  # noqa: RUF009
 
-    def select(self, task: Task, context: DrawContext) -> CandidateSelection:
-        """Erlaubte, bekannte Personen (nach Kennung sortiert) durch die Filterkette schicken."""
+    def select(
+        self, task: Task, context: DrawContext, rest: Sequence[Task] = ()
+    ) -> CandidateSelection:
+        """Erlaubte, bekannte Personen (nach Kennung sortiert) durch die Filterkette schicken.
+
+        Harte Filter sperren, danach bleiben nur Personen, die den Rest der Runde nicht
+        unlösbar machen (`rest` sind die noch folgenden Aufgaben); erst dann greifen weiche
+        Filter wie „nicht zweimal dieselbe Aufgabe“.
+        """
         remaining = [context.persons[pid] for pid in sorted(context.persons) if task.allows(pid)]
         exclusions: list[Exclusion] = []
-        for flt in self.factory.create_chain(task):
+        chain = self.factory.create_chain(task)
+        remaining = self._apply(
+            tuple(f for f in chain if not f.soft), task, context, remaining, exclusions
+        )
+        if rest:
+            keep = self._safe(remaining, rest, context)
+            exclusions.extend(
+                Exclusion(p.id, ExclusionReason.NEEDED) for p in remaining if p.id not in keep
+            )
+            remaining = [p for p in remaining if p.id in keep]
+        remaining = self._apply(
+            tuple(f for f in chain if f.soft), task, context, remaining, exclusions
+        )
+        return CandidateSelection(tuple(remaining), tuple(exclusions))
+
+    def eligible(self, task: Task, context: DrawContext) -> frozenset[str]:
+        """Personen, die `task` bekommen dürfen (nur harte Filter), für die Zuordnung der Runde."""
+        remaining = [context.persons[pid] for pid in sorted(context.persons) if task.allows(pid)]
+        hard = tuple(f for f in self.factory.create_chain(task) if not f.soft)
+        remaining = self._apply(hard, task, context, remaining, [])
+        return frozenset(p.id for p in remaining)
+
+    def _safe(
+        self,
+        candidates: Sequence[Person],
+        rest: Sequence[Task],
+        context: DrawContext,
+    ) -> frozenset[str]:
+        """Kandidaten, bei denen insgesamt so viele Aufgaben verteilt werden wie möglich."""
+        options = [self.eligible(t, context) for t in rest]
+        return frozenset(safe_winners(frozenset(p.id for p in candidates), options))
+
+    @staticmethod
+    def _apply(
+        chain: Sequence[CandidateFilter],
+        task: Task,
+        context: DrawContext,
+        remaining: list[Person],
+        exclusions: list[Exclusion],
+    ) -> list[Person]:
+        """Schickt die Kandidaten durch `chain` und trägt die Ausschlüsse ein."""
+        for flt in chain:
             removed = flt.excluded(task, remaining, context)
             exclusions.extend(Exclusion(pid, flt.reason) for pid in sorted(removed))
             remaining = [p for p in remaining if p.id not in removed]
-        return CandidateSelection(tuple(remaining), tuple(exclusions))
+        return remaining

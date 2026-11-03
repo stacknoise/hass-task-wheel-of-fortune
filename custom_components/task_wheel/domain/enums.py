@@ -116,6 +116,7 @@ class ExclusionReason(StrEnum):
     ABSENT = "absent"
     REPEAT = "no_repeat"
     TAKEN = "taken"
+    NEEDED = "needed"
 
 
 class AnimationKind(StrEnum):
