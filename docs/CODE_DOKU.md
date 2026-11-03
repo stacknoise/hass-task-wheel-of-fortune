@@ -167,7 +167,7 @@ Verhalten auffällt.
 | Messung | Ziel | Ist |
 |---|---|---|
 | Runde mit 10 Aufgaben × 6 Personen | < 5 ms | ca. 1,6 ms (AP-06, `tests/domain/draw/test_engine.py`) |
-| Runde mit 100 Aufgaben × 30 Personen (Obergrenze) | < 1 s | ca. 120–130 ms, mit 2000 Runden Verlauf ca. 130–140 ms |
+| Runde mit 100 Aufgaben × 30 Personen (Obergrenze) | < 5 s (CI misst mit Abdeckung ca. 10× langsamer) | ca. 120–130 ms, mit 2000 Runden Verlauf ca. 130–140 ms |
 | Snapshot im Backend (Obergrenze, 2000 Runden Verlauf) | < 100 ms | 4 ms (vor AP-18: 48 ms, siehe Änderungsprotokoll) |
 | Delta an 50 Abonnenten (`publish`) | < 100 ms | 4 ms (vor AP-18: 49 ms) |
 | Statistik für 12 Monate und 52 Wochen | < 250 ms | ca. 18 ms |
