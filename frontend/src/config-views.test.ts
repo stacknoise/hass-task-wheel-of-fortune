@@ -99,6 +99,10 @@ function failNext(hass: FakeHass, error: { code: string; message: string }): voi
   };
 }
 
+/** Der letzte Befehl, der etwas ändert (die Vorschau-Abfragen zählen nicht). */
+const lastChange = (hass: FakeHass): FakeHass['messages'][number] | undefined =>
+  hass.messages.filter((message) => !message.type.endsWith('/preview')).at(-1);
+
 async function addNew(view: El): Promise<void> {
   await click(view, '.top .primary');
 }
@@ -134,9 +138,9 @@ describe('Personen', () => {
     say([...editor.querySelectorAll('tw-field')].at(-1) as El, ' notify.berta ');
     await click(view, 'section.editor .primary');
     await vi.waitFor(() => {
-      expect(hass.messages.at(-1)?.type).toBe('task_wheel/person/create');
+      expect(lastChange(hass)?.type).toBe('task_wheel/person/create');
     });
-    expect(hass.messages.at(-1)?.['person']).toEqual({
+    expect(lastChange(hass)?.['person']).toEqual({
       name: 'Berta',
       color: '#e8590c',
       load: 'half',
@@ -146,6 +150,34 @@ describe('Personen', () => {
     await vi.waitFor(() => {
       expect(view.shadowRoot?.querySelector('section.editor')).toBeNull();
     });
+  });
+
+  it('zeigt die Anwesenheitsvorschau des Backends und fragt bei jeder Änderung der Regeln neu', async () => {
+    const { hass, view } = await open('/persons');
+    hass.replies.set('task_wheel/availability/preview', { present: [true, false, true] });
+    await addNew(view);
+    const editor = q(view.shadowRoot, 'section.editor');
+    const absences = [{ kind: 'weekly_days', weekdays: [1] }];
+    say(q(editor, 'tw-absence-editor'), absences);
+    const days = async (): Promise<number> => {
+      await view.updateComplete;
+      const preview = q(q(editor, 'tw-absence-editor').shadowRoot, 'tw-week-preview');
+      return preview.shadowRoot?.querySelectorAll('.day').length ?? 0;
+    };
+    await vi.waitFor(async () => {
+      expect(await days()).toBe(3);
+    });
+    const asked = hass.messages.filter((m) => m.type === 'task_wheel/availability/preview');
+    expect(asked.at(-1)?.['absences']).toEqual(absences);
+
+    hass.replies.set('task_wheel/availability/preview', new Error('ungültig'));
+    say(q(editor, 'tw-absence-editor'), [...absences, { kind: 'weekly_days', weekdays: [2] }]);
+    await vi.waitFor(() => {
+      expect(
+        hass.messages.filter((m) => m.type === 'task_wheel/availability/preview'),
+      ).toHaveLength(asked.length + 1);
+    });
+    expect(await days()).toBe(3);
   });
 
   it('zeigt Fehler des Backends am Feld und im Hinweis', async () => {

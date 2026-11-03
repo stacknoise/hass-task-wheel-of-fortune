@@ -16,6 +16,7 @@ import { FREQUENCY_BUILDERS } from '../state/index.ts';
 import type { FrequencyWire } from '../state/index.ts';
 import { ConfigView } from './config-view.ts';
 import type { ConfigTexts } from './config-view.ts';
+import { defineOnce } from '../components/define.ts';
 
 interface TaskDraft {
   readonly name: string;
@@ -137,4 +138,4 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
   }
 }
 
-customElements.define(VIEW_TAGS.tasks, TasksView);
+defineOnce(VIEW_TAGS.tasks, TasksView);

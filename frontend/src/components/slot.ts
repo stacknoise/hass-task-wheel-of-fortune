@@ -44,6 +44,7 @@ import {
 } from './slot-geometry.ts';
 import type { SlotCell } from './slot-geometry.ts';
 import { StageElement, sharesOf } from './stage-base.ts';
+import { defineOnce } from './define.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 
 const STRIP_CLASS = 'strip';
@@ -265,4 +266,4 @@ export class TwSlot extends StageElement {
   }
 }
 
-customElements.define(STAGE_TAGS.slot, TwSlot);
+defineOnce(STAGE_TAGS.slot, TwSlot);

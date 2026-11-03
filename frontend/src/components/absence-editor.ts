@@ -4,7 +4,7 @@ import { repeat } from 'lit/directives/repeat.js';
 
 import { ABSENCE_KINDS, FORM_LIMITS, FORM_TAGS } from '../constants/index.ts';
 import type { AbsenceKind } from '../constants/index.ts';
-import { ABSENCE_BUILDERS, presencePreview } from '../state/index.ts';
+import { ABSENCE_BUILDERS } from '../state/index.ts';
 import type { AbsenceWire } from '../state/index.ts';
 import { emitChange, onChange } from './change.ts';
 import './chip-select.ts';
@@ -16,15 +16,17 @@ import './select.ts';
 import './stepper.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import './week-preview.ts';
+import { defineOnce } from './define.ts';
 
 type Renderer = (absence: never, index: number) => TemplateResult;
 
-/** Liste der Abwesenheitsregeln einer Person mit Vorschau der nächsten Wochen. */
+/** Liste der Abwesenheitsregeln einer Person; die Vorschau der nächsten Wochen kommt von außen (`present`). */
 export class TwAbsenceEditor extends LocalizedElement {
   static override properties = {
     ...LocalizedElement.properties,
     value: { attribute: false },
     today: { type: String },
+    present: { attribute: false },
   };
 
   static override styles = [
@@ -58,6 +60,7 @@ export class TwAbsenceEditor extends LocalizedElement {
 
   declare value: readonly AbsenceWire[];
   declare today: string;
+  declare present: readonly boolean[];
 
   /** Eingabemaske je Art; die Tabelle ersetzt eine Verzweigung nach `kind`. */
   readonly #renderers: Readonly<Record<AbsenceKind, Renderer>> = {
@@ -134,6 +137,7 @@ export class TwAbsenceEditor extends LocalizedElement {
     super();
     this.value = [];
     this.today = '';
+    this.present = [];
   }
 
   protected override render(): TemplateResult {
@@ -155,10 +159,7 @@ export class TwAbsenceEditor extends LocalizedElement {
           ${this.text('absence.add')}
         </button>
       </div>
-      <tw-week-preview
-        .language=${this.language}
-        .present=${presencePreview(this.value, this.today)}
-      ></tw-week-preview>
+      <tw-week-preview .language=${this.language} .present=${this.present}></tw-week-preview>
     `;
   }
 
@@ -202,4 +203,4 @@ export class TwAbsenceEditor extends LocalizedElement {
   }
 }
 
-customElements.define(FORM_TAGS.absenceEditor, TwAbsenceEditor);
+defineOnce(FORM_TAGS.absenceEditor, TwAbsenceEditor);

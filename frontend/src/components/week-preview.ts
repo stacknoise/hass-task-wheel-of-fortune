@@ -7,6 +7,7 @@ import { translate } from '../i18n/index.ts';
 import { WEEKDAY_TEXT } from './options.ts';
 import { formStyles } from './formStyles.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
+import { defineOnce } from './define.ts';
 
 /** Anwesenheit in Wochenzeilen (Montag bis Sonntag); `present` enthält einen Wert je Tag. */
 export class TwWeekPreview extends LitElement {
@@ -75,4 +76,4 @@ export class TwWeekPreview extends LitElement {
   }
 }
 
-customElements.define(FORM_TAGS.weekPreview, TwWeekPreview);
+defineOnce(FORM_TAGS.weekPreview, TwWeekPreview);

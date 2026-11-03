@@ -20,7 +20,6 @@ export const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
 export const WEEKDAY_COUNT = WEEKDAYS.length;
 export const MS_PER_DAY = 86_400_000;
-export const PREVIEW_WEEKS = 4;
 export const TIME_INPUT_LENGTH = 5;
 export const DATE_LENGTH = 10;
 

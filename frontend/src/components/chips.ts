@@ -4,6 +4,7 @@ import { repeat } from 'lit/directives/repeat.js';
 
 import { COMPONENT_TAGS, EVENT_CHIP_SELECT } from '../constants/index.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
+import { defineOnce } from './define.ts';
 
 export interface ChipItem {
   readonly id: string;
@@ -97,4 +98,4 @@ export class TwChips extends LitElement {
   }
 }
 
-customElements.define(COMPONENT_TAGS.chips, TwChips);
+defineOnce(COMPONENT_TAGS.chips, TwChips);

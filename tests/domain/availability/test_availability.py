@@ -139,3 +139,10 @@ def test_factory_rejects_mismatched_registry_entry() -> None:
     wrong = AvailabilityRuleFactory({"once": RULE_BUILDERS["weekly_days"]})
     with pytest.raises(UnknownKindError):
         wrong.create(once)
+
+
+def test_week_preview_starts_on_monday_of_the_week() -> None:
+    avail = PersonAvailability.of_rules((WeeklyDaysAbsence(weekdays=frozenset({0})),))
+    days = avail.week_preview(D(2026, 11, 4), 1)
+    assert days[0].day == D(2026, 11, 2)
+    assert [entry.present for entry in days] == [False, True, True, True, True, True, True]
