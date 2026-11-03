@@ -1,1 +1,62 @@
-"""Platzhalter für Schicht 0 (`limits`); wird in AP-02 gefüllt."""
+"""Grenzwerte für Eingaben und Ressourcen (Sicherheit, KONZEPT §8)."""
+
+import re
+from typing import Final
+
+# Ressourcen
+MAX_PERSONS: Final = 30
+MAX_TASKS: Final = 100
+MAX_SCHEDULES: Final = 30
+MAX_OPEN_PANEL_ROUNDS: Final = 5
+MAX_ABSENCES_PER_PERSON: Final = 20
+MAX_TASKS_PER_SCHEDULE: Final = MAX_TASKS
+MAX_ASSIGNMENTS_PER_ROUND: Final = MAX_TASKS
+
+# Zeichenketten
+NAME_MIN_LENGTH: Final = 1
+NAME_MAX_LENGTH: Final = 60
+SLUG_MAX_LENGTH: Final = 64
+ID_MAX_LENGTH: Final = 64
+NOTIFY_TARGET_MAX_LENGTH: Final = 255
+COLOR_PATTERN: Final = re.compile(r"^#[0-9a-f]{6}$")
+SLUG_PATTERN: Final = re.compile(r"^[a-z0-9_]+$")
+
+# Zeit
+WEEKDAY_MIN: Final = 0
+WEEKDAY_MAX: Final = 6
+WEEKDAY_COUNT: Final = WEEKDAY_MAX - WEEKDAY_MIN + 1
+RHYTHM_CYCLE_MIN: Final = 1
+RHYTHM_CYCLE_MAX: Final = 8
+EVERY_N_WEEKS_MIN: Final = 1
+EVERY_N_WEEKS_MAX: Final = 52
+REMIND_AFTER_DAYS_MIN: Final = 1
+REMIND_AFTER_DAYS_MAX: Final = 365
+
+# Aufgaben und Häufigkeit
+POINTS_MIN: Final = 1
+POINTS_MAX: Final = 100
+DUE_DAYS_MIN: Final = 1
+DUE_DAYS_MAX: Final = 365
+PERIOD_COUNT_MIN: Final = 1
+PERIOD_COUNT_MAX: Final = 50
+INTERVAL_DAYS_MIN: Final = 1
+INTERVAL_DAYS_MAX: Final = 365
+INTERVAL_TOLERANCE_MIN: Final = 0
+
+# Zuteilungen
+CHANCE_MIN: Final = 0.0
+CHANCE_MAX: Final = 1.0
+
+# Einstellungen
+JOKERS_MIN: Final = 0
+JOKERS_MAX: Final = 31
+FAIRNESS_WINDOW_MIN: Final = 1
+FAIRNESS_WINDOW_MAX: Final = 365
+RETENTION_MIN: Final = 30
+RETENTION_MAX: Final = 3650
+LATE_FACTOR_MIN: Final = 0.0
+LATE_FACTOR_MAX: Final = 1.0
+MISSED_FACTOR_MIN: Final = -1.0
+MISSED_FACTOR_MAX: Final = 0.0
+GRACE_HOURS_MIN: Final = 0
+GRACE_HOURS_MAX: Final = 168
