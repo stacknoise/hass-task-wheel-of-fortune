@@ -92,13 +92,6 @@ cd frontend && npm ci && npm run lint && npm run typecheck && npm test && npm ru
 python3 docs/code-doku/generate.py --check
 ```
 
-### Lokale Testumgebung (Docker)
-
-Zum Ausprobieren dient die vorhandene lokale Home-Assistant-Instanz in Docker (`http://localhost:18123`), die auch das
-Projekt *HASS Test Data Creator* nutzt. Die Integration wird dort als zusätzlicher Read-only-Mount
-`custom_components/task_wheel` eingebunden; es wird keine zweite Instanz gestartet. Ablauf und Regeln stehen in
-[dev/README.md](dev/README.md).
-
 ### Continuous Integration
 
 Pull Requests und `main` durchlaufen die Jobs `hassfest`, `HACS validation`, `lint`, `typecheck`, `architecture`

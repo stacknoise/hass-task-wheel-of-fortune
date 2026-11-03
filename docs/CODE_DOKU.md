@@ -82,6 +82,7 @@ steht „–“.
 
 | Modul | Schicht | Verantwortung | Nutzt | LOC | CC | MI | Ca | Ce | I | Test |
 |---|---|---|---|---|---|---|---|---|---|---|
+| 2026-11-03 | – | – | `README.md` | geändert: Abschnitt „Lokale Testumgebung (Docker)“ entfernt; `dev/README.md` bleibt bestehen. Kein Code betroffen | – |
 | `const/keys.py` | Const | Speicher- und API-Schlüssel | – | – | – | – | – | – | – | – |
 | `const/limits.py` | Const | Grenzwerte | – | – | – | – | – | – | – | – |
 | `const/defaults.py` | Const | Standardwerte | – | – | – | – | – | – | – | – |
