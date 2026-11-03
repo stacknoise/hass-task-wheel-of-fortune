@@ -28,7 +28,7 @@ import {
 import { formatDateTime, formatNumber } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
-import { AsyncValue, StoreController, indexById } from '../state/index.ts';
+import { AsyncValue, RevisionTracker, StoreController, indexById } from '../state/index.ts';
 import { personChips } from './person-chips.ts';
 import { assignmentGroups } from './overview-assignments.ts';
 import type { AssignmentHandlers } from './overview-assignments.ts';
@@ -115,6 +115,7 @@ export class TwOverviewView extends LitElement {
   readonly #store = new StoreController(this);
   readonly #points = new AsyncValue<StatisticsReport>(this);
   readonly #activity = new AsyncValue<HistoryPage>(this);
+  readonly #revision = new RevisionTracker();
   #started = false;
 
   constructor() {
@@ -132,7 +133,8 @@ export class TwOverviewView extends LitElement {
 
   protected override willUpdate(): void {
     const client = this.#store.client;
-    if (client && !this.#started) {
+    const changed = this.#revision.advance(this.#store.state?.snapshot);
+    if (client && (!this.#started || changed)) {
       this.#started = true;
       this.#refresh(client);
     }

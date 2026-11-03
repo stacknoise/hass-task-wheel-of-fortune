@@ -102,6 +102,16 @@ describe('Übersicht', () => {
     });
   });
 
+  it('lädt Punkte und Aktivität neu, wenn sich Zuteilungen live ändern', async () => {
+    const { hass } = await mount();
+    const loads = () => hass.calls.filter((call) => call === WS_STATISTICS_GET).length;
+    expect(loads()).toBe(1);
+    hass.emit({ assignments: { upsert: [], remove: ['a1'] } });
+    await vi.waitFor(() => {
+      expect(loads()).toBe(2);
+    });
+  });
+
   it('bietet nur erlaubte, nicht pausierte Personen zum Tausch an', async () => {
     const { view, hass } = await mount();
     await choose(view, 'Tauschen');
