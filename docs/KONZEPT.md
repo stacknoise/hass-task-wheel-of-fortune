@@ -351,6 +351,20 @@ Präfix `task_wheel/`. Befehle je Bereich in eigenen Modulen; jeder Befehl hat e
 `subscribe` schickt nach dem ersten Snapshot nur noch Änderungen (Delta je Objekt-ID). Das hält die Datenmenge
 klein und das Panel reaktiv.
 
+**Nachrichten (umgesetzt in AP-10).** Konfigurationsobjekte stehen unter dem Schlüssel ihrer Art:
+`person/create {person: {…}}`, `person/update {person_id, person: {…nur geänderte Felder…}}`,
+`person/delete {person_id}`; ebenso `task/*` und `schedule/*`; `settings/update {settings: {…}}`. Die Kennung
+vergibt das Backend, der Kurzname (`slug`) wird bei Bedarf aus dem Namen abgeleitet. Schemas lehnen unbekannte
+Felder, zu lange Zeichenketten und Listen sowie zu tiefe Verschachtelung ab; die Bedeutung prüfen die Modelle.
+Fachfehler kommen als Fehlerantwort, deren `code` der Übersetzungsschlüssel ist (z. B. `not_found`,
+`limit_reached`, `in_use`). Wer ein Element löscht, das noch gebraucht wird (letzte erlaubte Person einer Aufgabe,
+letzte Aufgabe eines Zeitplans), bekommt `in_use`; sonst wird es aus den Verweisen gestrichen. Ist
+`panel_admin_only` gesetzt, gilt für alle Befehle: nur Administratoren.
+
+`snapshot` und die Antwort auf `subscribe` enthalten `persons` (mit `jokers_left`), `tasks`, `schedules` (mit
+`next_run`), die offenen `assignments`, die offenen `panel_rounds`, `settings` und `now`. Ein Delta nennt je
+Sammlung `{upsert: […], remove: [ids]}` und bei Änderung die gesamten `settings`.
+
 ### 6.5 Panel
 
 Registrierung über `panel_custom.async_register_panel` (Seitenleiste „Glücksrad“, Symbol `mdi:ferris-wheel`

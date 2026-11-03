@@ -22,6 +22,7 @@ from .infrastructure.repository.factory import create_config_store, create_histo
 from .infrastructure.scheduler import HassTimerScheduler
 from .runtime import TaskWheelData, compose
 from .services import async_register_services
+from .websocket import async_register_commands
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -33,8 +34,9 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Meldet die Dienste an; sie gehören der Integration, nicht der einzelnen Config Entry."""
+    """Meldet Dienste und WebSocket-Befehle an; sie gehören nicht einer einzelnen Config Entry."""
     async_register_services(hass)
+    async_register_commands(hass)
     return True
 
 

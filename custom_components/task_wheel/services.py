@@ -29,6 +29,7 @@ from .const.limits import REF_MAX_LENGTH, REF_MIN_LENGTH
 from .domain.enums import RoundOrigin
 from .domain.errors import TaskWheelError
 from .domain.models import OnceAbsence, Person, Schedule, Task
+from .entry_lookup import loaded_runtime
 from .runtime import TaskWheelData
 
 RESOURCE_PERSON: Final = "person"
@@ -152,10 +153,9 @@ def to_service_error(err: TaskWheelError) -> ServiceValidationError:
 
 def _runtime(hass: HomeAssistant) -> TaskWheelData:
     """Laufzeitdaten der geladenen Config Entry; ohne sie sind die Dienste nicht nutzbar."""
-    entries = hass.config_entries.async_loaded_entries(DOMAIN)
-    if not entries:
+    data = loaded_runtime(hass)
+    if data is None:
         raise ServiceValidationError(translation_domain=DOMAIN, translation_key=ERR_NOT_LOADED)
-    data: TaskWheelData = entries[0].runtime_data
     return data
 
 
@@ -168,6 +168,8 @@ def _service(hass: HomeAssistant, handler: Handler) -> Callable[[ServiceCall], A
             handler(data, service_call.data, data.clock())
         except TaskWheelError as err:
             raise to_service_error(err) from err
+        finally:
+            data.live.publish()
 
     return call
 
