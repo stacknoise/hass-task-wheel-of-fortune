@@ -3,7 +3,6 @@
 import datetime as dt
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -27,11 +26,8 @@ from ..const.entities import (
 from ..domain.models import Person, Schedule
 from ..runtime import TaskWheelData
 from .base import Owner, TaskWheelEntity
-from .factory import EntityFactory, EntityGroup, active_schedules
+from .factory import EntityFactory, EntityGroup, TaskWheelEntry, active_schedules
 from .signals import signal_person, signal_schedule
-
-if TYPE_CHECKING:
-    from .. import TaskWheelConfigEntry
 
 type ValueFn = Callable[[EntityStateService, str, dt.datetime], StateType | dt.datetime]
 
@@ -136,7 +132,7 @@ GROUPS = (
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: "TaskWheelConfigEntry", async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant, entry: TaskWheelEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Richtet die Sensoren ein."""
     EntityFactory(hass, entry, Platform.SENSOR, async_add_entities, GROUPS).start()

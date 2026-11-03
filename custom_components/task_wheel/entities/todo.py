@@ -1,7 +1,5 @@
 """To-do-Liste je Person: offene Zuteilungen; Abhaken erledigt die Zuteilung."""
 
-from typing import TYPE_CHECKING
-
 from homeassistant.components.todo import TodoItem, TodoListEntity
 from homeassistant.components.todo.const import TodoItemStatus, TodoListEntityFeature
 from homeassistant.const import Platform
@@ -18,11 +16,8 @@ from ..domain.models import Person
 from ..runtime import TaskWheelData
 from ..services import to_service_error
 from .base import Owner, TaskWheelEntity
-from .factory import EntityFactory, EntityGroup
+from .factory import EntityFactory, EntityGroup, TaskWheelEntry
 from .signals import signal_person
-
-if TYPE_CHECKING:
-    from .. import TaskWheelConfigEntry
 
 # `name=None`: die Liste ist die Hauptentität des Geräts (`todo.task_wheel_anna`)
 TODO_DESCRIPTION = EntityDescription(key=KEY_TODO_TASKS, name=None)
@@ -77,7 +72,7 @@ def _lists(data: TaskWheelData, person: Person) -> list[PersonTodo]:
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: "TaskWheelConfigEntry", async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant, entry: TaskWheelEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Richtet die To-do-Listen ein."""
     group = EntityGroup(lambda config: config.persons, _lists, signal_person)

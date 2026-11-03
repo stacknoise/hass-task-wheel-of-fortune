@@ -21,6 +21,7 @@ from .base import device_name, item_id_of
 PLATFORMS: tuple[Platform, ...] = (Platform.SENSOR, Platform.TODO, Platform.BUTTON)
 
 type Item = Person | Schedule
+type TaskWheelEntry = ConfigEntry[TaskWheelData]
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,7 +49,7 @@ class EntityFactory:
     def __init__(
         self,
         hass: HomeAssistant,
-        entry: ConfigEntry[TaskWheelData],
+        entry: TaskWheelEntry,
         domain: Platform,
         add_entities: AddEntitiesCallback,
         groups: Sequence[EntityGroup[Person] | EntityGroup[Schedule]],

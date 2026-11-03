@@ -1,7 +1,5 @@
 """Button „Auslosen“ je Zeitplan (Dashboard, Automationen)."""
 
-from typing import TYPE_CHECKING
-
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -14,11 +12,8 @@ from ..domain.models import Schedule
 from ..runtime import TaskWheelData
 from ..services import to_service_error
 from .base import Owner, TaskWheelEntity
-from .factory import EntityFactory, EntityGroup, active_schedules
+from .factory import EntityFactory, EntityGroup, TaskWheelEntry, active_schedules
 from .signals import signal_schedule
-
-if TYPE_CHECKING:
-    from .. import TaskWheelConfigEntry
 
 DRAW_BUTTON = ButtonEntityDescription(key=KEY_BUTTON_DRAW, translation_key=KEY_BUTTON_DRAW)
 
@@ -44,7 +39,7 @@ def _buttons(data: TaskWheelData, schedule: Schedule) -> list[DrawButton]:
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: "TaskWheelConfigEntry", async_add_entities: AddEntitiesCallback
+    hass: HomeAssistant, entry: TaskWheelEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Richtet die Buttons ein."""
     group = EntityGroup(active_schedules, _buttons, signal_schedule)
