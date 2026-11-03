@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from tools.code_doku import constants as c
+from tools.code_doku.check import find_violations
 from tools.code_doku.cli import run
 from tools.code_doku.project import ScanError, build_report
 from tools.code_doku.render import to_json
@@ -146,3 +147,18 @@ def test_cli_ok_and_errors(project: Path, capsys: pytest.CaptureFixture[str]) ->
     assert run(["--root", str(project), "--check"], project) == c.EXIT_ERROR
     (project / "docs/CODE_DOKU.md").unlink()
     assert run(["--root", str(project)], project) == c.EXIT_ERROR
+
+
+def test_factories_are_exempt_from_instability(project: Path) -> None:
+    pkg = c.SRC_PYTHON
+    write(
+        project,
+        f"{pkg}/domain/thing_factory.py",
+        "from .models import Model\nfrom ..const import NAME\n",
+    )
+    write(project, f"{pkg}/domain/user.py", "from .thing_factory import Model\n")
+    report = build_report(project)
+    factory = next(m for m in report.modules if m.path.endswith("thing_factory.py"))
+    assert factory.ca and factory.instability > 0.5
+    findings = find_violations(report, load_thresholds(project / c.DEFAULT_DOC))
+    assert all("thing_factory" not in f.location for f in findings)

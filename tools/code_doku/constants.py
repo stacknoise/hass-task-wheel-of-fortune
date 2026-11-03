@@ -297,3 +297,5 @@ TOK_FUNCTION: Final = "function"
 TOK_ASYNC: Final = "async"
 TOK_BRACKETS_OPEN: Final = "([{"
 TS_MODULE_DOC_MAX_LINE: Final = 2
+
+FACTORY_MARKER: Final = "factory"

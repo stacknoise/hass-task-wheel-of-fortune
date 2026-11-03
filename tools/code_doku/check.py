@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .constants import (
+    FACTORY_MARKER,
     LAYER_DOMAIN,
     SCOPE_DOMAIN_INSTABILITY,
     SCOPE_METHOD_CC,
@@ -46,13 +47,20 @@ def _has_methods(module: ModuleInfo) -> bool:
     return bool(module.functions) or any(t.methods for t in module.types)
 
 
+def _is_factory(module: ModuleInfo) -> bool:
+    """Fabriken kennen ihre Strategien und sind gewollt instabil (Entscheidung Anton, AP-01)."""
+    return FACTORY_MARKER in module.path.rsplit("/", 1)[-1]
+
+
 MEASUREMENTS: dict[str, Callable[[Report], Iterator[Measurement]]] = {
     SCOPE_METHOD_CC: lambda r: ((where, m.metrics.cc) for where, m in _methods(r)),
     SCOPE_METHOD_LOC: lambda r: ((where, m.metrics.loc) for where, m in _methods(r)),
     SCOPE_MODULE_MI: lambda r: _per_module(r, lambda m: m.metrics.mi, rated=_has_methods),
     SCOPE_MODULE_LOC: lambda r: _per_module(r, lambda m: m.metrics.loc),
     SCOPE_DOMAIN_INSTABILITY: lambda r: (
-        (m.path, m.instability) for m in r.modules if m.layer == LAYER_DOMAIN and m.ca
+        (m.path, m.instability)
+        for m in r.modules
+        if m.layer == LAYER_DOMAIN and m.ca and not _is_factory(m)
     ),
 }
 
