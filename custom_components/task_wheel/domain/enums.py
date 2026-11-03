@@ -113,3 +113,4 @@ class ExclusionReason(StrEnum):
     PAUSED = "paused"
     ABSENT = "absent"
     REPEAT = "no_repeat"
+    TAKEN = "taken"
