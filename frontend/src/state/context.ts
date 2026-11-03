@@ -1,6 +1,7 @@
 import { ContextConsumer, createContext } from '@lit/context';
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 
+import type { ApiClient } from '../api/index.ts';
 import type { Store, StoreState } from './store.ts';
 
 export const storeContext = createContext<Store>(Symbol('task-wheel-store'));
@@ -28,6 +29,11 @@ export class StoreController implements ReactiveController {
   /** Der aktuelle Stand; vor dem Eintreffen des Stores leer. */
   get state(): StoreState | undefined {
     return this.#store?.state;
+  }
+
+  /** Der API-Zugang des Stores; vor dem Eintreffen des Stores leer. */
+  get client(): ApiClient | undefined {
+    return this.#store?.client;
   }
 
   hostDisconnected(): void {

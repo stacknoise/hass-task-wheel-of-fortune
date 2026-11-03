@@ -7,6 +7,8 @@ export const DEFAULT_LANGUAGE = 'en';
 export const COMPONENT_TAGS = {
   tabBar: 'tw-tab-bar',
   stat: 'tw-stat',
+  wheel: 'tw-wheel',
+  confetti: 'tw-confetti',
 } as const;
 
 export const VIEW_TAGS = {

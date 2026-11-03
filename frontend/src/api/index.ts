@@ -6,7 +6,13 @@ export type {
   Delta,
   HassApi,
   HassConnection,
+  PanelRoundWire,
   Settings,
   Snapshot,
+  SpinReply,
+  SpinRestReply,
+  TaskDrawWire,
+  WireExclusion,
   WireObject,
+  WireSegment,
 } from './types.ts';

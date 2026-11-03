@@ -30,6 +30,11 @@ export class Store {
     this.#client = client;
   }
 
+  /** Der Zugang zur API für Befehle (Auslosen, Erledigen …). */
+  get client(): ApiClient {
+    return this.#client;
+  }
+
   get state(): StoreState {
     return this.#state;
   }
