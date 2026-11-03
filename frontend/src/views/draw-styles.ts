@@ -229,6 +229,9 @@ export const drawStyles: CSSResult[] = [
       display: grid;
       grid-template-columns: minmax(0, 1fr);
     }
+    .card .button {
+      width: 100%;
+    }
     .people .hint {
       display: block;
       margin-top: var(--tw-space-l);
