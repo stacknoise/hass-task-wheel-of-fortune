@@ -334,7 +334,7 @@ export class TwOverviewView extends LitElement {
                         }
                         ·
                         ${taskById.get(assignment.task_id)?.name ?? this.#text('common.unknownTask')}
-                        <span class="muted">${formatDateTime(at, this.language)}</span>
+                        <div class="muted">${formatDateTime(at, this.language)}</div>
                       </span>
                       <tw-badge class="fixed" tone=${STATUS_TONES[assignment.status]}
                         >${this.#text(`status.${assignment.status}`)}</tw-badge
