@@ -43,6 +43,24 @@
       "base": "Invalid setting."
     }
   },
+  "entity": {
+    "sensor": {
+      "open": {
+        "name": "Open"
+      },
+      "points": {
+        "name": "Points"
+      },
+      "next_draw": {
+        "name": "Next draw"
+      }
+    },
+    "button": {
+      "draw": {
+        "name": "Draw"
+      }
+    }
+  },
   "services": {
     "draw": {
       "name": "Draw",
@@ -160,6 +178,9 @@
     },
     "out_of_range": {
       "message": "The value is outside {low} to {high}."
+    },
+    "todo_complete_only": {
+      "message": "The list only allows ticking off tasks."
     },
     "notify_target_invalid": {
       "message": "The notification target \"{target}\" does not exist. Existing notify entities and services are allowed."

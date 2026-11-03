@@ -13,6 +13,8 @@ from .application.fanout import FanOutRoundEvents
 from .application.notification_service import NotificationService
 from .const import DOMAIN
 from .const.notification import TEXTS_DIRECTORY
+from .entities.factory import PLATFORMS
+from .entities.signals import EntityEvents
 from .infrastructure.events import HassRoundEvents
 from .infrastructure.notifier.hass_notifier import HassNotifier
 from .infrastructure.notifier.texts import load_catalog
@@ -54,13 +56,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: TaskWheelConfigEntry) ->
         config,
         history,
         timers=HassTimerScheduler(hass),
-        events=FanOutRoundEvents(HassRoundEvents(hass, config), notifications),
+        events=FanOutRoundEvents(HassRoundEvents(hass, config), EntityEvents(hass), notifications),
         notifications=notifications,
         clock=dt_util.now,
         spawn=hass.async_create_task,
     )
     entry.runtime_data = data
     await async_register_panel(hass, require_admin=config.settings.panel_admin_only)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     now = data.clock()
     data.schedules.arm_all(now)
     data.maintenance.start(now)
@@ -69,6 +72,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: TaskWheelConfigEntry) ->
 
 async def async_unload_entry(hass: HomeAssistant, entry: TaskWheelConfigEntry) -> bool:
     """Meldet alle Zeitgeber ab und sichert den Bestand."""
+    if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        return False
     data = entry.runtime_data
     async_remove_panel(hass)
     data.schedules.disarm_all()
