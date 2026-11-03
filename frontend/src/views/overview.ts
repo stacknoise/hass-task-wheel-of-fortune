@@ -91,6 +91,9 @@ export class TwOverviewView extends LitElement {
       .group-head + ul {
         margin-top: var(--tw-space-field);
       }
+      .info {
+        flex-basis: 16em;
+      }
       .swap {
         padding: var(--tw-space-s) 0 0 40px;
       }

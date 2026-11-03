@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { VIEW_TAGS, WS_HISTORY_LIST, WS_ROUND_DELETE } from '../constants/index.ts';
+import { press } from '../components/press.testing.ts';
 import { HISTORY, fakeHass, mountView, text } from './fixtures.testing.ts';
 import { VIEW_LOADERS } from './registry.ts';
 
@@ -125,14 +126,11 @@ describe('Historie', () => {
     const remove = view.shadowRoot?.querySelectorAll('tw-confirm-action')[1] as HTMLElement & {
       updateComplete: Promise<boolean>;
     };
-    const click = (label: string) =>
-      [...(remove.shadowRoot?.querySelectorAll('button') ?? [])]
-        .find((b) => b.textContent.includes(label))
-        ?.click();
-    click('Auslosung löschen');
-    await remove.updateComplete;
-    expect(remove.shadowRoot?.textContent).toContain('1 Zuteilungen');
-    click('Löschen');
+    await press(remove, 'Auslosung löschen');
+    expect(
+      remove.shadowRoot?.querySelector('tw-confirm-dialog')?.shadowRoot?.textContent,
+    ).toContain('1 Zuteilungen');
+    await press(remove, 'Löschen');
     await vi.waitFor(() => {
       expect(hass.messages.find((m) => m.type === WS_ROUND_DELETE)).toEqual({
         type: WS_ROUND_DELETE,
@@ -150,13 +148,8 @@ describe('Historie', () => {
     const remove = view.shadowRoot?.querySelectorAll('tw-confirm-action')[1] as HTMLElement & {
       updateComplete: Promise<boolean>;
     };
-    const click = (label: string) =>
-      [...(remove.shadowRoot?.querySelectorAll('button') ?? [])]
-        .find((b) => b.textContent.includes(label))
-        ?.click();
-    click('Auslosung löschen');
-    await remove.updateComplete;
-    click('Löschen');
+    await press(remove, 'Auslosung löschen');
+    await press(remove, 'Löschen');
     await vi.waitFor(() => {
       expect(text(view)).toContain('Die Aktion ist fehlgeschlagen.');
     });

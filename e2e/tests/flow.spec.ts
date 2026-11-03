@@ -75,7 +75,8 @@ test('Auslosung, Erledigen und Tausch im Panel', async ({ page, baseURL }) => {
   const other = owner === 'Anna' ? 'Ben' : 'Anna';
 
   // Tausch gegen Joker an die andere Person
-  await row.getByRole('button', { name: 'Tauschen' }).click();
+  await row.getByRole('button', { name: 'Aktionen' }).click();
+  await row.getByRole('menuitem', { name: 'Tauschen' }).click();
   await page
     .getByRole('group', { name: 'Tauschen mit' })
     .getByRole('button', { name: other })
@@ -83,7 +84,12 @@ test('Auslosung, Erledigen und Tausch im Panel', async ({ page, baseURL }) => {
   await expect(openRows(page).first()).toContainText(other);
 
   // Erledigen
-  await openRows(page).first().getByRole('button', { name: 'Erledigt', exact: true }).click();
+  await openRows(page).first().getByRole('button', { name: 'Aktionen' }).click();
+  await openRows(page).first().getByRole('menuitem', { name: 'Erledigt', exact: true }).click();
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Erledigt', exact: true })
+    .click();
   await expect(openRows(page)).toHaveCount(0, {
     timeout: READY_MS,
   });
