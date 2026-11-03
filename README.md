@@ -45,7 +45,7 @@ nach `config/custom_components/task_wheel` entpacken (das Repository selbst enth
 
 1. `version` in `custom_components/task_wheel/manifest.json` anheben, Eintrag in `CHANGELOG.md` und im
    Änderungsprotokoll von `docs/CODE_DOKU.md`, per Pull Request nach `main`
-2. Tag setzen: `git tag v0.1.0 && git push origin v0.1.0`
+2. Tag setzen: `git tag v0.1.0 && git push origin v0.1.0`, oder auf GitHub unter *Actions → Release → Run workflow* den Tag eintragen (der Workflow legt ihn am Stand von `main` an)
 3. Der Workflow `Release` prüft, dass Tag und Manifest-Version übereinstimmen, baut das Panel und hängt
    `task_wheel.zip` an das neue GitHub-Release (siehe `hacs.json`: `zip_release`). Tags mit Suffix (`v0.2.0-beta.1`)
    werden als Vorabversion veröffentlicht.
