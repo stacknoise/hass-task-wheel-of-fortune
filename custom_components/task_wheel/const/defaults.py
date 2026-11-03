@@ -27,3 +27,9 @@ LOAD_FACTOR_PAUSED: Final = 0.0
 
 # Anwesenheit vorschauen (Personen-Ansicht zeigt die nächsten vier Wochen)
 DEFAULT_PREVIEW_WEEKS: Final = 4
+
+# Fairness-Gewichtung (KONZEPT §5.3)
+FAIRNESS_DAMPING: Final = 1.0
+WEIGHT_MIN: Final = 0.005
+WEIGHT_MAX: Final = 1.0
+UNIFORM_WEIGHT: Final = 1.0
