@@ -10,6 +10,7 @@ from ..const.events import (
     WS_DRAW_BEGIN,
     WS_DRAW_CANCEL,
     WS_DRAW_COMMIT,
+    WS_DRAW_PREVIEW,
     WS_DRAW_SPIN,
     WS_DRAW_SPIN_REST,
     WS_ROUND_DELETE,
@@ -67,6 +68,12 @@ def _begin(request: Request) -> Reply:
     return Reply(panel_round_view(panel_round))
 
 
+def _preview(request: Request) -> Reply:
+    """Das Rad der nächsten Aufgabe, ohne zu ziehen."""
+    result = request.data.draws.preview(request.params[WS_FIELD_PANEL_ROUND_ID], request.now)
+    return Reply({WIRE_RESULT: to_wire(result)})
+
+
 def _spin(request: Request) -> Reply:
     """Zieht die nächste Aufgabe; das Ergebnis bestimmt das Backend."""
     result = request.data.draws.spin(request.params[WS_FIELD_PANEL_ROUND_ID], request.now)
@@ -96,6 +103,7 @@ COMMANDS: Final = (
     Command(WS_ASSIGNMENT_SWAP, _SWAP, _swap, mutates=True),
     Command(WS_ROUND_DELETE, _ROUND, _delete_round, access=Access.ADMIN, mutates=True),
     Command(WS_DRAW_BEGIN, _SCHEDULE, _begin, mutates=True),
+    Command(WS_DRAW_PREVIEW, _PANEL_ROUND, _preview),
     Command(WS_DRAW_SPIN, _PANEL_ROUND, _spin, mutates=True),
     Command(WS_DRAW_SPIN_REST, _PANEL_ROUND, _spin_rest, mutates=True),
     Command(WS_DRAW_COMMIT, _PANEL_ROUND, _commit, mutates=True),

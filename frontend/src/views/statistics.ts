@@ -57,7 +57,11 @@ export class TwStatisticsView extends LitElement {
         flex-wrap: wrap;
         gap: var(--tw-space-m);
       }
+      .pair {
+        align-items: stretch;
+      }
       .pair > .card {
+        margin: 0;
         flex: 1 1 340px;
       }
       .bar-row {

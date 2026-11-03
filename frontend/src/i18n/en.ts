@@ -162,7 +162,7 @@ export const en: Record<keyof typeof de, string> = {
   'draw.undistributable': 'Cannot be assigned',
   'draw.points': 'points',
   'draw.due': 'days to do it',
-  'draw.rest': 'Draw the rest without animation',
+  'draw.rest': 'Assign tasks directly',
   'draw.restart': 'Restart round',
   'draw.spin': 'Spin',
   'draw.spin.label': 'Spin the wheel',

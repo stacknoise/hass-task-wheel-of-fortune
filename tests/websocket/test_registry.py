@@ -54,6 +54,7 @@ def test_reads_do_not_mutate() -> None:
         events.WS_SUBSCRIBE,
         events.WS_HISTORY_LIST,
         events.WS_STATISTICS_GET,
+        events.WS_DRAW_PREVIEW,
     }
     for command in COMMANDS:
         assert command.mutates is (command.name not in reads), command.name

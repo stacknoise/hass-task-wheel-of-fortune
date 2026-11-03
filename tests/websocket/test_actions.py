@@ -105,3 +105,22 @@ def test_snapshot_lists_rounds_with_open_assignments(api: Api) -> None:
     assert head["schedule_id"] == "s1"
     assert head["total"] == 3
     assert head["closed"] == 1
+
+
+def test_preview_shows_the_wheel_of_the_next_task_without_drawing(api: Api) -> None:
+    rid = api.result("draw/begin", schedule_id="s1")["id"]
+    preview = api.result("draw/preview", panel_round_id=rid)["result"]
+    assert preview["task_id"] == "t1"
+    assert preview["winner_id"] is None
+    assert {s["person_id"] for s in preview["segments"]} == {"p1", "p2"}
+    # nichts wurde gezogen, und die Ziehung zeigt dasselbe Rad
+    assert api.result("snapshot")["panel_rounds"][0]["results"] == []
+    spun = api.result("draw/spin", panel_round_id=rid)["result"]
+    assert spun["segments"] == preview["segments"]
+
+
+def test_preview_of_a_finished_round_is_rejected(api: Api) -> None:
+    rid = api.result("draw/begin", schedule_id="s1")["id"]
+    api.run("draw/spin_rest", panel_round_id=rid)
+    with pytest.raises(DrawRejectedError):
+        api.run("draw/preview", panel_round_id=rid)
