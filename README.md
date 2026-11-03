@@ -4,8 +4,8 @@ Verteilt Haushaltsaufgaben fair und mit etwas Spaß: Ein Glücksrad lost aus, we
 richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie belastbar ist.
 
 > **Status:** Entwicklung, Version 0.0.1. Das Projektgerüst steht (Integration lässt sich hinzufügen und
-> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03), Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07), Statistik und Historie (AP-13) Runden und Zeitpläne (AP-08), Einstieg, Dienste, Events und Einstellungen (AP-09), Benachrichtigungen (AP-12) Entitäten (AP-11) sowie die WebSocket-API für das Panel (AP-10) und das Frontend-Gerüst des Panels (AP-14: Tabs, Store, Seitenleisten-Eintrag) sind umgesetzt, die Ansichten folgen mit den Arbeitspaketen. Es gibt noch keine Veröffentlichung
-> über HACS.
+> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03), Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07), Statistik und Historie (AP-13) Runden und Zeitpläne (AP-08), Einstieg, Dienste, Events und Einstellungen (AP-09), Benachrichtigungen (AP-12) Entitäten (AP-11) sowie die WebSocket-API für das Panel (AP-10) und das Frontend-Gerüst des Panels (AP-14: Tabs, Store, Seitenleisten-Eintrag) sind umgesetzt, die Ansichten folgen mit den Arbeitspaketen. Die erste Veröffentlichung über HACS
+> (Version 0.1.0) ist in Vorbereitung.
 
 ## Funktionen (geplant)
 
@@ -22,15 +22,34 @@ richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie b
 - **Historie** mit CSV-Export und **Statistiken** (fairer Anteil, Erledigungsquote, Matrix Aufgabe × Person)
 - **Home-Assistant-Anbindung**: Dienste, Events, Sensoren, To-do-Listen je Person, Buttons je Zeitplan
 
-## Installation (sobald veröffentlicht)
+## Installation über HACS
 
-1. HACS → Integrationen → Menü → *Benutzerdefinierte Repositories* →
-   `https://github.com/stacknoise/hass-task-wheel-of-fortune`, Typ *Integration*
-2. „Aufgaben-Glücksrad“ installieren und Home Assistant neu starten
+Die Integration ist (noch) nicht im HACS-Standardverzeichnis. Sie wird als **benutzerdefiniertes Repository**
+installiert. Voraussetzung: [HACS](https://hacs.xyz) ist eingerichtet und Home Assistant ist in Version 2025.6 oder neuer.
+
+[![Repository in HACS öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=stacknoise&repository=hass-task-wheel-of-fortune&category=integration)
+
+Der Knopf öffnet das Repository direkt in der eigenen Home-Assistant-Instanz (My Home Assistant, einmalig die
+Adresse der Instanz hinterlegen). Von Hand geht es so:
+
+1. HACS → Menü (⋮) → *Benutzerdefinierte Repositories* → `https://github.com/stacknoise/hass-task-wheel-of-fortune`,
+   Typ *Integration* → *Hinzufügen*
+2. „Aufgaben-Glücksrad“ in HACS suchen, *Herunterladen* (die neueste Version wählen) und Home Assistant neu starten
 3. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Aufgaben-Glücksrad*
 4. In der Seitenleiste erscheint **Glücksrad**; dort Personen, Aufgaben und Zeitpläne anlegen
 
-Voraussetzung: Home Assistant 2025.6 oder neuer (wird mit dem ersten Release festgelegt).
+Updates meldet HACS wie bei jeder anderen Integration. Ohne HACS: den Ordner `custom_components/task_wheel` aus der
+Datei `task_wheel.zip` des jeweiligen [Releases](https://github.com/stacknoise/hass-task-wheel-of-fortune/releases)
+nach `config/custom_components/task_wheel` entpacken (das Repository selbst enthält das gebaute Panel nicht).
+
+## Veröffentlichen (für Entwickler)
+
+1. `version` in `custom_components/task_wheel/manifest.json` anheben, Eintrag in `CHANGELOG.md` und im
+   Änderungsprotokoll von `docs/CODE_DOKU.md`, per Pull Request nach `main`
+2. Tag setzen: `git tag v0.1.0 && git push origin v0.1.0`
+3. Der Workflow `Release` prüft, dass Tag und Manifest-Version übereinstimmen, baut das Panel und hängt
+   `task_wheel.zip` an das neue GitHub-Release (siehe `hacs.json`: `zip_release`). Tags mit Suffix (`v0.2.0-beta.1`)
+   werden als Vorabversion veröffentlicht.
 
 ## Dienste und Events
 
