@@ -1,6 +1,6 @@
 """`ConfigStore`: Personen, Aufgaben, Zeitpläne und Einstellungen auf Basis von `Store`."""
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from types import MappingProxyType
 
 from ...const import defaults, limits
@@ -9,7 +9,9 @@ from ...domain.models import Person, Schedule, Settings, Task
 from ...domain.serialization import model_of, tuple_of
 from ...domain.types import PersonId, ScheduleId, TaskId
 from .storage import (
+    ChangeListeners,
     StoreLike,
+    Unsubscribe,
     models_by_id,
     put_limited,
     read_root,
@@ -32,6 +34,7 @@ class ConfigStore:
         self._tasks: dict[TaskId, Task] = {}
         self._schedules: dict[ScheduleId, Schedule] = {}
         self._settings = Settings()
+        self._listeners = ChangeListeners()
 
     @property
     def persons(self) -> Mapping[PersonId, Person]:
@@ -52,6 +55,10 @@ class ConfigStore:
     def settings(self) -> Settings:
         """Die globalen Einstellungen."""
         return self._settings
+
+    def subscribe(self, listener: Callable[[], None]) -> Unsubscribe:
+        """Meldet einen Empfänger an, der nach jeder Änderung gerufen wird."""
+        return self._listeners.subscribe(listener)
 
     async def async_load(self) -> None:
         """Lädt den Bestand; ohne Datei bleibt er leer. Fehlerhafte Daten brechen ab."""
@@ -110,6 +117,7 @@ class ConfigStore:
 
     def _changed(self) -> None:
         self._store.async_delay_save(self._snapshot, defaults.STORE_SAVE_DELAY_SECONDS)
+        self._listeners.notify()
 
     def _snapshot(self) -> dict[str, object]:
         return {
