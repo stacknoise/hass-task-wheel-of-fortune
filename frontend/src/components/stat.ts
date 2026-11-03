@@ -3,6 +3,7 @@ import type { TemplateResult } from 'lit';
 
 import { COMPONENT_TAGS } from '../constants/index.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
+import { defineOnce } from './define.ts';
 
 /** Kennzahl mit Beschriftung. Kennt nur ihre Eigenschaften. */
 export class TwStat extends LitElement {
@@ -48,4 +49,4 @@ export class TwStat extends LitElement {
   }
 }
 
-customElements.define(COMPONENT_TAGS.stat, TwStat);
+defineOnce(COMPONENT_TAGS.stat, TwStat);

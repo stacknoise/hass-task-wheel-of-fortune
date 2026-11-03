@@ -25,6 +25,7 @@ import { numberText, percentText } from './format.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import { layoutWedges, spinRotation, wedgePath } from './wheel-geometry.ts';
 import type { Wedge, WheelSegment } from './wheel-geometry.ts';
+import { defineOnce } from './define.ts';
 
 const ROTOR_CLASS = 'rotor';
 const [LEFT, RIGHT, TIP_X, TIP_Y] = [
@@ -192,4 +193,4 @@ export class TwWheel extends LitElement {
   }
 }
 
-customElements.define(COMPONENT_TAGS.wheel, TwWheel);
+defineOnce(COMPONENT_TAGS.wheel, TwWheel);

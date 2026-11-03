@@ -12,7 +12,7 @@ from ...const.limits import (
     PREVIEW_WEEKS_MIN,
     WEEKDAY_COUNT,
 )
-from ..models import Person
+from ..models import AbsenceConfig, Person
 from ..validation import ensure, ensure_range
 from .factory import AvailabilityRuleFactory
 from .rule import AvailabilityRule
@@ -41,8 +41,14 @@ class PersonAvailability:
         cls, person: Person, factory: AvailabilityRuleFactory | None = None
     ) -> "PersonAvailability":
         """Baut die Anwesenheit aus den Regeln der Person."""
-        rule_factory = factory or AvailabilityRuleFactory()
-        return cls(rule_factory.create_all(person.absences))
+        return cls.of_rules(person.absences, factory)
+
+    @classmethod
+    def of_rules(
+        cls, absences: Sequence[AbsenceConfig], factory: AvailabilityRuleFactory | None = None
+    ) -> "PersonAvailability":
+        """Baut die Anwesenheit aus Abwesenheitsregeln, die noch zu keiner Person gehören."""
+        return cls((factory or AvailabilityRuleFactory()).create_all(absences))
 
     def is_present(self, day: dt.date) -> bool:
         """Anwesend am Tag `day`."""
@@ -76,3 +82,9 @@ class PersonAvailability:
         ensure_range(_FIELD_WEEKS, weeks, PREVIEW_WEEKS_MIN, PREVIEW_WEEKS_MAX)
         end = start + dt.timedelta(days=weeks * WEEKDAY_COUNT - 1)
         return tuple(self.days(start, end))
+
+    def week_preview(
+        self, today: dt.date, weeks: int = DEFAULT_PREVIEW_WEEKS
+    ) -> tuple[DayPresence, ...]:
+        """Vorschau für `weeks` volle Wochen, beginnend am Montag der Woche von `today`."""
+        return self.preview(today - dt.timedelta(days=today.weekday()), weeks)

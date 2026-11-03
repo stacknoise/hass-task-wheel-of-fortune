@@ -4,6 +4,7 @@ import { repeat } from 'lit/directives/repeat.js';
 
 import { COMPONENT_TAGS, EVENT_ACTION } from '../constants/index.ts';
 import './confirm-dialog.ts';
+import { defineOnce } from './define.ts';
 import { LocalizedElement } from './localized.ts';
 import { baseStyles, tokenStyles, viewStyles } from './styles.ts';
 
@@ -193,4 +194,4 @@ export class TwActionMenu extends LocalizedElement {
   };
 }
 
-customElements.define(COMPONENT_TAGS.actionMenu, TwActionMenu);
+defineOnce(COMPONENT_TAGS.actionMenu, TwActionMenu);

@@ -6,6 +6,7 @@ import { emitChange } from './change.ts';
 import { FORM_TAGS } from '../constants/index.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import { formStyles } from './formStyles.ts';
+import { defineOnce } from './define.ts';
 
 export interface SegmentOption {
   readonly id: string;
@@ -82,4 +83,4 @@ export class TwSegmented extends LitElement {
   }
 }
 
-customElements.define(FORM_TAGS.segmented, TwSegmented);
+defineOnce(FORM_TAGS.segmented, TwSegmented);

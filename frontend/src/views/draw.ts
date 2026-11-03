@@ -33,6 +33,7 @@ import {
 import type { DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
 
 import { drawStyles } from './draw-styles.ts';
+import { defineOnce } from '../components/define.ts';
 
 const HISTORY_ROUTE = 'history';
 const NOT_ALLOWED = 'not_allowed';
@@ -542,4 +543,4 @@ export class TwDrawView extends LitElement {
   }
 }
 
-customElements.define(VIEW_TAGS.draw, TwDrawView);
+defineOnce(VIEW_TAGS.draw, TwDrawView);

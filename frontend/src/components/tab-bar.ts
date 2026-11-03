@@ -4,6 +4,7 @@ import { repeat } from 'lit/directives/repeat.js';
 
 import { COMPONENT_TAGS, EVENT_TAB_SELECT } from '../constants/index.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
+import { defineOnce } from './define.ts';
 
 export interface TabItem {
   readonly id: string;
@@ -84,4 +85,4 @@ export class TwTabBar extends LitElement {
   }
 }
 
-customElements.define(COMPONENT_TAGS.tabBar, TwTabBar);
+defineOnce(COMPONENT_TAGS.tabBar, TwTabBar);

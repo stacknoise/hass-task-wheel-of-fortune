@@ -1,6 +1,7 @@
 """Tausch einer Zuteilung gegen einen Joker (KONZEPT §5.4); Uhrzeit kommt als Parameter."""
 
 import datetime as dt
+from collections.abc import Iterable
 
 from ..const.limits import OPEN_ASSIGNMENT_MAX_AGE_DAYS
 from ..domain import status
@@ -8,7 +9,7 @@ from ..domain.enums import AssignmentAction, Period
 from ..domain.errors import NotFoundError
 from ..domain.models import Assignment
 from ..domain.rules.periods import period_start
-from ..domain.swap import SwapContext, ensure_swap_possible, jokers_left, jokers_used
+from ..domain.swap import SwapContext, ensure_swap_possible, jokers_left, jokers_used_by_person
 from ..domain.types import AssignmentId, PersonId
 from .protocols import (
     AssignmentRecorder,
@@ -42,11 +43,20 @@ class SwapService:
 
     def jokers_left(self, person_id: PersonId, now: dt.datetime) -> int:
         """Verbleibende Joker im laufenden Kalendermonat (ohne Rücksetzen, der Monat zählt neu)."""
+        return self.jokers_left_for(frozenset({person_id}), now)[person_id]
+
+    def jokers_left_for(
+        self, person_ids: Iterable[PersonId], now: dt.datetime
+    ) -> dict[PersonId, int]:
+        """Verbleibende Joker mehrerer Personen, ein Durchlauf durch die jüngsten Zuteilungen."""
         month_start = dt.datetime.combine(
             period_start(Period.MONTH, now), dt.time.min, tzinfo=now.tzinfo
         )
-        recent = self._history.assignments_since(month_start - _OPEN_MAX_AGE)
-        return jokers_left(self._config.settings, jokers_used(recent, person_id, now))
+        used = jokers_used_by_person(
+            self._history.assignments_since(month_start - _OPEN_MAX_AGE), now
+        )
+        settings = self._config.settings
+        return {person_id: jokers_left(settings, used[person_id]) for person_id in person_ids}
 
     def swap(
         self, assignment_id: AssignmentId, to_person_id: PersonId, now: dt.datetime

@@ -2,6 +2,7 @@ import { css, html } from 'lit';
 import type { TemplateResult } from 'lit';
 
 import { COMPONENT_TAGS, EVENT_CANCEL, EVENT_CONFIRM } from '../constants/index.ts';
+import { defineOnce } from './define.ts';
 import { LocalizedElement } from './localized.ts';
 import { baseStyles, tokenStyles, viewStyles } from './styles.ts';
 
@@ -102,4 +103,4 @@ export class TwConfirmDialog extends LocalizedElement {
   }
 }
 
-customElements.define(COMPONENT_TAGS.confirmDialog, TwConfirmDialog);
+defineOnce(COMPONENT_TAGS.confirmDialog, TwConfirmDialog);
