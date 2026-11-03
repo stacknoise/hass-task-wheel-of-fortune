@@ -105,7 +105,7 @@ die Karten, rechts das Formular; Fehler des Backends erscheinen am betroffenen F
 ## Panel-API (WebSocket)
 
 Das Panel spricht mit dem Backend über WebSocket-Befehle mit dem Präfix `task_wheel/`: `snapshot`, `subscribe`
-(erst der Gesamtstand, danach nur Änderungen je Objekt), `history/list`, `statistics/get`,
+(erst der Gesamtstand, danach nur Änderungen je Objekt), `history/list`, `statistics/get`, `availability/preview` (Vorschau der Anwesenheit),
 `assignment/complete`, `assignment/swap`, `draw/begin|spin|spin_rest|commit|cancel` für jeden angemeldeten
 Benutzer sowie `person/*`, `task/*`, `schedule/*` und `settings/update` nur für Administratoren. Alle Eingaben
 werden gegen strenge Schemas geprüft (keine unbekannten Felder, begrenzte Längen). Ist in den Einstellungen
@@ -155,6 +155,10 @@ ruff check . && ruff format --check . && mypy && lint-imports && pytest
 
 # Frontend (Node 22)
 cd frontend && npm ci && npm run lint && npm run typecheck && npm test && npm run build && npm run bundle-budget
+
+# End-to-End-Test (Playwright gegen eine echte, frische HA-Instanz mit der Integration; läuft in CI als Job `e2e`)
+# Ablauf: Frontend bauen, `hass -c <config>` mit `custom_components/task_wheel` starten, dann
+cd e2e && npm ci && npx playwright install chromium && HA_URL=http://localhost:8123 npx playwright test
 
 # Code-Doku erzeugen (docs/code-doku/index.html) und Schwellwerte prüfen
 python3 docs/code-doku/generate.py --check
