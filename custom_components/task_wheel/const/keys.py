@@ -95,3 +95,7 @@ ERR_ROUND_COMPLETE: Final = "round_complete"
 # Fehlerschlüssel der Dienste
 ERR_NOT_LOADED: Final = "not_loaded"
 ERR_TARGET_REQUIRED: Final = "target_required"
+
+# Fehlerschlüssel der Benachrichtigung
+ERR_NOTIFY_TARGET: Final = "notify_target_invalid"
+ERR_NOTIFY_FAILED: Final = "notify_failed"

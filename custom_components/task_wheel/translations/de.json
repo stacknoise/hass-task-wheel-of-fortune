@@ -181,6 +181,12 @@
     },
     "todo_complete_only": {
       "message": "Die Liste erlaubt nur das Abhaken von Aufgaben."
+    },
+    "notify_target_invalid": {
+      "message": "Das Benachrichtigungsziel „{target}“ gibt es nicht. Erlaubt sind vorhandene notify-Entitäten und -Dienste."
+    },
+    "notify_failed": {
+      "message": "Die Benachrichtigung an „{target}“ konnte nicht gesendet werden."
     }
   }
 }

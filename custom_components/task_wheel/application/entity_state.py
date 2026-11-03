@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from ..domain.statistics import aggregate
 from ..domain.statistics.report import Tally
 from ..domain.types import AssignmentId, PersonId, ScheduleId
-from .event_payloads import task_name
+from .names import task_name
 from .protocols import ConfigRepository, HistoryRepository
 from .schedule_service import ScheduleService
 

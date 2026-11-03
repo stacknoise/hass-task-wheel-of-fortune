@@ -1,0 +1,21 @@
+{
+  "common": {
+    "date_format": "%d.%m.",
+    "list_separator": ", ",
+    "line_separator": "\n"
+  },
+  "round_drawn": {
+    "title": "Neue Aufgaben: {schedule}",
+    "message": "{summary}",
+    "person_line": "{person}: {tasks}",
+    "task_item": "{task} (bis {due})"
+  },
+  "swapped": {
+    "title": "Aufgabe übernommen",
+    "message": "{from_person} hat dir „{task}“ übergeben (bis {due})."
+  },
+  "reminder": {
+    "title": "Erinnerung: {schedule}",
+    "message": "„{schedule}“ wurde seit {days} Tagen nicht ausgelost."
+  }
+}

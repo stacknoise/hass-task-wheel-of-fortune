@@ -202,6 +202,35 @@ class NoEvents:
         """Tut nichts."""
 
 
+class Notifier(Protocol):
+    """Schickt eine Benachrichtigung an ein Ziel (Infrastruktur: `notify`-Entität oder -Dienst)."""
+
+    def check(self, target: str) -> None:
+        """Prüft, dass das Ziel jetzt existiert.
+
+        Raises:
+            InvalidNotifyTargetError: Es gibt keine solche Entität oder keinen solchen Dienst.
+        """
+        ...
+
+    async def async_send(self, target: str, title: str, message: str) -> None:
+        """Sendet die Nachricht; das Ziel wird dabei erneut geprüft.
+
+        Raises:
+            InvalidNotifyTargetError: Das Ziel gibt es nicht (mehr).
+            NotifyFailedError: Der Dienst hat den Versand abgelehnt oder war zu langsam.
+        """
+        ...
+
+
+class Texts(Protocol):
+    """Übersetzte Texte der Benachrichtigungen (Sprache der Installation)."""
+
+    def render(self, kind: str, part: str, **values: object) -> str:
+        """Setzt `values` in den Text `part` der Meldungsart `kind` ein."""
+        ...
+
+
 class AssignmentRecorder(Protocol):
     """Nimmt Änderungen an Zuteilungen entgegen (hält die Monatsaggregate aktuell)."""
 

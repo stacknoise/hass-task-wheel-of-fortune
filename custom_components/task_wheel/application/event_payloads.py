@@ -21,27 +21,10 @@ from ..const.keys import (
     ATTR_TASK_NAME,
 )
 from ..domain.models import Assignment, Round, Schedule
+from .names import person_name, schedule_name, task_name
 from .protocols import ConfigRepository
 
 type Payload = dict[str, Any]
-
-
-def task_name(config: ConfigRepository, assignment: Assignment) -> str:
-    """Name der Aufgabe; eine inzwischen gelöschte Aufgabe wird über ihre Kennung genannt."""
-    task = config.tasks.get(assignment.task_id)
-    return task.name if task is not None else assignment.task_id
-
-
-def _person_name(config: ConfigRepository, person_id: str) -> str:
-    """Name der Person; eine inzwischen gelöschte Person wird über ihre Kennung genannt."""
-    person = config.persons.get(person_id)
-    return person.name if person is not None else person_id
-
-
-def _schedule_name(config: ConfigRepository, schedule_id: str) -> str:
-    """Name des Zeitplans; ein gelöschter Zeitplan wird über seine Kennung genannt."""
-    schedule = config.schedules.get(schedule_id)
-    return schedule.name if schedule is not None else schedule_id
 
 
 def assignment_payload(config: ConfigRepository, assignment: Assignment) -> Payload:
@@ -51,7 +34,7 @@ def assignment_payload(config: ConfigRepository, assignment: Assignment) -> Payl
         ATTR_TASK_ID: assignment.task_id,
         ATTR_TASK_NAME: task_name(config, assignment),
         ATTR_PERSON_ID: assignment.person_id,
-        ATTR_PERSON_NAME: _person_name(config, assignment.person_id),
+        ATTR_PERSON_NAME: person_name(config, assignment.person_id),
         ATTR_POINTS: assignment.points,
         ATTR_DUE_AT: assignment.due_at.isoformat(),
         ATTR_STATUS: str(assignment.status),
@@ -63,7 +46,7 @@ def round_payload(config: ConfigRepository, round_: Round) -> Payload:
     return {
         ATTR_ROUND_ID: round_.id,
         ATTR_SCHEDULE_ID: round_.schedule_id,
-        ATTR_SCHEDULE_NAME: _schedule_name(config, round_.schedule_id),
+        ATTR_SCHEDULE_NAME: schedule_name(config, round_.schedule_id),
         ATTR_ORIGIN: str(round_.origin),
         ATTR_ASSIGNMENTS: [assignment_payload(config, item) for item in round_.assignments],
     }
@@ -74,7 +57,7 @@ def swapped_payload(config: ConfigRepository, assignment: Assignment) -> Payload
     payload = assignment_payload(config, assignment)
     if assignment.swap is not None:
         payload[ATTR_FROM_PERSON_ID] = assignment.swap.from_person_id
-        payload[ATTR_FROM_PERSON_NAME] = _person_name(config, assignment.swap.from_person_id)
+        payload[ATTR_FROM_PERSON_NAME] = person_name(config, assignment.swap.from_person_id)
     return payload
 
 

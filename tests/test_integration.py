@@ -10,6 +10,7 @@ from homeassistant.exceptions import ServiceValidationError
 from pytest_homeassistant_custom_component.common import (
     async_capture_events,
     async_fire_time_changed,
+    async_mock_service,
 )
 
 from custom_components.task_wheel.const import DOMAIN
@@ -20,6 +21,7 @@ from custom_components.task_wheel.const.events import (
     EVENT_SWAPPED,
 )
 from custom_components.task_wheel.domain.enums import AssignmentStatus
+from custom_components.task_wheel.domain.errors import InvalidNotifyTargetError
 from custom_components.task_wheel.domain.models import (
     EveryRound,
     ManualTrigger,
@@ -76,6 +78,35 @@ async def test_draw_service_fires_drawn_and_animate_events(hass: HomeAssistant) 
     assert drawn[0].data["assignments"][0]["task_name"] == "Müll"
     assert len(animate) == 1
     assert animate[0].data["animate_on"] == "sensor.display"
+
+
+async def test_draw_sends_notifications_to_legacy_service_and_entity(hass: HomeAssistant) -> None:
+    legacy = async_mock_service(hass, "notify", "mobile_app_anna")
+    entity = async_mock_service(hass, "notify", "send_message")
+    hass.states.async_set("notify.ben_phone", "unknown")
+    _, data = await _setup(hass)
+    for ident, slug, target in (
+        ("p1", "anna", "notify.mobile_app_anna"),
+        ("p2", "ben", "notify.ben_phone"),
+    ):
+        person = f.person(id=ident, slug=slug, name=slug.title(), absences=(), notify_target=target)
+        data.config.put_person(person)
+    await hass.services.async_call(DOMAIN, "draw", {"schedule": "wochenplan"}, blocking=True)
+    await hass.async_block_till_done()
+    assert [call.data["title"] for call in legacy] == ["New tasks: Wochenrunde"]
+    assert "Müll" in legacy[0].data["message"]
+    assert [call.data["entity_id"] for call in entity] == ["notify.ben_phone"]
+
+
+async def test_notification_target_is_checked(hass: HomeAssistant) -> None:
+    async_mock_service(hass, "notify", "mobile_app_anna")
+    _, data = await _setup(hass)
+    data.notifications.check_target(None)
+    data.notifications.check_target("notify.mobile_app_anna")
+    with pytest.raises(InvalidNotifyTargetError):
+        data.notifications.check_target("notify.gone")
+    with pytest.raises(InvalidNotifyTargetError):
+        data.notifications.check_target("script.turn_on")
 
 
 async def test_draw_without_animate_fires_no_animation(hass: HomeAssistant) -> None:
