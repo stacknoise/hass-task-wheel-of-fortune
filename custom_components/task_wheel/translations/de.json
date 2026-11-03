@@ -1,5 +1,11 @@
 {
   "config": {
+    "step": {
+      "user": {
+        "title": "Aufgaben-Glücksrad",
+        "description": "Verteilt Haushaltsaufgaben fair per Glücksrad. Personen, Aufgaben und Zeitpläne werden anschließend im Panel verwaltet."
+      }
+    },
     "abort": {
       "already_configured": "Aufgaben-Glücksrad ist bereits eingerichtet.",
       "single_instance_allowed": "Es wird nur eine Instanz unterstützt."
