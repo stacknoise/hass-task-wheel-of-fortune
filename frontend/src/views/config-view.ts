@@ -77,7 +77,7 @@ export abstract class ConfigView<
         flex: 1 1 320px;
         max-width: 420px;
         display: grid;
-        gap: var(--tw-space-m);
+        gap: var(--tw-space-field);
         padding: var(--tw-space-m);
         border-radius: var(--tw-radius);
         border: 1px solid var(--tw-color-divider);

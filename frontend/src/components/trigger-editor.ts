@@ -14,7 +14,7 @@ import type { TriggerWire } from '../state/index.ts';
 import { emitChange, onChange } from './change.ts';
 import './chip-select.ts';
 import './field.ts';
-import { formStyles } from './formStyles.ts';
+import { formStyles, stackStyles } from './formStyles.ts';
 import { LocalizedElement } from './localized.ts';
 import { toIds, toNumbers, weekdayOptions } from './options.ts';
 import './select.ts';
@@ -32,7 +32,7 @@ export class TwTriggerEditor extends LocalizedElement {
     now: { type: String },
   };
 
-  static override styles = [tokenStyles, baseStyles, formStyles];
+  static override styles = [tokenStyles, baseStyles, formStyles, stackStyles];
 
   declare value: TriggerWire;
   declare now: string;
@@ -43,6 +43,7 @@ export class TwTriggerEditor extends LocalizedElement {
       <tw-chip-select
         .label=${this.text('trigger.weekdays')}
         .options=${weekdayOptions(this.language)}
+        compact
         .selected=${toIds(trigger.weekdays)}
         @tw-change=${onChange<string[]>((ids) => {
           this.#merge({ weekdays: toNumbers(ids) });

@@ -3,7 +3,7 @@ export { changeDetail, emitChange, onChange } from './change.ts';
 export { TwChipSelect } from './chip-select.ts';
 export type { ChipOption } from './chip-select.ts';
 export { TwField } from './field.ts';
-export { formStyles } from './formStyles.ts';
+export { formStyles, stackStyles } from './formStyles.ts';
 export { TwFrequencyEditor } from './frequency-editor.ts';
 export { LocalizedElement } from './localized.ts';
 export { weekdayOptions } from './options.ts';

@@ -9,7 +9,7 @@ import type { AbsenceWire } from '../state/index.ts';
 import { emitChange, onChange } from './change.ts';
 import './chip-select.ts';
 import './field.ts';
-import { formStyles } from './formStyles.ts';
+import { formStyles, stackStyles } from './formStyles.ts';
 import { LocalizedElement } from './localized.ts';
 import { toIds, toNumbers, weekOptions, weekdayOptions } from './options.ts';
 import './select.ts';
@@ -31,10 +31,11 @@ export class TwAbsenceEditor extends LocalizedElement {
     tokenStyles,
     baseStyles,
     formStyles,
+    stackStyles,
     css`
       .rule {
         display: grid;
-        gap: var(--tw-space-s);
+        gap: var(--tw-space-field);
         padding: var(--tw-space-s) 0;
         border-bottom: 1px solid var(--tw-color-divider);
       }
@@ -51,9 +52,6 @@ export class TwAbsenceEditor extends LocalizedElement {
         border: 1px solid var(--tw-color-divider);
         background: var(--tw-color-surface);
         cursor: pointer;
-      }
-      .actions {
-        margin: var(--tw-space-s) 0;
       }
     `,
   ];
@@ -85,6 +83,7 @@ export class TwAbsenceEditor extends LocalizedElement {
       <tw-chip-select
         .label=${this.text('absence.weekdays')}
         .options=${weekdayOptions(this.language)}
+        compact
         .selected=${toIds(absence.weekdays)}
         @tw-change=${onChange<string[]>((ids) => {
           this.replaceAt(this.value, index, { weekdays: toNumbers(ids) });
