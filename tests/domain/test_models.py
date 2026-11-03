@@ -140,7 +140,6 @@ def test_load_factors():
         (lambda: f.person(absences=(OnceAbsence(start=f.TODAY, end=f.TODAY),) * 21), "absences"),
         (lambda: f.task(points=0), "points"),
         (lambda: f.task(due_days=366), "due_days"),
-        (lambda: f.task(allowed=frozenset()), "allowed"),
         (lambda: f.task(allowed=frozenset({""})), "allowed"),
         (lambda: f.schedule(task_ids=()), "task_ids"),
         (lambda: f.schedule(task_ids=("t1", "t1")), "task_ids"),
@@ -257,6 +256,14 @@ def test_round_nested_error_path():
     with pytest.raises(ValidationError) as caught:
         Round.from_dict(data)
     assert caught.value.field == "assignments.chance"
+
+
+def test_task_without_allowed_persons_is_open_for_everyone():
+    task = Task.from_dict({"id": "t", "name": "N"})
+    assert task.allowed == frozenset()
+    assert task.allows("anyone")
+    assert f.task(allowed=frozenset({"p1"})).allows("p1")
+    assert not f.task(allowed=frozenset({"p1"})).allows("p2")
 
 
 def test_task_default_frequency_is_every_round():

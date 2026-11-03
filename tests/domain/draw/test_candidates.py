@@ -27,6 +27,12 @@ def test_paused_and_unknown_persons_are_removed():
     assert reasons(selection) == {("b", ExclusionReason.PAUSED)}
 
 
+def test_task_without_allowed_persons_is_open_for_everyone_in_the_round():
+    ctx = make_context([make_person("b"), make_person("a")])
+    selection = CandidateSelector().select(task(allowed=frozenset()), ctx)
+    assert [p.id for p in selection.candidates] == ["a", "b"]
+
+
 def test_absent_throughout_window_is_excluded_but_one_day_present_is_enough():
     gone = OnceAbsence(start=TODAY, end=TODAY + dt.timedelta(days=30))
     back = OnceAbsence(start=TODAY, end=TODAY + dt.timedelta(days=2))

@@ -115,7 +115,7 @@ class CandidateSelector:
 
     def select(self, task: Task, context: DrawContext) -> CandidateSelection:
         """Erlaubte, bekannte Personen (nach Kennung sortiert) durch die Filterkette schicken."""
-        remaining = [context.persons[pid] for pid in sorted(task.allowed) if pid in context.persons]
+        remaining = [context.persons[pid] for pid in sorted(context.persons) if task.allows(pid)]
         exclusions: list[Exclusion] = []
         for flt in self.factory.create_chain(task):
             removed = flt.excluded(task, remaining, context)
