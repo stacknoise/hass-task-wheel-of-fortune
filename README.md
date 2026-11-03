@@ -120,6 +120,8 @@ vorerst nur Zähler und werden mit AP-15 ausgebaut.
   (SVG-Liniendiagramm ohne Diagrammbibliothek), Matrix Aufgabe mal Person und Auszeichnungen (Glückspilz, Pechvogel,
   Zuverlässigste Person). Leere Zeiträume zeigen einen Hinweis statt leerer Diagramme.
 
+**Tablet und Smartphone:** Das Panel richtet sich nach seiner eigenen Breite. Auf dem Tablet hochkant und auf dem Smartphone steht bei der Auslosung die Bühne (Rad, Ergebnis, „Nächste Aufgabe“) oben und die Rundenliste darunter; auf dem Smartphone ist alles einspaltig und kompakt, Bedienelemente haben Touch-Größe (44 px), und im schmalen Modus erscheint der Menü-Knopf von Home Assistant für die Seitenleiste.
+
 Texte gibt es auf Deutsch und Englisch (Sprache aus Home Assistant). Das Bundle ist nicht eingecheckt: vor dem
 Ausprobieren `cd frontend && npm ci && npm run build`. Fehlt es, bleibt die Integration nutzbar und schreibt eine
 Warnung ins Protokoll.

@@ -344,9 +344,12 @@ export class TwDrawView extends LitElement {
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
     if (this.#idle(state)) {
-      return html`<section class="stage">
+      return html`<section class="stage idle">
         <p class="heading">${this.#text('draw.choose')}</p>
       </section>`;
+    }
+    if (state.phase === 'done') {
+      return html`<section class="stage">${this.#summary(state, tasks, persons)}</section>`;
     }
     const taskId = state.current?.task_id ?? state.taskIds[state.results.length];
     const task = taskId ? tasks.get(taskId) : undefined;
@@ -359,7 +362,6 @@ export class TwDrawView extends LitElement {
         </div>
         ${this.#wheelBox(state, persons)} ${this.#people(state, task, persons)}
         ${state.phase === 'revealed' ? this.#result(state, task, persons) : nothing}
-        ${state.phase === 'done' ? this.#summary(state, tasks, persons) : nothing}
       </section>
     `;
   }

@@ -4,7 +4,7 @@ import type { PropertyValues, TemplateResult } from 'lit';
 
 import { ApiClient } from './api/index.ts';
 import type { HassApi } from './api/index.ts';
-import { baseStyles, tokenStyles } from './components/index.ts';
+import { baseStyles, phoneQuery, tokenStyles } from './components/index.ts';
 import type { TabItem } from './components/index.ts';
 import './components/index.ts';
 import {
@@ -46,16 +46,35 @@ export class TaskWheelPanel extends LitElement {
     baseStyles,
     css`
       :host {
+        container-type: inline-size;
         background: var(--tw-color-background);
         min-height: 100%;
       }
-      header,
+      header {
+        display: flex;
+        align-items: center;
+        gap: var(--tw-space-s);
+        padding: var(--tw-space-m);
+      }
       main {
         padding: var(--tw-space-m);
+        padding-bottom: calc(var(--tw-space-m) + env(safe-area-inset-bottom, 0px));
       }
       h1 {
         margin: 0;
         font-weight: 400;
+      }
+      @container ${phoneQuery} {
+        header {
+          padding: var(--tw-space-s) var(--tw-space-m);
+        }
+        h1 {
+          font-size: 1.4em;
+        }
+        main {
+          padding: var(--tw-space-s);
+          padding-bottom: calc(var(--tw-space-s) + env(safe-area-inset-bottom, 0px));
+        }
       }
     `,
   ];
@@ -108,6 +127,11 @@ export class TaskWheelPanel extends LitElement {
     const text = (key: TextKey): string => translate(key, language);
     return html`
       <header>
+        ${
+          this.narrow
+            ? html`<ha-menu-button .hass=${this.hass} .narrow=${this.narrow}></ha-menu-button>`
+            : nothing
+        }
         <h1 class=${PANEL_HEADING_CLASS}>${text('panel.title')}</h1>
       </header>
       <tw-tab-bar

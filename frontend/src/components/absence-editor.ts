@@ -48,7 +48,7 @@ export class TwAbsenceEditor extends LocalizedElement {
         gap: var(--tw-space-s);
       }
       button.plain {
-        min-height: 36px;
+        min-height: var(--tw-control-height);
         padding: 0 12px;
         border-radius: 18px;
         border: 1px solid var(--tw-color-divider);
