@@ -94,6 +94,12 @@ function rowBounds(row: number): { first: number; count: number; last: number } 
   return { first, count, last: first + (count - 1) * PLINKO_PEG_SPACING };
 }
 
+/** Die x-Stellen aller Stifte je Reihe. */
+const ROW_XS: readonly (readonly number[])[] = ROW_INDEXES.map((row) => {
+  const { first, count } = rowBounds(row);
+  return Array.from({ length: count }, (_unused, index) => first + index * PLINKO_PEG_SPACING);
+});
+
 const rowY = (row: number): number => PLINKO_FIRST_ROW_Y + row * PLINKO_ROW_SPACING;
 
 /** Alle Stifte des Bretts, Reihe für Reihe. */
@@ -143,24 +149,45 @@ function nearestIndex(row: number, x: number): number {
 const pegX = (row: number, index: number): number =>
   rowBounds(row).first + index * PLINKO_PEG_SPACING;
 
-/** Ein Schritt rückwärts: der Stift der Reihe darüber, einen halben Abstand links oder rechts. */
-function stepBack(row: number, x: number, random: Random): number {
+/** Die Stifte der Reihe `row`, auf die die Kugel von `x` aus fallen kann (einen halben Abstand daneben). */
+function below(row: number, x: number): readonly number[] {
   const { first, last } = rowBounds(row);
-  const options = [x - HALF_SPACING, x + HALF_SPACING].filter(
+  return [x - HALF_SPACING, x + HALF_SPACING].filter(
     (candidate) =>
       candidate >= first - PLINKO_EDGE_TOLERANCE && candidate <= last + PLINKO_EDGE_TOLERANCE,
   );
-  const pick = Math.min(Math.floor(random() * options.length), options.length - 1);
-  return options[pick] ?? x;
 }
 
-/** Die Stiftreihen von oben nach unten, rückwärts vom letzten Stift über dem Ziel bestimmt. */
-function pegColumns(targetX: number, random: Random): readonly number[] {
-  let x = pegX(LAST_ROW, nearestIndex(LAST_ROW, targetX));
-  const columns = [x];
+/** Stifte je Reihe, von denen aus die Kugel noch den letzten Stift `target` erreichen kann. */
+function reachable(target: number): readonly ReadonlySet<number>[] {
+  const rows: ReadonlySet<number>[] = [new Set([target])];
   for (let row = LAST_ROW - 1; row >= 0; row--) {
-    x = stepBack(row, x, random);
-    columns.unshift(x);
+    const next = rows[0] ?? new Set<number>();
+    const xs = ROW_XS[row] ?? [];
+    rows.unshift(new Set(xs.filter((x) => below(row + 1, x).some((lower) => next.has(lower)))));
+  }
+  return rows;
+}
+
+function pickFrom(options: readonly number[], random: Random): number {
+  return options[Math.min(Math.floor(random() * options.length), options.length - 1)] ?? 0;
+}
+
+/**
+ * Die Stiftreihen von oben nach unten. Der Einwurf ist ein zufälliger Stift, von dem das Ziel noch
+ * erreichbar ist, jeder weitere Schritt ein zufälliger Nachbar mit dieser Eigenschaft: aus dem
+ * Einwurf und den ersten Schritten lässt sich das Fach nicht ablesen.
+ */
+function pegColumns(targetX: number, random: Random): readonly number[] {
+  const rows = reachable(pegX(LAST_ROW, nearestIndex(LAST_ROW, targetX)));
+  let x = pickFrom([...(rows[0] ?? [])], random);
+  const columns = [x];
+  for (let row = 1; row <= LAST_ROW; row++) {
+    x = pickFrom(
+      below(row, x).filter((candidate) => rows[row]?.has(candidate)),
+      random,
+    );
+    columns.push(x);
   }
   return columns;
 }
