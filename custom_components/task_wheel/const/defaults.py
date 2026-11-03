@@ -25,5 +25,8 @@ LOAD_FACTOR_FULL: Final = 1.0
 LOAD_FACTOR_HALF: Final = 0.5
 LOAD_FACTOR_PAUSED: Final = 0.0
 
+# Persistenz: Verzögerung des gebündelten Speicherns (Sekunden)
+STORE_SAVE_DELAY_SECONDS: Final = 10
+
 # Anwesenheit vorschauen (Personen-Ansicht zeigt die nächsten vier Wochen)
 DEFAULT_PREVIEW_WEEKS: Final = 4
