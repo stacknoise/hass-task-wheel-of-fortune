@@ -1,6 +1,6 @@
 # Technisches Konzept: Aufgaben-Glücksrad für Home Assistant
 
-Stand: 2026-11-03 · Status: **Entwurf** (Pattern entschieden, Annahmen §11 offen) · Grundlage: UI-Mockups in `mockups/` (PR #1)
+Stand: 2026-11-03 · Status: **Abgestimmt** (Pattern und Annahmen §11 bestätigt) · Grundlage: UI-Mockups in `mockups/` (PR #1)
 
 Dieses Dokument beschreibt Architektur, Datenmodell, Algorithmen, Schnittstellen und Qualitätsregeln der
 Erweiterung. Die Umsetzung ist in [ARBEITSPAKETE.md](ARBEITSPAKETE.md) geschnitten, der Code selbst wird in
@@ -196,7 +196,7 @@ erDiagram
 | `TriggerConfig` | `recurring(weekdays, time, every_n_weeks \| monthly)` · `once(at, after: keep_manual \| archive \| delete)` · `manual(remind_after_days)` |
 | `Round` | `id`, `schedule_id`, `origin: auto \| manual \| service`, `started_at`, `finished_at`, `assignments` |
 | `Assignment` | `id`, `round_id`, `task_id`, `person_id`, `chance` (0–1), `points`, `due_at`, `status`, `done_at`, `swap: Swap \| None` |
-| `Settings` | `jokers_per_month`, `fairness_window_days`, `history_retention_days`, `weighting` |
+| `Settings` | `jokers_per_month`, `fairness_window_days`, `history_retention_days`, `weighting`, `late_points_factor` (0–1, Standard 1,0), `missed_points_factor` (−1–0, Standard 0), `missed_grace_hours` |
 
 ### 4.1 Speicher
 
@@ -279,8 +279,8 @@ Aufgaben an dieselbe Person verteilt. Aufwand pro Runde: `O(Aufgaben × Personen
 | Übergang | Auslöser | Ergebnis |
 |---|---|---|
 | offen → pünktlich | `complete` vor `due_at` | Punkte zählen |
-| offen → verspätet | `complete` nach `due_at` | Punkte zählen (Faktor als Konstante, Standard 1,0) |
-| offen → verpasst | täglicher Lauf nach `due_at + Kulanz` | keine Punkte |
+| offen → verspätet | `complete` nach `due_at` | Punkte × `late_points_factor` (einstellbar, Standard 1,0) |
+| offen → verpasst | täglicher Lauf nach `due_at + missed_grace_hours` | Punkte × `missed_points_factor` (einstellbar, Standard 0; negativ = Abzug) |
 | offen → getauscht | `swap` mit Joker | neue Person übernimmt, Punkte gehen an sie, Joker −1 |
 
 Tausch ist nur erlaubt, wenn die Aufgabe `swap_allowed` hat, die neue Person die Aufgabe laut Regel bekommen
@@ -419,10 +419,10 @@ setzen das durch.
 
 ---
 
-## 11. Annahmen (bitte bestätigen oder korrigieren)
+## 11. Festgelegte Annahmen (bestätigt von Anton am 2026-11-03)
 
 1. Anwesenheit im Fristfenster: Eine Person ist Kandidat, wenn sie an **mindestens einem Tag** zwischen Auslosung und Frist da ist.
 2. Joker werden **pro Kalendermonat** zurückgesetzt, Anzahl global einstellbar (Standard 2).
-3. Verspätet erledigte Aufgaben bringen volle Punkte; verpasste keine.
+3. Punkte für verspätete und verpasste Aufgaben sind **einstellbar** (Options Flow: `late_points_factor`, `missed_points_factor`, `missed_grace_hours`); Standard: verspätet volle Punkte, verpasst keine. Grenzen der Faktoren stehen in `const/limits.py`.
 4. Panel ist für alle angemeldeten Benutzer sichtbar, Konfiguration nur für Admins.
 5. `animate_on` im Dienst feuert ein Event für eine spätere optionale Lovelace-Karte; im ersten Release ohne eigene Karte.

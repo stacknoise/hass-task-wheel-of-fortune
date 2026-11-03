@@ -139,7 +139,7 @@ Parallelisierbar: AP-04/05 nach AP-02; AP-11/12/13 nach AP-09; AP-15/16/17 nach 
 ## AP-07 · Zuteilungen, Fristen, Joker/Tausch (M)
 
 - Statusübergangstabelle (`domain/status.py`)
-- `AssignmentService` (erledigen, täglicher Lauf „verpasst“), `SwapService` (Joker je Monat, Berechtigung der neuen Person)
+- `AssignmentService` (erledigen, täglicher Lauf „verpasst“, Punkte mit einstellbaren Faktoren für verspätet/verpasst), `SwapService` (Joker je Monat, Berechtigung der neuen Person)
 
 **Fertig, wenn:** Alle Übergänge inkl. unzulässiger getestet; Joker-Rücksetzung zum Monatswechsel getestet.
 
@@ -154,7 +154,7 @@ Parallelisierbar: AP-04/05 nach AP-02; AP-11/12/13 nach AP-09; AP-15/16/17 nach 
 ## AP-09 · Einstieg, Config Flow, Dienste, Events (M)
 
 - `__init__.py` mit typisiertem `entry.runtime_data` (Komposition aller Objekte an einer Stelle)
-- Config Flow (Einzelinstanz) + Options Flow (Joker, Fairness-Fenster, Aufbewahrung, Panel nur für Admins)
+- Config Flow (Einzelinstanz) + Options Flow (Joker, Fairness-Fenster, Aufbewahrung, Punktefaktoren verspätet/verpasst, Kulanzzeit, Panel nur für Admins)
 - Dienste `draw`, `complete`, `swap`, `set_absence` mit Schemas, `services.yaml`, Übersetzungen
 - Events aus Konzept §6.2
 

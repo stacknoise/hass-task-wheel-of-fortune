@@ -143,6 +143,7 @@ Module, Art der Änderung, Auswirkung auf Metriken und Abhängigkeiten. CI prüf
 
 | Datum | Version | AP | Module | Änderung | Metriken / Abhängigkeiten |
 |---|---|---|---|---|---|
+| 2026-11-03 | – | – | – | Annahmen §11 bestätigt; Punkte für verspätet/verpasst einstellbar (Settings, §5.4, AP-07, AP-09) | – |
 | 2026-11-03 | – | – | – | Pattern entschieden: Factory + Strategy + Repository (KONZEPT §3.2, §10, README) | – |
 | 2026-11-03 | – | – | – | Konzept, Arbeitspakete, Code-Doku-Struktur und README angelegt; noch kein Code | – |
 
