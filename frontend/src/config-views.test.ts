@@ -103,6 +103,14 @@ function failNext(hass: FakeHass, error: { code: string; message: string }): voi
 const lastChange = (hass: FakeHass): FakeHass['messages'][number] | undefined =>
   hass.messages.filter((message) => !message.type.endsWith('/preview')).at(-1);
 
+/** Bestätigt die Rückfrage zum Löschen im Popup. */
+async function confirmDelete(view: El): Promise<void> {
+  const dialog = q(view.shadowRoot, 'tw-confirm-dialog');
+  await dialog.updateComplete;
+  (dialog.shadowRoot?.querySelector('.danger') as HTMLButtonElement).click();
+  await view.updateComplete;
+}
+
 async function addNew(view: El): Promise<void> {
   await click(view, '.top .primary');
 }
@@ -136,7 +144,7 @@ describe('Personen', () => {
     button(view, 'section.editor .swatch:nth-child(2)').click();
     say(q(editor, 'tw-absence-editor'), [{ kind: 'weekly_days', weekdays: [5] }]);
     say([...editor.querySelectorAll('tw-field')].at(-1) as El, ' notify.berta ');
-    await click(view, 'section.editor .primary');
+    await click(view, '.buttons .primary');
     await vi.waitFor(() => {
       expect(lastChange(hass)?.type).toBe('task_wheel/person/create');
     });
@@ -184,7 +192,7 @@ describe('Personen', () => {
     const { hass, view } = await open('/persons');
     await addNew(view);
     failNext(hass, { code: 'invalid_format', message: 'notify_target: invalid_format' });
-    await click(view, 'section.editor .primary');
+    await click(view, '.buttons .primary');
     await vi.waitFor(() => {
       expect(q(view.shadowRoot, '.banner').textContent).toContain('notify_target');
     });
@@ -196,17 +204,17 @@ describe('Personen', () => {
     const { hass, view } = await open('/persons');
     await click(view, '.card');
     say(q(view.shadowRoot, 'section.editor tw-field'), 'Anna B.');
-    await click(view, 'section.editor .primary');
+    await click(view, '.buttons .primary');
     await vi.waitFor(() => {
       expect(hass.messages.at(-1)?.type).toBe('task_wheel/person/update');
     });
     expect(hass.messages.at(-1)?.['person_id']).toBe('p1');
 
     await click(view, '.card');
-    await click(view, '.danger');
+    await click(view, '.buttons .danger');
     expect(hass.messages.at(-1)?.type).toBe('task_wheel/person/update');
-    expect(q(view.shadowRoot, '.danger').textContent).toContain('Wirklich');
-    await click(view, '.danger');
+    expect(q(view.shadowRoot, 'tw-confirm-dialog').getAttribute('question')).toContain('Wirklich');
+    await confirmDelete(view);
     await vi.waitFor(() => {
       expect(hass.messages.at(-1)?.type).toBe('task_wheel/person/delete');
     });
@@ -216,8 +224,8 @@ describe('Personen', () => {
     const { hass, view } = await open('/persons');
     await click(view, '.card');
     failNext(hass, { code: 'in_use', message: 'in_use' });
-    await click(view, '.danger');
-    await click(view, '.danger');
+    await click(view, '.buttons .danger');
+    await confirmDelete(view);
     await vi.waitFor(() => {
       expect(q(view.shadowRoot, '.banner').textContent).toContain('verwendet');
     });
@@ -226,8 +234,33 @@ describe('Personen', () => {
   it('bricht ab und verwirft Entwürfe', async () => {
     const { view } = await open('/persons');
     await addNew(view);
-    await click(view, 'section.editor .secondary');
-    expect(view.shadowRoot?.querySelector('section.editor')).toBeNull();
+    await click(view, '.buttons .secondary');
+    expect(view.shadowRoot?.querySelector('tw-dialog')).toBeNull();
+  });
+
+  it('öffnet das Formular im Dialog und schließt es mit Escape', async () => {
+    const { view } = await open('/persons');
+    await addNew(view);
+    const dialog = q(view.shadowRoot, 'tw-dialog');
+    expect(dialog.getAttribute('label')).toBeTruthy();
+    await dialog.updateComplete;
+    dialog.shadowRoot
+      ?.querySelector('.dialog')
+      ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await view.updateComplete;
+    expect(view.shadowRoot?.querySelector('tw-dialog')).toBeNull();
+  });
+
+  it('bricht die Löschrückfrage ab', async () => {
+    const { view } = await open('/persons');
+    await click(view, '.card');
+    await click(view, '.buttons .danger');
+    const ask = q(view.shadowRoot, 'tw-confirm-dialog');
+    await ask.updateComplete;
+    (ask.shadowRoot?.querySelectorAll('button')[1] as HTMLButtonElement).click();
+    await view.updateComplete;
+    expect(view.shadowRoot?.querySelector('tw-confirm-dialog')).toBeNull();
+    expect(view.shadowRoot?.querySelector('tw-dialog')).not.toBeNull();
   });
 });
 
@@ -246,7 +279,7 @@ describe('Aufgaben', () => {
     for (const toggle of editor.querySelectorAll('tw-toggle')) {
       say(toggle, false);
     }
-    await click(view, 'section.editor .primary');
+    await click(view, '.buttons .primary');
     await vi.waitFor(() => {
       expect(hass.messages.at(-1)?.type).toBe('task_wheel/task/create');
     });
@@ -266,7 +299,7 @@ describe('Aufgaben', () => {
     const { hass, view } = await open('/tasks');
     await click(view, '.card');
     failNext(hass, { code: 'empty', message: 'allowed: empty' });
-    await click(view, 'section.editor .primary');
+    await click(view, '.buttons .primary');
     await vi.waitFor(() => {
       expect(q(view.shadowRoot, 'tw-chip-select').getAttribute('error')).toBeDefined();
     });
@@ -285,7 +318,7 @@ describe('Zeitpläne', () => {
     say(toggles[0] as El, true);
     say(q(view.shadowRoot, 'tw-trigger-editor'), { kind: 'manual', remind_after_days: 3 });
     say(q(view.shadowRoot, 'tw-chip-select'), []);
-    await click(view, 'section.editor .primary');
+    await click(view, '.buttons .primary');
     await vi.waitFor(() => {
       expect(hass.messages.at(-1)?.type).toBe('task_wheel/schedule/update');
     });
@@ -305,7 +338,7 @@ describe('Zeitpläne', () => {
     const animations = selects[1] as El;
     expect((animations as unknown as { options: unknown[] }).options).toHaveLength(5);
     say(animations, ['drum', 'plinko']);
-    await click(view, 'section.editor .primary');
+    await click(view, '.buttons .primary');
     await vi.waitFor(() => {
       expect(hass.messages.at(-1)?.type).toBe('task_wheel/schedule/update');
     });
@@ -317,7 +350,7 @@ describe('Zeitpläne', () => {
     await addNew(view);
     say(q(view.shadowRoot, 'section.editor tw-field'), 'Neu');
     failNext(hass, { code: 'required', message: 'trigger.time: required' });
-    await click(view, 'section.editor .primary');
+    await click(view, '.buttons .primary');
     await vi.waitFor(() => {
       expect(view.shadowRoot?.textContent).toContain('trigger.time');
     });
