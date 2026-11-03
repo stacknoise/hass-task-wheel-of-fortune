@@ -131,6 +131,12 @@ describe('Formularbausteine', () => {
     const line = await mount(FORM_TAGS.timeline, { language: 'de', days: 7, tolerance: 2 });
     expect(line.shadowRoot?.textContent).toContain('frühestens: 5');
     expect(line.shadowRoot?.textContent).toContain('spätestens: 9');
+    expect(line.shadowRoot?.textContent).toContain('Ziel: 7');
+    const scale = (element: Element): string[] =>
+      [...(element.shadowRoot?.querySelectorAll('.days span') ?? [])].map((day) => day.textContent);
+    expect(scale(line)).toEqual(['0', '2', '4', '6', '8', '10']);
+    const long = await mount(FORM_TAGS.timeline, { language: 'de', days: 365, tolerance: 30 });
+    expect(scale(long)).toEqual(['0', '100', '200', '300', '400']);
   });
 });
 
