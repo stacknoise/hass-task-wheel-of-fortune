@@ -1,6 +1,7 @@
 """Tests von Abhängigkeiten, Schwellwerten, Prüfung, Ausgabe und Kommandozeile."""
 
 # ruff: noqa: RUF001
+import hashlib
 import json
 from pathlib import Path
 
@@ -10,7 +11,8 @@ from tools.code_doku import constants as c
 from tools.code_doku.check import find_violations
 from tools.code_doku.cli import run
 from tools.code_doku.project import ScanError, build_report
-from tools.code_doku.render import to_json
+from tools.code_doku.render import TemplateError, render, to_json, verify_template
+from tools.code_doku.schema import build_schema
 from tools.code_doku.thresholds import Threshold, load_thresholds, parse_thresholds
 
 DOC = """# Doku
@@ -64,7 +66,13 @@ def project(tmp_path: Path) -> Path:
         "from custom_components.task_wheel.domain.models import Model\nModel()\n",
     )
     write(tmp_path, "docs/CODE_DOKU.md", DOC)
-    write(tmp_path, "docs/code-doku/template.html", f"<script>{c.DATA_PLACEHOLDER}</script>")
+    template = (
+        f"<title>{c.PLACEHOLDER_TITLE}</title><script>{c.PLACEHOLDER_DATA}</script>"
+        f"<script>{c.PLACEHOLDER_FILES}</script>"
+    )
+    write(tmp_path, "docs/code-doku/template.html", template)
+    digest = hashlib.sha256(template.encode("utf-8")).hexdigest()
+    write(tmp_path, "docs/code-doku/template.sha256", f"{digest}  template.html\n")
     return tmp_path
 
 
@@ -118,11 +126,44 @@ def test_syntax_error_is_reported(project: Path) -> None:
         build_report(project)
 
 
-def test_json_escapes_markup(project: Path) -> None:
-    write(project, f"{c.SRC_PYTHON}/domain/doc.py", '"""</script><b>"""\n')
-    text = to_json(build_report(project), ())
-    assert "<" not in text
-    assert json.loads(text.replace("\\u003c", "<"))["modules"]
+def test_json_escapes_markup() -> None:
+    text = to_json({"doc": "</script><b>"})
+    assert "</" not in text
+    assert json.loads(text.replace("<\\/", "</")) == {"doc": "</script><b>"}
+
+
+def test_schema_types_props_and_dependencies(project: Path) -> None:
+    write(
+        project,
+        f"{c.SRC_PYTHON}/domain/enums.py",
+        "from enum import Enum\n\nclass Color(Enum):\n    RED = 1\n    BLUE = 2\n",
+    )
+    write(
+        project,
+        f"{c.SRC_PYTHON}/domain/util.py",
+        "LIMIT: int = 3\n\ndef helper():\n    return LIMIT\n",
+    )
+    document, files = build_schema(project, build_report(project))
+    by_name = {item.name: item for item in document.types}
+    assert document.schema == c.SCHEMA_VERSION and document.meta.tests
+    assert by_name["Color"].kind == c.KIND_ENUM
+    assert [p.n for p in by_name["Color"].props] == ["RED", "BLUE"]
+    assert by_name["util"].static and by_name["util"].props[0].kind == c.PROP_CONST
+    assert [m.n for m in by_name["util"].meths] == ["helper"]
+    assert by_name["Svc"].deps == [by_name["Model"].id]
+    assert by_name["Model"].ca == 1 and by_name["Svc"].ce == 1
+    assert by_name["Model"].file in files and by_name["Model"].id.startswith("Domain|")
+    assert document.meta.layers[0] == c.LAYER_CONST
+    assert document.projdeps[c.LAYER_APP] == [c.LAYER_DOMAIN]
+
+
+def test_template_must_match_checksum(project: Path) -> None:
+    template = project / "docs/code-doku/template.html"
+    assert verify_template(template).startswith("<title>")
+    template.write_text("<b>geändert</b>", encoding="utf-8")
+    with pytest.raises(TemplateError):
+        render(template, project / "out.html", build_report(project), project)
+    assert run(["--root", str(project)], project) == c.EXIT_ERROR
 
 
 def test_cli_writes_and_checks(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -131,7 +172,7 @@ def test_cli_writes_and_checks(project: Path, capsys: pytest.CaptureFixture[str]
     err = capsys.readouterr().err
     assert "method.cc" in err and "domain.instability" in err
     html = (project / c.DEFAULT_OUTPUT).read_text(encoding="utf-8")
-    assert "1.2.3" in html and c.DATA_PLACEHOLDER not in html
+    assert "1.2.3" in html and c.PLACEHOLDER_DATA not in html
     assert run(["--root", str(project)], project) == c.EXIT_OK
 
 

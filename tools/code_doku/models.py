@@ -38,6 +38,23 @@ class MethodInfo:
     line_end: int
     metrics: Metrics
     source: str
+    abstract: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class PropertyInfo:
+    """Eigenschaft, Feld, Konstante oder Aufzählungswert (Schema 2 des Leitfadens)."""
+
+    name: str
+    kind: str
+    type: str
+    access: str
+    init: str
+    visibility: str
+    static: bool
+    line_start: int
+    line_end: int
+    doc: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +68,8 @@ class TypeInfo:
     line_end: int
     metrics: Metrics
     methods: tuple[MethodInfo, ...]
+    props: tuple[PropertyInfo, ...] = ()
+    bases: tuple[str, ...] = ()
     refs: frozenset[str] = frozenset()
     uses: tuple[str, ...] = ()
     tested: bool = False
@@ -70,6 +89,8 @@ class ModuleInfo:
     metrics: Metrics
     types: tuple[TypeInfo, ...]
     functions: tuple[MethodInfo, ...]
+    constants: tuple[PropertyInfo, ...] = ()
+    refs: frozenset[str] = frozenset()
     imports: tuple[str, ...] = ()
     deps: tuple[str, ...] = ()
     tested: bool = False
