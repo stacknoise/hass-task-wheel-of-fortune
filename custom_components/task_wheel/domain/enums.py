@@ -83,6 +83,15 @@ class AssignmentStatus(StrEnum):
     MISSED = "missed"
 
 
+class AssignmentAction(StrEnum):
+    """Aktion, die den Status einer Zuteilung ändert (Schlüssel der Übergangstabelle)."""
+
+    COMPLETE_ON_TIME = "complete_on_time"
+    COMPLETE_LATE = "complete_late"
+    MISS = "miss"
+    SWAP = "swap"
+
+
 class WeightingKind(StrEnum):
     """Art der Gewichtung bei der Ziehung."""
 
