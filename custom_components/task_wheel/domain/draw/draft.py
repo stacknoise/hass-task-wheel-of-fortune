@@ -50,6 +50,16 @@ class RoundDraft:
         result = engine.draw_task(task, self.context)
         return replace(self, context=self._advance(task, result), results=(*self.results, result))
 
+    def preview(self, engine: DrawEngine) -> TaskDraw:
+        """Das Rad der nächsten Aufgabe ohne Ziehung.
+
+        Raises:
+            DrawRejectedError: Es ist nichts mehr zu ziehen.
+        """
+        if self.complete:
+            raise DrawRejectedError(ERR_ROUND_COMPLETE)
+        return engine.preview_task(self.tasks[len(self.results)], self.context)
+
     def spin_rest(self, engine: DrawEngine) -> "RoundDraft":
         """Zieht alle übrigen Aufgaben."""
         draft = self

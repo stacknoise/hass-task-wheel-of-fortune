@@ -57,14 +57,16 @@ export class TwWheel extends LitElement {
         fill: var(--tw-color-rim);
       }
       .empty {
-        fill: var(--tw-color-divider);
+        fill: var(--tw-color-surface);
+        stroke: var(--tw-color-divider);
+        stroke-width: 1px;
       }
       .rotor {
         transform-origin: ${WHEEL_CENTER}px ${WHEEL_CENTER}px;
         will-change: transform;
       }
       .wedge {
-        stroke: #ffffff;
+        stroke: var(--tw-color-surface);
         stroke-width: ${WHEEL_SEGMENT_GAP}px;
       }
       .name {
@@ -80,8 +82,8 @@ export class TwWheel extends LitElement {
         pointer-events: none;
       }
       .pointer {
-        fill: #ffffff;
-        stroke: var(--tw-color-stage);
+        fill: var(--tw-color-text);
+        stroke: var(--tw-color-surface);
         stroke-width: ${WHEEL_SEGMENT_GAP}px;
       }
     `,

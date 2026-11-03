@@ -161,7 +161,7 @@ export const de = {
   'draw.undistributable': 'Nicht verteilbar',
   'draw.points': 'Punkte',
   'draw.due': 'Tage Frist',
-  'draw.rest': 'Rest ohne Animation verlosen',
+  'draw.rest': 'Aufgaben direkt verteilen',
   'draw.restart': 'Runde neu starten',
   'draw.spin': 'Drehen',
   'draw.spin.label': 'Rad drehen',
