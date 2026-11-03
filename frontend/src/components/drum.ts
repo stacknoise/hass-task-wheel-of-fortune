@@ -38,6 +38,7 @@ import { numberText, percentText } from './format.ts';
 import type { MotionToken } from './motion.ts';
 import { StageElement, sharesOf } from './stage-base.ts';
 import type { Share } from './stage-base.ts';
+import { defineOnce } from './define.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 
 const WALL = wallPath();
@@ -206,4 +207,4 @@ export class TwDrum extends StageElement {
   }
 }
 
-customElements.define(STAGE_TAGS.drum, TwDrum);
+defineOnce(STAGE_TAGS.drum, TwDrum);

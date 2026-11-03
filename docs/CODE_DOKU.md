@@ -1,6 +1,6 @@
 # Code-Dokumentation: Aufgaben-Glücksrad
 
-Stand: 2026-11-03 · Code-Version: 0.0.1 (bis AP-15) · Vorlage: Code-Dokus „Detailed Energy Card“ und
+Stand: 2026-11-03 · Code-Version: 0.0.1 (bis AP-18) · Vorlage: Code-Dokus „Detailed Energy Card“ und
 „HASS Test Data Creator“
 
 Dieses Dokument erfasst den Code mit seinen **Metriken** und **Abhängigkeiten** und protokolliert **jede
@@ -121,7 +121,7 @@ steht „–“.
 | `infrastructure/notifier/` | Infra | `NotifierFactory` (Registry Art → Sender: `EntitySender` mit `notify.send_message`, `ServiceSender` für Legacy-`notify.*`, `NoSender`), `classify` (nur `notify.*`), `HassNotifier` (Prüfung beim Speichern und Senden, Zeitlimit), `TextCatalog` (Texte aus `texts/<Sprache>.json`) | protocols, models, enums, errors | – | – | – | – | – | – | ja |
 | `const/notification.py` | Const | Dienst-/Feldnamen, Zielmuster, Grenzen, Textschlüssel der Benachrichtigung | – | – | – | – | – | – | – | ja |
 | `services.py` | Api | HA-Dienste `draw`, `complete`, `swap`, `set_absence` (Schemas, Tabelle Dienst → Handler, Fehlerübersetzung) | application, runtime | – | – | – | – | – | – | ja (nur CI) |
-| `websocket/` | Api | Panel-API: Befehlstabellen je Bereich (`read`, `actions`, `config`), Schemas aus den Modellfeldern, Anmeldung und Rechteprüfung bei HA (`__init__.py`) | application, runtime, domain/models | – | – | – | – | – | – | ja (`__init__.py` nur CI) |
+| `websocket/` | Api | Panel-API: Befehlstabellen je Bereich (`read` inkl. `availability/preview`, `actions`, `config`), Schemas aus den Modellfeldern, Anmeldung und Rechteprüfung bei HA (`__init__.py`) | application, runtime, domain/models | – | – | – | – | – | – | ja (`__init__.py` nur CI) |
 | `application/config_service.py` | App | Konfiguration ändern: Kennung, Kurzname, Verweise, Löschen mit Aufräumen | schedule_service, draw_service, models | – | – | – | – | – | – | ja |
 | `application/views.py` | App | Snapshot und Delta je Objekt, Historieneinträge | draw_service, swap_service, schedule_service, wire | – | – | – | – | – | – | ja |
 | `application/live_view.py` | App | `LiveView` (Abonnenten, Deltas), `ObservedTimers` | views, protocols | – | – | – | – | – | – | ja |
@@ -138,9 +138,11 @@ steht „–“.
 | `frontend/src/constants/` | Panel | Routen, Tokens, Grenzen, Befehle und Grenzwerte der Ansichten (`insights.ts`) | – | – | – | – | – | – | – | – |
 | `frontend/src/i18n/` | Panel | Texte de/en (`insights.*` für Übersicht, Historie, Statistik), Platzhalter, Formatierung (`format.ts`) | – | – | – | – | – | – | – | – |
 | `frontend/src/api/` | Panel | WebSocket-Client, typisierte Sicht auf Objekte und Antworten (`models.ts`) | constants | – | – | – | – | – | – | – |
-| `frontend/src/state/` | Panel | Store, Kontext, `AsyncValue` (asynchron geladener Wert einer Ansicht), `indexById` | api | – | – | – | – | – | – | – |
+| `frontend/src/state/` | Panel | Store, Kontext, `AsyncValue` (asynchron geladener Wert einer Ansicht; auch die Anwesenheitsvorschau der Personen-Ansicht), `indexById`; keine Fachregeln (die liegen im Backend) | api | – | – | – | – | – | – | – |
 | `frontend/src/components/` | Panel | `tw-tab-bar`, `tw-stat`, `tw-chips`, `tw-avatar`, `tw-badge`, gemeinsame Stile; `tw-wheel` folgt in AP-16 | constants, i18n | – | – | – | – | – | – | – |
 | `frontend/src/views/` | Panel | 7 Views; fertig: Übersicht (`overview*.ts`), Historie (`history*.ts`, `csv.ts`, `download.ts`), Statistik (`statistics*.ts`); Modelle (reine Funktionen) getrennt von den Elementen | state, components | – | – | – | – | – | – | – |
+| `e2e/` | Test | Playwright-End-to-End-Test gegen eine echte HA-Instanz (Einrichtung über Onboarding und Config Flow, Auslosung → Tausch → Erledigen, Ladezeit des Panels) | – | – | – | – | – | – | – | – |
+| `tests/performance/` | Test | Lasttest an den Obergrenzen mit Zeitbudgets | websocket-Harness, Factories | – | – | – | – | – | – | – |
 
 ### 3.1 Externe Abhängigkeiten
 
@@ -157,8 +159,27 @@ Laufzeitabhängigkeiten außerhalb von HA: **keine** (`requirements: []` im Mani
 
 ### 3.2 Messwerte Laufzeit
 
+Gemessen in AP-18 auf dem Entwicklungsrechner (Python 3.13, ein Kern), Bestand an den Obergrenzen aus
+`const/limits.py`: 30 Personen, 100 Aufgaben, 30 Zeitpläne, 2000 Runden à 10 Zuteilungen im Verlauf. Die Tests in
+`tests/performance/test_limits.py` prüfen großzügige Budgets (Vielfaches der Messwerte), damit quadratisches
+Verhalten auffällt.
+
 | Messung | Ziel | Ist |
 |---|---|---|
+| Runde mit 10 Aufgaben × 6 Personen | < 5 ms | ca. 1,6 ms (AP-06, `tests/domain/draw/test_engine.py`) |
+| Runde mit 100 Aufgaben × 30 Personen (Obergrenze) | < 5 s (CI misst mit Abdeckung ca. 10× langsamer) | ca. 120–130 ms, mit 2000 Runden Verlauf ca. 130–140 ms |
+| Snapshot im Backend (Obergrenze, 2000 Runden Verlauf) | < 100 ms | 4 ms (vor AP-18: 48 ms, siehe Änderungsprotokoll) |
+| Delta an 50 Abonnenten (`publish`) | < 100 ms | 4 ms (vor AP-18: 49 ms) |
+| Statistik für 12 Monate und 52 Wochen | < 250 ms | ca. 18 ms |
+| Historie, größte Seite (200 Einträge) | < 250 ms | ca. 24 ms |
+| Anwesenheitsvorschau (20 Regeln, 12 Wochen) | < 50 ms | ca. 0,3 ms |
+| Panel laden bis zur ersten Ansicht (Chromium, lokale HA-Instanz, `e2e/`) | < 5 s | ca. 1,2 s |
+| Bundle gzip | ≤ 120 kB | 47,8 kB (`npm run bundle-budget`) |
+
+Testabdeckung nach AP-18: Python 98,9 % (1115 Tests), Frontend 97,2 % Anweisungen (133 Tests); End-to-End-Test mit
+Playwright (`e2e/`, CI-Job `e2e`): Auslosung, Tausch und Erledigen gegen eine echte Home-Assistant-Instanz.
+
+---|---|---|
 | Runde mit 10 Aufgaben × 6 Personen | < 5 ms | ca. 1,6 ms (AP-06, `tests/domain/draw/test_engine.py`, lokal gemessen) |
 | Panel erster Snapshot | < 300 ms | – |
 | Bundle gzip | ≤ 120 kB | – |
@@ -173,6 +194,8 @@ Module, Art der Änderung, Auswirkung auf Metriken und Abhängigkeiten. CI prüf
 
 | Datum | Version | AP | Module | Änderung | Metriken / Abhängigkeiten |
 |---|---|---|---|---|---|
+| 2026-11-03 | 0.0.1 | AP-18 | `frontend/src/components/define.ts` (neu: `defineOnce`), alle Dateien mit `customElements.define` unter `components/`, `views/`, `task-wheel-panel.ts`, `entities/factory.py` (`_device_of`), `tests/`, `frontend/src/components/define.test.ts` | geändert: (1) Elemente werden über `defineOnce` angemeldet; wertet der Browser das Bundle ein zweites Mal aus, entfällt der Fehler „name has already been used“. (2) `async_get_device` (entfällt in Home Assistant 2027.8) ersetzt durch die Suche unter den Geräten der Config Entry (`async_entries_for_config_entry`), das funktioniert mit alter und neuer HA-Version | `entities/factory.py` +11 LOC, `components/define.ts` +9 LOC, max. CC unverändert, Duplikate 0 |
+| 2026-11-03 | 0.0.1 | AP-18 | `websocket/read.py` (neu: Befehl `availability/preview`), `domain/availability/calendar.py` (`PersonAvailability.of_rules`, `week_preview`), `domain/swap.py` (`jokers_used_by_person`), `application/swap_service.py` (`jokers_left_for`), `application/views.py` (Jokerzähler einmal je Snapshot), `const/` (`events.py`, `keys.py`), `frontend/src/` (`api/client.ts` `availabilityPreview`, `constants/api.ts`, `views/persons.ts`, `components/absence-editor.ts`, `state/dates.ts`; **entfernt:** `state/presence.ts` samt Test, `dayNumber`/`dateOfDay`/`weekdayOf`, `PREVIEW_WEEKS`), `e2e/` (neu), `tests/` (`websocket/test_hardening.py`, `performance/test_limits.py`), `.github/` (CI-Job `e2e`, Dependabot) | geändert/neu: **Härtung.** (1) Duplizierte Regel entfernt: die Anwesenheitsvorschau der Personen-Ansicht spiegelte `domain/availability/strategies.py` in TypeScript; jetzt rechnet nur das Backend (WebSocket-Befehl `availability/preview`, Schema begrenzt Regelzahl auf `MAX_ABSENCES_PER_PERSON`, Wochen auf 1–12), das Panel zeigt das Ergebnis über `AsyncValue`; bei ungültigen Regeln bleibt die letzte Vorschau stehen. (2) Sicherheits-Review aller Eingänge (WebSocket, Dienste, To-do, CSV, Benachrichtigungsziel, Panel, Rechte) ohne Befund hoch/mittel, siehe KONZEPT §8.1; Härtungstests mit fehlerhaften Werten für jedes Feld jedes Befehls (nur Schema- oder Fachfehler, nie eine Ausnahme). (3) Performance-Befund behoben: der Snapshot zählte die Joker je Person mit eigenem Durchlauf über alle jüngsten Zuteilungen (O(Personen × Zuteilungen), 48 ms an den Obergrenzen, bei jeder Änderung für alle Abonnenten); jetzt ein Durchlauf für alle (4 ms). (4) Lasttest an den Obergrenzen mit Budgets, Playwright-End-to-End-Test gegen echte HA-Instanz (CI-Job `e2e`, `npm audit` und Dependabot auch für `e2e/`) | `custom_components/` +87 / −19 Zeilen, `frontend/src/` +91 / −156 Zeilen (netto −65, mit Tests), max. CC je Funktion ≤ 8, keine neue Laufzeitabhängigkeit, Entwicklungsabhängigkeit `@playwright/test` 1.63.0 (nur `e2e/`), Schichten unverändert (import-linter 5 von 5), Duplikate 0, Bundle 47,8 kB gzip |
 | 2026-11-03 | 0.0.1 | AP-19 | `application/draw_inputs.py`, `tests/`, `README.md`, `docs/KONZEPT.md` | geändert: Sperre aus AP-19 zurückgenommen (`tasks_open_elsewhere` entfernt). Eine Aufgabe, die in mehreren Zeitplänen steht, kann mehrfach ausgelost werden, auch an dieselbe Person; jede Zuteilung kennt ihren Zeitplan (`schedule_id`) und wird einzeln erledigt. Die Anzeige je Auslosung kommt aus dem Thread „Auslosungen gruppieren“ | Backend 433 Tests der HA-freien Schichten grün; keine neue Abhängigkeit; ca. −15 LOC |
 | 2026-11-03 | 0.0.1 | AP-19 | `domain/models.py` (`Assignment.schedule_id`, Prüfung in `Round`), `domain/draw/draft.py`, `application/draw_inputs.py` (`tasks_open_elsewhere`), `infrastructure/repository/migration.py`, `const/keys.py` (`KEY_ASSIGNMENTS`, `KEY_SCHEDULE_ID`, `STORE_MINOR_VERSION` 2), `frontend/src/` (`api/models.ts`, `views/overview-model.ts`), `tests/`, `README.md`, `docs/KONZEPT.md` | geändert: Zuteilungen kennen den auslosenden Zeitplan (`schedule_id`, Pflichtfeld, muss zur Runde passen). Die Übersicht gruppiert danach statt nach dem ersten Zeitplan mit der Aufgabe; Zuteilungen gelöschter Zeitpläne stehen unter „Ohne Zeitplan“. Migration 1.1 → 1.2 setzt bei bestehenden Zuteilungen den Zeitplan ihrer Runde ein (Config-Store: Schritt ohne Änderung, beide Stores teilen die Versionsnummer). Erledigen gilt für alle Pläne: `due_tasks` lässt Aufgaben aus, die in einem anderen Zeitplan noch offen oder getauscht sind; die Häufigkeitsregeln zählten schon je Aufgabe über alle Pläne | Backend 429 Tests der HA-freien Schichten grün, Frontend 137 Tests; neue Funktionen je ≤ 8 LOC, max. CC 3; Duplikate 0; keine neue Abhängigkeit, keine Laufzeitabhängigkeit |
 | 2026-11-03 | 0.0.1 | AP-15 (Nachbesserung 2) | `frontend/src/` (geändert: `constants/tokens.ts`, `components/` `formStyles`, `chip-select`, `absence-editor`, `frequency-editor`, `trigger-editor`, `index`, `views/` `config-view`, `schedules`) | geändert: einheitlicher Feldabstand über das Token `--tw-space-field` (16 px) und die gemeinsame Klasse `stackStyles` für alle Editoren sowie das Formular der Ansichten; die Schalter eines Formulars stehen gruppiert ohne zusätzlichen Abstand. Chip-Auswahl mit Eigenschaft `compact` (eine Zeile, gleich breite Chips) für die Wochentage Mo bis So, damit sie nicht umbrechen | Frontend: keine neuen Module, Duplikate 0, Abdeckung ≈ 89 % Zweige; keine neuen Abhängigkeiten |

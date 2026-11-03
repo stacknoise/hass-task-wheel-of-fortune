@@ -121,6 +121,7 @@ WS_FIELD_OFFSET: Final = "offset"
 WS_FIELD_LIMIT: Final = "limit"
 WS_FIELD_MONTHS: Final = "months"
 WS_FIELD_WEEKS: Final = "weeks"
+WS_FIELD_ABSENCES: Final = "absences"
 
 # Inhalt der Antworten und Deltas
 WIRE_PERSONS: Final = "persons"
@@ -148,6 +149,7 @@ WIRE_PANEL_ROUND: Final = "panel_round"
 WIRE_EXPIRES_AT: Final = "expires_at"
 WIRE_PENDING: Final = "pending_task_ids"
 WIRE_NEXT_RUN: Final = "next_run"
+WIRE_PRESENT: Final = "present"
 
 # Fehlerschlüssel der Benachrichtigung
 ERR_NOTIFY_TARGET: Final = "notify_target_invalid"

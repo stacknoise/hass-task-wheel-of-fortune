@@ -118,6 +118,50 @@ jobs:
         working-directory: frontend
       - run: npm run bundle-budget
         working-directory: frontend
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            requirements-dev.txt
+            e2e/requirements.txt
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+      - run: pip install -r requirements-dev.txt -r e2e/requirements.txt
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - run: npm ci
+        working-directory: e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: e2e
+      - name: Home Assistant mit der Integration starten
+        run: |
+          mkdir -p "$RUNNER_TEMP/ha/custom_components"
+          ln -s "$GITHUB_WORKSPACE/custom_components/task_wheel" "$RUNNER_TEMP/ha/custom_components/task_wheel"
+          printf 'frontend:\nconfig:\nonboarding:\nhttp:\n' > "$RUNNER_TEMP/ha/configuration.yaml"
+          nohup hass -c "$RUNNER_TEMP/ha" > "$RUNNER_TEMP/ha.log" 2>&1 &
+          for _ in $(seq 1 90); do
+            curl -sf http://localhost:8123/api/onboarding > /dev/null && exit 0
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/ha.log"
+          exit 1
+      - run: npx playwright test
+        working-directory: e2e
+      - if: failure()
+        run: cat "$RUNNER_TEMP/ha.log"
   audit:
     name: audit
     runs-on: ubuntu-latest
@@ -128,6 +172,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm audit --audit-level=high
         working-directory: frontend
+      - run: npm audit --audit-level=high
+        working-directory: e2e
   docs-check:
     name: docs-check
     runs-on: ubuntu-latest

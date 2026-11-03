@@ -3,6 +3,7 @@ import type { TemplateResult } from 'lit';
 
 import { COMPONENT_TAGS, INITIAL_LENGTH } from '../constants/index.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
+import { defineOnce } from './define.ts';
 
 /** Runde Marke einer Person: Anfangsbuchstabe auf ihrer Farbe. */
 export class TwAvatar extends LitElement {
@@ -46,4 +47,4 @@ export class TwAvatar extends LitElement {
   }
 }
 
-customElements.define(COMPONENT_TAGS.avatar, TwAvatar);
+defineOnce(COMPONENT_TAGS.avatar, TwAvatar);

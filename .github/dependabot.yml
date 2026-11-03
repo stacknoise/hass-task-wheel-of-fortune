@@ -25,6 +25,14 @@ updates:
     groups:
       npm:
         patterns: ["*"]
+  - package-ecosystem: npm
+    directory: /e2e
+    schedule:
+      interval: weekly
+    labels: [dependencies, e2e]
+    groups:
+      e2e:
+        patterns: ["*"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

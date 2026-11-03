@@ -24,6 +24,7 @@ import type { TextKey } from './i18n/index.ts';
 import { Store, storeContext } from './state/index.ts';
 import { VIEW_LOADERS, routeFromPath } from './views/index.ts';
 import type { SectionView } from './views/index.ts';
+import { defineOnce } from './components/define.ts';
 
 interface PanelRoute {
   readonly prefix: string;
@@ -185,4 +186,4 @@ export class TaskWheelPanel extends LitElement {
   }
 }
 
-customElements.define(PANEL_ELEMENT_NAME, TaskWheelPanel);
+defineOnce(PANEL_ELEMENT_NAME, TaskWheelPanel);

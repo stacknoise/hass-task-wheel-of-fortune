@@ -5,6 +5,7 @@ import { FORM_TAGS } from '../constants/index.ts';
 import { emitChange } from './change.ts';
 import { formStyles } from './formStyles.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
+import { defineOnce } from './define.ts';
 
 const STEP = 1;
 const DECREASE = '−';
@@ -96,4 +97,4 @@ export class TwStepper extends LitElement {
   }
 }
 
-customElements.define(FORM_TAGS.stepper, TwStepper);
+defineOnce(FORM_TAGS.stepper, TwStepper);
