@@ -82,6 +82,7 @@ steht „–“.
 
 | Modul | Schicht | Verantwortung | Nutzt | LOC | CC | MI | Ca | Ce | I | Test |
 |---|---|---|---|---|---|---|---|---|---|---|
+| 2026-11-03 | 0.0.1 | AP-17 | `frontend/src/views/overview.ts` | geändert (UI-Rückmeldung): In der Aktivität steht Datum und Uhrzeit in einer eigenen Zeile unter Name und Aufgabe | keine Änderung der Kennzahlen |
 | 2026-11-03 | – | – | `README.md` | geändert: Abschnitt „Lokale Testumgebung (Docker)“ entfernt; `dev/README.md` bleibt bestehen. Kein Code betroffen | – |
 | `const/keys.py` | Const | Speicher- und API-Schlüssel | – | – | – | – | – | – | – | – |
 | `const/limits.py` | Const | Grenzwerte | – | – | – | – | – | – | – | – |
