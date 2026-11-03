@@ -35,10 +35,10 @@ _decode_status = enum_of(AssignmentStatus)
 
 @dataclass(slots=True, frozen=True)
 class AssignmentChange:
-    """Änderung einer Zuteilung; `before` ist leer, wenn sie neu entsteht."""
+    """Änderung einer Zuteilung; `before` fehlt bei neuen, `after` bei entfallenden."""
 
     before: Assignment | None
-    after: Assignment
+    after: Assignment | None
 
 
 @dataclass(slots=True, frozen=True)
@@ -119,7 +119,8 @@ def updated_month(
     for change in changes:
         if change.before is not None:
             _apply(month, change.before, _SUBTRACT)
-        _apply(month, change.after, _ADD)
+        if change.after is not None:
+            _apply(month, change.after, _ADD)
     return month
 
 

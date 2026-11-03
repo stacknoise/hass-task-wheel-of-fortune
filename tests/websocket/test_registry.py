@@ -9,6 +9,7 @@ ADMIN_PREFIXES = (
     events.WS_TASK_PREFIX,
     events.WS_SCHEDULE_PREFIX,
     events.WS_SETTINGS_UPDATE,
+    events.WS_ROUND_DELETE,
 )
 EXPECTED = {
     events.WS_SNAPSHOT,
@@ -17,6 +18,7 @@ EXPECTED = {
     events.WS_STATISTICS_GET,
     events.WS_ASSIGNMENT_COMPLETE,
     events.WS_ASSIGNMENT_SWAP,
+    events.WS_ROUND_DELETE,
     events.WS_DRAW_BEGIN,
     events.WS_DRAW_SPIN,
     events.WS_DRAW_SPIN_REST,
@@ -40,7 +42,7 @@ def test_all_documented_commands_exist() -> None:
             assert prefix + action in names
 
 
-def test_only_configuration_needs_admin() -> None:
+def test_only_configuration_and_deleting_rounds_need_admin() -> None:
     for command in COMMANDS:
         is_config = command.name.startswith(ADMIN_PREFIXES)
         assert (command.access is Access.ADMIN) is is_config, command.name

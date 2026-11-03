@@ -7,6 +7,7 @@ import {
   WS_ASSIGNMENT_COMPLETE,
   WS_ASSIGNMENT_SWAP,
   WS_HISTORY_LIST,
+  WS_ROUND_DELETE,
   WS_STATISTICS_GET,
 } from '../constants/index.ts';
 import { Store, storeContext } from '../state/index.ts';
@@ -42,7 +43,25 @@ export const SNAPSHOT: Snapshot = {
   assignments: [
     assignment('a1', 't1', 'p1', 'open'),
     assignment('a2', 't2', 'p1', 'swapped'),
-    assignment('a3', 't9', 'p2', 'open', 'gone'),
+    assignment('a3', 't9', 'p2', 'open', 'r2', 'gone'),
+  ],
+  rounds: [
+    {
+      id: 'r1',
+      schedule_id: 's1',
+      origin: 'manual',
+      started_at: '2026-11-02T18:00:00+00:00',
+      total: 3,
+      done: 1,
+    },
+    {
+      id: 'r2',
+      schedule_id: 'gone',
+      origin: 'auto',
+      started_at: '2026-11-01T18:00:00+00:00',
+      total: 1,
+      done: 0,
+    },
   ],
   panel_rounds: [],
   settings: {},
@@ -54,11 +73,12 @@ export function assignment(
   taskId: string,
   personId: string,
   status: string,
+  roundId = 'r1',
   scheduleId = 's1',
 ) {
   return {
     id,
-    round_id: 'r1',
+    round_id: roundId,
     schedule_id: scheduleId,
     task_id: taskId,
     person_id: personId,
@@ -87,7 +107,7 @@ export const HISTORY: HistoryPage = {
       schedule_id: 'gone',
       origin: 'auto',
       started_at: '2026-10-26T18:00:00+00:00',
-      assignments: [assignment('a6', 't7', 'p2', 'late')],
+      assignments: [assignment('a6', 't7', 'p2', 'missed')],
     },
   ],
   next_offset: null,
@@ -131,6 +151,7 @@ export function fakeHass(): FakeHass {
   hass.replies.set(WS_STATISTICS_GET, REPORT);
   hass.replies.set(WS_ASSIGNMENT_COMPLETE, { id: 'a1' });
   hass.replies.set(WS_ASSIGNMENT_SWAP, { id: 'a1' });
+  hass.replies.set(WS_ROUND_DELETE, {});
 
   return hass;
 }

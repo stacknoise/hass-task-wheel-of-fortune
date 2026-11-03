@@ -4,6 +4,7 @@ export const WS_PREFIX = 'task_wheel/';
 export const WS_SNAPSHOT = `${WS_PREFIX}snapshot`;
 export const WS_SUBSCRIBE = `${WS_PREFIX}subscribe`;
 export const WS_AVAILABILITY_PREVIEW = `${WS_PREFIX}availability/preview`;
+export const WS_ROUND_DELETE = `${WS_PREFIX}round/delete`;
 export const WS_DRAW_BEGIN = `${WS_PREFIX}draw/begin`;
 export const WS_DRAW_PREVIEW = `${WS_PREFIX}draw/preview`;
 export const WS_DRAW_SPIN = `${WS_PREFIX}draw/spin`;
@@ -13,6 +14,7 @@ export const WS_DRAW_CANCEL = `${WS_PREFIX}draw/cancel`;
 
 export const FIELD_ABSENCES = 'absences';
 export const FIELD_SCHEDULE_ID = 'schedule_id';
+export const FIELD_ROUND_ID = 'round_id';
 export const FIELD_PANEL_ROUND_ID = 'panel_round_id';
 export const REPLY_PRESENT = 'present';
 export const REPLY_RESULT = 'result';
@@ -24,6 +26,7 @@ export const COLLECTIONS = [
   'tasks',
   'schedules',
   'assignments',
+  'rounds',
   'panel_rounds',
 ] as const;
 export type CollectionName = (typeof COLLECTIONS)[number];

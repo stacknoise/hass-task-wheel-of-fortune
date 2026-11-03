@@ -23,6 +23,7 @@ import type { TextKey, TextParams } from '../i18n/index.ts';
 import { AsyncValue, StoreController, indexById } from '../state/index.ts';
 import { personChips } from './person-chips.ts';
 import { buildCsv } from './csv.ts';
+import { roundDelete } from './round-delete.ts';
 import { downloadText } from './download.ts';
 import { csvRows, doneCount, originText } from './history-model.ts';
 import type { HistoryLookups } from './history-model.ts';
@@ -41,6 +42,8 @@ export class TwHistoryView extends LitElement {
     _open: { state: true },
     _exporting: { state: true },
     _exportFailed: { state: true },
+    _busy: { state: true },
+    _deleteFailed: { state: true },
   };
 
   static override styles = [
@@ -84,6 +87,8 @@ export class TwHistoryView extends LitElement {
   declare _open: ReadonlySet<string>;
   declare _exporting: boolean;
   declare _exportFailed: boolean;
+  declare _busy: boolean;
+  declare _deleteFailed: boolean;
 
   readonly #store = new StoreController(this);
   readonly #data = new AsyncValue<Loaded>(this);
@@ -96,6 +101,8 @@ export class TwHistoryView extends LitElement {
     this._open = new Set();
     this._exporting = false;
     this._exportFailed = false;
+    this._busy = false;
+    this._deleteFailed = false;
     this.addEventListener(EVENT_CHIP_SELECT, (event) => {
       this._filter = (event as CustomEvent<string>).detail;
       this.#load(false);
@@ -144,6 +151,11 @@ export class TwHistoryView extends LitElement {
       ${
         this._exportFailed
           ? html`<p class="error" role="alert">${this.#text('history.exportError')}</p>`
+          : nothing
+      }
+      ${
+        this._deleteFailed
+          ? html`<p class="error" role="alert">${this.#text('overview.actionError')}</p>`
           : nothing
       }
       ${this.#body(lookups)}
@@ -218,6 +230,15 @@ export class TwHistoryView extends LitElement {
           <span class="chevron" aria-hidden="true">▾</span>
         </button>
         ${open ? this.#table(round, lookups) : nothing}
+        ${roundDelete({
+          language: this.language,
+          total: round.assignments.length,
+          done: doneCount(round.assignments),
+          busy: this._busy,
+          onConfirm: () => {
+            this.#delete(round.id);
+          },
+        })}
       </section>
     `;
   }
@@ -297,6 +318,26 @@ export class TwHistoryView extends LitElement {
       const page = await client.history(this.#query(before?.next ?? 0, HISTORY_PAGE_SIZE));
       return { rounds: [...(before?.rounds ?? []), ...page.entries], next: page.next_offset };
     });
+  }
+
+  #delete(roundId: string): void {
+    const client = this.#store.client;
+    if (!client) {
+      return;
+    }
+    this._busy = true;
+    this._deleteFailed = false;
+    client
+      .deleteRound(roundId)
+      .then(() => {
+        this.#load(false);
+      })
+      .catch(() => {
+        this._deleteFailed = true;
+      })
+      .finally(() => {
+        this._busy = false;
+      });
   }
 
   #export(lookups: HistoryLookups): void {

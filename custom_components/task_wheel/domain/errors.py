@@ -11,6 +11,7 @@ from ..const.keys import (
     ERR_NOT_FOUND,
     ERR_NOTIFY_FAILED,
     ERR_NOTIFY_TARGET,
+    ERR_ROUND_HAS_DONE,
     ERR_STORAGE_CORRUPT,
     ERR_STORAGE_VERSION,
     ERR_UNKNOWN_KIND,
@@ -103,6 +104,14 @@ class InvalidTransitionError(TaskWheelError):
     def __init__(self, status: str, action: str) -> None:
         """Merkt sich Status und Aktion als Platzhalter."""
         super().__init__(ERR_INVALID_TRANSITION, {"status": status, "action": action})
+
+
+class RoundHasDoneError(TaskWheelError):
+    """Die Auslosung kann nicht gelöscht werden, weil schon Aufgaben erledigt sind."""
+
+    def __init__(self, round_id: str, done: int) -> None:
+        """Merkt sich Runde und Zahl der erledigten Zuteilungen als Platzhalter."""
+        super().__init__(ERR_ROUND_HAS_DONE, {"id": round_id, "done": done})
 
 
 class SwapRejectedError(TaskWheelError):

@@ -107,6 +107,10 @@ class HistoryRepository(Protocol):
         """Legt eine Runde an oder ersetzt sie samt Zuteilungen."""
         ...
 
+    def remove_round(self, round_id: RoundId) -> Round | None:
+        """Entfernt eine Runde samt Zuteilungen und Indizes; liefert sie oder `None`."""
+        ...
+
     def set_aggregates(self, aggregates: Mapping[str, object]) -> None:
         """Ersetzt die Monatsaggregate."""
         ...
@@ -175,6 +179,10 @@ class RoundEvents(Protocol):
         """Eine Zuteilung wurde als verpasst markiert."""
         ...
 
+    def round_deleted(self, round_: Round) -> None:
+        """Eine Runde wurde samt Zuteilungen gelöscht (Statistik ist zurückgerechnet)."""
+        ...
+
     def animation_requested(self, round_: Round, target: str) -> None:
         """Eine Anzeige `target` soll die Auslosung der Runde zeigen (Dienst `draw`)."""
         ...
@@ -196,6 +204,9 @@ class NoEvents:
         """Tut nichts."""
 
     def assignment_missed(self, assignment: Assignment) -> None:
+        """Tut nichts."""
+
+    def round_deleted(self, round_: Round) -> None:
         """Tut nichts."""
 
     def animation_requested(self, round_: Round, target: str) -> None:
@@ -240,4 +251,8 @@ class AssignmentRecorder(Protocol):
 
     def record_round(self, round_: Round) -> None:
         """Nimmt alle Zuteilungen einer neuen Runde auf."""
+        ...
+
+    def forget_round(self, round_: Round) -> None:
+        """Nimmt alle Zuteilungen einer gelöschten Runde (samt Punkten) wieder heraus."""
         ...

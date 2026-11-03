@@ -2,6 +2,7 @@ import {
   EVENT_CONNECTION_READY,
   FIELD_ABSENCES,
   FIELD_ASSIGNMENT_ID,
+  FIELD_ROUND_ID,
   FIELD_MONTHS,
   FIELD_PANEL_ROUND_ID,
   FIELD_SCHEDULE_ID,
@@ -17,6 +18,7 @@ import {
   WS_ASSIGNMENT_COMPLETE,
   WS_AVAILABILITY_PREVIEW,
   WS_ASSIGNMENT_SWAP,
+  WS_ROUND_DELETE,
   WS_DRAW_BEGIN,
   WS_DRAW_CANCEL,
   WS_DRAW_COMMIT,
@@ -137,6 +139,11 @@ export class ApiClient {
       [FIELD_ASSIGNMENT_ID]: assignmentId,
       [FIELD_TO_PERSON_ID]: toPersonId,
     });
+  }
+
+  /** Löscht die Auslosung samt Zuteilungen; Punkte und Statistik werden zurückgerechnet. */
+  async deleteRound(roundId: string): Promise<void> {
+    await this.#hass.callWS<unknown>({ type: WS_ROUND_DELETE, [FIELD_ROUND_ID]: roundId });
   }
 
   /** Ruft `listener` nach jedem Wiederaufbau der Verbindung auf. */

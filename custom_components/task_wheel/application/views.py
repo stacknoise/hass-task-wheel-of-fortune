@@ -7,21 +7,28 @@ from typing import Final
 
 from ..const.keys import (
     WIRE_ASSIGNMENTS,
+    WIRE_DONE,
     WIRE_EXPIRES_AT,
     WIRE_JOKERS_LEFT,
     WIRE_NEXT_RUN,
     WIRE_NOW,
+    WIRE_ORIGIN,
     WIRE_PANEL_ROUNDS,
     WIRE_PENDING,
     WIRE_PERSONS,
     WIRE_REMOVE,
     WIRE_RESULTS,
+    WIRE_ROUNDS,
     WIRE_SCHEDULES,
     WIRE_SETTINGS,
+    WIRE_STARTED_AT,
     WIRE_TASKS,
+    WIRE_TOTAL,
     WIRE_UPSERT,
+    WS_FIELD_SCHEDULE_ID,
 )
 from ..domain.models import Round, Schedule
+from ..domain.status import DONE_STATUSES
 from .draw_service import DrawService, PanelRound
 from .history_service import HistoryEntry
 from .protocols import ConfigRepository, HistoryRepository
@@ -36,6 +43,7 @@ COLLECTIONS: Final = (
     WIRE_TASKS,
     WIRE_SCHEDULES,
     WIRE_ASSIGNMENTS,
+    WIRE_ROUNDS,
     WIRE_PANEL_ROUNDS,
 )
 
@@ -69,6 +77,18 @@ def panel_round_view(panel_round: PanelRound) -> Json:
         WIRE_EXPIRES_AT: panel_round.expires_at.isoformat(),
         WIRE_RESULTS: to_wire(draft.results),
         WIRE_PENDING: [task.id for task in draft.pending],
+    }
+
+
+def round_head(round_: Round) -> Json:
+    """Kopf einer Runde für die Übersicht: Zeitplan, Beginn, Zahl der erledigten."""
+    return {
+        KEY_ID: round_.id,
+        WS_FIELD_SCHEDULE_ID: round_.schedule_id,
+        WIRE_ORIGIN: round_.origin.value,
+        WIRE_STARTED_AT: round_.started_at.isoformat(),
+        WIRE_TOTAL: len(round_.assignments),
+        WIRE_DONE: sum(item.status in DONE_STATUSES for item in round_.assignments),
     }
 
 
@@ -106,11 +126,23 @@ class SnapshotBuilder:
                     for item in self._history.open_assignments(person_id)
                 ]
             ),
+            WIRE_ROUNDS: _by_id(self._open_rounds()),
             WIRE_PANEL_ROUNDS: _by_id(
                 [panel_round_view(item) for item in self._draws.open_rounds(now)]
             ),
         }
         return Snapshot(collections, to_json(config.settings), now)
+
+    def _open_rounds(self) -> list[Json]:
+        """Kopf der Runden mit offenen Zuteilungen (Zeitplan, Beginn, Zahl der erledigten)."""
+        open_ids = {
+            item.round_id
+            for person_id in self._config.persons
+            for item in self._history.open_assignments(person_id)
+        }
+        return [
+            round_head(round_) for round_ in self._history.rounds.values() if round_.id in open_ids
+        ]
 
     def _persons(self, now: dt.datetime) -> list[Json]:
         """Die Personen samt verbleibenden Jokern im laufenden Monat (Zähler einmal für alle)."""
