@@ -114,3 +114,13 @@ class ExclusionReason(StrEnum):
     ABSENT = "absent"
     REPEAT = "no_repeat"
     TAKEN = "taken"
+
+
+class AnimationKind(StrEnum):
+    """Darstellung der Auslosung im Panel (Wahl je Zeitplan; die Ziehung selbst bleibt im Backend)."""
+
+    WHEEL = "wheel"
+    DRUM = "drum"
+    SLOT = "slot"
+    PLINKO = "plinko"
+    SPOTLIGHT = "spotlight"
