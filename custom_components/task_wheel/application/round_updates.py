@@ -4,8 +4,9 @@ from dataclasses import replace
 
 from ..domain.errors import NotFoundError
 from ..domain.models import Assignment
+from ..domain.statistics.aggregate import AssignmentChange
 from ..domain.types import AssignmentId
-from .protocols import HistoryRepository
+from .protocols import AssignmentRecorder, HistoryRepository
 
 RESOURCE_ASSIGNMENT = "assignment"
 
@@ -18,9 +19,13 @@ def require_assignment(history: HistoryRepository, assignment_id: AssignmentId) 
     return assignment
 
 
-def store_assignment(history: HistoryRepository, updated: Assignment) -> Assignment:
-    """Ersetzt die Zuteilung in ihrer Runde und sichert die Runde."""
+def store_assignment(
+    history: HistoryRepository, recorder: AssignmentRecorder, updated: Assignment
+) -> Assignment:
+    """Ersetzt die Zuteilung in ihrer Runde, sichert die Runde und schreibt die Aggregate fort."""
     round_ = history.rounds[updated.round_id]
+    before = history.get_assignment(updated.id)
     assignments = tuple(updated if item.id == updated.id else item for item in round_.assignments)
     history.put_round(replace(round_, assignments=assignments))
+    recorder.record(round_, (AssignmentChange(before, updated),))
     return updated
