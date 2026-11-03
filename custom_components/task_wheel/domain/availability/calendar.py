@@ -2,7 +2,7 @@
 
 import datetime as dt
 from collections.abc import Iterator, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ...const.defaults import DEFAULT_PREVIEW_WEEKS
 from ...const.keys import ERR_ORDER, ERR_RANGE
@@ -35,6 +35,10 @@ class PersonAvailability:
     """Eine Person ist an einem Tag anwesend, wenn **keine** ihrer Regeln sie abwesend meldet."""
 
     rules: Sequence[AvailabilityRule]
+    # Merkt sich je Fenster, ob jemand anwesend ist (viele Aufgaben fragen dasselbe Fenster ab).
+    _window_cache: dict[tuple[dt.date, dt.date], bool] = field(
+        default_factory=dict, init=False, repr=False, compare=False
+    )
 
     @classmethod
     def of(
@@ -69,7 +73,10 @@ class PersonAvailability:
 
     def present_in_window(self, start: dt.date, end: dt.date) -> bool:
         """Anwesend an mindestens einem Tag im Fenster (Kandidatenregel, KONZEPT §5)."""
-        return any(entry.present for entry in self.days(start, end))
+        key = (start, end)
+        if key not in self._window_cache:
+            self._window_cache[key] = any(entry.present for entry in self.days(start, end))
+        return self._window_cache[key]
 
     def present_day_count(self, start: dt.date, end: dt.date) -> int:
         """Anzahl anwesender Tage im Fenster (Grundlage der Kapazität, KONZEPT §5.3)."""

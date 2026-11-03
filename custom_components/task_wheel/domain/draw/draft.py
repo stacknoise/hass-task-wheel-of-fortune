@@ -47,7 +47,7 @@ class RoundDraft:
         if self.complete:
             raise DrawRejectedError(ERR_ROUND_COMPLETE)
         task = self.tasks[len(self.results)]
-        result = engine.draw_task(task, self.context)
+        result = engine.draw_task(task, self.context, self.pending[1:])
         return replace(self, context=self._advance(task, result), results=(*self.results, result))
 
     def preview(self, engine: DrawEngine) -> TaskDraw:
@@ -58,7 +58,7 @@ class RoundDraft:
         """
         if self.complete:
             raise DrawRejectedError(ERR_ROUND_COMPLETE)
-        return engine.preview_task(self.tasks[len(self.results)], self.context)
+        return engine.preview_task(self.pending[0], self.context, self.pending[1:])
 
     def spin_rest(self, engine: DrawEngine) -> "RoundDraft":
         """Zieht alle übrigen Aufgaben."""
