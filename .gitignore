@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+node_modules/
+frontend/coverage/
+# Gebautes Panel entsteht in CI bzw. beim Release, nicht von Hand bearbeiten
+custom_components/task_wheel/frontend/dist/
+*.zip
+.DS_Store

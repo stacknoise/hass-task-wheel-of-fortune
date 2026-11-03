@@ -1,0 +1,14 @@
+{
+  "domain": "task_wheel",
+  "name": "Aufgaben-Glücksrad",
+  "codeowners": ["@stacknoise"],
+  "config_flow": true,
+  "dependencies": ["http", "frontend", "panel_custom", "websocket_api"],
+  "documentation": "https://github.com/stacknoise/hass-task-wheel-of-fortune",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/stacknoise/hass-task-wheel-of-fortune/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "0.0.1"
+}

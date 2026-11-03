@@ -1,0 +1,4 @@
+node_modules
+coverage
+package-lock.json
+../custom_components/task_wheel/frontend/dist

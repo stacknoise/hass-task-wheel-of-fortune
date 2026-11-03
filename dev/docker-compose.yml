@@ -1,0 +1,14 @@
+# Lokale Home-Assistant-Testinstanz (Entwicklung). Start: docker compose -f dev/docker-compose.yml up -d
+# Das Gerüst der Integration wird read-only eingebunden; das Panel-Bundle kommt aus `npm run build`.
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: task-wheel-ha-dev
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+    volumes:
+      - ./config:/config
+      - ../custom_components/task_wheel:/config/custom_components/task_wheel:ro
+    environment:
+      TZ: Europe/Berlin

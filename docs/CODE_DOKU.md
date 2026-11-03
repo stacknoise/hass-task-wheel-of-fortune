@@ -1,6 +1,6 @@
 # Code-Dokumentation: Aufgaben-Glücksrad
 
-Stand: 2026-11-03 · Code-Version: – (noch kein Code) · Vorlage: Code-Dokus „Detailed Energy Card“ und
+Stand: 2026-11-03 · Code-Version: 0.0.1 (Gerüst, AP-00) · Vorlage: Code-Dokus „Detailed Energy Card“ und
 „HASS Test Data Creator“
 
 Dieses Dokument erfasst den Code mit seinen **Metriken** und **Abhängigkeiten** und protokolliert **jede
@@ -117,11 +117,12 @@ steht „–“.
 
 | Paket | Version | Schicht | Zweck |
 |---|---|---|---|
-| Home Assistant | ≥ 2025.6 (wird in AP-00 gepinnt) | Entry, Api, Infra | Plattform |
+| Home Assistant | ≥ 2025.6 (`hacs.json`); Tests laufen gegen die Version von `pytest-homeassistant-custom-component` 0.13.316 (HA 2026.2.3) | Entry, Api, Infra | Plattform |
 | voluptuous | mit HA | Api | Schemas |
-| lit | 3.x (gepinnt in AP-00) | Panel | Webcomponents |
-| @lit/context | 1.x | Panel | Zustand |
-| vite, typescript, eslint, vitest | gepinnt in AP-00 | Build/Test | Werkzeuge |
+| lit | 3.3.3 (gepinnt) | Panel | Webcomponents |
+| @lit/context | 1.1.6 (gepinnt) | Panel | Zustand |
+| vite 8.3.5, typescript 6.0.3, eslint 10.14.0, vitest 5.1.0, typescript-eslint 8.72.1, eslint-plugin-boundaries 7.4.1, jscpd 5.4.2 | gepinnt (`frontend/package.json`) | Build/Test | Werkzeuge |
+| ruff 0.17.3, mypy 2.4.1, import-linter 2.15, pylint 4.1.3, pytest-homeassistant-custom-component 0.13.316 | gepinnt (`requirements-dev.txt`) | Build/Test | Werkzeuge |
 
 Laufzeitabhängigkeiten außerhalb von HA: **keine** (`requirements: []` im Manifest).
 
@@ -143,6 +144,7 @@ Module, Art der Änderung, Auswirkung auf Metriken und Abhängigkeiten. CI prüf
 
 | Datum | Version | AP | Module | Änderung | Metriken / Abhängigkeiten |
 |---|---|---|---|---|---|
+| 2026-11-03 | 0.0.1 | AP-00 | `custom_components/task_wheel/` (`__init__.py`, `config_flow.py`, `const/`, Schichtpakete `domain/`, `application/`, `infrastructure/`, `websocket/`, `entities/`), `tools/check_docs_changed.py`, `frontend/src/` (`task-wheel-panel.ts`, `constants/`, `i18n/`, Platzhalter `api/`, `state/`, `components/`, `views/`) | neu: Projektgerüst. Einzelinstanz-Config-Flow, `manifest.json`, `hacs.json`, Konstantenpaket (`DOMAIN`, `INTEGRATION_NAME`), leere Schichtpakete; Lit-Panel-Gerüst mit i18n (de/en), Vite-Build mit Inhalts-Hash, Bundle-Budget; CI-Jobs `hassfest`, `HACS validation`, `lint`, `typecheck`, `architecture`, `test-backend`, `test-frontend`, `build-frontend`, `audit`, `docs-check`; Dependabot, Vorlagen, LICENSE (MIT), Docker-Testumgebung `dev/` | Python: 51 Anweisungen, Abdeckung 96 %, max. CC 3; Frontend: 11 Anweisungen, Abdeckung 100 %, Bundle 6,4 kB gzip; import-linter-Verträge: 5 (Schichten, Domäne frei von HA, Anwendung ohne Infrastruktur, Infrastruktur ohne Schnittstellen, Konstanten unabhängig); Duplikate 0 |
 | 2026-11-03 | – | – | – | Annahmen §11 bestätigt; Punkte für verspätet/verpasst einstellbar (Settings, §5.4, AP-07, AP-09) | – |
 | 2026-11-03 | – | – | – | Pattern entschieden: Factory + Strategy + Repository (KONZEPT §3.2, §10, README) | – |
 | 2026-11-03 | – | – | – | Konzept, Arbeitspakete, Code-Doku-Struktur und README angelegt; noch kein Code | – |
