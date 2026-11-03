@@ -109,11 +109,11 @@ class DrawEngine:
         context: DrawContext,
         capacity: Mapping[PersonId, float],
         points: Mapping[PersonId, float],
-    ) -> tuple[CandidateSelection, tuple[Segment, ...], list[float]]:
+    ) -> tuple[CandidateSelection, tuple[Segment, ...], Sequence[float]]:
         """Filtert und gewichtet: Kandidaten, Segmente des Rads und deren Gewichte."""
         selection = self._selector.select(task, context)
         if not selection.candidates:
-            return selection, (), []
+            return selection, (), ()
         inputs = [
             WeightInput(p.id, capacity[p.id], points.get(p.id, 0)) for p in selection.candidates
         ]
