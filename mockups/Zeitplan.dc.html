@@ -79,6 +79,16 @@ a{color:#0262a0}a:hover{color:#01497a}
               </button>
             </div>
           </sc-if>
+          <sc-if value="{{isOnce}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+                <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #5a616b;">Datum<input type="date" value="{{sel.date}}" style="font: 400 16px Roboto, sans-serif; padding: 8px 10px; border: 1px solid #c4c9d0; border-radius: 8px;"></label>
+                <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #5a616b;">Uhrzeit<input type="time" value="{{sel.time}}" style="font: 400 16px Roboto, sans-serif; padding: 8px 10px; border: 1px solid #c4c9d0; border-radius: 8px;"></label>
+                <label style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #5a616b;">Danach<select style="font: 400 16px Roboto, sans-serif; padding: 8px 10px; border: 1px solid #c4c9d0; border-radius: 8px; background: #ffffff;"><option>Zeitplan behalten (nur manuell)</option><option>Zeitplan archivieren</option><option>Zeitplan löschen</option></select></label>
+              </div>
+              <span style="font-size: 12px; color: #5a616b;">Löst genau einmal automatisch aus, z. B. für den Putz vor einem Besuch oder einer Feier.</span>
+            </div>
+          </sc-if>
           <sc-if value="{{isAuto}}" hint-placeholder-val="{{ true }}">
           <span style="font-size: 12px; color: #5a616b;">Auch automatische Zeitpläne lassen sich jederzeit zusätzlich manuell auslösen. Jede manuelle Auslosung gehört immer zu einem Zeitplan.</span>
           <div style="display: flex; flex-wrap: wrap; gap: 8px;">
@@ -142,6 +152,7 @@ class Component extends DCLogic {
         { name: 'Wochenplan', slug: 'wochenplan', trigger: 'auto', remind: false, days: [0], time: '07:00', tasks: [0, 2, 3, 4, 5, 6], enabled: true, notify: true, skipAway: true, next: 'Mo, 9. Nov' },
         { name: 'Täglich morgens', slug: 'taeglich', trigger: 'auto', remind: false, days: [0, 1, 2, 3, 4, 5, 6], time: '06:30', tasks: [1], enabled: true, notify: false, skipAway: true, next: 'Mi, 4. Nov' },
         { name: 'Großputz', slug: 'grossputz', trigger: 'manual', remind: true, days: [], time: '10:00', tasks: [0, 2, 3, 5], enabled: true, notify: true, skipAway: true, next: 'zuletzt Sa, 10. Okt' },
+        { name: 'Vor dem Weihnachtsbesuch', slug: 'weihnachtsbesuch', trigger: 'once', remind: false, date: '2026-12-19', days: [], time: '10:00', tasks: [0, 2, 3, 6], enabled: true, notify: true, skipAway: true, next: 'Sa, 19. Dez' },
         { name: 'Garten (Sommer)', slug: 'garten', trigger: 'auto', remind: false, days: [5], time: '09:00', tasks: [4], enabled: false, notify: true, skipAway: true, next: 'pausiert' }
       ]
     };
@@ -166,13 +177,14 @@ class Component extends DCLogic {
     function toggleIn(arr, v) { var a = arr.slice(); var i = a.indexOf(v); if (i >= 0) a.splice(i, 1); else a.push(v); return a.sort(function (x, y) { return x - y; }); }
     function whenText(p) {
       if (p.trigger === 'manual') return 'Nur manuell auslosen';
+      if (p.trigger === 'once') return 'Einmalig am 19. Dezember um ' + p.time;
       var d = p.days.length === 7 ? 'Täglich' : (p.days.length ? 'Jeden ' + p.days.map(function (i) { return D[i][1]; }).join(', ') : 'Kein Tag gewählt');
       return d + ' um ' + p.time;
     }
     var plans = s.plans.map(function (p, i) {
       var on = i === s.sel;
       return { name: p.name, when: whenText(p), tasks: p.tasks.length + ' Aufgabe' + (p.tasks.length === 1 ? '' : 'n'), next: p.enabled ? p.next : 'pausiert',
-        state: !p.enabled ? 'Pausiert' : (p.trigger === 'manual' ? 'Manuell' : 'Automatisch'),
+        state: !p.enabled ? 'Pausiert' : (p.trigger === 'manual' ? 'Manuell' : (p.trigger === 'once' ? 'Einmalig' : 'Automatisch')),
         stBg: !p.enabled ? '#eef0f3' : (p.trigger === 'manual' ? '#f1e7fb' : '#e3f1e6'), stFg: !p.enabled ? '#3c424a' : (p.trigger === 'manual' ? '#5b1f99' : '#0f5c28'),
         on: on, border: on ? '#0262a0' : '#e3e6ea', select: function () { self.setState({ sel: i }); } };
     });
@@ -195,13 +207,13 @@ class Component extends DCLogic {
       var on = !!sel[g[0]];
       return { label: g[1], hint: g[2], on: on, track: on ? '#0262a0' : '#a3aab3', knob: on ? 21 : 3, toggle: function () { update(function (p) { p[g[0]] = !p[g[0]]; }); } };
     });
-    var triggers = [['auto', 'Automatisch nach Zeitplan'], ['manual', 'Nur manuell']].map(function (m) {
+    var triggers = [['auto', 'Wiederkehrend'], ['once', 'Einmalig'], ['manual', 'Nur manuell']].map(function (m) {
       var on = sel.trigger === m[0];
       return { label: m[1], on: on, bg: on ? '#0262a0' : '#ffffff', fg: on ? '#ffffff' : '#1f2328', pick: function () { update(function (p) { p.trigger = m[0]; }); } };
     });
     return {
       haNav: haNav, tabs: tabs, plans: plans, sel: sel, days: days, taskBoxes: taskBoxes, toggles: toggles, triggers: triggers,
-      isManual: sel.trigger === 'manual', isAuto: sel.trigger !== 'manual',
+      isManual: sel.trigger === 'manual', isAuto: sel.trigger === 'auto', isOnce: sel.trigger === 'once',
       remindTrack: sel.remind ? '#0262a0' : '#a3aab3', remindKnob: sel.remind ? 21 : 3,
       toggleRemind: function () { update(function (p) { p.remind = !p.remind; }); }
     };
