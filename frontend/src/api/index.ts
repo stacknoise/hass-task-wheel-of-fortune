@@ -14,6 +14,7 @@ export type {
   SpinRestReply,
   TaskDrawWire,
   WireExclusion,
+  NotifyTarget,
   WireObject,
   WireSegment,
 } from './types.ts';
