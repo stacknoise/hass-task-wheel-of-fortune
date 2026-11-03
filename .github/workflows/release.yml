@@ -1,0 +1,50 @@
+name: Release
+# Erstellt aus einem Tag `vX.Y.Z` das GitHub-Release mit `task_wheel.zip` (Panel gebaut, siehe hacs.json).
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+permissions:
+  contents: write
+env:
+  NODE_VERSION: "22"
+  INTEGRATION_DIR: custom_components/task_wheel
+  ARCHIVE: task_wheel.zip
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Tag muss zur Version im Manifest passen
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(python3 -c "import json,os; print(json.load(open(os.environ['INTEGRATION_DIR'] + '/manifest.json'))['version'])")
+          if [ "v$version" != "$TAG" ]; then
+            echo "Tag $TAG passt nicht zur Manifest-Version $version" >&2
+            exit 1
+          fi
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - run: npm run bundle-budget
+        working-directory: frontend
+      - name: ZIP aus dem Integrationsordner bauen
+        run: |
+          test -f "$INTEGRATION_DIR/frontend/dist/index.html" -o -d "$INTEGRATION_DIR/frontend/dist"
+          cd "$INTEGRATION_DIR"
+          zip -r -q "$GITHUB_WORKSPACE/$ARCHIVE" . -x "*/__pycache__/*" -x "__pycache__/*"
+      - name: Release erstellen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          prerelease=""
+          case "$TAG" in *-*) prerelease="--prerelease" ;; esac
+          gh release create "$TAG" "$ARCHIVE" --title "$TAG" --generate-notes --verify-tag $prerelease
