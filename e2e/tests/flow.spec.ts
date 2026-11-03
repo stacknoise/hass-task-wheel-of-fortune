@@ -1,8 +1,11 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { callWS, signIn } from '../support/panel.ts';
 
 const PANEL = '/task-wheel';
+const TASK_NAME = 'Müll rausbringen';
+// Nur die offenen Zuteilungen; die Aktivitätsliste nennt erledigte Aufgaben weiter
+const openRows = (page: Page) => page.locator('.assignments .row', { hasText: TASK_NAME });
 const READY_MS = 30_000;
 // Budget für das Laden des Panels bis zur ersten Ansicht (Messwert: docs/CODE_DOKU.md §3.2)
 const PANEL_LOAD_BUDGET_MS = 5000;
@@ -31,11 +34,19 @@ test('Auslosung, Erledigen und Tausch im Panel', async ({ page, baseURL }) => {
   });
   const task = await callWS<Created>(page, {
     type: 'task_wheel/task/create',
-    task: { name: 'Müll rausbringen', allowed: [anna.id, ben.id], frequency: { kind: 'every_round' } },
+    task: {
+      name: 'Müll rausbringen',
+      allowed: [anna.id, ben.id],
+      frequency: { kind: 'every_round' },
+    },
   });
   await callWS(page, {
     type: 'task_wheel/schedule/create',
-    schedule: { name: 'Wochenrunde', trigger: { kind: 'manual' }, task_ids: [task.id] },
+    schedule: {
+      name: 'Wochenrunde',
+      trigger: { kind: 'manual' },
+      task_ids: [task.id],
+    },
   });
 
   // Auslosung: Runde starten, drehen, abschließen
@@ -47,15 +58,18 @@ test('Auslosung, Erledigen und Tausch im Panel', async ({ page, baseURL }) => {
 
   // Die Zuteilung steht in der Übersicht; wer sie hat, entscheidet die Ziehung
   await page.goto(`${PANEL}/overview`);
-  const row = page.locator('.row', { hasText: 'Müll rausbringen' }).first();
+  const row = openRows(page).first();
   await expect(row).toBeVisible({ timeout: READY_MS });
   const owner = (await row.textContent())?.includes('Anna') ? 'Anna' : 'Ben';
   const other = owner === 'Anna' ? 'Ben' : 'Anna';
 
   // Tausch gegen Joker an die andere Person
   await row.getByRole('button', { name: 'Tauschen' }).click();
-  await page.getByRole('group', { name: 'Tauschen mit' }).getByRole('button', { name: other }).click();
-  await expect(page.locator('.row', { hasText: 'Müll rausbringen' }).first()).toContainText(other);
+  await page
+    .getByRole('group', { name: 'Tauschen mit' })
+    .getByRole('button', { name: other })
+    .click();
+  await expect(openRows(page).first()).toContainText(other);
 
   // Erledigen
   await page
@@ -63,7 +77,7 @@ test('Auslosung, Erledigen und Tausch im Panel', async ({ page, baseURL }) => {
     .first()
     .getByRole('button', { name: 'Erledigt' })
     .click();
-  await expect(page.locator('.row', { hasText: 'Müll rausbringen' })).toHaveCount(0, {
+  await expect(openRows(page)).toHaveCount(0, {
     timeout: READY_MS,
   });
 });
