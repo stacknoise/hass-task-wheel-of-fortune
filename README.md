@@ -1,25 +1,45 @@
 # Task Wheel of Fortune for Home Assistant
 
-Verteilt Haushaltsaufgaben fair und mit etwas Spaß: Ein Glücksrad lost aus, wer was übernimmt. Die Chancen
-richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie belastbar ist.
+Distributes household chores fairly and with a bit of fun: a wheel of fortune draws who takes what. The odds
+depend on who has done how much recently, who is around, and how much load each person can take.
 
-> **Status:** Version 0.1.0, die erste Veröffentlichung. Alle Funktionen unten sind umgesetzt; die Installation läuft über HACS als
-> benutzerdefiniertes Repository (siehe unten). Rückmeldungen gern als [Issue](https://github.com/stacknoise/hass-task-wheel-of-fortune/issues).
+> **Status:** version 0.1.0, the first release. All features below are implemented. Installation is done through HACS
+> as a custom repository (see below). Feedback is welcome as an [issue](https://github.com/stacknoise/hass-task-wheel-of-fortune/issues).
 
-## Funktionen
+## Installation via HACS
 
-- **Personen** als eigene Objekte, unabhängig von HA-Benutzern: Farbe im Rad, volle oder halbe Last oder Pause,
-  Abwesenheiten (einmalig, an festen Wochentagen, im Wochenrhythmus wie „jede 2. Woche Fr–Fr“),
-  optionale Benachrichtigung
-- **Aufgaben** mit erlaubten Personen, Punkten (Aufwand), Frist und Häufigkeit: jede Runde,
-  höchstens n× pro Tag/Woche/Monat oder festes Intervall mit Toleranz
-- **Zeitpläne**: wiederkehrend, einmalig oder nur manuell
-- **Auslosung** automatisch oder im Panel mit Animation: Glücksrad, Lostrommel, Slot-Machine, Plinko oder Scheinwerfer; die Größe (Segment, Kugel, Zeile, Fach, Kachel) entspricht der Chance. Je Zeitplan wählt man per Mehrfachauswahl die erlaubten Varianten; bei mehreren wird bei jeder Auslosung zufällig eine genommen
-- **Fairness**: Wer im Verhältnis zu seinem fairen Anteil weniger Punkte hatte, bekommt ein größeres Stück
-- **Tauschen mit Joker**, nur mit Personen derselben Auslosung, die die Aufgabe bekommen dürfen
-- **„Bleibt unerledigt“**: eine Zuteilung bewusst nicht machen; zählt in Punkten und Statistik wie verpasst
-- **Historie** mit CSV-Export und **Statistiken** (fairer Anteil, Erledigungsquote, Matrix Aufgabe × Person)
-- **Home-Assistant-Anbindung**: Dienste, Events, Sensoren, To-do-Listen je Person, Buttons je Zeitplan
+The integration is not (yet) in the default HACS store. It is installed as a **custom repository**. Prerequisites:
+[HACS](https://hacs.xyz) is set up and Home Assistant is version 2025.6 or newer.
+
+[![Open the repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=stacknoise&repository=hass-task-wheel-of-fortune&category=integration)
+
+The button opens the repository directly in your own Home Assistant instance (My Home Assistant, the address of the
+instance has to be set once). Manually:
+
+1. HACS → menu (⋮) → *Custom repositories* → `https://github.com/stacknoise/hass-task-wheel-of-fortune`,
+   type *Integration* → *Add*
+2. Search for "Task Wheel of Fortune" in HACS, *Download* it (pick the latest version) and restart Home Assistant
+3. *Settings → Devices & services → Add integration → Task Wheel of Fortune*
+4. **Task Wheel of Fortune** appears in the sidebar; create people, tasks and schedules there
+
+HACS reports updates like for any other integration. Without HACS: extract the folder `custom_components/task_wheel` from
+the file `task_wheel.zip` of the respective [release](https://github.com/stacknoise/hass-task-wheel-of-fortune/releases)
+to `config/custom_components/task_wheel` (the repository itself does not contain the built panel).
+
+## Features
+
+- **People** as their own objects, independent of HA users: color on the wheel, full or half load or paused,
+  absences (one-off, on fixed weekdays, in a weekly rhythm such as "every 2nd week Fri–Fri"),
+  optional notification
+- **Tasks** with allowed people, points (effort), deadline and frequency: every round,
+  at most n× per day/week/month, or a fixed interval with tolerance
+- **Schedules**: recurring, one-off or manual only
+- **Draws** automatically or in the panel with an animation: wheel of fortune, lottery drum, slot machine, Plinko or spotlight; the size (segment, ball, row, slot, tile) equals the chance. For each schedule you choose the allowed variants with a multi-select; if there are several, one is picked at random for every draw
+- **Fairness**: whoever has had fewer points relative to their fair share gets a bigger slice
+- **Swapping with a joker**, only with people from the same draw who are allowed to get the task
+- **"Stays undone"**: deliberately not doing an assignment; counts like missed in points and statistics
+- **History** with CSV export and **statistics** (fair share, completion rate, task × person matrix)
+- **Home Assistant integration**: services, events, sensors, a to-do list per person, buttons per schedule
 
 ## Screenshots
 
@@ -34,217 +54,198 @@ richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie b
 | ![Statistics](docs/screenshots/statistics.png) | |
 | **Statistics:** fair share, completion rate, task × person | |
 
-## Installation über HACS
+## Fairness and fair share
 
-Die Integration ist (noch) nicht im HACS-Standardverzeichnis. Sie wird als **benutzerdefiniertes Repository**
-installiert. Voraussetzung: [HACS](https://hacs.xyz) ist eingerichtet und Home Assistant ist in Version 2025.6 oder neuer.
+Next to a person's points, the panel shows their **fair share** ("fair: 1.15") under "Points this month" (overview) and in the
+statistics. This is **not** "everyone gets the same amount", but the share that is due to the person according to their
+**load capacity** and their **days present** in the period. Equal points therefore do not mean equal fair shares.
 
-[![Repository in HACS öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=stacknoise&repository=hass-task-wheel-of-fortune&category=integration)
+**Calculation**
 
-Der Knopf öffnet das Repository direkt in der eigenen Home-Assistant-Instanz (My Home Assistant, einmalig die
-Adresse der Instanz hinterlegen). Von Hand geht es so:
+1. A person's capacity = load capacity (full 1.0 · half 0.5 · paused 0) × number of days present in the period.
+   Absences (one-off, fixed weekdays, weekly rhythm) reduce the days.
+2. Fair share = total points of all people × the person's capacity ÷ sum of all capacities.
+3. Points of an assignment: completed on time counts in full; late and missed ("Stays undone" included) count with the
+   factor from the settings (default: late 1.0, missed 0). Open and swapped assignments do not count in the statistics
+   yet, but count fully as load when drawing.
+4. The period of the statistics is whole calendar months **up to today**; when drawing, the fairness window applies
+   (default 30 days, adjustable in the settings).
 
-1. HACS → Menü (⋮) → *Benutzerdefinierte Repositories* → `https://github.com/stacknoise/hass-task-wheel-of-fortune`,
-   Typ *Integration* → *Hinzufügen*
-2. „Task Wheel of Fortune“ in HACS suchen, *Herunterladen* (die neueste Version wählen) und Home Assistant neu starten
-3. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Task Wheel of Fortune*
-4. In der Seitenleiste erscheint **Task Wheel of Fortune**; dort Personen, Aufgaben und Zeitpläne anlegen
+**Example 1: everyone completes exactly 1 point, yet the fair shares differ**
 
-Updates meldet HACS wie bei jeder anderen Integration. Ohne HACS: den Ordner `custom_components/task_wheel` aus der
-Datei `task_wheel.zip` des jeweiligen [Releases](https://github.com/stacknoise/hass-task-wheel-of-fortune/releases)
-nach `config/custom_components/task_wheel` entpacken (das Repository selbst enthält das gebaute Panel nicht).
+It is Tuesday, 3 November. The "month" period therefore covers only Sunday, Monday and Tuesday. Five people have
+each completed a task worth 1 point (5 points in total):
 
-## Veröffentlichen (für Entwickler)
-
-1. `version` in `custom_components/task_wheel/manifest.json` anheben, Eintrag in `CHANGELOG.md` und im
-   Änderungsprotokoll von `docs/CODE_DOKU.md`, per Pull Request nach `main`
-2. Tag setzen: `git tag v0.1.0 && git push origin v0.1.0`, oder auf GitHub unter *Actions → Release → Run workflow* den Tag eintragen (der Workflow legt ihn am Stand von `main` an)
-3. Der Workflow `Release` prüft, dass Tag und Manifest-Version übereinstimmen, baut das Panel und hängt
-   `task_wheel.zip` an das neue GitHub-Release (siehe `hacs.json`: `zip_release`). Tags mit Suffix (`v0.2.0-beta.1`)
-   werden als Vorabversion veröffentlicht.
-
-## Fairness und fairer Anteil
-
-Das Panel zeigt bei „Punkte im Monat“ (Übersicht) und in der Statistik neben den Punkten einer Person ihren **fairen Anteil**
-(„fair: 1,15“). Das ist **nicht** „alle gleich viel“, sondern der Anteil, der der Person nach ihrer **Belastbarkeit** und
-ihren **Anwesenheitstagen** im Zeitraum zusteht. Gleiche Punkte bedeuten deshalb nicht gleichen fairen Anteil.
-
-**Berechnung**
-
-1. Kapazität der Person = Belastbarkeit (voll 1,0 · halb 0,5 · Pause 0) × Anzahl der anwesenden Tage im Zeitraum.
-   Abwesenheiten (einmalig, feste Wochentage, Wochenrhythmus) verringern die Tage.
-2. Fairer Anteil = Gesamtpunkte aller Personen × Kapazität der Person ÷ Summe aller Kapazitäten.
-3. Punkte einer Zuteilung: pünktlich erledigt zählt voll, verspätet und verpasst („Bleibt unerledigt“ eingeschlossen) mit dem
-   Faktor aus den Einstellungen (Standard: verspätet 1,0, verpasst 0). Offene und getauschte Zuteilungen zählen in der
-   Statistik noch nicht, beim Auslosen aber voll als Last.
-4. Der Zeitraum der Statistik sind ganze Kalendermonate **bis heute**; beim Auslosen gilt das Fairness-Fenster
-   (Standard 30 Tage, in den Einstellungen änderbar).
-
-**Beispiel 1: alle erledigen genau 1 Punkt, trotzdem verschiedene faire Anteile**
-
-Es ist Dienstag, der 3. November. Der Zeitraum „Monat“ umfasst also nur Sonntag, Montag und Dienstag. Fünf Personen haben
-je eine Aufgabe mit 1 Punkt erledigt (zusammen 5 Punkte):
-
-| Person | Anwesenheit | Tage | Fairer Anteil | Punkte |
+| Person | Presence | Days | Fair share | Points |
 |---|---|---|---|---|
-| Toni | immer | 3 | 5 × 3 ÷ 13 = **1,15** | 1 |
-| Andrea | immer | 3 | **1,15** | 1 |
-| Fabian | alle 2 Wochen Fr–Fr, jetzt gerade anwesend | 3 | **1,15** | 1 |
-| Felix | nicht Sa und So | 2 (Mo, Di) | 5 × 2 ÷ 13 = **0,77** | 1 |
-| Laurenz | nicht Sa, So, Mi | 2 (Mo, Di) | **0,77** | 1 |
+| Toni | always | 3 | 5 × 3 ÷ 13 = **1.15** | 1 |
+| Andrea | always | 3 | **1.15** | 1 |
+| Fabian | every 2 weeks Fri–Fri, present right now | 3 | **1.15** | 1 |
+| Felix | not Sat and Sun | 2 (Mon, Tue) | 5 × 2 ÷ 13 = **0.77** | 1 |
+| Laurenz | not Sat, Sun, Wed | 2 (Mon, Tue) | **0.77** | 1 |
 
-Die Summe der Tage ist 13. Wer an weniger Tagen da ist, hat weniger Anspruch auf Aufgaben, 1 Punkt liegt dort also **über**
-dem fairen Anteil (Felix und Laurenz). Mit jedem Tag gleicht sich das an, denn die Kapazität wächst nur an Anwesenheitstagen.
-Fabian steht nur gleichauf mit Toni und Andrea, solange seine Anwesenheitsphase den ganzen Zeitraum abdeckt. In seiner
-Abwesenheitswoche sinkt sein fairer Anteil.
+The sum of the days is 13. Whoever is around on fewer days has less claim to tasks, so 1 point is **above** the fair share
+for Felix and Laurenz. This evens out with every day, because capacity only grows on days present.
+Fabian is only on par with Toni and Andrea as long as his presence phase covers the whole period. In his
+week of absence his fair share drops.
 
-**Beispiel 2: halbe Belastbarkeit**
+**Example 2: half load capacity**
 
-Ein Monat mit 30 Tagen, Anna (voll) und Ben (halb) sind immer da: Kapazität Anna 30, Ben 15. Bei 9 Punkten insgesamt
-stehen Anna 9 × 30 ÷ 45 = **6** und Ben 9 × 15 ÷ 45 = **3** Punkte zu. Hat jede Person 4,5 Punkte, liegt Ben über seinem
-Anteil und Anna darunter.
+A month with 30 days, Anna (full) and Ben (half) are always present: capacity Anna 30, Ben 15. With 9 points in total,
+Anna is due 9 × 30 ÷ 45 = **6** and Ben 9 × 15 ÷ 45 = **3** points. If each person has 4.5 points, Ben is above his
+share and Anna below.
 
-**Beispiel 3: verspätet und verpasst**
+**Example 3: late and missed**
 
-Eine Aufgabe mit 2 Punkten wird verspätet erledigt. Ist der Faktor „verspätet“ auf 0,5 gestellt, bekommt die Person 1
-Punkt gutgeschrieben, bei „verpasst“ (Standard 0) bekommt sie 0.
+A task worth 2 points is completed late. If the "late" factor is set to 0.5, the person is credited 1
+point; for "missed" (default 0) they get 0.
 
-**Wirkung auf die Auslosung**
+**Effect on the draw**
 
-Wer unter seinem fairen Anteil liegt, bekommt ein größeres Stück im Rad. Das Gewicht ist
-`w = f × exp((f − a) ÷ f)` mit dem fairen Anteil `f` und dem tatsächlichen Anteil `a` (Punkte der Person ÷ Punkte
-aller), danach auf mindestens 0,5 % und höchstens 100 % begrenzt und zu Chancen normiert. Beispiel: Anna und Ben sind
-beide voll belastbar und immer da (`f` = 50 %), Anna hat 3 und Ben 1 Punkt im Fenster (`a` = 75 % und 25 %). Dann ist
-Annas Gewicht 0,50 × e^−0,5 ≈ 0,30 und Bens 0,50 × e^0,5 ≈ 0,82. Ben hat damit etwa 73 %, Anna etwa 27 % Chance.
-Ohne Punkte im Fenster haben alle ihren fairen Anteil als Chance; Personen ohne Kapazität (Pause oder im Fenster nie anwesend) behalten nur das Mindestgewicht von 0,5 %.
+Whoever is below their fair share gets a bigger slice on the wheel. The weight is
+`w = f × exp((f − a) ÷ f)` with the fair share `f` and the actual share `a` (the person's points ÷ points of
+everyone), then limited to at least 0.5 % and at most 100 % and normalized to chances. Example: Anna and Ben are
+both fully capable and always present (`f` = 50 %), Anna has 3 and Ben 1 point in the window (`a` = 75 % and 25 %). Then
+Anna's weight is 0.50 × e^−0.5 ≈ 0.30 and Ben's is 0.50 × e^0.5 ≈ 0.82. Ben thus has about a 73 % chance, Anna about 27 %.
+Without points in the window, everyone's chance is their fair share; people without capacity (paused or never present in the window) keep only the minimum weight of 0.5 %.
 
-**Weitere Kennzahlen**
+**Further indicators**
 
-- **Fairness-Index** (Statistik): 100 % bedeutet, alle haben genau ihren fairen Anteil; er sinkt mit der Summe der
-  Abweichungen (Index = 1 − ½ × Σ|Punkte − fairer Anteil| ÷ Gesamtpunkte).
-- **Glückspilz** liegt am weitesten unter seinem fairen Anteil, **Pechvogel** am weitesten darüber, beide nur bei echter
-  Abweichung und ab zwei Personen.
+- **Fairness index** (statistics): 100 % means everyone has exactly their fair share; it falls with the sum of the
+  deviations (index = 1 − ½ × Σ|points − fair share| ÷ total points).
+- **Lucky one** is furthest below their fair share, **unlucky one** furthest above; both only with a real
+  deviation and from two people on.
 
-## Dienste und Events
+## Releasing (for developers)
+
+1. Raise `version` in `custom_components/task_wheel/manifest.json`, add an entry to `CHANGELOG.md` and to the
+   change log of `docs/CODE_DOKU.md`, via pull request to `main`
+2. Set the tag: `git tag v0.1.0 && git push origin v0.1.0`, or enter the tag on GitHub under *Actions → Release → Run workflow* (the workflow creates it at the state of `main`)
+3. The `Release` workflow checks that the tag and the manifest version match, builds the panel and attaches
+   `task_wheel.zip` to the new GitHub release (see `hacs.json`: `zip_release`). Tags with a suffix (`v0.2.0-beta.1`)
+   are published as a pre-release.
+
+## Services and events
 
 ```yaml
 action: task_wheel.draw
 data:
-  schedule: wochenplan
+  schedule: weekly-plan
 ```
 
-| Dienst | Zweck |
+| Service | Purpose |
 |---|---|
-| `task_wheel.draw` | Runde eines Zeitplans auslosen |
-| `task_wheel.complete` | Zuteilung erledigen |
-| `task_wheel.swap` | Zuteilung per Joker tauschen |
-| `task_wheel.set_absence` | Abwesenheit einer Person eintragen |
+| `task_wheel.draw` | Draw a round of a schedule |
+| `task_wheel.complete` | Complete an assignment |
+| `task_wheel.swap` | Swap an assignment with a joker |
+| `task_wheel.set_absence` | Enter an absence for a person |
 
-Events: `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_wheel_missed`, `task_wheel_reminder`. Mit `animate_on` meldet `task_wheel.draw` zusätzlich `task_wheel_animate` (Hinweis für eine Anzeige). Die Inhalte nennen nur Kennungen, Namen und Zahlen.
+Events: `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_wheel_missed`, `task_wheel_reminder`. With `animate_on`, `task_wheel.draw` additionally fires `task_wheel_animate` (a hint for a display). The payloads contain only identifiers, names and numbers.
 
-Zeitplan und Person lassen sich über Kennung oder Kurzname ansprechen, die Aufgabe über Kennung oder Namen. `task_wheel.complete` nimmt entweder `assignment_id` oder `person` zusammen mit `task`.
+A schedule and a person can be addressed by identifier or short name, a task by identifier or name. `task_wheel.complete` takes either `assignment_id` or `person` together with `task`.
 
-Einstellungen (Joker, Fairness-Fenster, Aufbewahrung, Punktefaktoren, Kulanzzeit, Panel nur für Administratoren) ändert man unter *Einstellungen → Geräte & Dienste → Aufgaben-Glücksrad → Konfigurieren*. Jede Nacht um 03:00 werden verpasste Zuteilungen markiert und Runden nach der Aufbewahrungsfrist gelöscht.
+Settings (jokers, fairness window, retention, points factors, grace period, panel for administrators only) are changed under *Settings → Devices & services → Task Wheel of Fortune → Configure*. Every night at 03:00, missed assignments are marked and rounds older than the retention period are deleted.
 
-## Benachrichtigungen
+## Notifications
 
-Jede Person kann ein Ziel haben: eine `notify`-Entität (über `notify.send_message`) oder einen Legacy-Dienst `notify.<name>`, z. B. `notify.mobile_app_anna`. Es sind nur vorhandene Ziele der Domäne `notify` erlaubt; geprüft wird beim Speichern und bei jedem Senden.
+Each person can have a target: a `notify` entity (via `notify.send_message`) or a legacy service `notify.<name>`, e.g. `notify.mobile_app_anna`. Only existing targets of the `notify` domain are allowed; this is checked when saving and on every send.
 
-| Anlass | Empfänger |
+| Occasion | Recipient |
 |---|---|
-| Runde ausgelost (nur wenn der Zeitplan „Ergebnis als Push-Nachricht senden“ aktiv hat) | alle Personen mit Ziel, eine Zeile je Person |
-| Aufgabe getauscht | die Person, die die Aufgabe übernimmt |
-| Erinnerung (Zeitplan „nur manuell“, nach n, 2n, … Tagen ohne Auslosung) | alle Personen mit Ziel |
+| Round drawn (only if the schedule has "Send result as push message" enabled) | all people with a target, one line per person |
+| Task swapped | the person who takes over the task |
+| Reminder (schedule "manual only", after n, 2n, … days without a draw) | all people with a target |
 
-Ein Ziel, das mehrere Personen teilen (z. B. ein Familienkanal), bekommt jede Meldung nur einmal. Die Texte stehen in `custom_components/task_wheel/texts/` (de, en; andere Sprachen fallen auf Englisch zurück). Ein fehlgeschlagener Versand wird protokolliert und blockiert weder die Auslosung noch andere Ziele.
+A target shared by several people (e.g. a family channel) receives each message only once. The texts are in `custom_components/task_wheel/texts/` (de, en; other languages fall back to English). A failed send is logged and blocks neither the draw nor other targets.
 
-## Panel (Gerüst)
+## Panel (skeleton)
 
-Nach dem Einrichten erscheint in der Seitenleiste der Eintrag „Task Wheel of Fortune“ (`/task-wheel`). Das Panel hat die
-Tabs Übersicht, Auslosung, Aufgaben, Personen, Zeitpläne, Historie und Statistik, lädt den Stand per `snapshot` und
-bleibt über `subscribe` aktuell. Der Tab **Auslosung** ist fertig: Zeitplan wählen, Runde starten (eine offene Runde
-lässt sich fortsetzen), je Aufgabe die Animation des Zeitplans abspielen (Glücksrad, Lostrommel, Slot-Machine, Plinko oder Scheinwerfer, Größe = Chance, „Wer ist dabei?“ mit Gründen; wer in der Runde schon eine Aufgabe hat, ist für die weiteren nicht mehr im Rad; überzählige Aufgaben bleiben als „nicht verteilbar“ offen; bleibt für eine Aufgabe nur noch eine Person übrig, wird sie ohne Drehen zugewiesen),
-den Rest ohne Animation verlosen und die Runde abschließen. Das Ergebnis bestimmt immer das Backend; die Animation läuft
-nur dorthin, bei „reduzierte Bewegung“ im Betriebssystem ohne Animation. Fertig sind außerdem **Übersicht**, **Historie** und **Statistik** (AP-17); Aufgaben, Personen und Zeitpläne zeigen
-vorerst nur Zähler und werden mit AP-15 ausgebaut.
+After setup, the entry "Task Wheel of Fortune" (`/task-wheel`) appears in the sidebar. The panel has the
+tabs Overview, Draw, Tasks, People, Schedules, History and Statistics, loads the state via `snapshot` and
+stays up to date via `subscribe`. The **Draw** tab is finished: choose a schedule, start a round (an open round
+can be resumed), play the schedule's animation for each task (wheel of fortune, lottery drum, slot machine, Plinko or spotlight, size = chance, "Who takes part?" with reasons; whoever already has a task in the round is no longer on the wheel for the further ones; surplus tasks stay open as "not distributable"; if only one person is left for a task, they are assigned without spinning),
+draw the rest without animation and complete the round. The backend always determines the result; the animation only
+follows it, and with "reduced motion" in the operating system it is skipped. **Overview**, **History** and **Statistics** are also finished (AP-17); Tasks, People and Schedules
+initially show only counters and are extended with AP-15.
 
+- **Overview:** next draw (with paging through the schedules), open assignments per schedule with a filter by person,
+  an action menu per assignment with Complete and "Stays undone" (both with a confirmation popup) and Swap (only allowed, non-paused people of the same draw, with a note on the remaining jokers), points this month against the
+  fair share, and the latest activity. The open assignments are grouped by **draw** (most recent first, with
+  schedule and time); a draw without open assignments disappears from the list. A whole draw can be
+  **deleted** after confirmation as long as none of its tasks is completed; it then also disappears from history and statistics.
+  If a task is in several schedules, it can be drawn several times; each assignment is completed individually.
+- **History:** expandable rounds (schedule, origin, assignments with chance and status, deleting a round after confirmation), filter by person, loading in
+  pages and **CSV export** (semicolon, UTF-8 with BOM; fields that begin with `=`, `+`, `-`, `@`, a tab or a line break
+  are defused with an apostrophe so that spreadsheet programs do not execute them as a formula).
+- **Statistics:** period (month, 3 or 12 months), indicators, points against fair share, completion rate per week
+  (SVG line chart without a charting library), task × person matrix and awards (lucky one, unlucky one,
+  most reliable person). Empty periods show a note instead of empty charts.
 
-- **Übersicht:** nächste Auslosung (mit Blättern durch die Zeitpläne), offene Zuteilungen je Zeitplan mit Filter nach Person,
-  Aktionsmenü je Zuteilung mit Erledigen und „Bleibt unerledigt“ (beide mit Rückfrage per Popup) und Tauschen (nur erlaubte, nicht pausierte Personen derselben Auslosung, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
-  fairen Anteil und die jüngste Aktivität. Die offenen Zuteilungen sind nach **Auslosung** gruppiert (jüngste zuerst, mit
-  Zeitplan und Zeitpunkt); eine Auslosung ohne offene Zuteilungen verschwindet aus der Liste. Eine ganze Auslosung lässt sich
-  nach Rückfrage **löschen**, solange keine ihrer Aufgaben erledigt ist; sie verschwindet dann auch aus Historie und Statistik.
-  Ist eine Aufgabe in mehreren Zeitplänen, kann sie mehrfach ausgelost werden; jede Zuteilung wird einzeln erledigt.
-- **Historie:** Runden aufklappbar (Zeitplan, Herkunft, Zuteilungen mit Chance und Status, Löschen einer Runde nach Rückfrage), Filter nach Person, Nachladen in
-  Seiten und **CSV-Export** (Semikolon, UTF-8 mit Marke; Felder, die mit `=`, `+`, `-`, `@`, Tabulator oder Zeilenumbruch
-  beginnen, werden mit einem Hochkomma entschärft, damit Tabellenprogramme sie nicht als Formel ausführen).
-- **Statistik:** Zeitraum (Monat, 3 oder 12 Monate), Kennzahlen, Punkte gegen fairen Anteil, Erledigungsquote je Woche
-  (SVG-Liniendiagramm ohne Diagrammbibliothek), Matrix Aufgabe mal Person und Auszeichnungen (Glückspilz, Pechvogel,
-  Zuverlässigste Person). Leere Zeiträume zeigen einen Hinweis statt leerer Diagramme.
+**Tablet and smartphone:** the panel adapts to its own width. On a tablet in portrait mode and on a smartphone, the stage (wheel, result, "Next task") sits at the top of the draw and the round list below it; on a smartphone everything is single-column and compact, controls have touch size (44 px), and in narrow mode the Home Assistant menu button for the sidebar appears.
 
-**Tablet und Smartphone:** Das Panel richtet sich nach seiner eigenen Breite. Auf dem Tablet hochkant und auf dem Smartphone steht bei der Auslosung die Bühne (Rad, Ergebnis, „Nächste Aufgabe“) oben und die Rundenliste darunter; auf dem Smartphone ist alles einspaltig und kompakt, Bedienelemente haben Touch-Größe (44 px), und im schmalen Modus erscheint der Menü-Knopf von Home Assistant für die Seitenleiste.
+Texts are available in German and English (language from Home Assistant). The bundle is not checked in: before
+trying it out, run `cd frontend && npm ci && npm run build`. If it is missing, the integration stays usable and writes a
+warning to the log.
 
-Texte gibt es auf Deutsch und Englisch (Sprache aus Home Assistant). Das Bundle ist nicht eingecheckt: vor dem
-Ausprobieren `cd frontend && npm ci && npm run build`. Fehlt es, bleibt die Integration nutzbar und schreibt eine
-Warnung ins Protokoll.
+### People, tasks and schedules in the panel (AP-15)
 
-### Personen, Aufgaben und Zeitpläne im Panel (AP-15)
+The *People*, *Tasks* and *Schedules* tabs create, change and delete objects (administrators only). People and tasks cannot be deleted while they are still in use: a person not while a task allows them or they have open assignments; a task not while a schedule contains it or it is still assigned and open. The cards are laid out
+in a grid; adding and editing open a popup (full screen on a smartphone, close with Escape or ✕), and deleting asks for confirmation in another popup. Backend errors appear at the affected field and as a note in the popup.
 
-Die Tabs *Personen*, *Aufgaben* und *Zeitpläne* legen Objekte an, ändern und löschen sie (nur Administratoren). Personen und Aufgaben lassen sich nicht löschen, solange sie noch verwendet werden: eine Person nicht, solange eine Aufgabe sie erlaubt oder sie offene Zuteilungen hat; eine Aufgabe nicht, solange ein Zeitplan sie enthält oder sie noch offen zugeteilt ist. Die Karten stehen
-im Raster; Hinzufügen und Bearbeiten öffnen ein Popup (auf dem Smartphone im Vollbild, mit Escape oder ✕ zu schließen), das Löschen fragt in einem weiteren Popup nach. Fehler des Backends erscheinen am betroffenen Feld und als Hinweis im Popup.
+- **People:** color on the wheel, load capacity (full, half, paused), presence (one-off, weekdays, weekly rhythm) with a
+  preview of the next four weeks, and optionally a notification entity (`notify.…`, with a search across the entities and services of Home Assistant, checked when saving).
+- **Tasks:** allowed people, frequency (every round, at most n× per period, fixed interval with a timeline),
+  points, deadline, minimum load capacity (any, at least half or full load only; whoever is below it does not get onto the wheel for the task and cannot take it over by swapping) and the extra rules "no repetition", "respect absence", "swap allowed".
+- **Schedules:** recurring, one-off or manual only, task selection, options and an example for `task_wheel.draw`
+  and the event `task_wheel_drawn`.
 
-- **Personen:** Farbe im Rad, Belastbarkeit (voll, halb, pausiert), Anwesenheit (einmalig, Wochentage, Wochenrhythmus) mit
-  Vorschau der nächsten vier Wochen und optional eine Benachrichtigungs-Entität (`notify.…`, mit Suche über die Entitäten und Dienste von Home Assistant, wird beim Speichern geprüft).
-- **Aufgaben:** erlaubte Personen, Häufigkeit (jede Runde, höchstens n× je Zeitraum, festes Intervall mit Zeitstrahl),
-  Punkte, Frist, Mindest-Belastbarkeit (egal, mindestens halbe oder nur volle Last; wer darunter liegt, kommt für die Aufgabe nicht ins Rad und kann sie nicht per Tausch übernehmen) und die Zusatzregeln „keine Wiederholung“, „Abwesenheit beachten“, „Tausch erlaubt“.
-- **Zeitpläne:** wiederkehrend, einmalig oder nur manuell, Aufgabenwahl, Optionen und ein Beispiel für `task_wheel.draw`
-  und das Ereignis `task_wheel_drawn`.
+## Panel API (WebSocket)
 
-## Panel-API (WebSocket)
+The panel talks to the backend through WebSocket commands with the prefix `task_wheel/`: `snapshot`, `subscribe`
+(first the full state, then only changes per object), `history/list`, `statistics/get`, `availability/preview` (presence preview),
+`assignment/complete`, `assignment/swap`, `assignment/skip`, `draw/begin|spin|spin_rest|commit|cancel` for every signed-in
+user, and `round/delete`, `person/*`, `task/*`, `schedule/*` and `settings/update` for administrators only. All inputs
+are validated against strict schemas (no unknown fields, limited lengths). If "Panel for administrators only" is set in the settings,
+the read commands are also reserved for administrators. Details:
+[docs/KONZEPT.md](docs/KONZEPT.md) §6.4 (in German).
 
-Das Panel spricht mit dem Backend über WebSocket-Befehle mit dem Präfix `task_wheel/`: `snapshot`, `subscribe`
-(erst der Gesamtstand, danach nur Änderungen je Objekt), `history/list`, `statistics/get`, `availability/preview` (Vorschau der Anwesenheit),
-`assignment/complete`, `assignment/swap`, `assignment/skip`, `draw/begin|spin|spin_rest|commit|cancel` für jeden angemeldeten
-Benutzer sowie `round/delete`, `person/*`, `task/*`, `schedule/*` und `settings/update` nur für Administratoren. Alle Eingaben
-werden gegen strenge Schemas geprüft (keine unbekannten Felder, begrenzte Längen). Ist in den Einstellungen
-„Panel nur für Administratoren“ gesetzt, sind auch die Lesebefehle Administratoren vorbehalten. Details:
-[docs/KONZEPT.md](docs/KONZEPT.md) §6.4.
+## Entities
 
-## Entitäten
+For every person and every (non-archived) schedule, the integration creates a device "Task Wheel <name>" with these entities. They appear and disappear with the people and schedules; the entity IDs result from the device name and the entity name (shown here with the English UI):
 
-Für jede Person und jeden (nicht archivierten) Zeitplan legt die Integration ein Gerät „Task Wheel <Name>“ mit diesen Entitäten an. Sie entstehen und verschwinden mit den Personen und Zeitplänen; die Entity-IDs ergeben sich aus dem Gerätenamen und dem Entitätsnamen (hier mit deutscher Oberfläche):
-
-| Entität | Beispiel | Inhalt |
+| Entity | Example | Content |
 |---|---|---|
-| Offene Aufgaben je Person | `sensor.task_wheel_anna_offen` | Anzahl der noch nicht abgeschlossenen Zuteilungen |
-| Punkte im Monat je Person | `sensor.task_wheel_anna_punkte` | gutgeschriebene Punkte im laufenden Monat (Faktoren für verspätet/verpasst aus den Einstellungen) |
-| To-do-Liste je Person | `todo.task_wheel_anna` | offene Aufgaben mit Frist; **Abhaken erledigt die Zuteilung** (App, Sprachassistent), andere Änderungen sind nicht möglich |
-| Nächste Auslosung je Zeitplan | `sensor.task_wheel_wochenplan_naechste_auslosung` | Zeitstempel; leer bei pausiert oder „nur manuell“ |
-| Auslosen-Button je Zeitplan | `button.task_wheel_wochenplan_auslosen` | löst den Zeitplan wie im Panel aus |
+| Open tasks per person | `sensor.task_wheel_anna_open` | number of assignments not yet completed |
+| Points this month per person | `sensor.task_wheel_anna_points` | points credited in the current month (late/missed factors from the settings) |
+| To-do list per person | `todo.task_wheel_anna` | open tasks with deadline; **checking one off completes the assignment** (app, voice assistant), other changes are not possible |
+| Next draw per schedule | `sensor.task_wheel_weekly_plan_next_draw` | timestamp; empty when paused or "manual only" |
+| Draw button per schedule | `button.task_wheel_weekly_plan_draw` | draws the schedule as in the panel |
 
-Die Entitäten fragen nichts ab, sondern aktualisieren sich, sobald sich etwas für sie ändert (Auslosung, Erledigen, Tausch, Verpasst, geänderte Personen und Zeitpläne).
+The entities do not poll; they update as soon as something changes for them (draw, completion, swap, missed, changed people and schedules).
 
-## Dokumentation
+## Documentation
 
-| Dokument | Inhalt |
+The project documents are written in German.
+
+| Document | Content |
 |---|---|
-| [docs/KONZEPT.md](docs/KONZEPT.md) | Technisches Konzept: Architektur, Schichten, Muster, Datenmodell, Algorithmen, Schnittstellen, Sicherheit, Performance, Code-Regeln |
-| [docs/ARBEITSPAKETE.md](docs/ARBEITSPAKETE.md) | Arbeitspakete AP-00 bis AP-19 mit Abhängigkeiten, Größen und Definition of Done |
-| [docs/CODE_DOKU.md](docs/CODE_DOKU.md) | Code-Dokumentation: Metriken, Schwellwerte, Abhängigkeiten, Änderungsprotokoll |, Abgleich mit dem [Leitfaden Code-Dokumentation](https://claude.ai/artifact/9txBo1nQLP7gMmYQfYcLJe) |
-| [mockups/](mockups/) | Klickbare UI-Mockups ([interaktiv ansehen](https://claude.ai/artifact/NEch6MPsvESdj91pqQFHT7)) |
+| [docs/KONZEPT.md](docs/KONZEPT.md) | Technical concept: architecture, layers, patterns, data model, algorithms, interfaces, security, performance, code rules |
+| [docs/ARBEITSPAKETE.md](docs/ARBEITSPAKETE.md) | Work packages AP-00 to AP-19 with dependencies, sizes and definition of done |
+| [docs/CODE_DOKU.md](docs/CODE_DOKU.md) | Code documentation: metrics, thresholds, dependencies, change log, comparison with the [code documentation guideline](https://claude.ai/artifact/9txBo1nQLP7gMmYQfYcLJe) |
+| [mockups/](mockups/) | Clickable UI mockups ([view interactively](https://claude.ai/artifact/NEch6MPsvESdj91pqQFHT7)) |
 
-## Entwicklung
+## Development
 
-Kurzfassung der Regeln (Details in KONZEPT.md §10):
+Short version of the rules (details in KONZEPT.md §10):
 
-- Backend: Python 3.13, Home-Assistant-Custom-Integration; Frontend: Lit 3 + TypeScript (strict), Build mit Vite
-- Factory + Strategy + Repository: Fabriken erzeugen Regel-Strategien registrierungsbasiert ohne `if/elif`-Ketten, Speicherung nur über Repositories
-- Klare Schichten (Konstanten, Einstieg, Schnittstellen, Anwendung, Domäne, Infrastruktur), Importrichtung wird in CI geprüft
-- Keine Literale im Code, alles über Konstanten; kein duplizierter Code
-- Sicherheit und Performance zuerst: validierte Eingaben, Konfiguration nur für Admins, Ziehung nur im Backend
-- **Jede Codeänderung wird in [docs/CODE_DOKU.md](docs/CODE_DOKU.md) protokolliert**; die README wird bei sichtbaren Änderungen nachgezogen
+- Backend: Python 3.13, Home Assistant custom integration; frontend: Lit 3 + TypeScript (strict), built with Vite
+- Factory + Strategy + Repository: factories create rule strategies by registration without `if/elif` chains, storage only through repositories
+- Clear layers (constants, entry point, interfaces, application, domain, infrastructure); the import direction is checked in CI
+- No literals in the code, everything through constants; no duplicated code
+- Security and performance first: validated inputs, configuration for administrators only, drawing only in the backend
+- **Every code change is logged in [docs/CODE_DOKU.md](docs/CODE_DOKU.md)**; the README is updated for visible changes
 
-Befehle:
+Commands:
 
 ```bash
 # Backend (Python 3.13)
@@ -254,25 +255,25 @@ ruff check . && ruff format --check . && mypy && lint-imports && pytest
 # Frontend (Node 22)
 cd frontend && npm ci && npm run lint && npm run typecheck && npm test && npm run build && npm run bundle-budget
 
-# End-to-End-Test (Playwright gegen eine echte, frische HA-Instanz mit der Integration; läuft in CI als Job `e2e`)
-# Ablauf: Frontend bauen, `hass -c <config>` mit `custom_components/task_wheel` starten, dann
+# End-to-end test (Playwright against a real, fresh HA instance with the integration; runs in CI as job `e2e`)
+# Procedure: build the frontend, start `hass -c <config>` with `custom_components/task_wheel`, then
 cd e2e && npm ci && npx playwright install chromium && HA_URL=http://localhost:8123 npx playwright test
 
-# Screenshots der README neu erzeugen (frische HA-Instanz mit der Integration läuft auf :8123, englische Oberfläche)
+# Regenerate the README screenshots (a fresh HA instance with the integration is running on :8123, English UI)
 cd e2e && npm ci && HA_LANGUAGE=en SHOT_DIR=../docs/screenshots npm run screenshots
 
-# Code-Doku erzeugen (docs/code-doku/index.html) und Schwellwerte prüfen
+# Generate the code documentation (docs/code-doku/index.html) and check thresholds
 python3 docs/code-doku/generate.py --check
 ```
 
-### Continuous Integration
+### Continuous integration
 
-Pull Requests und `main` durchlaufen die Jobs `hassfest`, `HACS validation`, `lint`, `typecheck`, `architecture`
-(Importrichtung, Duplikate), `test-backend`, `test-frontend`, `build-frontend` (inkl. Bundle-Budget), `audit` und
-`docs-check` (Code geändert ⇒ `docs/CODE_DOKU.md` geändert) und `code-doku` (Generator läuft, Schwellwerte aus `docs/CODE_DOKU.md` §1.1 eingehalten). Dependabot hält pip, npm und GitHub Actions aktuell.
+Pull requests and `main` run the jobs `hassfest`, `HACS validation`, `lint`, `typecheck`, `architecture`
+(import direction, duplicates), `test-backend`, `test-frontend`, `build-frontend` (incl. bundle budget), `audit` and
+`docs-check` (code changed ⇒ `docs/CODE_DOKU.md` changed) and `code-doku` (the generator runs, thresholds from `docs/CODE_DOKU.md` §1.1 are met). Dependabot keeps pip, npm and GitHub Actions up to date.
 
-Sicherheitslücken bitte vertraulich melden, siehe [SECURITY.md](SECURITY.md).
+Please report security vulnerabilities confidentially, see [SECURITY.md](SECURITY.md).
 
-## Lizenz
+## License
 
 [MIT](LICENSE)
