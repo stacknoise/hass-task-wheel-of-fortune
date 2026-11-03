@@ -394,6 +394,7 @@ class Settings(Model):
     late_points_factor: float = spec(to_float, default=defaults.DEFAULT_LATE_POINTS_FACTOR)
     missed_points_factor: float = spec(to_float, default=defaults.DEFAULT_MISSED_POINTS_FACTOR)
     missed_grace_hours: int = spec(to_int, default=defaults.DEFAULT_MISSED_GRACE_HOURS)
+    panel_admin_only: bool = spec(to_bool, default=defaults.DEFAULT_PANEL_ADMIN_ONLY)
 
     def __post_init__(self) -> None:
         """Prüft alle Grenzen aus `const/limits.py`."""

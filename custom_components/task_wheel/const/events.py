@@ -10,6 +10,8 @@ EVENT_COMPLETED: Final = f"{DOMAIN}_completed"
 EVENT_SWAPPED: Final = f"{DOMAIN}_swapped"
 EVENT_MISSED: Final = f"{DOMAIN}_missed"
 EVENT_REMINDER: Final = f"{DOMAIN}_reminder"
+# Wunsch einer Anzeige (Dienst `draw` mit `animate_on`); keine Zuteilung, nur Hinweis
+EVENT_ANIMATE: Final = f"{DOMAIN}_animate"
 
 # Dienste
 SERVICE_DRAW: Final = "draw"

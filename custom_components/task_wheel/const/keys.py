@@ -31,6 +31,34 @@ ATTR_TO_PERSON: Final = "to_person"
 ATTR_START: Final = "start"
 ATTR_END: Final = "end"
 
+# Ereignisdaten (KONZEPT §6.2): nur Kennungen, Namen und Zahlen
+ATTR_ROUND_ID: Final = "round_id"
+ATTR_SCHEDULE_ID: Final = "schedule_id"
+ATTR_SCHEDULE_NAME: Final = "schedule_name"
+ATTR_ORIGIN: Final = "origin"
+ATTR_ASSIGNMENTS: Final = "assignments"
+ATTR_TASK_ID: Final = "task_id"
+ATTR_TASK_NAME: Final = "task_name"
+ATTR_PERSON_ID: Final = "person_id"
+ATTR_PERSON_NAME: Final = "person_name"
+ATTR_FROM_PERSON_ID: Final = "from_person_id"
+ATTR_FROM_PERSON_NAME: Final = "from_person_name"
+ATTR_POINTS: Final = "points"
+ATTR_DUE_AT: Final = "due_at"
+ATTR_STATUS: Final = "status"
+ATTR_DAYS_SINCE: Final = "days_since"
+
+# Einstellungen im Options Flow (Feldnamen wie in `Settings`)
+OPT_JOKERS: Final = "jokers_per_month"
+OPT_FAIRNESS_WINDOW: Final = "fairness_window_days"
+OPT_RETENTION: Final = "history_retention_days"
+OPT_LATE_FACTOR: Final = "late_points_factor"
+OPT_MISSED_FACTOR: Final = "missed_points_factor"
+OPT_GRACE_HOURS: Final = "missed_grace_hours"
+OPT_PANEL_ADMIN_ONLY: Final = "panel_admin_only"
+STEP_INIT: Final = "init"
+ABORT_NOT_LOADED: Final = "not_loaded"
+
 # Übersetzungsschlüssel für Validierungsfehler
 ERR_REQUIRED: Final = "required"
 ERR_TYPE: Final = "invalid_type"
@@ -63,3 +91,7 @@ ERR_SCHEDULE_DISABLED: Final = "schedule_disabled"
 ERR_SCHEDULE_ARCHIVED: Final = "schedule_archived"
 ERR_ROUND_INCOMPLETE: Final = "round_incomplete"
 ERR_ROUND_COMPLETE: Final = "round_complete"
+
+# Fehlerschlüssel der Dienste
+ERR_NOT_LOADED: Final = "not_loaded"
+ERR_TARGET_REQUIRED: Final = "target_required"

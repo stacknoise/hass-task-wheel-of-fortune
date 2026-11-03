@@ -30,7 +30,7 @@ convention = "pep257"
 "tests/**" = ["S101", "PLR2004", "ANN", "D", "ARG"]
 # Rückruf-Signaturen werden von Home Assistant vorgegeben
 "custom_components/task_wheel/__init__.py" = ["ARG001"]
-"custom_components/task_wheel/config_flow.py" = ["ARG002"]
+"custom_components/task_wheel/config_flow.py" = ["ARG002", "ARG004"]
 
 [tool.mypy]
 python_version = "3.13"

@@ -10,7 +10,13 @@ from ..domain.models import Assignment
 from ..domain.rules.periods import period_start
 from ..domain.swap import SwapContext, ensure_swap_possible, jokers_left, jokers_used
 from ..domain.types import AssignmentId, PersonId
-from .protocols import AssignmentRecorder, ConfigRepository, HistoryRepository
+from .protocols import (
+    AssignmentRecorder,
+    ConfigRepository,
+    HistoryRepository,
+    NoEvents,
+    RoundEvents,
+)
 from .round_updates import require_assignment, store_assignment
 
 _RESOURCE_PERSON = "person"
@@ -22,12 +28,17 @@ class SwapService:
     """Prüft und führt einen Tausch aus; Joker werden je Kalendermonat gezählt."""
 
     def __init__(
-        self, config: ConfigRepository, history: HistoryRepository, recorder: AssignmentRecorder
+        self,
+        config: ConfigRepository,
+        history: HistoryRepository,
+        recorder: AssignmentRecorder,
+        events: RoundEvents | None = None,
     ) -> None:
-        """Hält die Repositories und den Empfänger der Statusänderungen (Statistik)."""
+        """Hält die Repositories, den Empfänger der Statusänderungen (Statistik) und die Events."""
         self._config = config
         self._history = history
         self._recorder = recorder
+        self._events = events or NoEvents()
 
     def jokers_left(self, person_id: PersonId, now: dt.datetime) -> int:
         """Verbleibende Joker im laufenden Kalendermonat (ohne Rücksetzen, der Monat zählt neu)."""
@@ -57,6 +68,8 @@ class SwapService:
         status.next_status(assignment.status, AssignmentAction.SWAP)
         left = self.jokers_left(assignment.person_id, now)
         ensure_swap_possible(SwapContext(assignment, task, receiver, left, now))
-        return store_assignment(
+        swapped = store_assignment(
             self._history, self._recorder, status.swap(assignment, to_person_id, now)
         )
+        self._events.assignment_swapped(swapped)
+        return swapped

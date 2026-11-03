@@ -8,7 +8,158 @@
     },
     "abort": {
       "already_configured": "Aufgaben-Glücksrad ist bereits eingerichtet.",
-      "single_instance_allowed": "Es wird nur eine Instanz unterstützt."
+      "single_instance_allowed": "Es wird nur eine Instanz unterstützt.",
+      "not_loaded": "Die Integration ist nicht geladen."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Einstellungen",
+        "data": {
+          "jokers_per_month": "Joker pro Monat",
+          "fairness_window_days": "Fairness-Fenster (Tage)",
+          "history_retention_days": "Aufbewahrung (Tage)",
+          "late_points_factor": "Punktefaktor verspätet",
+          "missed_points_factor": "Punktefaktor verpasst",
+          "missed_grace_hours": "Kulanzzeit (Stunden)",
+          "panel_admin_only": "Panel nur für Administratoren"
+        },
+        "data_description": {
+          "jokers_per_month": "Wie oft eine Person im Monat eine Aufgabe tauschen darf.",
+          "fairness_window_days": "So weit zurück zählen Punkte für die faire Gewichtung.",
+          "history_retention_days": "So lange bleiben Runden im Verlauf; die Monatsstatistik bleibt erhalten.",
+          "late_points_factor": "Anteil der Punkte für verspätet erledigte Aufgaben (0 bis 1).",
+          "missed_points_factor": "Anteil der Punkte für verpasste Aufgaben (−1 bis 0, negativ zieht Punkte ab).",
+          "missed_grace_hours": "So lange nach der Frist gilt eine Aufgabe noch nicht als verpasst.",
+          "panel_admin_only": "Wenn aktiv, sehen nur Administratoren das Panel."
+        }
+      }
+    },
+    "abort": {
+      "not_loaded": "Die Integration ist nicht geladen."
+    },
+    "error": {
+      "base": "Ungültige Einstellung."
+    }
+  },
+  "services": {
+    "draw": {
+      "name": "Auslosen",
+      "description": "Löst eine Runde für einen Zeitplan ohne Panel aus.",
+      "fields": {
+        "schedule": {
+          "name": "Zeitplan",
+          "description": "Kurzname oder Kennung des Zeitplans."
+        },
+        "animate_on": {
+          "name": "Anzeige",
+          "description": "Entität einer Anzeige, die die Auslosung zusätzlich über ein Event zeigen soll."
+        }
+      }
+    },
+    "complete": {
+      "name": "Erledigen",
+      "description": "Markiert eine Zuteilung als erledigt.",
+      "fields": {
+        "assignment_id": {
+          "name": "Zuteilung",
+          "description": "Kennung der Zuteilung (alternativ Person und Aufgabe)."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Kurzname oder Kennung der Person."
+        },
+        "task": {
+          "name": "Aufgabe",
+          "description": "Name oder Kennung der Aufgabe."
+        }
+      }
+    },
+    "swap": {
+      "name": "Tauschen",
+      "description": "Übergibt eine offene Zuteilung gegen einen Joker an eine andere Person.",
+      "fields": {
+        "assignment_id": {
+          "name": "Zuteilung",
+          "description": "Kennung der Zuteilung."
+        },
+        "to_person": {
+          "name": "Neue Person",
+          "description": "Kurzname oder Kennung der übernehmenden Person."
+        }
+      }
+    },
+    "set_absence": {
+      "name": "Abwesenheit eintragen",
+      "description": "Trägt eine einmalige Abwesenheit ein (z. B. aus einer Kalender-Automation).",
+      "fields": {
+        "person": {
+          "name": "Person",
+          "description": "Kurzname oder Kennung der Person."
+        },
+        "start": {
+          "name": "Beginn",
+          "description": "Erster Tag der Abwesenheit."
+        },
+        "end": {
+          "name": "Ende",
+          "description": "Letzter Tag der Abwesenheit (einschließlich)."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "not_loaded": {
+      "message": "Das Aufgaben-Glücksrad ist nicht geladen."
+    },
+    "not_found": {
+      "message": "{resource} „{id}“ wurde nicht gefunden."
+    },
+    "limit_reached": {
+      "message": "Die Obergrenze für {resource} ({limit}) ist erreicht."
+    },
+    "invalid_transition": {
+      "message": "Die Aktion „{action}“ ist im Status „{status}“ nicht möglich."
+    },
+    "swap_disabled": {
+      "message": "Diese Aufgabe darf nicht getauscht werden."
+    },
+    "swap_same_person": {
+      "message": "Die Aufgabe gehört der Person bereits."
+    },
+    "swap_person_not_allowed": {
+      "message": "Die Person darf diese Aufgabe nicht übernehmen."
+    },
+    "swap_person_paused": {
+      "message": "Die Person pausiert."
+    },
+    "swap_person_absent": {
+      "message": "Die Person ist im Fristfenster abwesend."
+    },
+    "no_jokers_left": {
+      "message": "Es ist kein Joker mehr übrig."
+    },
+    "schedule_disabled": {
+      "message": "Der Zeitplan ist pausiert."
+    },
+    "schedule_archived": {
+      "message": "Der Zeitplan ist archiviert."
+    },
+    "round_incomplete": {
+      "message": "Die Runde ist noch nicht vollständig gezogen."
+    },
+    "round_complete": {
+      "message": "Die Runde ist bereits vollständig gezogen."
+    },
+    "invalid_order": {
+      "message": "Das Ende liegt vor dem Beginn."
+    },
+    "invalid_length": {
+      "message": "Die Anzahl ist außerhalb von {low} bis {high}."
+    },
+    "out_of_range": {
+      "message": "Der Wert ist außerhalb von {low} bis {high}."
     }
   }
 }

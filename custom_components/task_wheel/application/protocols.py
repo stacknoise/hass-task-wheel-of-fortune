@@ -147,7 +147,7 @@ class TimerPort(Protocol):
 
 
 class RoundEvents(Protocol):
-    """Meldungen nach außen (Events, Entitäten, Benachrichtigung); umgesetzt in AP-09/11/12."""
+    """Meldungen nach außen (Events, Entitäten, Benachrichtigung); Umsetzung: HA-Events (AP-09)."""
 
     def round_drawn(self, round_: Round) -> None:
         """Eine Runde wurde ausgelost und gespeichert."""
@@ -157,14 +157,42 @@ class RoundEvents(Protocol):
         """Ein Zeitplan „nur manuell“ wurde seit `days_since` Tagen nicht ausgelost."""
         ...
 
+    def assignment_completed(self, assignment: Assignment) -> None:
+        """Eine Zuteilung wurde erledigt (pünktlich oder verspätet)."""
+        ...
+
+    def assignment_swapped(self, assignment: Assignment) -> None:
+        """Eine Zuteilung wurde getauscht (`assignment.swap` nennt die abgebende Person)."""
+        ...
+
+    def assignment_missed(self, assignment: Assignment) -> None:
+        """Eine Zuteilung wurde als verpasst markiert."""
+        ...
+
+    def animation_requested(self, round_: Round, target: str) -> None:
+        """Eine Anzeige `target` soll die Auslosung der Runde zeigen (Dienst `draw`)."""
+        ...
+
 
 class NoEvents:
-    """Standard ohne Empfänger (Tests, solange AP-09 die Ereignisse noch nicht verdrahtet)."""
+    """Standard ohne Empfänger (Tests)."""
 
     def round_drawn(self, round_: Round) -> None:
         """Tut nichts."""
 
     def reminder_due(self, schedule: Schedule, days_since: int) -> None:
+        """Tut nichts."""
+
+    def assignment_completed(self, assignment: Assignment) -> None:
+        """Tut nichts."""
+
+    def assignment_swapped(self, assignment: Assignment) -> None:
+        """Tut nichts."""
+
+    def assignment_missed(self, assignment: Assignment) -> None:
+        """Tut nichts."""
+
+    def animation_requested(self, round_: Round, target: str) -> None:
         """Tut nichts."""
 
 

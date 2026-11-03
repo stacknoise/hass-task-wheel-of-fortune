@@ -8,7 +8,158 @@
     },
     "abort": {
       "already_configured": "Task Wheel of Fortune is already set up.",
-      "single_instance_allowed": "Only one instance is supported."
+      "single_instance_allowed": "Only one instance is supported.",
+      "not_loaded": "The integration is not loaded."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Settings",
+        "data": {
+          "jokers_per_month": "Swaps per month",
+          "fairness_window_days": "Fairness window (days)",
+          "history_retention_days": "Retention (days)",
+          "late_points_factor": "Points factor for late",
+          "missed_points_factor": "Points factor for missed",
+          "missed_grace_hours": "Grace period (hours)",
+          "panel_admin_only": "Panel for administrators only"
+        },
+        "data_description": {
+          "jokers_per_month": "How often a person may swap a task per calendar month.",
+          "fairness_window_days": "How far back points count for the fair weighting.",
+          "history_retention_days": "How long rounds stay in the history; monthly statistics are kept.",
+          "late_points_factor": "Share of the points for tasks completed late (0 to 1).",
+          "missed_points_factor": "Share of the points for missed tasks (−1 to 0, negative deducts points).",
+          "missed_grace_hours": "How long after the deadline a task does not yet count as missed.",
+          "panel_admin_only": "If enabled, only administrators see the panel."
+        }
+      }
+    },
+    "abort": {
+      "not_loaded": "The integration is not loaded."
+    },
+    "error": {
+      "base": "Invalid setting."
+    }
+  },
+  "services": {
+    "draw": {
+      "name": "Draw",
+      "description": "Draws a round for a schedule without the panel.",
+      "fields": {
+        "schedule": {
+          "name": "Schedule",
+          "description": "Slug or ID of the schedule."
+        },
+        "animate_on": {
+          "name": "Display",
+          "description": "Entity of a display that should also show the draw via an event."
+        }
+      }
+    },
+    "complete": {
+      "name": "Complete",
+      "description": "Marks an assignment as completed.",
+      "fields": {
+        "assignment_id": {
+          "name": "Assignment",
+          "description": "ID of the assignment (alternatively person and task)."
+        },
+        "person": {
+          "name": "Person",
+          "description": "Slug or ID of the person."
+        },
+        "task": {
+          "name": "Task",
+          "description": "Name or ID of the task."
+        }
+      }
+    },
+    "swap": {
+      "name": "Swap",
+      "description": "Hands an open assignment to another person using a swap.",
+      "fields": {
+        "assignment_id": {
+          "name": "Assignment",
+          "description": "ID of the assignment."
+        },
+        "to_person": {
+          "name": "New person",
+          "description": "Slug or ID of the receiving person."
+        }
+      }
+    },
+    "set_absence": {
+      "name": "Set absence",
+      "description": "Adds a one-time absence (e.g. from a calendar automation).",
+      "fields": {
+        "person": {
+          "name": "Person",
+          "description": "Slug or ID of the person."
+        },
+        "start": {
+          "name": "Start",
+          "description": "First day of the absence."
+        },
+        "end": {
+          "name": "End",
+          "description": "Last day of the absence (inclusive)."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "not_loaded": {
+      "message": "The task wheel is not loaded."
+    },
+    "not_found": {
+      "message": "{resource} \"{id}\" was not found."
+    },
+    "limit_reached": {
+      "message": "The limit for {resource} ({limit}) has been reached."
+    },
+    "invalid_transition": {
+      "message": "The action \"{action}\" is not possible in status \"{status}\"."
+    },
+    "swap_disabled": {
+      "message": "This task may not be swapped."
+    },
+    "swap_same_person": {
+      "message": "The task already belongs to this person."
+    },
+    "swap_person_not_allowed": {
+      "message": "The person may not take over this task."
+    },
+    "swap_person_paused": {
+      "message": "The person is paused."
+    },
+    "swap_person_absent": {
+      "message": "The person is absent during the deadline window."
+    },
+    "no_jokers_left": {
+      "message": "No swaps are left."
+    },
+    "schedule_disabled": {
+      "message": "The schedule is paused."
+    },
+    "schedule_archived": {
+      "message": "The schedule is archived."
+    },
+    "round_incomplete": {
+      "message": "The round has not been fully drawn yet."
+    },
+    "round_complete": {
+      "message": "The round has already been fully drawn."
+    },
+    "invalid_order": {
+      "message": "The end is before the start."
+    },
+    "invalid_length": {
+      "message": "The count is outside {low} to {high}."
+    },
+    "out_of_range": {
+      "message": "The value is outside {low} to {high}."
     }
   }
 }
