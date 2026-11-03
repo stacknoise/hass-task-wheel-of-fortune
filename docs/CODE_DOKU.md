@@ -218,3 +218,37 @@ Vorlage für neue Einträge:
 ```text
 | JJJJ-MM-TT | x.y.z | AP-nn | pfad/modul.py, … | neu / geändert / entfernt: was und warum | LOC ±n, max. CC n, neue Abhängigkeit A → B |
 ```
+
+---
+
+## 5. Abgleich mit dem Leitfaden Code-Dokumentation
+
+Maßgeblich ist der [Leitfaden Code-Dokumentation](https://claude.ai/artifact/9txBo1nQLP7gMmYQfYcLJe) (Version 1.0, Stand 2026-11-03). Er ist die globale Definition für alle Code-Dokus; dieser Abschnitt hält fest, wo diese Doku ihm folgt und wo sie abweicht.
+
+### 5.1 Übereinstimmung und Abweichung
+
+| Thema | Leitfaden | Stand hier |
+|---|---|---|
+| Ergebnis | Eine selbstständige HTML-Datei, aus dem Quelltext erzeugt, nie von Hand gepflegt | wie Leitfaden (`docs/code-doku/index.html`, Generator `docs/code-doku/generate.py`) |
+| Ablageort, Aufruf | `docs/code-doku/index.html`, Generator daneben, Aufruf in der README | wie Leitfaden (README, Abschnitt „Entwicklung“) |
+| Tabs | Explorer und Abhängigkeiten | wie Leitfaden |
+| Explorer | Drei Spalten: Baum, Details, Quelltext | **Abweichung:** zwei Spalten (Baum, Details mit Quelltext je Element) |
+| Typen | Properties, Felder, Konstanten, Enum-Werte, Record-Parameter in Baum, Kacheln und Tabelle (Schema 2) | **Abweichung:** Typen erfassen nur Methoden; Properties und Felder fehlen |
+| Vorlage | `generator/template.html` des Leitfadens, unverändert (Prüfsumme) | **Abweichung:** eigene Vorlage `docs/code-doku/template.html`, Python- und TypeScript-Scanner |
+| Veröffentlichung | Als Artifact oder im Repo | Artefakt „Task Wheel Code-Dokumentation“, bei Codeänderungen neue Version |
+| Teststatus | Kein erfundener Status („nicht gescannt“) | „Test nennt Typ“ wird aus den Testordnern gelesen |
+
+Die Abweichungen betreffen Generator und Vorlage (Code). Sie werden nicht in der Doku, sondern in einem eigenen Code-Änderungspaket behoben; bis dahin gilt dieser Abschnitt als Stand.
+
+### 5.2 Ampelwerte
+
+Der Leitfaden färbt CC ≤ 5 grün, ≤ 10 gelb, darüber rot; MI ≥ 55 grün, ≥ 35 gelb; Instabilität ≤ 0,5 grün, ≤ 0,8 gelb. Die Schwellwerte in §1.1 sind bewusst enger (CC rot ab 9, passend zu ruff `C901` ≤ 8) bzw. für die Instabilität weiter gefasst (gelb bis 0,9, siehe dortige Auslegung). Sie bleiben die Quelle für die CI-Prüfung.
+
+### 5.3 Bekannte Grenzen
+
+Wie im Leitfaden (§10) gilt: Der Scanner arbeitet mit Quelltext-Mustern, nicht mit einem Compiler.
+
+- Python wird über `ast` gelesen, TypeScript über einen Token-Scanner; Typauflösung findet nicht statt. Abhängigkeiten entstehen aus Importen und Namen, nicht aus Laufzeitverhalten (Registrierungen in Fabriken, dynamische Importe, Reflection).
+- „Test nennt Typ“ heißt nur: ein Test erwähnt den Namen. Es sagt nichts über die Abdeckung (dafür gibt es `Cov`).
+- Werte sind Näherungen (siehe §1); die Schwellwerte beurteilen sie, ersetzen aber kein Review.
+- Konfigurationsdateien (`manifest.json`, `services.yaml`, Übersetzungen) und Mockups werden nicht dokumentiert.
