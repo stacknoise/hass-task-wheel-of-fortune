@@ -60,11 +60,11 @@ describe('upcomingDraws', () => {
 });
 
 describe('groupBySchedule', () => {
-  it('ordnet jede Zuteilung dem ersten Zeitplan mit ihrer Aufgabe zu und lässt leere Gruppen weg', () => {
+  it('ordnet jede Zuteilung ihrem auslosenden Zeitplan zu, auch bei gleicher Aufgabe in mehreren Plänen', () => {
     const items = [
-      { id: '1', task_id: 'x' },
-      { id: '2', task_id: 'y' },
-      { id: '3', task_id: 'z' },
+      { id: '1', task_id: 'x', schedule_id: 's1' },
+      { id: '2', task_id: 'x', schedule_id: 's2' },
+      { id: '3', task_id: 'z', schedule_id: 'gone' },
     ] as unknown as AssignmentObject[];
     const groups = groupBySchedule(items, [
       schedule('s1', ['x']),

@@ -18,9 +18,17 @@ from .world import DAY, World
 NOW = f.NOW
 
 
-def add_round(world: World, ident: str, started: dt.datetime, *assignments) -> None:
+def add_round(
+    world: World, ident: str, started: dt.datetime, *assignments, schedule_id: str = "s1"
+) -> None:
     world.history.put_round(
-        f.finished_round(id=ident, started_at=started, finished_at=started, assignments=assignments)
+        f.finished_round(
+            id=ident,
+            schedule_id=schedule_id,
+            started_at=started,
+            finished_at=started,
+            assignments=assignments,
+        )
     )
 
 
@@ -75,3 +83,27 @@ def test_due_tasks_keep_the_order_of_the_schedule():
     tasks = due_tasks(world.config, schedule, (), NOW)
     assert [t.id for t in tasks] == ["t2", "t1"]
     assert all(t.respect_absence for t in tasks)
+
+
+def test_task_open_in_another_schedule_is_not_due_again():
+    world = World()
+    schedule = world.put_schedule(task_ids=("t1", "t2"))
+    add_round(
+        world,
+        "r1",
+        NOW - DAY,
+        item("a1", "r1", schedule_id="other", task_id="t1"),
+        schedule_id="other",
+    )
+    recent = recent_assignments(world.history, NOW)
+    assert [t.id for t in due_tasks(world.config, schedule, recent, NOW)] == ["t2"]
+
+
+def test_task_done_elsewhere_or_open_in_the_own_schedule_stays_due():
+    world = World()
+    schedule = world.put_schedule(task_ids=("t1", "t2"))
+    done = item("a1", "r1", schedule_id="other", task_id="t1", status=S.ON_TIME, done_at=NOW)
+    add_round(world, "r1", NOW - DAY, done, schedule_id="other")
+    add_round(world, "r2", NOW - DAY, item("a2", "r2", task_id="t2"))
+    recent = recent_assignments(world.history, NOW)
+    assert [t.id for t in due_tasks(world.config, schedule, recent, NOW)] == ["t1", "t2"]

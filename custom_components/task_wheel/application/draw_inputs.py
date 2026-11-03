@@ -9,7 +9,7 @@ from ..domain.availability.calendar import PersonAvailability
 from ..domain.draw.types import DrawContext
 from ..domain.models import Assignment, Schedule, Settings, Task
 from ..domain.rules.factory import FrequencyRuleFactory
-from ..domain.status import counted_points
+from ..domain.status import PENDING_STATUSES, counted_points
 from ..domain.types import PersonId, TaskId
 from .protocols import ConfigRepository, HistoryRepository
 
@@ -45,19 +45,31 @@ def window_points(recent: Recent, settings: Settings, now: dt.datetime) -> dict[
     return dict(points)
 
 
+def tasks_open_elsewhere(recent: Recent, schedule: Schedule) -> frozenset[TaskId]:
+    """Aufgaben, die in einem anderen Zeitplan noch offen sind (Erledigen gilt für alle Pläne)."""
+    return frozenset(
+        item.task_id
+        for item, _ in recent
+        if item.status in PENDING_STATUSES and item.schedule_id != schedule.id
+    )
+
+
 def due_tasks(
     config: ConfigRepository, schedule: Schedule, recent: Recent, now: dt.datetime
 ) -> tuple[Task, ...]:
     """Aufgaben des Zeitplans, die laut Häufigkeitsregel jetzt an der Reihe sind.
 
-    Gelöschte Aufgaben werden übergangen. Ist `skip_absent` aus, gilt Abwesenheit nicht.
+    Gelöschte Aufgaben werden übergangen, ebenso Aufgaben, die ein anderer Zeitplan noch offen hat:
+    Das Erledigen dort gilt auch für diesen Plan. Ist `skip_absent` aus, gilt Abwesenheit nicht.
     """
     times = assigned_times(recent)
+    elsewhere = tasks_open_elsewhere(recent, schedule)
     found = (config.tasks.get(task_id) for task_id in schedule.task_ids)
     due = (
         task
         for task in found
         if task is not None
+        and task.id not in elsewhere
         and FrequencyRuleFactory.create(task.frequency).is_due(times.get(task.id, ()), now)
     )
     if schedule.skip_absent:

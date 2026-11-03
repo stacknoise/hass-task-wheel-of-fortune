@@ -42,17 +42,24 @@ export const SNAPSHOT: Snapshot = {
   assignments: [
     assignment('a1', 't1', 'p1', 'open'),
     assignment('a2', 't2', 'p1', 'swapped'),
-    assignment('a3', 't9', 'p2', 'open'),
+    assignment('a3', 't9', 'p2', 'open', 'gone'),
   ],
   panel_rounds: [],
   settings: {},
   now: '2026-11-03T12:00:00+00:00',
 };
 
-export function assignment(id: string, taskId: string, personId: string, status: string) {
+export function assignment(
+  id: string,
+  taskId: string,
+  personId: string,
+  status: string,
+  scheduleId = 's1',
+) {
   return {
     id,
     round_id: 'r1',
+    schedule_id: scheduleId,
     task_id: taskId,
     person_id: personId,
     chance: 0.25,

@@ -6,7 +6,12 @@ from typing import TYPE_CHECKING
 import pytest
 
 from custom_components.task_wheel.const import defaults, limits
-from custom_components.task_wheel.const.keys import KEY_AGGREGATES, KEY_ROUNDS, STORE_CONFIG
+from custom_components.task_wheel.const.keys import (
+    KEY_AGGREGATES,
+    KEY_ROUNDS,
+    STORE_CONFIG,
+    STORE_HISTORY,
+)
 from custom_components.task_wheel.domain.enums import AssignmentStatus
 from custom_components.task_wheel.domain.errors import (
     LimitReachedError,
@@ -17,7 +22,11 @@ from custom_components.task_wheel.domain.errors import (
 from custom_components.task_wheel.infrastructure.repository.config_store import ConfigStore
 from custom_components.task_wheel.infrastructure.repository.history_store import HistoryStore
 from custom_components.task_wheel.infrastructure.repository.memory import MemoryStore
-from custom_components.task_wheel.infrastructure.repository.migration import migrate
+from custom_components.task_wheel.infrastructure.repository.migration import (
+    CONFIG_MIGRATIONS,
+    HISTORY_MIGRATIONS,
+    migrate,
+)
 
 from ..domain import factories as f
 
@@ -275,3 +284,33 @@ async def test_failing_listener_does_not_break_the_change(
     assert "p1" in repo.persons
     assert seen == [1]
     assert "Konfigurationsänderung fehlgeschlagen" in caplog.text
+
+
+def test_history_migration_gives_assignments_the_schedule_of_their_round() -> None:
+    old = {
+        KEY_ROUNDS: [
+            {"id": "r1", "schedule_id": "s7", "assignments": [{"id": "a1"}, {"id": "a2"}]},
+            {"id": "r2", "schedule_id": "s8", "assignments": []},
+            "kaputt",
+        ],
+        KEY_AGGREGATES: {},
+    }
+    new = migrate(STORE_HISTORY, old, (1, 1), HISTORY_MIGRATIONS)
+    assert [a["schedule_id"] for a in new[KEY_ROUNDS][0]["assignments"]] == ["s7", "s7"]
+    assert new[KEY_ROUNDS][1:] == old[KEY_ROUNDS][1:]
+    assert migrate(STORE_HISTORY, {}, (1, 1), HISTORY_MIGRATIONS) == {}
+
+
+async def test_migrated_history_loads() -> None:
+    round_ = f.finished_round().to_dict()
+    for item in round_["assignments"]:
+        del item["schedule_id"]
+    old = {KEY_ROUNDS: [round_], KEY_AGGREGATES: {}}
+    raw = migrate(STORE_HISTORY, old, (1, 1), HISTORY_MIGRATIONS)
+    repo = HistoryStore(MemoryStore(raw))
+    await repo.async_load()
+    assert repo.get_assignment("a1").schedule_id == "s1"  # type: ignore[union-attr]
+
+
+def test_config_migration_keeps_the_data() -> None:
+    assert migrate(STORE_CONFIG, {"x": 1}, (1, 1), CONFIG_MIGRATIONS) == {"x": 1}
