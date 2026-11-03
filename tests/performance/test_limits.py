@@ -66,6 +66,7 @@ def _full_world() -> Api:
             f.assignment(
                 id=f"{round_id}a{k}",
                 round_id=round_id,
+                schedule_id=f"s{number % limits.MAX_SCHEDULES}",
                 task_id=f"t{(number + k) % limits.MAX_TASKS}",
                 person_id=f"p{(number + k) % limits.MAX_PERSONS}",
                 status=AssignmentStatus.ON_TIME,
