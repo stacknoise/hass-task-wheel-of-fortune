@@ -43,7 +43,7 @@ export const SNAPSHOT: Snapshot = {
   assignments: [
     assignment('a1', 't1', 'p1', 'open'),
     assignment('a2', 't2', 'p1', 'swapped'),
-    assignment('a3', 't9', 'p2', 'open', 'r2'),
+    assignment('a3', 't9', 'p2', 'open', 'r2', 'gone'),
   ],
   rounds: [
     {
@@ -74,10 +74,12 @@ export function assignment(
   personId: string,
   status: string,
   roundId = 'r1',
+  scheduleId = 's1',
 ) {
   return {
     id,
     round_id: roundId,
+    schedule_id: scheduleId,
     task_id: taskId,
     person_id: personId,
     chance: 0.25,

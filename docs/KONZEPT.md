@@ -195,7 +195,7 @@ erDiagram
 | `Schedule` | `id`, `name`, `slug`, `trigger: TriggerConfig`, `task_ids: tuple[TaskId, ...]`, `enabled`, `notify`, `skip_absent`, `archived` (archiviert ⇒ nicht aktiv, nie auslösbar) |
 | `TriggerConfig` | `recurring(weekdays, time, every_n_weeks \| monthly)` · `once(at, after: keep_manual \| archive \| delete)` · `manual(remind_after_days)` |
 | `Round` | `id`, `schedule_id`, `origin: auto \| manual \| service`, `started_at`, `finished_at`, `assignments` |
-| `Assignment` | `id`, `round_id`, `task_id`, `person_id`, `chance` (0–1), `points`, `due_at`, `status`, `done_at`, `swap: Swap \| None` |
+| `Assignment` | `id`, `round_id`, `schedule_id` (auslosender Zeitplan), `task_id`, `person_id`, `chance` (0–1), `points`, `due_at`, `status`, `done_at`, `swap: Swap \| None` |
 | `Settings` | `jokers_per_month`, `fairness_window_days`, `history_retention_days`, `weighting`, `late_points_factor` (0–1, Standard 1,0), `missed_points_factor` (−1–0, Standard 0), `missed_grace_hours` |
 
 ### 4.1 Speicher
@@ -204,6 +204,8 @@ erDiagram
 |---|---|---|
 | `task_wheel.config` (Version 1) | Personen, Aufgaben, Zeitpläne, Einstellungen | `async_delay_save` (gebündelt, Verzögerung als Konstante) |
 | `task_wheel.history` (Version 1) | Runden, Zuteilungen, Monatsaggregate pro Person/Aufgabe | `async_delay_save`; Aufräumen nach `history_retention_days` einmal täglich |
+
+Version 1.2 (beide Stores): Zuteilungen tragen `schedule_id`; die Migration 1.1 → 1.2 setzt den Zeitplan der Runde ein.
 
 Migrationen laufen über `Store(..., minor_version=...)` und `_async_migrate_func`; jede Migration ist eine
 eigene, getestete Funktion.
@@ -289,6 +291,7 @@ Aufgaben an dieselbe Person verteilt. Aufwand pro Runde: `O(Aufgaben × Personen
 
 Tausch ist nur erlaubt, wenn die Aufgabe `swap_allowed` hat, die neue Person die Aufgabe laut Regel bekommen
 dürfte (erlaubt, nicht pausiert, anwesend) und die abgebende Person im laufenden Monat noch Joker hat.
+Ist eine Aufgabe in mehreren Zeitplänen, gilt ihr Erledigen für alle: Solange eine Zuteilung der Aufgabe aus einem anderen Zeitplan offen oder getauscht ist, lost dieser Plan sie nicht noch einmal aus. Die Häufigkeitsregeln zählen Zuteilungen je Aufgabe über alle Zeitpläne.
 Statusübergänge sind eine Tabelle `dict[(Status, Aktion), Status]` – keine Verzweigungsketten.
 
 **Auslosung löschen** (`round/delete`, nur Administratoren): Die Runde verschwindet mit **allen** Zuteilungen, auch den
