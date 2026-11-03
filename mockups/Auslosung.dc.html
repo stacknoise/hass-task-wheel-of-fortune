@@ -51,11 +51,11 @@ a{color:#0262a0}a:hover{color:#01497a}
       <section style="flex: 1 1 260px; max-width: 320px; background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 8px 0;">
         <div style="padding: 12px 20px; display: flex; flex-direction: column; gap: 10px;">
           <label for="tw-plan" style="font-size: 12px; color: #5a616b; font-weight: 500;">Welcher Zeitplan wird ausgelöst?</label>
-          <div id="tw-plan" role="radiogroup" aria-label="Zeitplan" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: -4px;">
+          <select id="tw-plan" value="{{planValue}}" onChange="{{pickPlan}}" style="margin-top: -4px; min-height: 44px; padding: 0 12px; border: 1px solid #c4c9d0; border-radius: 8px; background: #ffffff; color: #1f2328; font: 500 15px Roboto, sans-serif; cursor: pointer;">
             <sc-for list="{{planChips}}" as="p" hint-placeholder-count="3">
-              <button type="button" role="radio" aria-checked="{{p.on}}" onClick="{{p.pick}}" style="min-height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid {{p.border}}; background: {{p.bg}}; color: {{p.fg}}; font: 500 13px Roboto, sans-serif; cursor: pointer;">{{p.label}}</button>
+              <option value="{{p.value}}">{{p.label}} · {{p.mode}}</option>
             </sc-for>
-          </div>
+          </select>
           <span style="font-size: 12px; color: #5a616b;">{{planHint}}</span>
           <h2 style="margin: 4px 0 0; font-size: 18px; font-weight: 500;">Runde „{{planName}}"</h2>
           <span style="font-size: 13px; color: #5a616b; margin-top: -8px;">Manuell gestartet · {{doneTasks}} von {{totalTasks}} verlost</span>
@@ -207,10 +207,13 @@ class Component extends DCLogic {
     var planIdx = s.plan || 0, plan = D.plans[planIdx];
     var tasks = plan.tasks.map(function (i) { return D.tasks[i]; });
     var planChips = D.plans.map(function (p, i) {
-      var on = i === planIdx;
-      return { label: p.name, on: on, bg: on ? '#dcecf8' : '#ffffff', border: on ? '#0262a0' : '#c4c9d0', fg: on ? '#01497a' : '#1f2328',
-        pick: function () { if (self.timer) clearTimeout(self.timer); self.setState({ plan: i, idx: 0, phase: 'ready', rot: 0, anim: false, results: {} }); } };
+      return { label: p.name, value: String(i), mode: p.id === 'big' ? 'nur manuell' : 'automatisch' };
     });
+    var pickPlan = function (e) {
+      var i = parseInt(e && e.target ? e.target.value : 0, 10) || 0;
+      if (self.timer) clearTimeout(self.timer);
+      self.setState({ plan: i, idx: 0, phase: 'ready', rot: 0, anim: false, results: {} });
+    };
     var secs = this.props.spinSeconds ?? 5;
     var ICONS = {
       home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z', map: 'M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
@@ -269,7 +272,7 @@ class Component extends DCLogic {
     var isLast = idx === tasks.length - 1;
 
     return {
-      haNav: haNav, tabs: tabs, round: round, planChips: planChips, planName: plan.name, planHint: plan.hint, doneTasks: doneTasks, totalTasks: tasks.length,
+      haNav: haNav, tabs: tabs, round: round, planChips: planChips, planValue: String(planIdx), pickPlan: pickPlan, planName: plan.name, planHint: plan.hint, doneTasks: doneTasks, totalTasks: tasks.length,
       stepLabel: 'Aufgabe ' + (idx + 1) + ' von ' + tasks.length,
       taskName: t.task, wedges: wedges, pegs: pegs, people: people, wheelCount: t.wheel.length,
       rot: s.rot, trans: s.anim ? 'transform ' + secs + 's cubic-bezier(0.12, 0.65, 0.08, 1)' : 'none',
