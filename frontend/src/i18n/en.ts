@@ -98,7 +98,7 @@ export const en: Record<keyof typeof de, string> = {
   'frequency.summary_interval': 'every {days} days ± {tolerance}',
   'timeline.earliest': 'earliest',
   'timeline.latest': 'latest',
-  'timeline.day': 'Day',
+  'timeline.target': 'Target',
   'schedules.add': 'Add schedule',
   'schedules.new': 'New schedule',
   'schedules.edit': 'Edit schedule',
