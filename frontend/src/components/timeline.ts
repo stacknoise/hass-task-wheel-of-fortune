@@ -1,7 +1,14 @@
 import { LitElement, css, html } from 'lit';
+import { nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 
-import { FORM_TAGS, TIMELINE_SCALE_LABELS, TIMELINE_SCALE_STEPS } from '../constants/index.ts';
+import {
+  FORM_TAGS,
+  TIMELINE_GRID_MAX,
+  TIMELINE_HALF,
+  TIMELINE_SCALE_LABELS,
+  TIMELINE_SCALE_STEPS,
+} from '../constants/index.ts';
 import { translate } from '../i18n/index.ts';
 import { formStyles } from './formStyles.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
@@ -21,16 +28,28 @@ export class TwTimeline extends LitElement {
     formStyles,
     css`
       .bar {
-        display: flex;
         height: 16px;
         border-radius: 8px;
         overflow: hidden;
+        --dim: color-mix(in srgb, var(--tw-color-primary) 25%, transparent);
+        --mid: color-mix(in srgb, var(--tw-color-primary) 55%, transparent);
+        background: linear-gradient(
+          to right,
+          var(--dim) calc(var(--from) * 100%),
+          var(--mid) calc(var(--from) * 100%),
+          var(--tw-color-primary) calc(var(--at) * 100%),
+          var(--mid)
+        );
       }
-      .outside {
-        background: color-mix(in srgb, var(--tw-color-primary) 30%, transparent);
-      }
-      .window {
-        background: var(--tw-color-primary);
+      .grid {
+        display: block;
+        height: 100%;
+        background: linear-gradient(
+          to right,
+          color-mix(in srgb, var(--tw-color-surface) 55%, transparent) 1px,
+          transparent 1px
+        );
+        background-size: calc(100% / var(--n)) 100%;
       }
       .track {
         position: relative;
@@ -80,38 +99,34 @@ export class TwTimeline extends LitElement {
     this.language = '';
   }
 
-  /** Zeitachse: Anfang, Toleranzfenster und Ende; hinter dem Fenster bleibt ein Stück Skala. */
-  #axis(): { earliest: number; latest: number; total: number } {
-    const earliest = Math.max(0, this.days - this.tolerance);
-    const latest = this.days + this.tolerance;
-    return { earliest, latest, total: latest + Math.max(1, this.tolerance) };
-  }
-
-  /** Tage an der Skala: gleichmäßige Schritte von 0 an, höchstens `TIMELINE_SCALE_LABELS` Zahlen. */
-  #scaleDays(total: number): readonly number[] {
-    const step =
-      TIMELINE_SCALE_STEPS.find((candidate) => total / candidate <= TIMELINE_SCALE_LABELS) ??
-      TIMELINE_SCALE_STEPS.at(-1) ??
-      1;
-    return Array.from({ length: Math.floor(total / step) + 1 }, (_, index) => index * step);
+  /** Zeitachse in Tagen: erster und letzter Tag des Fensters; die Skala reicht von Tag 1 bis `latest`. */
+  #axis(): { earliest: number; latest: number } {
+    return {
+      earliest: Math.max(1, this.days - this.tolerance),
+      latest: this.days + this.tolerance,
+    };
   }
 
   protected override render(): TemplateResult {
-    const { earliest, latest, total } = this.#axis();
-    const at = (day: number): string => `--at:${String(day / total)}`;
-    const share = (days: number): string => `flex:${String(days / total)}`;
+    const { earliest, latest } = this.#axis();
+    const centre = (day: number): number => (day - TIMELINE_HALF) / latest;
+    const at = (day: number): string => `--at:${String(centre(day))}`;
+    const barStyle = `--from:${String((earliest - 1) / latest)};--at:${String(centre(this.days))};--n:${String(latest)}`;
     return html`
       <span class="label">${translate('frequency.timeline', this.language)}</span>
       <div class="track">
-        <div class="bar" role="img" aria-label=${translate('frequency.timeline', this.language)}>
-          <span class="outside" style=${share(earliest)}></span>
-          <span class="window" style=${share(latest - earliest)}></span>
-          <span class="outside" style=${share(total - latest)}></span>
+        <div
+          class="bar"
+          role="img"
+          aria-label=${translate('frequency.timeline', this.language)}
+          style=${barStyle}
+        >
+          ${latest <= TIMELINE_GRID_MAX ? html`<span class="grid"></span>` : nothing}
         </div>
         <span class="tick" style=${at(this.days)}></span>
       </div>
       <div class="days" aria-hidden="true">
-        ${this.#scaleDays(total).map((day) => html`<span style=${at(day)}>${day}</span>`)}
+        ${scaleDays(latest).map((day) => html`<span style=${at(day)}>${day}</span>`)}
       </div>
       <div class="scale">
         <span>${translate('timeline.earliest', this.language)}: ${earliest}</span>
@@ -120,6 +135,19 @@ export class TwTimeline extends LitElement {
       </div>
     `;
   }
+}
+
+/** Tage an der Skala: Tag 1, gleichmäßige Schritte und der letzte Tag, höchstens `TIMELINE_SCALE_LABELS`. */
+export function scaleDays(total: number): readonly number[] {
+  const step =
+    TIMELINE_SCALE_STEPS.find((candidate) => total / candidate <= TIMELINE_SCALE_LABELS) ??
+    TIMELINE_SCALE_STEPS.at(-1) ??
+    1;
+  const inner = Array.from({ length: Math.floor(total / step) }, (_, index) => (index + 1) * step);
+  const spaced = inner.filter(
+    (day) => day - 1 >= step * TIMELINE_HALF && total - day >= step * TIMELINE_HALF,
+  );
+  return [...new Set([1, ...spaced, total])];
 }
 
 defineOnce(FORM_TAGS.timeline, TwTimeline);

@@ -134,9 +134,9 @@ describe('Formularbausteine', () => {
     expect(line.shadowRoot?.textContent).toContain('Ziel: 7');
     const scale = (element: Element): string[] =>
       [...(element.shadowRoot?.querySelectorAll('.days span') ?? [])].map((day) => day.textContent);
-    expect(scale(line)).toEqual(['0', '2', '4', '6', '8', '10']);
+    expect(scale(line)).toEqual(['1', '2', '4', '6', '8', '9']);
     const long = await mount(FORM_TAGS.timeline, { language: 'de', days: 365, tolerance: 30 });
-    expect(scale(long)).toEqual(['0', '100', '200', '300', '400']);
+    expect(scale(long)).toEqual(['1', '50', '100', '150', '200', '250', '300', '350', '395']);
   });
 });
 
