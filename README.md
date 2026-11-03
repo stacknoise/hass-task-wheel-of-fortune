@@ -77,8 +77,8 @@ vorerst nur Zähler und werden mit AP-15 ausgebaut.
 
 - **Übersicht:** nächste Auslosung (mit Blättern durch die Zeitpläne), offene Zuteilungen je Zeitplan mit Filter nach Person,
   Erledigen und Tauschen (nur erlaubte, nicht pausierte Personen, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
-  fairen Anteil und die jüngste Aktivität. Eine Zuteilung kennt nur ihre Aufgabe; sie erscheint unter dem ersten Zeitplan, der
-  diese Aufgabe enthält.
+  fairen Anteil und die jüngste Aktivität. Jede Zuteilung erscheint unter dem Zeitplan, der sie ausgelost hat. Ist eine Aufgabe in
+  mehreren Zeitplänen, lost kein anderer Plan sie erneut aus, solange sie offen ist: Erledigen gilt für alle Pläne.
 - **Historie:** Runden aufklappbar (Zeitplan, Herkunft, Zuteilungen mit Chance und Status), Filter nach Person, Nachladen in
   Seiten und **CSV-Export** (Semikolon, UTF-8 mit Marke; Felder, die mit `=`, `+`, `-`, `@`, Tabulator oder Zeilenumbruch
   beginnen, werden mit einem Hochkomma entschärft, damit Tabellenprogramme sie nicht als Formel ausführen).
