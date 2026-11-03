@@ -27,6 +27,8 @@ export interface ScheduleObject extends WireObject {
 
 export interface AssignmentObject extends WireObject {
   readonly round_id: string;
+  /** Der Zeitplan, der die Zuteilung ausgelost hat. */
+  readonly schedule_id: string;
   readonly task_id: string;
   readonly person_id: string;
   readonly chance: number;

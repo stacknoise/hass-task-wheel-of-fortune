@@ -98,6 +98,7 @@ def assignment(**overrides: object) -> Assignment:
     values: dict[str, object] = {
         "id": "a1",
         "round_id": "r1",
+        "schedule_id": "s1",
         "task_id": "t1",
         "person_id": "p1",
         "chance": 0.25,
@@ -108,21 +109,23 @@ def assignment(**overrides: object) -> Assignment:
 
 
 def finished_round(**overrides: object) -> Round:
+    schedule_id = overrides.get("schedule_id", "s1")
     values: dict[str, object] = {
         "id": "r1",
-        "schedule_id": "s1",
+        "schedule_id": schedule_id,
         "origin": RoundOrigin.MANUAL,
         "started_at": NOW,
         "finished_at": NOW + dt.timedelta(minutes=2),
         "assignments": (
-            assignment(),
+            assignment(schedule_id=schedule_id),
             assignment(
                 id="a2",
+                schedule_id=schedule_id,
                 status=AssignmentStatus.SWAPPED,
                 swap=swap(),
                 person_id="p2",
             ),
-            assignment(id="a3", status=AssignmentStatus.LATE, done_at=NOW),
+            assignment(id="a3", schedule_id=schedule_id, status=AssignmentStatus.LATE, done_at=NOW),
         ),
     }
     return Round(**{**values, **overrides})  # type: ignore[arg-type]

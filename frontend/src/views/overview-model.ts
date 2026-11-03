@@ -31,31 +31,29 @@ export function filterByPerson(
 }
 
 /**
- * Gruppiert nach Zeitplan in der Reihenfolge der Zeitpläne. Eine Zuteilung kennt nur ihre Aufgabe;
- * sie gehört zum ersten Zeitplan, der diese Aufgabe enthält.
+ * Gruppiert nach dem auslosenden Zeitplan (`schedule_id` der Zuteilung) in der Reihenfolge der
+ * Zeitpläne; Zuteilungen gelöschter Zeitpläne stehen zuletzt in einer Gruppe ohne Zeitplan.
  */
 export function groupBySchedule(
   assignments: readonly AssignmentObject[],
   schedules: readonly ScheduleObject[],
 ): readonly AssignmentGroup[] {
-  const owner = new Map<string, ScheduleObject>();
+  const groups = new Map<string | undefined, AssignmentObject[]>();
   for (const schedule of schedules) {
-    for (const taskId of schedule.task_ids) {
-      if (!owner.has(taskId)) {
-        owner.set(taskId, schedule);
-      }
-    }
+    groups.set(schedule.id, []);
   }
-  const groups = new Map<ScheduleObject | undefined, AssignmentObject[]>();
-  for (const schedule of [...schedules, undefined]) {
-    groups.set(schedule, []);
-  }
+  groups.set(undefined, []);
   for (const assignment of assignments) {
-    groups.get(owner.get(assignment.task_id))?.push(assignment);
+    const key = groups.has(assignment.schedule_id) ? assignment.schedule_id : undefined;
+    groups.get(key)?.push(assignment);
   }
+  const byId = new Map(schedules.map((schedule) => [schedule.id, schedule]));
   return [...groups]
     .filter(([, items]) => items.length > 0)
-    .map(([schedule, items]) => ({ schedule, assignments: items }));
+    .map(([id, items]) => ({
+      schedule: id === undefined ? undefined : byId.get(id),
+      assignments: items,
+    }));
 }
 
 /** Personen, auf die getauscht werden darf: erlaubt für die Aufgabe, nicht die jetzige, nicht pausiert. */
