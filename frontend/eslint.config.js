@@ -50,7 +50,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.test.ts'],
+    files: ['**/*.test.ts', '**/*.testing.ts'],
     rules: { 'no-magic-numbers': 'off' },
   },
   {

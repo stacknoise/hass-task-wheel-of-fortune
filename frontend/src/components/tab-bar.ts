@@ -1,0 +1,87 @@
+import { LitElement, css, html } from 'lit';
+import type { TemplateResult } from 'lit';
+import { repeat } from 'lit/directives/repeat.js';
+
+import { COMPONENT_TAGS, EVENT_TAB_SELECT } from '../constants/index.ts';
+import { baseStyles, tokenStyles } from './styles.ts';
+
+export interface TabItem {
+  readonly id: string;
+  readonly label: string;
+  readonly href: string;
+}
+
+/** Tab-Leiste aus Links; meldet die Wahl als Ereignis und überlässt die Navigation dem Aufrufer. */
+export class TwTabBar extends LitElement {
+  static override properties = {
+    tabs: { attribute: false },
+    active: { type: String },
+    label: { type: String },
+  };
+
+  static override styles = [
+    tokenStyles,
+    baseStyles,
+    css`
+      nav {
+        display: flex;
+        gap: var(--tw-space-s);
+        overflow-x: auto;
+        border-bottom: 1px solid var(--tw-color-divider);
+      }
+      a {
+        padding: var(--tw-space-s) var(--tw-space-m);
+        color: var(--tw-color-text-muted);
+        text-decoration: none;
+        white-space: nowrap;
+        border-bottom: 2px solid transparent;
+        transition: color var(--tw-duration);
+      }
+      a[aria-current='page'] {
+        color: var(--tw-color-primary);
+        border-bottom-color: var(--tw-color-primary);
+      }
+    `,
+  ];
+
+  declare tabs: readonly TabItem[];
+  declare active: string;
+  declare label: string;
+
+  constructor() {
+    super();
+    this.tabs = [];
+    this.active = '';
+    this.label = '';
+  }
+
+  protected override render(): TemplateResult {
+    return html`
+      <nav aria-label=${this.label}>
+        ${repeat(
+          this.tabs,
+          (tab) => tab.id,
+          (tab) => html`
+            <a
+              href=${tab.href}
+              aria-current=${tab.id === this.active ? 'page' : 'false'}
+              @click=${(event: MouseEvent) => {
+                this.#select(event, tab);
+              }}
+              >${tab.label}</a
+            >
+          `,
+        )}
+      </nav>
+    `;
+  }
+
+  #select(event: MouseEvent, tab: TabItem): void {
+    event.preventDefault();
+    this.dispatchEvent(
+      new CustomEvent<string>(EVENT_TAB_SELECT, { detail: tab.id, bubbles: true, composed: true }),
+    );
+  }
+}
+
+customElements.define(COMPONENT_TAGS.tabBar, TwTabBar);

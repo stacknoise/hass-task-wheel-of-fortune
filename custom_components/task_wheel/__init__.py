@@ -18,6 +18,7 @@ from .entities.signals import EntityEvents
 from .infrastructure.events import HassRoundEvents
 from .infrastructure.notifier.hass_notifier import HassNotifier
 from .infrastructure.notifier.texts import load_catalog
+from .infrastructure.panel import async_register_panel, async_register_static, async_remove_panel
 from .infrastructure.repository.factory import create_config_store, create_history_store
 from .infrastructure.scheduler import HassTimerScheduler
 from .runtime import TaskWheelData, compose
@@ -37,6 +38,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Meldet Dienste und WebSocket-Befehle an; sie gehören nicht einer einzelnen Config Entry."""
     async_register_services(hass)
     async_register_commands(hass)
+    await async_register_static(hass)
     return True
 
 
@@ -60,6 +62,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: TaskWheelConfigEntry) ->
         spawn=hass.async_create_task,
     )
     entry.runtime_data = data
+    await async_register_panel(hass, require_admin=config.settings.panel_admin_only)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     now = data.clock()
     data.schedules.arm_all(now)
@@ -72,6 +75,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: TaskWheelConfigEntry) -
     if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         return False
     data = entry.runtime_data
+    async_remove_panel(hass)
     data.schedules.disarm_all()
     await data.config.async_flush()
     await data.history.async_flush()

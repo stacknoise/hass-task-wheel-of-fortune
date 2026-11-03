@@ -1,2 +1,12 @@
-/** Platzhalter für die Schicht `api`; wird in AP-14 gefüllt. */
-export {};
+export { ApiClient } from './client.ts';
+export type { Unsubscribe } from './client.ts';
+export type {
+  CollectionDelta,
+  Collections,
+  Delta,
+  HassApi,
+  HassConnection,
+  Settings,
+  Snapshot,
+  WireObject,
+} from './types.ts';

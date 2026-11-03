@@ -4,7 +4,7 @@ Verteilt Haushaltsaufgaben fair und mit etwas Spaß: Ein Glücksrad lost aus, we
 richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie belastbar ist.
 
 > **Status:** Entwicklung, Version 0.0.1. Das Projektgerüst steht (Integration lässt sich hinzufügen und
-> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03), Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07), Statistik und Historie (AP-13) Runden und Zeitpläne (AP-08), Einstieg, Dienste, Events und Einstellungen (AP-09), Benachrichtigungen (AP-12) Entitäten (AP-11) sowie die WebSocket-API für das Panel (AP-10) sind umgesetzt, das Panel folgt mit den Arbeitspaketen. Es gibt noch keine Veröffentlichung
+> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03), Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07), Statistik und Historie (AP-13) Runden und Zeitpläne (AP-08), Einstieg, Dienste, Events und Einstellungen (AP-09), Benachrichtigungen (AP-12) Entitäten (AP-11) sowie die WebSocket-API für das Panel (AP-10) und das Frontend-Gerüst des Panels (AP-14: Tabs, Store, Seitenleisten-Eintrag) sind umgesetzt, die Ansichten folgen mit den Arbeitspaketen. Es gibt noch keine Veröffentlichung
 > über HACS.
 
 ## Funktionen (geplant)
@@ -63,6 +63,15 @@ Jede Person kann ein Ziel haben: eine `notify`-Entität (über `notify.send_mess
 | Erinnerung (Zeitplan „nur manuell“, nach n, 2n, … Tagen ohne Auslosung) | alle Personen mit Ziel |
 
 Ein Ziel, das mehrere Personen teilen (z. B. ein Familienkanal), bekommt jede Meldung nur einmal. Die Texte stehen in `custom_components/task_wheel/texts/` (de, en; andere Sprachen fallen auf Englisch zurück). Ein fehlgeschlagener Versand wird protokolliert und blockiert weder die Auslosung noch andere Ziele.
+
+## Panel (Gerüst)
+
+Nach dem Einrichten erscheint in der Seitenleiste der Eintrag „Aufgaben-Glücksrad“ (`/task-wheel`). Das Panel hat die
+Tabs Übersicht, Auslosung, Aufgaben, Personen, Zeitpläne, Historie und Statistik, lädt den Stand per `snapshot` und
+bleibt über `subscribe` aktuell; die Ansichten zeigen vorerst nur Zähler und werden mit AP-15 bis AP-17 ausgebaut.
+Texte gibt es auf Deutsch und Englisch (Sprache aus Home Assistant). Das Bundle ist nicht eingecheckt: vor dem
+Ausprobieren `cd frontend && npm ci && npm run build`. Fehlt es, bleibt die Integration nutzbar und schreibt eine
+Warnung ins Protokoll.
 
 ## Panel-API (WebSocket)
 
