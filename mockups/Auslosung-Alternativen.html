@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glücksrad – Auslosung: 5 Alternativen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+:root{--bg:#f2f4f7;--ink:#1f2328;--mut:#5a616b;--line:#e3e6ea;--blue:#0262a0;--blue-d:#01497a;--stage:#10243a;--gold:#f5c542}
+body{margin:0;background:var(--bg);font-family:Roboto,system-ui,sans-serif;color:var(--ink)}
+button,select{font-family:inherit}
+a{color:var(--blue)}
+:focus-visible{outline:3px solid #ffb300;outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none !important}
+
+/* Kopf */
+.top{background:#fff;border-bottom:1px solid var(--line)}
+.top-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 24px}
+.top-row h1{margin:0;font-size:22px;font-weight:400;flex:1 1 auto}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;padding:0 16px}
+.tabs a{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;text-decoration:none;font-size:14px;font-weight:500;color:var(--mut);border-bottom:3px solid transparent}
+.tabs a[aria-current="page"]{color:var(--blue);border-bottom-color:var(--blue)}
+.btn-ghost{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border-radius:20px;border:1px solid #c4c9d0;background:#fff;color:var(--blue);font:500 14px Roboto,system-ui,sans-serif;cursor:pointer}
+.btn-ghost:hover{background:#eef6fc}
+.btn-primary{min-height:44px;padding:0 22px;border-radius:22px;border:none;background:var(--blue);color:#fff;font:500 15px Roboto,system-ui,sans-serif;cursor:pointer}
+.btn-primary:hover{background:var(--blue-d)}
+
+/* Ideen-Umschalter */
+.ideas{max-width:1200px;margin:0 auto;padding:16px 24px 0;width:100%}
+.ideas-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.ideas-lbl{font-size:12px;font-weight:500;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:22px;border:1px solid #c4c9d0;background:#fff;color:var(--ink);font:500 14px Roboto,system-ui,sans-serif;cursor:pointer}
+.seg button .n{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#e3e6ea;font-size:12px;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.seg button[aria-pressed="true"] .n{background:#fff;color:var(--blue)}
+.idea-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 24px;font-size:14px;line-height:1.5}
+.idea-info h2{margin:0 0 4px;font-size:18px;font-weight:500;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.effort{display:inline-flex;align-items:center;min-height:24px;padding:0 10px;border-radius:12px;background:#dcecf8;color:var(--blue-d);font-size:12px;font-weight:700}
+.idea-info p{margin:0}
+.idea-info .k{font-weight:700}
+.idea-info .rm{color:var(--mut);font-size:13px}
+.sim{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
+.sim input{width:20px;height:20px}
+
+/* Seite */
+.page{padding:24px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;max-width:1200px;margin:0 auto;width:100%}
+.side{flex:1 1 260px;max-width:320px;background:#fff;border-radius:12px;border:1px solid var(--line);padding:8px 0}
+.side .pad{padding:12px 20px;display:flex;flex-direction:column;gap:10px}
+.side label{font-size:12px;color:var(--mut);font-weight:500}
+.side select{min-height:44px;padding:0 12px;border:1px solid #c4c9d0;border-radius:8px;background:#fff;color:var(--ink);font:500 15px Roboto,system-ui,sans-serif;cursor:pointer;width:100%}
+.hint{font-size:12px;color:var(--mut)}
+.side h2{margin:4px 0 0;font-size:18px;font-weight:500}
+.side .sub{font-size:13px;color:var(--mut);margin-top:-8px}
+.rrow{display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #eef0f3}
+.rrow .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.rrow .m{flex:1 1 auto;display:flex;flex-direction:column;gap:2px;min-width:0}
+.rrow .t{font-size:15px;font-weight:500}
+.rrow .r{font-size:12px;color:var(--mut)}
+.rrow .s{font-size:13px;font-weight:500}
+.side .foot{padding:12px 20px;border-top:1px solid #eef0f3}
+.side .foot .btn-ghost{width:100%;justify-content:center}
+
+/* Bühne */
+.stage{flex:999 1 520px;min-width:0;background:var(--stage);border-radius:16px;padding:24px;color:#fff;display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.stage-head{flex:1 1 100%;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.stage-head .l{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#9fc4e4;font-weight:500}
+.stage-head .tn{font-size:30px;font-weight:900;overflow-wrap:anywhere}
+.viz-col{flex:1 1 300px;max-width:460px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:16px}
+.viz{width:100%}
+.start{min-height:52px;padding:0 28px;border-radius:26px;border:3px solid #fff;background:var(--blue);color:#fff;font:900 17px Roboto,system-ui,sans-serif;letter-spacing:.03em;cursor:pointer;animation:pulse 1.6s ease-in-out infinite}
+.start:disabled{background:#3a556f;animation:none;cursor:default}
+.start:hover:not(:disabled){background:var(--blue-d)}
+.who{flex:1 1 220px;max-width:280px;display:flex;flex-direction:column;gap:10px}
+.who h3{margin:0;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#9fc4e4;font-weight:500}
+.who .p{display:flex;align-items:center;gap:10px}
+.who .p.out{opacity:.7}
+.who .av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none;border:2px solid #fff}
+.who .nm{font-size:14px;font-weight:500}
+.who .nt{font-size:12px;color:#c9dcec}
+.who .bar{height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin-top:3px;width:100%;overflow:hidden}
+.who .bar i{display:block;height:100%;background:#9fc4e4}
+.who .legend{font-size:12px;color:#c9dcec;line-height:1.5;padding-top:6px}
+.banner{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px;background:#fff;color:var(--ink);border-radius:12px;padding:16px 20px;animation:pop .5s ease-out both;position:relative}
+.banner .badge{width:56px;height:56px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font:900 24px Roboto,system-ui,sans-serif}
+.banner .btxt{display:flex;flex-direction:column;gap:2px;flex:1 1 200px;min-width:0}
+.banner .bt{font-size:22px;font-weight:900;overflow-wrap:anywhere}
+.banner .bd{font-size:13px;color:var(--mut)}
+.done{position:absolute;inset:0;background:rgba(16,36,58,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;animation:pop .4s ease-out both;text-align:center}
+.done .l{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#9fc4e4;font-weight:500}
+.done .big{font-size:30px;font-weight:900}
+.done .list{display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px}
+.done .li{display:flex;justify-content:space-between;align-items:center;gap:12px;background:rgba(255,255,255,.08);border-radius:10px;padding:10px 14px;font-size:15px;text-align:left}
+.done .li b{font-weight:700}
+.done .note{font-size:13px;color:#c9dcec}
+.done .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.btn-out{min-height:44px;padding:0 20px;border-radius:22px;border:1px solid #9fc4e4;background:transparent;color:#fff;font:500 15px Roboto,system-ui,sans-serif;cursor:pointer}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(79,166,232,.6)}50%{box-shadow:0 0 0 14px rgba(79,166,232,0)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.04);opacity:1}100%{transform:scale(1)}}
+@keyframes blink{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* gemeinsame SVG-Texte */
+.svg{display:block;width:100%;height:auto;overflow:visible}
+.svg text{font-family:Roboto,system-ui,sans-serif}
+
+/* Idee 2: Karten */
+.cards{position:relative;width:100%;height:270px;perspective:1000px}
+.card{position:absolute;bottom:6px;height:200px;transform-origin:50% 140%;transform:translateY(var(--ty,0)) rotate(var(--rot,0deg)) scale(var(--sc,1));transition:left calc(.5s / var(--spd,1)) cubic-bezier(.4,0,.2,1),transform calc(.55s / var(--spd,1)) ease,opacity calc(.5s / var(--spd,1)),filter calc(.5s / var(--spd,1))}
+.card .flip{position:absolute;inset:0;transform-style:preserve-3d;transition:transform calc(.8s / var(--spd,1)) ease}
+.card.flipped .flip{transform:rotateY(180deg)}
+.card .back,.card .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:10px;border:3px solid #fff;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.card .back{background:repeating-linear-gradient(45deg,#1a3f66 0 8px,#234e7d 8px 16px);color:#fff;justify-content:space-between;padding:12px 2px}
+.card .back .q{font-size:34px;font-weight:900;color:var(--gold)}
+.card .back .pc{font-size:16px;font-weight:700;background:rgba(16,36,58,.85);border-radius:10px;padding:2px 8px}
+.card .face{transform:rotateY(180deg);color:#fff}
+.card .face .nm{font-size:clamp(15px,4.6vw,24px);font-weight:900;overflow-wrap:anywhere;text-align:center;padding:0 2px}
+.card .face .pc{font-size:14px;font-weight:500}
+.card.dim{opacity:.55;filter:saturate(.6)}
+.card.win{z-index:10}
+.card.win .face{box-shadow:0 0 0 4px var(--gold),0 0 30px 6px rgba(245,197,66,.6)}
+.cards.still .card,.cards.still .card .flip{transition:none}
+
+/* Idee 3: Slot */
+.slot{width:100%;max-width:360px;margin:0 auto;background:linear-gradient(#b3261e,#7f1a15);border:4px solid var(--gold);border-radius:18px;padding:12px 12px 16px;position:relative}
+.lamps{display:flex;justify-content:space-between;padding:0 6px 10px}
+.lamps i{width:12px;height:12px;border-radius:50%;background:var(--gold);animation:blink 1s infinite}
+.lamps i:nth-child(odd){animation-delay:.5s}
+.slot-row{display:flex;align-items:stretch;gap:10px}
+.reel{position:relative;flex:1 1 auto;height:220px;overflow:hidden;border-radius:10px;border:4px solid #3a1210;background:#fff}
+.strip{position:absolute;left:0;right:0;top:0;will-change:transform}
+.cell{display:flex;align-items:center;justify-content:center;gap:12px;color:#fff;border-bottom:3px solid rgba(255,255,255,.7)}
+.cell b{font-size:22px;font-weight:900}
+.cell span{font-size:14px;font-weight:500}
+.cell.dim{filter:brightness(.55)}
+.cell.win{box-shadow:inset 0 0 0 4px var(--gold)}
+.payline{position:absolute;left:0;right:0;top:50%;height:0;border-top:3px solid var(--gold);box-shadow:0 0 8px var(--gold);pointer-events:none}
+.payline::before,.payline::after{content:"";position:absolute;top:-10px;border:9px solid transparent}
+.payline::before{left:0;border-left-color:var(--gold);border-left-width:14px}
+.payline::after{right:0;border-right-color:var(--gold);border-right-width:14px}
+.fade{position:absolute;left:0;right:0;height:56px;pointer-events:none}
+.fade.t{top:0;background:linear-gradient(rgba(0,0,0,.5),transparent)}
+.fade.b{bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.5))}
+.lever{width:22px;flex:none;position:relative}
+.lever .rod{position:absolute;left:8px;bottom:20px;width:6px;height:96px;background:#d9dde2;border-radius:3px;transform-origin:50% 100%;transition:transform calc(.35s / var(--spd,1)) ease-in}
+.lever .rod::before{content:"";position:absolute;left:-9px;top:-18px;width:24px;height:24px;border-radius:50%;background:#e53935;border:2px solid #fff}
+.lever.pulled .rod{transform:scaleY(-.45)}
+.slot-note{text-align:center;font-size:12px;color:#ffe9b0;margin-top:10px}
+
+/* Idee 5: Scheinwerfer */
+.tiles{position:relative;width:100%;aspect-ratio:4/3;background:#0a1624;border-radius:12px;overflow:hidden}
+.tile{position:absolute;padding:3px;container-type:size}
+.tile .t{position:relative;width:100%;height:100%;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;filter:brightness(.42) saturate(.65);transition:filter calc(.12s / var(--spd,1)),box-shadow calc(.12s / var(--spd,1)),transform calc(.12s / var(--spd,1));overflow:hidden}
+.tile .nm{font-size:clamp(14px,24cqmin,30px);font-weight:900;overflow-wrap:anywhere;text-align:center}
+.tile .pc{font-size:clamp(12px,13cqmin,17px);font-weight:500}
+.tile.on .t{filter:brightness(1.12) saturate(1.1);box-shadow:0 0 0 4px #fff,0 0 34px 8px rgba(255,255,255,.55);transform:scale(1.03);z-index:2}
+.tile.on .t::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.45),transparent 70%)}
+.tile.on{z-index:2}
+.tile.final .t{box-shadow:0 0 0 5px var(--gold),0 0 40px 10px rgba(245,197,66,.7)}
+.tile.lose .t{filter:brightness(.3) saturate(.5)}
+.tiles.still .tile .t{transition:none}
+
+@media (max-width:640px){
+  .top-row,.ideas,.page{padding-left:16px;padding-right:16px}
+  .page{padding-top:16px}
+  .stage{padding:16px;gap:16px}
+  .stage-head .tn{font-size:24px}
+  .side{max-width:none}
+  .banner .bt{font-size:19px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-row">
+    <h1>Aufgaben-Glücksrad <span class="hint" style="font-size:14px">· Mockup: 5 Alternativen zur Rad-Animation</span></h1>
+    <button type="button" class="btn-ghost" id="restart">Runde neu starten</button>
+  </div>
+  <nav class="tabs" aria-label="Bereiche">
+    <a href="Main.dc.html">Übersicht</a>
+    <a href="Auslosung.dc.html" aria-current="page">Auslosung</a>
+    <a href="Aufgaben.dc.html">Aufgaben</a>
+    <a href="Personen.dc.html">Personen</a>
+    <a href="Zeitplan.dc.html">Zeitpläne</a>
+    <a href="Historie.dc.html">Historie</a>
+    <a href="Statistik.dc.html">Statistik</a>
+  </nav>
+</header>
+
+<section class="ideas" aria-label="Animationsvarianten">
+  <div class="ideas-card">
+    <span class="ideas-lbl" id="ideasLbl">Animationsidee wählen (Runde startet bei Wechsel neu)</span>
+    <div class="seg" id="seg" role="group" aria-labelledby="ideasLbl"></div>
+    <div class="idea-info" id="info"></div>
+    <label class="sim"><input type="checkbox" id="sim"> Reduzierte Bewegung simulieren (wie <code>prefers-reduced-motion: reduce</code>)</label>
+  </div>
+</section>
+
+<main class="page">
+  <section class="side" aria-label="Zeitplan und Runde">
+    <div class="pad">
+      <label for="plan">Welcher Zeitplan wird ausgelöst?</label>
+      <select id="plan"></select>
+      <span class="hint" id="planHint"></span>
+      <h2 id="planName"></h2>
+      <span class="sub" id="planSub"></span>
+    </div>
+    <div id="round"></div>
+    <div class="foot"><button type="button" class="btn-ghost" id="drawAll">Rest ohne Animation verlosen</button></div>
+  </section>
+
+  <section class="stage" id="stage" aria-label="Bühne">
+    <div class="stage-head"><span class="l" id="stepLbl"></span><span class="tn" id="taskName"></span></div>
+    <div class="viz-col">
+      <div class="viz" id="viz"></div>
+      <button type="button" class="start" id="start"></button>
+    </div>
+    <div class="who" id="who"></div>
+    <div id="sr" class="sr" aria-live="polite" aria-atomic="true"></div>
+    <div class="banner" id="banner" hidden>
+      <div class="badge" id="bBadge" aria-hidden="true"></div>
+      <div class="btxt"><span class="bt" id="bTitle"></span><span class="bd" id="bDetail"></span></div>
+      <button type="button" class="btn-primary" id="nextBtn"></button>
+    </div>
+    <div class="done" id="done" hidden>
+      <span class="l">Runde abgeschlossen</span>
+      <span class="big">Alle Aufgaben sind verteilt</span>
+      <div class="list" id="doneList"></div>
+      <span class="note">Gespeichert in der Historie · Push-Benachrichtigung an alle verschickt</span>
+      <div class="btns">
+        <button type="button" class="btn-out" id="again">Nochmal von vorn</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+'use strict';
+
+/* ---------- Beispieldaten (identisch zum Glücksrad-Mockup) ---------- */
+var P = {
+  A: { name: 'Anna', color: '#c05600' }, B: { name: 'Ben', color: '#1a5fd0' }, C: { name: 'Clara', color: '#137333' },
+  D: { name: 'David', color: '#7b2cbf' }, E: { name: 'Emma', color: '#b0136f' }
+};
+var TASKS = [
+  { task: 'Bad putzen', rule: 'Nur Anna, Ben, Clara, David · max. 1× in 2 Wochen pro Person',
+    wheel: [['A', 30], ['B', 34], ['D', 36]],
+    out: { C: 'Pause – hatte die Aufgabe letzte Woche', E: 'Nicht erlaubt für diese Aufgabe' } },
+  { task: 'Müll rausbringen', rule: 'Alle · 1× pro Woche',
+    wheel: [['A', 22], ['B', 22], ['C', 20], ['E', 36]],
+    out: { D: 'Abwesend (Urlaub bis 12.11.)' } },
+  { task: 'Rasen mähen', rule: 'Nur Ben, Clara, David · alle 2 Wochen ± 1 Tag',
+    wheel: [['B', 45], ['C', 55]],
+    out: { A: 'Nicht erlaubt für diese Aufgabe', D: 'Abwesend (Urlaub bis 12.11.)', E: 'Nicht erlaubt für diese Aufgabe' } },
+  { task: 'Staubsaugen Wohnzimmer', rule: 'Alle · max. 2× pro Woche',
+    wheel: [['A', 24], ['B', 26], ['C', 18], ['E', 32]],
+    out: { D: 'Abwesend (Urlaub bis 12.11.)' } },
+  { task: 'Spülmaschine ausräumen', rule: 'Alle · jede Runde',
+    wheel: [['A', 22], ['B', 24], ['C', 20], ['E', 34]],
+    out: { D: 'Abwesend (Urlaub bis 12.11.)' } }
+];
+var PLANS = [
+  { name: 'Wochenplan', tasks: [0, 1, 2, 3], hint: 'Automatisch jeden Montag 07:00 · jetzt vorzeitig manuell auslösen', mode: 'automatisch' },
+  { name: 'Täglich morgens', tasks: [4], hint: 'Automatisch täglich 06:30 · jetzt vorzeitig manuell auslösen', mode: 'automatisch' },
+  { name: 'Großputz', tasks: [0, 1, 3], hint: 'Nur manuell · zuletzt ausgelost Sa, 10. Okt', mode: 'nur manuell' },
+  { name: 'Vor dem Weihnachtsbesuch', tasks: [0, 1, 3], hint: 'Einmalig am Sa, 19. Dez · jetzt vorzeitig manuell auslösen', mode: 'einmalig' },
+  { name: 'Garten (Sommer)', tasks: [2], hint: 'Pausiert · manuell trotzdem möglich', mode: 'pausiert' }
+];
+
+/* ---------- Hilfen ---------- */
+function $(id) { return document.getElementById(id); }
+function speed() { return window.__speed > 0 ? window.__speed : 1; }
+function D(ms) { return ms / speed(); }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function easeInOut(t) { return t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+function rnd(a, b) { return a + Math.random() * (b - a); }
+function shuffled(arr) { var a = arr.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function reduced() {
+  var m = false;
+  try { m = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  return m || $('sim').checked;
+}
+function Tok() { this.dead = false; this.timers = []; this.raf = 0; }
+Tok.prototype.cancel = function () { this.dead = true; cancelAnimationFrame(this.raf); this.timers.forEach(clearTimeout); };
+function sleep(ms, tok) {
+  return new Promise(function (res) {
+    tok.timers.push(setTimeout(function () { if (!tok.dead) res(); }, D(ms)));
+  });
+}
+/* fn(t 0..1, dtMs echte Zeit) */
+function frames(dur, tok, fn) {
+  return new Promise(function (res) {
+    var t0 = null, last = null;
+    function step(ts) {
+      if (tok.dead) return;
+      if (t0 === null) { t0 = ts; last = ts; }
+      var t = Math.min(1, (ts - t0) / D(dur));
+      fn(t, ts - last); last = ts;
+      if (t < 1) tok.raf = requestAnimationFrame(step); else res();
+    }
+    tok.raf = requestAnimationFrame(step);
+  });
+}
+function entriesFor(task) {
+  var total = task.wheel.reduce(function (s, w) { return s + w[1]; }, 0);
+  return task.wheel.map(function (w) {
+    return { k: w[0], name: P[w[0]].name, color: P[w[0]].color, w: w[1], pct: Math.round(w[1] / total * 100), share: w[1] / total };
+  });
+}
+/* Gewichteter Zufall – simuliert das Backend. Danach ist das Ergebnis fix. */
+function pickWinner(entries) {
+  var u = Math.random(), acc = 0;
+  for (var i = 0; i < entries.length; i++) {
+    var e = entries[i];
+    if (u < acc + e.share || i === entries.length - 1) {
+      return { i: i, key: e.k, u: u, frac: Math.min(.999, Math.max(0, (u - acc) / e.share)), entries: entries };
+    }
+    acc += e.share;
+  }
+}
+function cum(entries) { var a = 0; return entries.map(function (e) { var s = a; a += e.share; return s; }); }
+function keyAt(entries, pos) { /* pos 0..1 */
+  var a = 0;
+  for (var i = 0; i < entries.length; i++) { a += entries[i].share; if (pos < a - 1e-9) return entries[i].k; }
+  return entries[entries.length - 1].k;
+}
+
+/* ---------- Idee 1: Lostrommel ---------- */
+var DRUM = {
+  id: 'drum', name: 'Lostrommel', effort: 'L', btn: 'Trommel drehen',
+  desc: 'Pro Person wirbeln drei Kugeln in der Trommel; die Kugelfläche entspricht der Chance. Die vorab bestimmte Kugel wird zur Öffnung gelenkt und rollt in die Ablage.',
+  pro: 'Wirkt wie eine echte Lotterie, sehr hoher Spaßfaktor.',
+  con: 'Chance über Kugelfläche nur grob ablesbar; Physik-Schleife (Kollisionen) ist der größte Aufwand.',
+  mount: function (viz, ctx) {
+    var C = { x: 160, y: 160, R: 140 }, T = { x: 338, y: 334 }, K = 4.7, ents = ctx.entries;
+    var S = { balls: [], cx: C.x, cy: C.y, R: C.R, T: T };
+    ents.forEach(function (e, ei) {
+      for (var j = 0; j < 3; j++) {
+        var r = K * Math.sqrt(e.pct), a = rnd(0, 6.28), d = rnd(0, C.R - r - 8);
+        S.balls.push({ key: e.k, ei: ei, r: r, color: e.color, x: C.x + Math.cos(a) * d, y: C.y + Math.sin(a) * d, vx: 0, vy: 0, out: false, sc: 1, name: e.name });
+      }
+    });
+    function P2(deg) { var a = deg * Math.PI / 180; return [C.x + C.R * Math.cos(a), C.y + C.R * Math.sin(a)]; }
+    var p60 = P2(60), p30 = P2(30);
+    var h = '<svg class="svg" viewBox="0 0 400 400" role="img" aria-label="Lostrommel mit ' + ents.length * 3 + ' Kugeln von ' + ents.length + ' Personen">';
+    h += '<line x1="215" y1="215" x2="' + T.x + '" y2="' + T.y + '" stroke="rgba(255,255,255,.12)" stroke-width="86" stroke-linecap="round"/>';
+    h += '<rect x="288" y="284" width="108" height="108" rx="14" fill="rgba(245,197,66,.16)" stroke="#f5c542" stroke-width="3" stroke-dasharray="6 5"/>';
+    h += '<text x="342" y="388" text-anchor="middle" font-size="13" fill="#f5c542" font-weight="700">Gezogen</text>';
+    h += '<circle cx="' + C.x + '" cy="' + C.y + '" r="' + C.R + '" fill="rgba(255,255,255,.06)"/>';
+    h += '<path d="M' + p60[0].toFixed(1) + ' ' + p60[1].toFixed(1) + ' A' + C.R + ' ' + C.R + ' 0 1 1 ' + p30[0].toFixed(1) + ' ' + p30[1].toFixed(1) + '" fill="none" stroke="#9fc4e4" stroke-width="7" stroke-linecap="round"/>';
+    h += '<g id="d-ribs" stroke="rgba(159,196,228,.55)" stroke-width="4" stroke-linecap="round">';
+    for (var i = 0; i < 6; i++) { var a = i * 60 * Math.PI / 180; h += '<line x1="' + C.x + '" y1="' + C.y + '" x2="' + (C.x + 124 * Math.cos(a)).toFixed(1) + '" y2="' + (C.y + 124 * Math.sin(a)).toFixed(1) + '"/>'; }
+    h += '<circle cx="' + C.x + '" cy="' + C.y + '" r="9" fill="#9fc4e4"/></g><g id="d-balls">';
+    S.balls.forEach(function (b, i) {
+      h += '<g id="d-b' + i + '"><circle r="' + b.r.toFixed(1) + '" fill="' + b.color + '" stroke="#fff" stroke-width="2.5"/><circle cx="' + (-b.r * .35).toFixed(1) + '" cy="' + (-b.r * .35).toFixed(1) + '" r="' + (b.r * .28).toFixed(1) + '" fill="#fff" opacity=".35"/>' +
+        '<text y="' + (b.r * .34).toFixed(1) + '" text-anchor="middle" font-size="' + (b.r * .95).toFixed(1) + '" font-weight="900" fill="#fff">' + esc(b.name.charAt(0)) + '</text></g>';
+    });
+    h += '</g></svg>';
+    viz.innerHTML = h;
+    S.ribs = $('d-ribs');
+    S.balls.forEach(function (b, i) { b.el = $('d-b' + i); });
+    this.S = S;
+    for (var n = 0; n < 400; n++) this.step(0.016, 0, 1100, 0, -1);
+    this.draw(0);
+  },
+  step: function (dt, ga, G, kick, kin) {
+    var S = this.S, b = S.balls, i, j, gx = Math.sin(ga) * G, gy = Math.cos(ga) * G;
+    for (i = 0; i < b.length; i++) {
+      var a = b[i]; if (a.out || i === kin) continue;
+      a.vx += gx * dt; a.vy += gy * dt;
+      if (kick && Math.random() < kick * dt) { a.vx += (Math.random() - .5) * 800; a.vy += (Math.random() - .5) * 800; }
+      a.vx *= .997; a.vy *= .997;
+      a.x += a.vx * dt; a.y += a.vy * dt;
+      var dx = a.x - S.cx, dy = a.y - S.cy, d = Math.hypot(dx, dy), m = S.R - 6 - a.r;
+      if (d > m) {
+        var nx = dx / d, ny = dy / d; a.x = S.cx + nx * m; a.y = S.cy + ny * m;
+        var vn = a.vx * nx + a.vy * ny; if (vn > 0) { a.vx -= 1.5 * vn * nx; a.vy -= 1.5 * vn * ny; }
+      }
+    }
+    for (i = 0; i < b.length; i++) for (j = i + 1; j < b.length; j++) {
+      var p = b[i], q = b[j]; if (p.out || q.out) continue;
+      var ex = q.x - p.x, ey = q.y - p.y, dd = Math.hypot(ex, ey), mn = p.r + q.r;
+      if (dd < mn && dd > .001) {
+        var ux = ex / dd, uy = ey / dd, ov = mn - dd;
+        var wp = (i === kin) ? 0 : 1 / (p.r * p.r), wq = (j === kin) ? 0 : 1 / (q.r * q.r), sw = wp + wq;
+        if (sw === 0) continue;
+        p.x -= ux * ov * wp / sw; p.y -= uy * ov * wp / sw; q.x += ux * ov * wq / sw; q.y += uy * ov * wq / sw;
+        var rv = (q.vx - p.vx) * ux + (q.vy - p.vy) * uy;
+        if (rv < 0) { var imp = -1.5 * rv / sw; p.vx -= imp * wp * ux; p.vy -= imp * wp * uy; q.vx += imp * wq * ux; q.vy += imp * wq * uy; }
+      }
+    }
+  },
+  draw: function (ga) {
+    var S = this.S;
+    S.ribs.setAttribute('transform', 'rotate(' + (ga * 180 / Math.PI).toFixed(1) + ' ' + S.cx + ' ' + S.cy + ')');
+    S.balls.forEach(function (b) { b.el.setAttribute('transform', 'translate(' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) + ') scale(' + b.sc.toFixed(3) + ')'); });
+  },
+  landed: function () {
+    var S = this.S, k = null;
+    S.balls.forEach(function (b) { if (Math.hypot(b.x - S.T.x, b.y - S.T.y) < 6) k = b.key; });
+    return k;
+  },
+  winBall: function (plan) {
+    var mine = this.S.balls.filter(function (b) { return b.key === plan.key; });
+    return this.S.balls.indexOf(mine[Math.min(mine.length - 1, Math.floor(plan.frac * mine.length))]);
+  },
+  run: function (plan, tok) {
+    var self = this, S = this.S, wi = this.winBall(plan), win = S.balls[wi];
+    var P1 = 3400, P2 = 1000, P3 = 900, P4 = 400, TOTAL = P1 + P2 + P3 + P4, ga = 0, p0 = null;
+    var E = { x: S.cx + (S.R - win.r - 2) * Math.SQRT1_2, y: S.cy + (S.R - win.r - 2) * Math.SQRT1_2 };
+    return frames(TOTAL, tok, function (t, dtr) {
+      var vt = t * TOTAL, dt = Math.min(.033, dtr * speed() / 1000);
+      if (vt < P1) {
+        ga += (6.5 - 3.5 * vt / P1) * dt;
+        self.step(dt / 2, ga, 1100, 7, -1); self.step(dt / 2, ga, 1100, 7, -1);
+      } else if (vt < P1 + P2) {
+        if (!p0) p0 = { x: win.x, y: win.y };
+        var s = easeInOut((vt - P1) / P2);
+        ga += (Math.round(ga / 6.2832) * 6.2832 - ga) * Math.min(1, dt * 3);
+        win.x = lerp(p0.x, E.x, s); win.y = lerp(p0.y, E.y, s);
+        self.step(dt / 2, ga, 1100, 0, wi); self.step(dt / 2, ga, 1100, 0, wi);
+      } else if (vt < P1 + P2 + P3) {
+        win.out = true; var q = (vt - P1 - P2) / P3;
+        win.x = lerp(E.x, S.T.x, q * q); win.y = lerp(E.y, S.T.y, q * q);
+        ga += (Math.round(ga / 6.2832) * 6.2832 - ga) * Math.min(1, dt * 3);
+        self.step(dt, ga, 1100, 0, -1);
+      } else {
+        win.out = true; win.x = S.T.x; win.y = S.T.y;
+        win.sc = 1 + .25 * Math.sin(Math.min(1, (vt - P1 - P2 - P3) / P4) * Math.PI / 2);
+        self.step(dt, ga, 1100, 0, -1);
+      }
+      self.draw(ga);
+    }).then(function () { return self.landed(); });
+  },
+  final: function (plan) {
+    var S = this.S, win = S.balls[this.winBall(plan)];
+    win.out = true; win.x = S.T.x; win.y = S.T.y; win.sc = 1.25; this.draw(0);
+    return this.landed();
+  }
+};
+
+/* ---------- Idee 2: Kartenziehen ---------- */
+var CARDS = {
+  id: 'cards', name: 'Kartenziehen', effort: 'M', btn: 'Karten mischen & ziehen',
+  desc: 'Ein Fächer verdeckter Karten, Kartenbreite = Chance. Die Karten werden gemischt, die vorab bestimmte Karte hebt sich ab und wird aufgedeckt.',
+  pro: 'Chance direkt als Breite sichtbar, wenig Code (CSS-Transitions), ruhig und gut lesbar.',
+  con: 'Wenig Spannung, weil die Auswahl nicht „abbremst“; bei vielen Personen werden Karten schmal.',
+  mount: function (viz, ctx) {
+    var ents = ctx.entries, n = ents.length, G = 6;
+    viz.style.setProperty('--spd', speed());
+    var h = '<div class="cards" id="c-wrap" role="group" aria-label="Fächer mit ' + n + ' verdeckten Karten, Breite entspricht der Chance">';
+    ents.forEach(function (e, i) {
+      h += '<div class="card" data-i="' + i + '" data-key="' + e.k + '"><div class="flip">' +
+        '<div class="back"><span class="q">?</span><span class="pc">' + e.pct + ' %</span></div>' +
+        '<div class="face" style="background:' + e.color + '"><span class="nm">' + esc(e.name) + '</span><span class="pc">' + e.pct + ' %</span></div></div></div>';
+    });
+    viz.innerHTML = h + '</div>';
+    this.n = n; this.G = G; this.ents = ents;
+    this.wrap = $('c-wrap'); this.cards = [].slice.call(this.wrap.querySelectorAll('.card'));
+    this.order = ents.map(function (_, i) { return i; });
+    this.layout(this.order, 0);
+  },
+  layout: function (order, lift) {
+    var n = this.n, G = this.G, ents = this.ents, acc = 0, self = this;
+    order.forEach(function (ci, slot) {
+      var c = self.cards[ci], e = ents[ci], off = slot - (n - 1) / 2;
+      c.style.left = 'calc((100% - ' + (G * (n - 1)) + 'px) * ' + acc.toFixed(4) + ' + ' + (slot * G) + 'px)';
+      c.style.width = 'calc((100% - ' + (G * (n - 1)) + 'px) * ' + e.share.toFixed(4) + ')';
+      c.style.setProperty('--rot', (off * 3.5).toFixed(1) + 'deg');
+      c.style.setProperty('--ty', (Math.abs(off) * 5 - (lift ? lift : 0)).toFixed(1) + 'px');
+      c.style.setProperty('--sc', 1);
+      c.style.zIndex = slot;
+      acc += e.share;
+    });
+  },
+  reveal: function (plan, still) {
+    var self = this, win = this.cards[plan.i];
+    if (still) this.wrap.classList.add('still');
+    this.cards.forEach(function (c) { c.classList.add('dim'); });
+    win.classList.remove('dim'); win.classList.add('win');
+    win.style.setProperty('--rot', '0deg'); win.style.setProperty('--ty', '-46px'); win.style.setProperty('--sc', 1.1);
+  },
+  run: function (plan, tok) {
+    var self = this, n = this.n, prev = this.order.join();
+    var chain = Promise.resolve();
+    function shuffleStep(k) {
+      return function () {
+        var o; do { o = shuffled(self.order); } while (n > 1 && o.join() === self.order.join());
+        self.order = o;
+        self.layout(o, 22);
+        return sleep(560, tok).then(function () { self.layout(self.order, 0); return sleep(260, tok); });
+      };
+    }
+    for (var k = 0; k < 4; k++) chain = chain.then(shuffleStep(k));
+    return chain.then(function () { return sleep(150, tok); }).then(function () {
+      self.reveal(plan, false);
+      return sleep(800, tok);
+    }).then(function () {
+      self.cards[plan.i].classList.add('flipped');
+      return sleep(900, tok);
+    }).then(function () {
+      self.cards.forEach(function (c, i) { if (i !== plan.i) setTimeout(function () { if (!tok.dead) c.classList.add('flipped'); }, D(150 * i)); });
+      return sleep(150 * n + 700, tok);
+    }).then(function () { return self.landed(); });
+  },
+  landed: function () {
+    var w = this.wrap.querySelector('.card.win.flipped'); return w ? w.dataset.key : null;
+  },
+  final: function (plan) {
+    this.order = shuffled(this.order); this.layout(this.order, 0);
+    this.reveal(plan, true);
+    this.cards.forEach(function (c) { c.classList.add('flipped'); });
+    return this.landed();
+  }
+};
+
+/* ---------- Idee 3: Slot-Machine ---------- */
+var SLOT = {
+  id: 'slot', name: 'Slot-Machine', effort: 'M', btn: 'Hebel ziehen',
+  desc: 'Eine Walze mit allen Personen; die Höhe jedes Eintrags entspricht der Chance. Die Walze läuft schnell an und bremst auf die vorab bestimmte Position unter der Gewinnlinie.',
+  pro: 'Prozent exakt als Höhe, vertrautes Prinzip, echte Spannung beim Abbremsen.',
+  con: 'Kleine Chancen ergeben niedrige Zeilen; Streifen mit vielen Wiederholungen nötig; Bewegung wirkt hektisch.',
+  K: 3.6, WH: 220, CYC: 11,
+  mount: function (viz, ctx) {
+    var ents = ctx.entries, K = this.K, WH = this.WH, h = '';
+    h += '<div class="slot"><div class="lamps">' + new Array(9).join('<i></i>') + '</div><div class="slot-row"><div class="reel" id="s-reel" role="img" aria-label="Walze mit ' + ents.length + ' Namen, Zeilenhöhe entspricht der Chance"><div class="strip" id="s-strip">';
+    for (var c = 0; c < this.CYC; c++) ents.forEach(function (e) {
+      h += '<div class="cell" data-key="' + e.k + '" style="height:' + (e.share * 100 * K) + 'px;background:' + e.color + '"><b>' + esc(e.name) + '</b><span>' + e.pct + ' %</span></div>';
+    });
+    h += '</div><div class="payline"></div><div class="fade t"></div><div class="fade b"></div></div><div class="lever" id="s-lever" aria-hidden="true"><div class="rod"></div></div></div><div class="slot-note">Gewinnlinie in der Mitte · Zeilenhöhe = Chance</div></div>';
+    viz.innerHTML = h;
+    this.ents = ents; this.C = 100 * K; this.strip = $('s-strip'); this.lever = $('s-lever'); this.cells = [].slice.call(this.strip.children);
+    this.ps = this.C + this.C * .35; this.setPos(this.ps);
+  },
+  setPos: function (p) { this.strip.style.transform = 'translate3d(0,' + (-(p - this.WH / 2)).toFixed(2) + 'px,0)'; },
+  target: function (plan) { var cs = cum(plan.entries); return 9 * this.C + (cs[plan.i] + plan.frac * plan.entries[plan.i].share) * this.C; },
+  landed: function () {
+    var m = new DOMMatrix(getComputedStyle(this.strip).transform), p = (-m.m42 + this.WH / 2) % this.C;
+    return keyAt(this.ents, p / this.C);
+  },
+  mark: function (plan) {
+    var idx = 9 * this.ents.length + plan.i, cells = this.cells;
+    cells.forEach(function (c, i) { c.classList.toggle('win', i === idx); c.classList.toggle('dim', Math.abs(i - idx) < 8 && i !== idx); });
+  },
+  run: function (plan, tok) {
+    var self = this, T = this.target(plan), from = this.ps - 30, ps = this.ps;
+    this.lever.classList.add('pulled');
+    return sleep(350, tok).then(function () {
+      self.lever.classList.remove('pulled');
+      return frames(250, tok, function (t) { self.setPos(ps - 30 * (1 - Math.pow(1 - t, 2))); });
+    }).then(function () {
+      return frames(5000, tok, function (t) {
+        var s2 = 1 - Math.pow(1 - t, 1.8), e = s2 * s2 * (3 - 2 * s2);
+        self.setPos(lerp(from, T, e));
+      });
+    }).then(function () { self.setPos(T); self.mark(plan); return self.landed(); });
+  },
+  final: function (plan) { var T = this.target(plan); this.setPos(T); this.mark(plan); return this.landed(); }
+};
+
+/* ---------- Idee 4: Plinko ---------- */
+var PLINKO = {
+  id: 'plinko', name: 'Plinko', effort: 'M', btn: 'Kugel fallen lassen',
+  desc: 'Eine Kugel fällt durch ein Stiftefeld in Fächer, deren Breite der Chance entspricht. Der Weg wird rückwärts vom vorab bestimmten Fach aus berechnet und dann abgespielt.',
+  pro: 'Fachbreite = Chance ist sofort verständlich; viel Spannung bis zum letzten Stift.',
+  con: 'Der Weg ist inszeniert statt echte Physik; bei vielen Personen sind Fächer schmal, Namen werden klein.',
+  W0: 10, W1: 390, DX: 38, ROWS: 10, DY: 30, Y0: 50, BY: 350, BH: 90,
+  mount: function (viz, ctx) {
+    var ents = ctx.entries, W = this.W1 - this.W0, h = '', self = this, i, r, x;
+    h += '<svg class="svg" viewBox="0 0 400 460" role="img" aria-label="Plinko-Brett mit ' + ents.length + ' Fächern, Fachbreite entspricht der Chance">';
+    this.bins = []; var acc = this.W0;
+    ents.forEach(function (e) {
+      var w = e.share * W; self.bins.push({ x0: acc, x1: acc + w, key: e.k });
+      h += '<rect x="' + acc.toFixed(1) + '" y="' + self.BY + '" width="' + w.toFixed(1) + '" height="' + self.BH + '" fill="' + e.color + '"/>' +
+        '<text x="' + (acc + w / 2).toFixed(1) + '" y="' + (self.BY + 28) + '" text-anchor="middle" font-size="16" font-weight="900" fill="#fff">' + esc(e.name) + '</text>' +
+        '<text x="' + (acc + w / 2).toFixed(1) + '" y="' + (self.BY + 48) + '" text-anchor="middle" font-size="14" fill="#fff">' + e.pct + ' %</text>';
+      acc += w;
+    });
+    for (i = 0; i <= ents.length; i++) { x = i === 0 ? this.W0 : this.bins[i - 1].x1; h += '<line x1="' + x.toFixed(1) + '" y1="' + (this.BY - 6) + '" x2="' + x.toFixed(1) + '" y2="' + (this.BY + this.BH) + '" stroke="#fff" stroke-width="4" stroke-linecap="round"/>'; }
+    this.pegs = [];
+    for (r = 0; r < this.ROWS; r++) {
+      var off = (r % 2) * this.DX / 2;
+      for (x = this.W0 + this.DX / 2 + off; x <= this.W1 - this.DX / 2 + .1; x += this.DX) {
+        h += '<circle id="pg-' + r + '-' + Math.round(x) + '" cx="' + x.toFixed(1) + '" cy="' + (this.Y0 + r * this.DY) + '" r="4.5" fill="#c9dcec" style="transition:fill .3s"/>';
+      }
+    }
+    h += '<circle id="p-ball" cx="200" cy="18" r="9" fill="#f5c542" stroke="#fff" stroke-width="2.5"/></svg>';
+    viz.innerHTML = h; this.ball = $('p-ball'); this.ents = ents;
+    this.setBall(200, 18);
+  },
+  setBall: function (x, y) { this.ball.setAttribute('cx', x.toFixed(1)); this.ball.setAttribute('cy', y.toFixed(1)); },
+  endX: function (plan) {
+    var b = this.bins[plan.i], m = 12; return b.x0 + m + plan.frac * (b.x1 - b.x0 - 2 * m);
+  },
+  buildPath: function (plan) {
+    var R = this.ROWS, DX = this.DX, xT = this.endX(plan), lastOff = ((R - 1) % 2) * DX / 2;
+    var first = this.W0 + DX / 2 + lastOff, last = this.W1 - DX / 2 - (lastOff ? DX / 2 : 0) - 0;
+    var j = Math.round((xT - first) / DX); var xs = new Array(R);
+    xs[R - 1] = Math.min(Math.max(first + j * DX, first), (lastOff ? 352 : 371));
+    for (var r = R - 1; r > 0; r--) {
+      var par = (r - 1) % 2, lo = this.W0 + DX / 2 + par * DX / 2, hi = lo + Math.floor((this.W1 - DX / 2 - lo + .1) / DX) * DX;
+      var c1 = xs[r] - DX / 2, c2 = xs[r] + DX / 2, ok1 = c1 >= lo - .1 && c1 <= hi + .1, ok2 = c2 >= lo - .1 && c2 <= hi + .1;
+      xs[r - 1] = ok1 && ok2 ? (Math.random() < .5 ? c1 : c2) : (ok1 ? c1 : c2);
+    }
+    var pts = [{ x: xs[0] + rnd(-6, 6), y: 14, k: 'start' }];
+    for (r = 0; r < R; r++) pts.push({ x: xs[r], y: this.Y0 + r * this.DY - 14, k: 'peg', r: r });
+    pts.push({ x: xT, y: this.BY + this.BH - 20, k: 'end' });
+    return pts;
+  },
+  posAt: function (pts, segs, t) { /* t in Sekunden ab Start */
+    var acc = 0;
+    for (var i = 0; i < segs.length; i++) {
+      if (t < acc + segs[i] || i === segs.length - 1) {
+        var s = Math.min(1, (t - acc) / segs[i]), a = pts[i], b = pts[i + 1], x = lerp(a.x, b.x, s), y;
+        if (i === 0) y = a.y + (b.y - a.y) * s * s;
+        else if (b.k === 'end') y = a.y + (b.y - a.y) * s * s - 28 * s * (1 - s) * (1 - s) * 4;
+        else y = a.y + (b.y - a.y) * s - 10 * 4 * s * (1 - s);
+        return { x: x, y: y, seg: i };
+      }
+      acc += segs[i];
+    }
+  },
+  landed: function () {
+    var x = parseFloat(this.ball.getAttribute('cx')), k = null;
+    this.bins.forEach(function (b) { if (x >= b.x0 && x < b.x1) k = b.key; });
+    return k;
+  },
+  run: function (plan, tok) {
+    var self = this, pts = this.buildPath(plan), segs = [], n = pts.length - 1, i, tot = 0, lastSeg = -1;
+    for (i = 0; i < n; i++) { var d = i === 0 ? .55 : (i === n - 1 ? .75 : rnd(.3, .36)); segs.push(d); tot += d; }
+    var end = pts[pts.length - 1];
+    return frames(tot * 1000, tok, function (t) {
+      var p = self.posAt(pts, segs, t * tot);
+      self.setBall(p.x, p.y);
+      if (p.seg !== lastSeg) {
+        lastSeg = p.seg;
+        var a = pts[p.seg]; if (a.k === 'peg') {
+          var el = $('pg-' + a.r + '-' + Math.round(a.x)); if (el) { el.setAttribute('fill', '#f5c542'); tok.timers.push(setTimeout(function () { el.setAttribute('fill', '#c9dcec'); }, D(300))); }
+        }
+      }
+    }).then(function () {
+      return frames(500, tok, function (t) { self.setBall(end.x, end.y - 16 * (1 - t) * Math.abs(Math.sin(t * Math.PI * 3))); });
+    }).then(function () { self.setBall(end.x, end.y); return self.landed(); });
+  },
+  final: function (plan) { var p = this.buildPath(plan), e = p[p.length - 1]; this.setBall(e.x, e.y); return this.landed(); }
+};
+
+/* ---------- Idee 5: Scheinwerfer ---------- */
+function treemap(items, x, y, w, h, out) {
+  if (items.length === 1) { out.push({ e: items[0], x: x, y: y, w: w, h: h }); return; }
+  var tot = items.reduce(function (s, e) { return s + e.share; }, 0), half = tot / 2, acc = 0, k = 1, best = 1e9;
+  for (var i = 0; i < items.length - 1; i++) { acc += items[i].share; var d = Math.abs(acc - half); if (d < best) { best = d; k = i + 1; } }
+  var a = items.slice(0, k), b = items.slice(k), fa = a.reduce(function (s, e) { return s + e.share; }, 0) / tot;
+  if (w >= h) { treemap(a, x, y, w * fa, h, out); treemap(b, x + w * fa, y, w * (1 - fa), h, out); }
+  else { treemap(a, x, y, w, h * fa, out); treemap(b, x, y + h * fa, w, h * (1 - fa), out); }
+}
+var SPOT = {
+  id: 'spot', name: 'Scheinwerfer', effort: 'S', btn: 'Scheinwerfer starten',
+  desc: 'Die Personen sind Kacheln, deren Fläche der Chance entspricht. Ein Scheinwerfer springt von Kachel zu Kachel, wird langsamer und bleibt auf der vorab bestimmten Kachel stehen.',
+  pro: 'Einfachste Umsetzung, sehr gut lesbar auch auf kleinen Displays, Fläche = Chance.',
+  con: 'Wenig Spektakel; der Sprung wirkt zufälliger, als er ist; Kachelanordnung ändert sich je Aufgabe.',
+  mount: function (viz, ctx) {
+    var ents = ctx.entries, out = []; treemap(ents, 0, 0, 4, 3, out);
+    viz.style.setProperty('--spd', speed());
+    var h = '<div class="tiles" id="t-wrap" role="group" aria-label="Kacheln der Personen, Fläche entspricht der Chance">';
+    out.forEach(function (o) {
+      h += '<div class="tile" data-key="' + o.e.k + '" style="left:' + (o.x / 4 * 100).toFixed(2) + '%;top:' + (o.y / 3 * 100).toFixed(2) + '%;width:' + (o.w / 4 * 100).toFixed(2) + '%;height:' + (o.h / 3 * 100).toFixed(2) + '%"><div class="t" style="background:' + o.e.color + '"><span class="nm">' + esc(o.e.name) + '</span><span class="pc">' + o.e.pct + ' %</span></div></div>';
+    });
+    viz.innerHTML = h + '</div>';
+    this.wrap = $('t-wrap'); this.tiles = {}; var self = this;
+    [].slice.call(this.wrap.children).forEach(function (t) { self.tiles[t.dataset.key] = t; });
+    this.ents = ents;
+  },
+  light: function (key) { var self = this; Object.keys(this.tiles).forEach(function (k) { self.tiles[k].classList.toggle('on', k === key); }); },
+  finish: function (key) {
+    var self = this; this.light(key);
+    Object.keys(this.tiles).forEach(function (k) { self.tiles[k].classList.toggle('final', k === key); self.tiles[k].classList.toggle('lose', k !== key); });
+  },
+  landed: function () { var t = this.wrap.querySelector('.tile.final'); return t ? t.dataset.key : null; },
+  run: function (plan, tok) {
+    var self = this, N = 26, seq = new Array(N), i, keys = this.ents.map(function (e) { return e.k; });
+    seq[N - 1] = plan.key;
+    for (i = N - 2; i >= 0; i--) { var c; do { c = keys[Math.floor(Math.random() * keys.length)]; } while (keys.length > 1 && c === seq[i + 1]); seq[i] = c; }
+    var chain = Promise.resolve();
+    seq.forEach(function (k, idx) {
+      chain = chain.then(function () { self.light(k); return sleep(70 + 520 * Math.pow(idx / (N - 1), 3), tok); });
+    });
+    return chain.then(function () { self.finish(plan.key); return sleep(900, tok); }).then(function () { return self.landed(); });
+  },
+  final: function (plan) { this.wrap.classList.add('still'); this.finish(plan.key); return this.landed(); }
+};
+
+var IDEAS = [DRUM, CARDS, SLOT, PLINKO, SPOT];
+
+/* ---------- Zustand ---------- */
+var state = { idea: 0, plan: 0, idx: 0, phase: 'ready', results: {} };
+var tok = new Tok();
+var cur = null; /* laufende Auslosung */
+try { var hv = parseInt((location.hash || '').replace('#', ''), 10); if (hv >= 1 && hv <= 5) state.idea = hv - 1; } catch (e) {}
+
+function curTasks() { return PLANS[state.plan].tasks.map(function (i) { return TASKS[i]; }); }
+function curTask() { return curTasks()[state.idx]; }
+
+function renderBar() {
+  var seg = $('seg'); seg.innerHTML = '';
+  IDEAS.forEach(function (it, i) {
+    var b = document.createElement('button'); b.type = 'button'; b.id = 'idea-' + (i + 1);
+    b.setAttribute('aria-pressed', i === state.idea ? 'true' : 'false');
+    b.innerHTML = '<span class="n">' + (i + 1) + '</span>' + esc(it.name);
+    b.addEventListener('click', function () { if (state.idea === i) return; state.idea = i; try { history.replaceState(null, '', '#' + (i + 1)); } catch (e) {} renderBar(); restart(); });
+    seg.appendChild(b);
+  });
+  var it = IDEAS[state.idea];
+  $('info').innerHTML =
+    '<div><h2>' + (state.idea + 1) + '. ' + esc(it.name) + ' <span class="effort" title="S = klein, M = mittel, L = groß">Aufwand ' + it.effort + '</span></h2><p>' + esc(it.desc) + '</p></div>' +
+    '<div><p><span class="k">Stärke:</span> ' + esc(it.pro) + '</p><p><span class="k">Schwäche:</span> ' + esc(it.con) + '</p>' +
+    '<p class="rm"><span class="k">Reduzierte Bewegung:</span> Bei <code>prefers-reduced-motion</code> entfällt jede Bewegung, das Ergebnis erscheint sofort im Endzustand.</p></div>';
+}
+
+function mountViz() {
+  tok.cancel(); tok = new Tok(); cur = null;
+  var viz = $('viz'); viz.innerHTML = ''; viz.style.removeProperty('--spd');
+  IDEAS[state.idea].mount(viz, { entries: entriesFor(curTask()), task: curTask() });
+}
+
+function renderSide() {
+  var plan = PLANS[state.plan], tasks = curTasks(), done = Object.keys(state.results).length;
+  $('planHint').textContent = plan.hint; $('planName').textContent = 'Runde „' + plan.name + '“';
+  $('planSub').textContent = 'Manuell gestartet · ' + done + ' von ' + tasks.length + ' verlost';
+  $('round').innerHTML = tasks.map(function (x, i) {
+    var res = state.results[i], active = i === state.idx && state.phase !== 'done';
+    var st = res ? P[res].name : (active ? (state.phase === 'spinning' ? 'läuft …' : 'als Nächstes') : 'offen');
+    var fg = res ? '#0f5c28' : (active ? '#0262a0' : '#5a616b'), dot = res ? P[res].color : (active ? '#0262a0' : '#c4c9d0');
+    return '<div class="rrow" style="background:' + (active ? '#eef6fc' : 'transparent') + '"><div class="dot" style="background:' + dot + '"></div><div class="m"><span class="t">' + esc(x.task) + '</span><span class="r">' + esc(x.rule) + '</span></div><span class="s" style="color:' + fg + '">' + esc(st) + '</span></div>';
+  }).join('');
+}
+
+function renderStage() {
+  var tasks = curTasks(), t = curTask(), ents = entriesFor(t), inW = {};
+  ents.forEach(function (e) { inW[e.k] = e.pct; });
+  $('stepLbl').textContent = 'Aufgabe ' + (state.idx + 1) + ' von ' + tasks.length;
+  $('taskName').textContent = t.task;
+  $('who').innerHTML = '<h3>Wer ist dabei?</h3>' + ['A', 'B', 'C', 'D', 'E'].map(function (k) {
+    var on = inW[k] !== undefined;
+    return '<div class="p' + (on ? '' : ' out') + '"><div class="av" style="background:' + P[k].color + '" aria-hidden="true">' + P[k].name.charAt(0) + '</div><div style="flex:1 1 auto;min-width:0"><div class="nm">' + P[k].name + '</div><div class="nt">' + (on ? 'Chance ' + inW[k] + ' %' : 'Ausgeschlossen: ' + esc(t.out[k])) + '</div>' + (on ? '<div class="bar"><i style="width:' + inW[k] + '%"></i></div>' : '') + '</div></div>';
+  }).join('') + '<span class="legend">Größe = Chance. Wer im letzten Monat weniger Punkte gesammelt hat, bekommt ein größeres Stück.</span>';
+  var s = $('start'), it = IDEAS[state.idea];
+  s.textContent = state.phase === 'spinning' ? 'Läuft …' : (state.phase === 'result' ? 'Gelost' : it.btn);
+  s.disabled = state.phase !== 'ready';
+  $('stage').setAttribute('aria-busy', state.phase === 'spinning' ? 'true' : 'false');
+  var win = state.results[state.idx], banner = $('banner');
+  banner.hidden = !(state.phase === 'result' && win);
+  if (!banner.hidden) {
+    var isLast = state.idx === tasks.length - 1;
+    $('bBadge').style.background = P[win].color; $('bBadge').textContent = P[win].name.charAt(0);
+    $('bTitle').textContent = P[win].name + ' übernimmt ' + t.task;
+    $('bDetail').textContent = 'Chance war ' + inW[win] + ' % · fällig bis Sonntag, 15. November · +' + (state.idx === 0 ? 5 : 3) + ' Punkte';
+    $('nextBtn').textContent = isLast ? 'Runde abschließen' : 'Nächste Aufgabe';
+  }
+  var dn = $('done'); dn.hidden = state.phase !== 'done';
+  $('doneList').innerHTML = tasks.map(function (x, i) { return '<div class="li"><span>' + esc(x.task) + '</span><b>' + (state.results[i] ? P[state.results[i]].name : 'nicht verteilt') + '</b></div>'; }).join('');
+}
+
+function update() { renderSide(); renderStage(); }
+
+function restart() {
+  tok.cancel(); state.idx = 0; state.phase = 'ready'; state.results = {};
+  $('sr').textContent = '';
+  mountViz(); update();
+}
+
+function start() {
+  if (state.phase !== 'ready') return;
+  var idea = IDEAS[state.idea], plan = pickWinner(entriesFor(curTask()));
+  window.__lastTarget = plan.key; window.__lastWinner = null; window.__lastLanded = null;
+  state.phase = 'spinning'; update();
+  var myTok = tok;
+  function finish(landed) {
+    if (myTok.dead) return;
+    window.__lastLanded = landed;
+    if (landed !== plan.key) console.error('Animation endet bei ' + landed + ', Ziel war ' + plan.key);
+    state.results[state.idx] = plan.key; state.phase = 'result';
+    window.__lastWinner = plan.key;
+    update();
+    var tn = curTask().task;
+    $('sr').textContent = P[plan.key].name + ' übernimmt ' + tn + '. Chance war ' + plan.entries[plan.i].pct + ' Prozent.';
+    try { $('nextBtn').focus({ preventScroll: true }); } catch (e) {}
+  }
+  if (reduced()) { finish(idea.final(plan)); return; }
+  idea.run(plan, myTok).then(finish);
+}
+
+function next() {
+  var tasks = curTasks();
+  if (state.idx >= tasks.length - 1) { state.phase = 'done'; update(); $('again').focus(); return; }
+  state.idx++; state.phase = 'ready'; $('sr').textContent = '';
+  mountViz(); update();
+  try { $('start').focus({ preventScroll: true }); } catch (e) {}
+}
+
+function drawAll() {
+  tok.cancel();
+  curTasks().forEach(function (t, i) { if (!state.results[i]) state.results[i] = pickWinner(entriesFor(t)).key; });
+  state.phase = 'done'; update(); $('again').focus();
+}
+
+/* ---------- Start ---------- */
+$('plan').innerHTML = PLANS.map(function (p, i) { return '<option value="' + i + '">' + esc(p.name) + ' · ' + esc(p.mode) + '</option>'; }).join('');
+$('plan').addEventListener('change', function (e) { state.plan = parseInt(e.target.value, 10) || 0; restart(); });
+$('start').addEventListener('click', start);
+$('nextBtn').addEventListener('click', next);
+$('drawAll').addEventListener('click', drawAll);
+$('restart').addEventListener('click', restart);
+$('again').addEventListener('click', restart);
+renderBar(); restart();
+})();
+</script>
+</body>
+</html>

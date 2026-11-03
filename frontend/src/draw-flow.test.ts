@@ -37,13 +37,13 @@ const round = (results: TaskDrawWire[], pending: string[]): PanelRoundWire => ({
   pending_task_ids: pending,
 });
 
-function hassWith(panelRounds: unknown[] = []): FakeHass {
+function hassWith(panelRounds: unknown[] = [], animations?: string[]): FakeHass {
   const hass = new FakeHass();
   hass.snapshot = {
     ...EMPTY_SNAPSHOT,
     persons: PERSONS,
     tasks: TASKS,
-    schedules: [{ id: 's1', name: 'Wochenplan', archived: false }],
+    schedules: [{ id: 's1', name: 'Wochenplan', archived: false, animations }],
     panel_rounds: panelRounds as never,
   };
   return hass;
@@ -101,7 +101,9 @@ describe('Auslosung', () => {
     expect(text(view)).toContain('Bad putzen');
 
     // Das Rad ist schon vor dem Drehen gefüllt, die Personen zeigen ihre Chance.
-    const wheel = (): ParentNode => view().querySelector('tw-wheel')?.shadowRoot as ShadowRoot;
+    const wheel = (): ParentNode =>
+      view().querySelector('tw-stage')?.shadowRoot?.querySelector('tw-wheel')
+        ?.shadowRoot as ShadowRoot;
     await vi.waitFor(() => {
       expect(wheel().querySelectorAll('path.wedge')).toHaveLength(2);
     });
@@ -197,5 +199,21 @@ describe('Auslosung', () => {
     const { view } = await mount(hass);
     expect(view().querySelector<HTMLButtonElement>('.button.primary')?.disabled).toBe(true);
     expect(text(view)).toContain('keinen Zeitplan');
+  });
+
+  it('zeigt die Animation des Zeitplans und setzt den Knopf darunter', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    const hass = hassWith([], ['drum']);
+    hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
+    hass.replies.set('task_wheel/draw/preview', {
+      result: { ...result('t1', null), segments: result('t1', 'p1').segments },
+    });
+    const { view } = await mount(hass);
+    await click(view, '.button.primary');
+    await vi.waitFor(() => {
+      const stage = view().querySelector('tw-stage');
+      expect(stage?.shadowRoot?.querySelector('tw-drum')).not.toBeNull();
+    });
+    expect(view().querySelector('.wheel-box.below .hub.below')).not.toBeNull();
   });
 });
