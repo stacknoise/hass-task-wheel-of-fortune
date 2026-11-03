@@ -5,6 +5,9 @@ updates:
     schedule:
       interval: weekly
     labels: [dependencies, backend]
+    ignore:
+      # von pytest-homeassistant-custom-component fest gepinnt, wird mit diesem Paket mitgezogen
+      - dependency-name: pytest-cov
     groups:
       python:
         patterns: ["*"]
@@ -13,6 +16,12 @@ updates:
     schedule:
       interval: weekly
     labels: [dependencies, frontend]
+    ignore:
+      # typescript-eslint unterstützt noch kein TypeScript 7; @types/node folgt der Node-Version (22)
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       npm:
         patterns: ["*"]
