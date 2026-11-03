@@ -1,6 +1,6 @@
 # Technisches Konzept: Aufgaben-Glücksrad für Home Assistant
 
-Stand: 2026-11-03 · Status: **Entwurf zur Abstimmung** · Grundlage: UI-Mockups in `mockups/` (PR #1)
+Stand: 2026-11-03 · Status: **Entwurf** (Pattern entschieden, Annahmen §11 offen) · Grundlage: UI-Mockups in `mockups/` (PR #1)
 
 Dieses Dokument beschreibt Architektur, Datenmodell, Algorithmen, Schnittstellen und Qualitätsregeln der
 Erweiterung. Die Umsetzung ist in [ARBEITSPAKETE.md](ARBEITSPAKETE.md) geschnitten, der Code selbst wird in
@@ -85,7 +85,7 @@ Die Anwendungsschicht spricht die Infrastruktur nur über `typing.Protocol`-Schn
 
 ### 3.2 Entwurfsmuster
 
-Vorgabe: **Factory Pattern**. Es wird an allen Stellen eingesetzt, an denen aus Konfiguration Objekte
+Vorgabe: **Factory Pattern**, ergänzt um **Strategy** und **Repository** (entschieden, siehe unten). Es wird an allen Stellen eingesetzt, an denen aus Konfiguration Objekte
 unterschiedlicher Art entstehen. Damit keine `if/elif`-Ketten entstehen, sind die Fabriken
 **registrierungsbasiert**: eine unveränderliche Zuordnung `Art → Erzeuger` (`MappingProxyType`), Auswahl per
 Schlüssel, unbekannte Arten werfen eine eigene Ausnahme.
@@ -100,13 +100,13 @@ Schlüssel, unbekannte Arten werfen eine eigene Ausnahme.
 | `EntityFactory` | Personen, Zeitpläne | Sensoren, To-do-Listen, Buttons über `EntityDescription`-Tabellen |
 | `ServiceFactory` (Komposition) | Config Entry | Verdrahtet Repositories, Services und Fabriken einmal beim Setup |
 
-> **Zur Abstimmung (Pattern):** Die Fabriken erzeugen Objekte, deren *Verhalten* sich je Art unterscheidet
-> (z. B. „Ist die Aufgabe in dieser Runde dran?“). Fachlich ist das das **Strategy Pattern**: jede Regelart ist
-> eine Klasse mit derselben Schnittstelle (`FrequencyRule.is_due(...)`), die Fabrik wählt sie nur aus.
-> Für den Datenzugriff passt das **Repository Pattern** (Store hinter einer Schnittstelle).
-> **Empfehlung:** Factory bleibt das Leitmuster für die Erzeugung, ergänzt um Strategy für die Regelarten und
-> Repository für die Persistenz. Bis zur Entscheidung ist das Konzept so geschrieben; bei „nur Factory“ entfallen
-> lediglich die Protokoll-Schnittstellen, die Fabriken bleiben gleich.
+> **Entschieden (2026-11-03, Anton): Factory + Strategy + Repository.**
+> - **Factory** ist das Leitmuster für die Erzeugung (Tabelle oben).
+> - **Strategy:** Die Fabriken erzeugen Objekte, deren *Verhalten* sich je Art unterscheidet. Jede Regelart ist
+>   eine Klasse mit derselben Schnittstelle (z. B. `FrequencyRule.is_due(...)`, `AvailabilityRule.is_present(...)`,
+>   `Weighting.weights(...)`); Aufrufer kennen nur die Schnittstelle.
+> - **Repository:** Persistenz liegt hinter `ConfigRepository` und `HistoryRepository` (`typing.Protocol`);
+>   Services greifen nie direkt auf den `Store` zu. Für Tests gibt es eine In-Memory-Implementierung.
 
 ### 3.3 Verzeichnisstruktur
 
@@ -408,7 +408,7 @@ setzen das durch.
 
 | Regel | Umsetzung und Prüfung |
 |---|---|
-| Factory Pattern | Registrierungsbasierte Fabriken (Abschnitt 3.2); neue Arten werden registriert, nicht verzweigt |
+| Factory + Strategy + Repository | Registrierungsbasierte Fabriken erzeugen Strategien (Abschnitt 3.2); neue Arten werden registriert, nicht verzweigt; Persistenz nur über Repository-Protokolle |
 | Aktuellste Syntax | Python 3.13-Features, ruff `target-version = "py313"` mit `UP`-Regeln; TS `target: ES2022`, `strict` |
 | Kein duplizierter Code | Gemeinsames gehört in eine Funktion/Methode; Prüfung mit `pylint duplicate-code` bzw. `jscpd` in CI (Schwelle als Konstante in der CI-Konfiguration) |
 | Keine Literale | Konstanten in `const/` (Python) und `constants/` (TS); ruff `PLR2004` (magic values), ESLint `no-magic-numbers`; Ausnahmen nur `0`, `1`, `-1` als Indizes und Tag/Attributnamen in Templates |

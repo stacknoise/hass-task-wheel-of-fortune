@@ -71,7 +71,7 @@ Events: `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_
 Kurzfassung der Regeln (Details in KONZEPT.md §10):
 
 - Backend: Python 3.13, Home-Assistant-Custom-Integration; Frontend: Lit 3 + TypeScript (strict), Build mit Vite
-- Factory Pattern für alle Objektarten aus Konfiguration, registrierungsbasiert ohne `if/elif`-Ketten
+- Factory + Strategy + Repository: Fabriken erzeugen Regel-Strategien registrierungsbasiert ohne `if/elif`-Ketten, Speicherung nur über Repositories
 - Klare Schichten (Konstanten, Einstieg, Schnittstellen, Anwendung, Domäne, Infrastruktur), Importrichtung wird in CI geprüft
 - Keine Literale im Code, alles über Konstanten; kein duplizierter Code
 - Sicherheit und Performance zuerst: validierte Eingaben, Konfiguration nur für Admins, Ziehung nur im Backend
