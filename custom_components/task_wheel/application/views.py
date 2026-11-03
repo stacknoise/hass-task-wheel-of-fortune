@@ -21,7 +21,7 @@ from ..const.keys import (
     WIRE_TASKS,
     WIRE_UPSERT,
 )
-from ..domain.models import Person, Round, Schedule
+from ..domain.models import Round, Schedule
 from .draw_service import DrawService, PanelRound
 from .history_service import HistoryEntry
 from .protocols import ConfigRepository, HistoryRepository
@@ -94,7 +94,7 @@ class SnapshotBuilder:
         """Liest den aktuellen Stand; nur offene Zuteilungen, nicht die ganze Historie."""
         config = self._config
         collections = {
-            WIRE_PERSONS: _by_id([self._person(item, now) for item in config.persons.values()]),
+            WIRE_PERSONS: _by_id(self._persons(now)),
             WIRE_TASKS: _by_id([to_json(item) for item in config.tasks.values()]),
             WIRE_SCHEDULES: _by_id(
                 [self._schedule(item, now) for item in config.schedules.values()]
@@ -112,9 +112,13 @@ class SnapshotBuilder:
         }
         return Snapshot(collections, to_json(config.settings), now)
 
-    def _person(self, person: Person, now: dt.datetime) -> Json:
-        """Die Person samt verbleibenden Jokern im laufenden Monat."""
-        return {**to_json(person), WIRE_JOKERS_LEFT: self._swaps.jokers_left(person.id, now)}
+    def _persons(self, now: dt.datetime) -> list[Json]:
+        """Die Personen samt verbleibenden Jokern im laufenden Monat (Zähler einmal für alle)."""
+        persons = self._config.persons
+        left = self._swaps.jokers_left_for(persons, now)
+        return [
+            {**to_json(person), WIRE_JOKERS_LEFT: left[person.id]} for person in persons.values()
+        ]
 
     def _schedule(self, schedule: Schedule, now: dt.datetime) -> Json:
         """Der Zeitplan samt nächster automatischer Auslosung (leer bei manuell/pausiert)."""

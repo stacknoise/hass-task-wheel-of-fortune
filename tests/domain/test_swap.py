@@ -8,12 +8,13 @@ from custom_components.task_wheel.const import keys
 from custom_components.task_wheel.domain import status
 from custom_components.task_wheel.domain.enums import Load
 from custom_components.task_wheel.domain.errors import SwapRejectedError
-from custom_components.task_wheel.domain.models import Assignment, OnceAbsence
+from custom_components.task_wheel.domain.models import Assignment, OnceAbsence, Swap
 from custom_components.task_wheel.domain.swap import (
     SwapContext,
     ensure_swap_possible,
     jokers_left,
     jokers_used,
+    jokers_used_by_person,
 )
 
 from . import factories as f
@@ -112,3 +113,15 @@ def test_jokers_left_never_negative() -> None:
     settings = f.settings(jokers_per_month=2)
     assert jokers_left(settings, 1) == 1
     assert jokers_left(settings, 5) == 0
+
+
+def test_jokers_used_by_person_counts_all_people_in_one_pass() -> None:
+    now = f.NOW
+    swapped = [
+        f.assignment(id="a1", swap=Swap(from_person_id="p1", to_person_id="p2", at=now)),
+        f.assignment(id="a2", swap=Swap(from_person_id="p1", to_person_id="p2", at=now)),
+        f.assignment(id="a3", swap=Swap(from_person_id="p2", to_person_id="p1", at=now)),
+        f.assignment(id="a4"),
+    ]
+    used = jokers_used_by_person(swapped, now)
+    assert (used["p1"], used["p2"], used["p3"]) == (2, 1, 0)
