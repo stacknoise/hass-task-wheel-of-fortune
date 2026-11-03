@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from .application.assignment_service import AssignmentService
 from .application.config_service import ConfigService
 from .application.draw_service import DrawService
+from .application.entity_state import EntityStateService
 from .application.history_service import HistoryService
 from .application.live_view import LiveView, ObservedTimers
 from .application.maintenance_service import MaintenanceService, Spawn
@@ -38,6 +39,7 @@ class TaskWheelData:
     schedules: ScheduleService
     maintenance: MaintenanceService
     history_service: HistoryService
+    entity_state: EntityStateService
     configuration: ConfigService
     live: LiveView
 
@@ -85,4 +87,5 @@ def compose(
         history_service=HistoryService(history),
         configuration=ConfigService(config, schedules, draws, notifications.check_target),
         live=live,
+        entity_state=EntityStateService(config, history, schedules),
     )
