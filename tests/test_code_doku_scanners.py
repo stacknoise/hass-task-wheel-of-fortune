@@ -3,7 +3,6 @@
 import pytest
 
 from tools.code_doku import constants as c
-from tools.code_doku.models import Metrics
 from tools.code_doku.layers import is_allowed, layer_of
 from tools.code_doku.metrics import (
     code_lines,
@@ -12,6 +11,7 @@ from tools.code_doku.metrics import (
     maintainability,
     weighted_maintainability,
 )
+from tools.code_doku.models import Metrics
 from tools.code_doku.python_scanner import (
     cyclomatic,
     dotted_name,
