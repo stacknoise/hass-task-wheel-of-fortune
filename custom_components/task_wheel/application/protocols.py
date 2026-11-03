@@ -9,6 +9,8 @@ from ..domain.statistics.aggregate import AssignmentChange
 from ..domain.types import AssignmentId, PersonId, RoundId, ScheduleId, TaskId
 
 type FireCallback = Callable[[dt.datetime], None]
+type ChangeCallback = Callable[[], None]
+type Unsubscribe = Callable[[], None]
 type IdFactory = Callable[[], str]
 
 
@@ -37,6 +39,10 @@ class ConfigRepository(Protocol):
     @property
     def settings(self) -> Settings:
         """Die globalen Einstellungen."""
+        ...
+
+    def subscribe(self, listener: ChangeCallback) -> Unsubscribe:
+        """Meldet einen Empfänger für jede Änderung an; liefert die Abmeldung."""
         ...
 
     async def async_load(self) -> None:

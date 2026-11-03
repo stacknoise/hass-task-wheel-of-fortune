@@ -1,5 +1,6 @@
 """Schmale Sicht auf `homeassistant.helpers.storage.Store` und gemeinsame Speicherlogik."""
 
+import logging
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any, Protocol
 
@@ -11,6 +12,37 @@ from ...domain.errors import (
     ValidationError,
 )
 from ...domain.serialization import Decoder, Model, as_mapping
+
+_LOGGER = logging.getLogger(__name__)
+
+type Listener = Callable[[], None]
+type Unsubscribe = Callable[[], None]
+
+
+class ChangeListeners:
+    """Empfänger, die nach jeder Änderung eines Speichers gerufen werden."""
+
+    def __init__(self) -> None:
+        """Startet ohne Empfänger."""
+        self._listeners: list[Listener] = []
+
+    def subscribe(self, listener: Listener) -> Unsubscribe:
+        """Meldet einen Empfänger an; die Rückgabe meldet ihn wieder ab (mehrfach aufrufbar)."""
+        self._listeners.append(listener)
+
+        def unsubscribe() -> None:
+            if listener in self._listeners:
+                self._listeners.remove(listener)
+
+        return unsubscribe
+
+    def notify(self) -> None:
+        """Ruft alle Empfänger; ein fehlerhafter Empfänger stört weder Speicher noch andere."""
+        for listener in tuple(self._listeners):
+            try:
+                listener()
+            except Exception:
+                _LOGGER.exception("Empfänger der Konfigurationsänderung fehlgeschlagen")
 
 
 class StoreLike(Protocol):
