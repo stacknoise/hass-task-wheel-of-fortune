@@ -94,7 +94,7 @@ Schlüssel, unbekannte Arten werfen eine eigene Ausnahme.
 |---|---|---|
 | `FrequencyRuleFactory` | `FrequencyConfig` | `every_round`, `max_per_period`, `interval` |
 | `AvailabilityRuleFactory` | `AbsenceConfig` | `once`, `weekly_days`, `week_rhythm` |
-| `TriggerFactory` | `ScheduleConfig` | `recurring`, `once`, `manual` |
+| `TriggerFactory` | `TriggerConfig` | `recurring`, `once`, `manual` |
 | `WeightingFactory` | `Settings.weighting` | `fairness` (Standard), `uniform` |
 | `NotifierFactory` | Ziel des Benachrichtigungsdienstes | `notify_entity` (`notify.send_message`), `notify_service` (Legacy `notify.*`), `none` |
 | `EntityFactory` | Personen, Zeitpläne | Sensoren, To-do-Listen, Buttons über `EntityDescription`-Tabellen |
@@ -192,7 +192,7 @@ erDiagram
 | `AbsenceConfig` | `kind` + Felder je Art: `once(start, end)`, `weekly_days(weekdays)`, `week_rhythm(present_weeks, cycle_weeks, change_weekday, anchor)` |
 | `Task` | `id`, `name`, `points`, `due_days`, `allowed: frozenset[PersonId]`, `frequency: FrequencyConfig`, `no_repeat`, `respect_absence`, `swap_allowed` |
 | `FrequencyConfig` | `every_round` · `max_per_period(count, period)` · `interval(days, tolerance)` |
-| `Schedule` | `id`, `name`, `slug`, `trigger: TriggerConfig`, `task_ids: tuple[TaskId, ...]`, `enabled`, `notify`, `skip_absent` |
+| `Schedule` | `id`, `name`, `slug`, `trigger: TriggerConfig`, `task_ids: tuple[TaskId, ...]`, `enabled`, `notify`, `skip_absent`, `archived` (archiviert ⇒ nicht aktiv, nie auslösbar) |
 | `TriggerConfig` | `recurring(weekdays, time, every_n_weeks \| monthly)` · `once(at, after: keep_manual \| archive \| delete)` · `manual(remind_after_days)` |
 | `Round` | `id`, `schedule_id`, `origin: auto \| manual \| service`, `started_at`, `finished_at`, `assignments` |
 | `Assignment` | `id`, `round_id`, `task_id`, `person_id`, `chance` (0–1), `points`, `due_at`, `status`, `done_at`, `swap: Swap \| None` |
@@ -239,7 +239,10 @@ sequenceDiagram
 Beim manuellen Ablauf im Panel wird die Runde schrittweise gezogen (`draw/begin`, `draw/spin`, `draw/spin_rest`,
 `draw/commit`, `draw/cancel`). Das **Ergebnis bestimmt immer das Backend**; das Frontend erhält Gewinner und
 Segmentgrenzen und animiert nur dorthin. Eine offene Runde verfällt nach einer Zeitgrenze (Konstante) und
-blockiert keine automatischen Runden desselben Zeitplans länger als diese Zeit.
+blockiert keine automatischen Runden desselben Zeitplans: löst der Zeitplan automatisch aus, wird die offene
+Panel-Runde verworfen (der Zeitplan geht vor, eine Runde entsteht nie doppelt). Je Zeitplan ist höchstens eine
+Panel-Runde offen (`begin` ersetzt die alte), insgesamt höchstens `MAX_OPEN_PANEL_ROUNDS`. Pausierte Zeitpläne
+lösen nicht automatisch aus, lassen sich aber von Hand auslosen; archivierte nie.
 
 ### 5.2 Kandidatenfilter
 
@@ -291,11 +294,13 @@ Statusübergänge sind eine Tabelle `dict[(Status, Aktion), Status]` – keine V
 
 | Art | Umsetzung |
 |---|---|
-| `recurring` | `async_track_point_in_time` auf den nächsten berechneten Zeitpunkt; nach Auslösung wird der nächste berechnet (Wochenrhythmus über Ankerdatum) |
+| `recurring` | `async_track_point_in_time` auf den nächsten berechneten Zeitpunkt; nach Auslösung wird der nächste berechnet (Wochenrhythmus über Ankerwoche; „monatlich“ = erster gewählter Wochentag des Monats) |
 | `once` | einmaliger Zeitpunkt; danach je nach Einstellung behalten (nur manuell), archivieren oder löschen |
-| `manual` | kein Zeitgeber; optional tägliche Prüfung „seit n Tagen nicht ausgelost“ → Erinnerung |
+| `manual` | kein Zeitgeber; optional tägliche Prüfung (09:00 Ortszeit) „seit n Tagen nicht ausgelost“ → Erinnerung nach n, 2n, 3n … Tagen; ohne bisherige Auslosung gibt es keinen Bezugspunkt und keine Erinnerung |
 
-Zeitgeber werden beim Ändern eines Zeitplans gezielt neu gesetzt (nur dieser Plan) und beim Entladen der
+Ein einmaliger Zeitplan, dessen Zeitpunkt beim Start schon vorbei ist (z. B. weil Home Assistant aus war), löst
+nicht nachträglich aus. Schlägt eine automatische Auslosung fehl, wird das protokolliert und der nächste Zeitgeber
+trotzdem gesetzt. Zeitgeber werden beim Ändern eines Zeitplans gezielt neu gesetzt (nur dieser Plan) und beim Entladen der
 Integration vollständig abgemeldet. Zeitzone ist die von HA (`dt_util`).
 
 ---

@@ -102,3 +102,10 @@ def points_factor(status: AssignmentStatus, settings: Settings) -> float:
 def awarded_points(assignment: Assignment, settings: Settings) -> int:
     """Punkte, die der Person der Zuteilung im aktuellen Status gutgeschrieben werden."""
     return round(assignment.points * points_factor(assignment.status, settings))
+
+
+def counted_points(assignment: Assignment, settings: Settings) -> int:
+    """Punkte für die Fairness: Offenes zählt voll (Last), Abgeschlossenes mit seinem Faktor."""
+    if assignment.status in PENDING_STATUSES:
+        return assignment.points
+    return awarded_points(assignment, settings)

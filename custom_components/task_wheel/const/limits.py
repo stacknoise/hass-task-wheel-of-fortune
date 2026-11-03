@@ -32,6 +32,8 @@ EVERY_N_WEEKS_MIN: Final = 1
 EVERY_N_WEEKS_MAX: Final = 52
 REMIND_AFTER_DAYS_MIN: Final = 1
 REMIND_AFTER_DAYS_MAX: Final = 365
+# So weit schaut ein wiederkehrender Auslöser höchstens voraus (längster Rhythmus plus eine Woche)
+TRIGGER_LOOKAHEAD_DAYS: Final = EVERY_N_WEEKS_MAX * WEEKDAY_COUNT + WEEKDAY_COUNT
 
 # Aufgaben und Häufigkeit
 POINTS_MIN: Final = 1
@@ -65,6 +67,9 @@ GRACE_HOURS_MAX: Final = 168
 # Zuteilungen: so lange kann eine Zuteilung höchstens offen sein (Frist plus Kulanzzeit)
 HOURS_PER_DAY: Final = 24
 OPEN_ASSIGNMENT_MAX_AGE_DAYS: Final = DUE_DAYS_MAX + GRACE_HOURS_MAX // HOURS_PER_DAY
+
+# Verlauf, der für Häufigkeitsregeln und Fairness-Fenster einer Runde herangezogen wird
+RECENT_HISTORY_DAYS: Final = max(INTERVAL_DAYS_MAX, FAIRNESS_WINDOW_MAX)
 
 # Anwesenheit
 PREVIEW_WEEKS_MIN: Final = 1

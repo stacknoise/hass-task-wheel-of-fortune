@@ -57,3 +57,9 @@ ERR_SWAP_NOT_ALLOWED: Final = "swap_person_not_allowed"
 ERR_SWAP_PAUSED: Final = "swap_person_paused"
 ERR_SWAP_ABSENT: Final = "swap_person_absent"
 ERR_NO_JOKERS: Final = "no_jokers_left"
+
+# Fehlerschlüssel für Runden und Zeitpläne
+ERR_SCHEDULE_DISABLED: Final = "schedule_disabled"
+ERR_SCHEDULE_ARCHIVED: Final = "schedule_archived"
+ERR_ROUND_INCOMPLETE: Final = "round_incomplete"
+ERR_ROUND_COMPLETE: Final = "round_complete"

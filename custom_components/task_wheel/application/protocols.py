@@ -1,12 +1,15 @@
-"""Protokolle der Anwendungsschicht: Persistenz (Repository-Muster, KONZEPT §3.2)."""
+"""Protokolle der Anwendungsschicht: Persistenz (KONZEPT §3.2), Zeitgeber, Ereignisse."""
 
 import datetime as dt
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import Protocol
 
 from ..domain.models import Assignment, Person, Round, Schedule, Settings, Task
 from ..domain.statistics.aggregate import AssignmentChange
 from ..domain.types import AssignmentId, PersonId, RoundId, ScheduleId, TaskId
+
+type FireCallback = Callable[[dt.datetime], None]
+type IdFactory = Callable[[], str]
 
 
 class ConfigRepository(Protocol):
@@ -127,9 +130,51 @@ class HistoryRepository(Protocol):
         ...
 
 
+class TimerPort(Protocol):
+    """Zeitgeber, die zu einem Zeitpunkt einmal auslösen (Infrastruktur: HA-Zeitgeber)."""
+
+    def schedule(self, key: str, at: dt.datetime, callback: FireCallback) -> None:
+        """Setzt den Zeitgeber `key` neu; ein vorhandener mit demselben Schlüssel entfällt."""
+        ...
+
+    def cancel(self, key: str) -> None:
+        """Meldet den Zeitgeber `key` ab (unbekannte Schlüssel werden ignoriert)."""
+        ...
+
+    def cancel_all(self) -> None:
+        """Meldet alle Zeitgeber ab (Entladen der Integration)."""
+        ...
+
+
+class RoundEvents(Protocol):
+    """Meldungen nach außen (Events, Entitäten, Benachrichtigung); umgesetzt in AP-09/11/12."""
+
+    def round_drawn(self, round_: Round) -> None:
+        """Eine Runde wurde ausgelost und gespeichert."""
+        ...
+
+    def reminder_due(self, schedule: Schedule, days_since: int) -> None:
+        """Ein Zeitplan „nur manuell“ wurde seit `days_since` Tagen nicht ausgelost."""
+        ...
+
+
+class NoEvents:
+    """Standard ohne Empfänger (Tests, solange AP-09 die Ereignisse noch nicht verdrahtet)."""
+
+    def round_drawn(self, round_: Round) -> None:
+        """Tut nichts."""
+
+    def reminder_due(self, schedule: Schedule, days_since: int) -> None:
+        """Tut nichts."""
+
+
 class AssignmentRecorder(Protocol):
     """Nimmt Änderungen an Zuteilungen entgegen (hält die Monatsaggregate aktuell)."""
 
     def record(self, round_: Round, changes: Iterable[AssignmentChange]) -> None:
         """Schreibt die Änderungen der Zuteilungen einer Runde fort."""
+        ...
+
+    def record_round(self, round_: Round) -> None:
+        """Nimmt alle Zuteilungen einer neuen Runde auf."""
         ...

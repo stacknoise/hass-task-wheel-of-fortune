@@ -37,6 +37,12 @@ WEIGHT_MIN: Final = 0.005
 WEIGHT_MAX: Final = 1.0
 UNIFORM_WEIGHT: Final = 1.0
 
+# Runden im Panel (KONZEPT §5.1): so lange bleibt eine offene Panel-Runde gültig
+PANEL_ROUND_TIMEOUT_MINUTES: Final = 15
+
+# Erinnerungen für Zeitpläne „nur manuell“ werden täglich zu dieser vollen Stunde geprüft
+REMINDER_HOUR: Final = 9
+
 # Statistik und Historie
 DEFAULT_STATISTICS_MONTHS: Final = 1
 DEFAULT_STATISTICS_WEEKS: Final = 8
