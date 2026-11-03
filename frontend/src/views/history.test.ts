@@ -1,0 +1,122 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import { VIEW_TAGS, WS_HISTORY_LIST } from '../constants/index.ts';
+import { HISTORY, fakeHass, mountView, text } from './fixtures.testing.ts';
+import { VIEW_LOADERS } from './registry.ts';
+
+const download = vi.hoisted(() => vi.fn());
+vi.mock('./download.ts', () => ({ downloadText: download }));
+
+async function mount(hass = fakeHass()) {
+  await VIEW_LOADERS.history();
+  const view = await mountView(VIEW_TAGS.history, hass);
+  await vi.waitFor(() => {
+    expect(text(view)).toContain('Wochenplan');
+  });
+  return { view, hass };
+}
+
+function button(view: Element, label: string): HTMLButtonElement | undefined {
+  return [...(view.shadowRoot?.querySelectorAll('button') ?? [])].find((b) =>
+    b.textContent.includes(label),
+  );
+}
+
+describe('Historie', () => {
+  it('zeigt die Runden zugeklappt mit Zusammenfassung', async () => {
+    const { view } = await mount();
+    const content = text(view);
+    expect(content).toContain('Manuell');
+    expect(content).toContain('Automatisch');
+    expect(content).toContain('1 von 2 erledigt');
+    expect(content).toContain('Gelöschter Zeitplan');
+    expect(view.shadowRoot?.querySelector('table')).toBeNull();
+  });
+
+  it('klappt eine Runde mit Zuteilungen auf und wieder zu', async () => {
+    const { view } = await mount();
+    button(view, 'Wochenplan')?.click();
+    await view.updateComplete;
+    const content = text(view);
+    expect(content).toContain('Bad putzen');
+    expect(content).toContain('Unbekannte Person');
+    expect(content).toContain('Verpasst');
+    expect(content).toContain('25 %');
+    button(view, 'Wochenplan')?.click();
+    await view.updateComplete;
+    expect(view.shadowRoot?.querySelector('table')).toBeNull();
+  });
+
+  it('filtert serverseitig nach Person', async () => {
+    const { view, hass } = await mount();
+    const chips = view.shadowRoot?.querySelector('tw-chips');
+    [...(chips?.shadowRoot?.querySelectorAll('button') ?? [])]
+      .find((b) => b.textContent.includes('Anna'))
+      ?.click();
+    await vi.waitFor(() => {
+      expect(hass.messages.at(-1)).toMatchObject({
+        type: WS_HISTORY_LIST,
+        person_id: 'p1',
+        offset: 0,
+      });
+    });
+  });
+
+  it('lädt weitere Seiten nach', async () => {
+    const hass = fakeHass();
+    hass.replies[WS_HISTORY_LIST] = { ...HISTORY, next_offset: 2 };
+    const { view } = await mount(hass);
+    button(view, 'Weitere laden')?.click();
+    await vi.waitFor(() => {
+      expect(hass.messages.at(-1)).toMatchObject({ offset: 2 });
+    });
+  });
+
+  it('exportiert alle Seiten als CSV', async () => {
+    const hass = fakeHass();
+    hass.callWS = ((message: { type: string; offset?: number }) => {
+      hass.messages.push(message);
+      if (message.type !== WS_HISTORY_LIST) {
+        return Promise.resolve(hass.snapshot);
+      }
+      return Promise.resolve(message.offset ? HISTORY : { ...HISTORY, next_offset: 2 });
+    }) as typeof hass.callWS;
+    const { view } = await mount(hass);
+    button(view, 'CSV exportieren')?.click();
+    await vi.waitFor(() => {
+      expect(download).toHaveBeenCalledOnce();
+    });
+    const [name, content] = download.mock.calls[0] as [string, string];
+    expect(name).toBe('task-wheel-history.csv');
+    expect(content.split('\r\n')).toHaveLength(1 + 3 + 3);
+    expect(content).toContain('"Bad putzen"');
+  });
+
+  it('meldet einen fehlgeschlagenen Export', async () => {
+    const { view, hass } = await mount();
+    hass.callWS = () => Promise.reject(new Error('x'));
+    button(view, 'CSV exportieren')?.click();
+    await vi.waitFor(() => {
+      expect(text(view)).toContain('Der Export ist fehlgeschlagen.');
+    });
+  });
+
+  it('zeigt leeren Zustand und Ladefehler', async () => {
+    const empty = fakeHass();
+    empty.replies[WS_HISTORY_LIST] = { entries: [], next_offset: null };
+    await VIEW_LOADERS.history();
+    const view = await mountView(VIEW_TAGS.history, empty);
+    await vi.waitFor(() => {
+      expect(text(view)).toContain('Noch keine Runden.');
+    });
+    const failing = fakeHass();
+    failing.callWS = ((message: { type: string }) =>
+      message.type === WS_HISTORY_LIST
+        ? Promise.reject(new Error('x'))
+        : Promise.resolve(failing.snapshot)) as typeof failing.callWS;
+    const broken = await mountView(VIEW_TAGS.history, failing);
+    await vi.waitFor(() => {
+      expect(text(broken)).toContain('konnten nicht geladen werden');
+    });
+  });
+});

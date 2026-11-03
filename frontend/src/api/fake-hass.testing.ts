@@ -14,6 +14,9 @@ export const EMPTY_SNAPSHOT: Snapshot = {
 export class FakeHass implements HassApi {
   readonly language = 'de';
   readonly calls: string[] = [];
+  readonly messages: { type: string }[] = [];
+  /** Antworten je Befehl; ohne Eintrag liefert `callWS` den Snapshot. */
+  replies: Record<string, unknown> = {};
   snapshot: Snapshot = EMPTY_SNAPSHOT;
   failSnapshot = false;
   unsubscribed = 0;
@@ -39,9 +42,12 @@ export class FakeHass implements HassApi {
 
   callWS<T>(message: { type: string }): Promise<T> {
     this.calls.push(message.type);
-    return this.failSnapshot
-      ? Promise.reject(new Error('offline'))
-      : Promise.resolve(this.snapshot as unknown as T);
+    this.messages.push(message);
+    if (this.failSnapshot) {
+      return Promise.reject(new Error('offline'));
+    }
+    const reply = message.type in this.replies ? this.replies[message.type] : this.snapshot;
+    return Promise.resolve(reply as T);
   }
 
   emit(delta: Delta): void {

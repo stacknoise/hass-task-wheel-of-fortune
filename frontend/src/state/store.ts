@@ -30,6 +30,11 @@ export class Store {
     this.#client = client;
   }
 
+  /** Der Zugang zur API für Aktionen und Abfragen der Ansichten. */
+  get client(): ApiClient {
+    return this.#client;
+  }
+
   get state(): StoreState {
     return this.#state;
   }

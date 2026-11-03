@@ -43,5 +43,5 @@ export interface HassApi {
   readonly connection: HassConnection;
   readonly language?: string;
   readonly locale?: { readonly language?: string };
-  callWS<T>(message: { readonly type: string }): Promise<T>;
+  callWS<T>(message: { readonly type: string; readonly [field: string]: unknown }): Promise<T>;
 }
