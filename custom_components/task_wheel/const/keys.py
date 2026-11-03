@@ -19,6 +19,7 @@ KEY_AGGREGATES: Final = "aggregates"
 
 # Unterscheidungsmerkmal für Modelle mit mehreren Arten (Strategien)
 KEY_KIND: Final = "kind"
+FIELD_FREQUENCY: Final = "frequency"
 
 # Dienstdaten (KONZEPT §6.1)
 ATTR_SCHEDULE: Final = "schedule"
