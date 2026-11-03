@@ -1,0 +1,104 @@
+[project]
+name = "hass-task-wheel-of-fortune"
+version = "0.0.1"
+description = "Aufgaben-Glücksrad für Home Assistant"
+requires-python = ">=3.13"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+src = ["."]
+
+[tool.ruff.lint]
+select = [
+  "E", "W", "F", "I", "N", "UP", "B", "A", "C4", "C90", "S", "PL", "RUF", "SIM",
+  "TCH", "PTH", "ANN", "D", "T20", "PERF", "FURB", "ASYNC", "RET", "ARG",
+]
+ignore = ["D203", "D213", "PLR0913"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 8
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "PLR2004", "ANN", "D", "ARG"]
+# Rückruf-Signaturen werden von Home Assistant vorgegeben
+"custom_components/task_wheel/__init__.py" = ["ARG001"]
+"custom_components/task_wheel/config_flow.py" = ["ARG002"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["custom_components", "tools"]
+plugins = []
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "--cov=custom_components/task_wheel --cov=tools --cov-report=term-missing --cov-fail-under=85"
+
+[tool.coverage.run]
+branch = true
+
+[tool.importlinter]
+root_packages = ["custom_components"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Schichten: Schnittstellen -> Anwendung -> Domäne"
+type = "layers"
+layers = [
+  "custom_components.task_wheel.websocket | custom_components.task_wheel.entities",
+  "custom_components.task_wheel.application",
+  "custom_components.task_wheel.domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Domäne ist frei von Home Assistant und Infrastruktur"
+type = "forbidden"
+source_modules = ["custom_components.task_wheel.domain"]
+forbidden_modules = ["homeassistant", "custom_components.task_wheel.infrastructure"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Anwendung kennt die Infrastruktur nicht"
+type = "forbidden"
+source_modules = ["custom_components.task_wheel.application"]
+forbidden_modules = ["custom_components.task_wheel.infrastructure"]
+
+[[tool.importlinter.contracts]]
+name = "Infrastruktur nutzt keine Schnittstellen"
+type = "forbidden"
+source_modules = ["custom_components.task_wheel.infrastructure"]
+forbidden_modules = [
+  "custom_components.task_wheel.websocket",
+  "custom_components.task_wheel.entities",
+]
+
+[[tool.importlinter.contracts]]
+name = "Konstanten sind unabhängig"
+type = "forbidden"
+source_modules = ["custom_components.task_wheel.const"]
+forbidden_modules = [
+  "custom_components.task_wheel.domain",
+  "custom_components.task_wheel.application",
+  "custom_components.task_wheel.infrastructure",
+  "custom_components.task_wheel.websocket",
+  "custom_components.task_wheel.entities",
+]
+
+[tool.pylint.main]
+disable = "all"
+enable = "duplicate-code"
+
+[tool.pylint.similarities]
+min-similarity-lines = 4
+ignore-comments = true
+ignore-docstrings = true
+ignore-imports = true

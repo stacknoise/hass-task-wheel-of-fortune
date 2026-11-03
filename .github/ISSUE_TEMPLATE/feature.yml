@@ -1,0 +1,14 @@
+name: Funktion vorschlagen
+description: Idee für eine neue Funktion
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem oder Wunsch
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Vorschlag

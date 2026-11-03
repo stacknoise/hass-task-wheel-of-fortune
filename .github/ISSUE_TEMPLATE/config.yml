@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Sicherheitslücke melden
+    url: https://github.com/stacknoise/hass-task-wheel-of-fortune/security/advisories/new
+    about: Bitte Sicherheitslücken vertraulich melden, nicht als öffentliches Issue.

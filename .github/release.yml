@@ -1,0 +1,18 @@
+changelog:
+  exclude:
+    labels: [skip-changelog]
+  categories:
+    - title: Inkompatible Änderungen
+      labels: [breaking-change]
+    - title: Neue Funktionen
+      labels: [enhancement]
+    - title: Fehlerbehebungen
+      labels: [bug]
+    - title: Sicherheit
+      labels: [security]
+    - title: Dokumentation
+      labels: [documentation]
+    - title: Abhängigkeiten
+      labels: [dependencies, github-actions]
+    - title: Sonstiges
+      labels: ["*"]

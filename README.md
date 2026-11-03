@@ -3,8 +3,9 @@
 Verteilt Haushaltsaufgaben fair und mit etwas Spaß: Ein Glücksrad lost aus, wer was übernimmt. Die Chancen
 richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie belastbar ist.
 
-> **Status:** Konzeptphase. Es gibt noch keine installierbare Version. Konzept, Arbeitspakete und UI-Mockups
-> liegen in diesem Repository.
+> **Status:** Entwicklung, Version 0.0.1. Das Projektgerüst steht (Integration lässt sich hinzufügen und
+> entfernen, CI ist eingerichtet), die Funktionen folgen mit den Arbeitspaketen. Es gibt noch keine Veröffentlichung
+> über HACS.
 
 ## Funktionen (geplant)
 
@@ -77,15 +78,41 @@ Kurzfassung der Regeln (Details in KONZEPT.md §10):
 - Sicherheit und Performance zuerst: validierte Eingaben, Konfiguration nur für Admins, Ziehung nur im Backend
 - **Jede Codeänderung wird in [docs/CODE_DOKU.md](docs/CODE_DOKU.md) protokolliert**; die README wird bei sichtbaren Änderungen nachgezogen
 
-Befehle (ab AP-00):
+Befehle:
 
 ```bash
-# Backend
-ruff check . && mypy custom_components && pytest
+# Backend (Python 3.13)
+python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements-dev.txt
+ruff check . && ruff format --check . && mypy && lint-imports && pytest
 
-# Frontend
-cd frontend && npm ci && npm run lint && npm test && npm run build
+# Frontend (Node 22)
+cd frontend && npm ci && npm run lint && npm run typecheck && npm test && npm run build && npm run bundle-budget
 
-# Code-Doku erzeugen
+# Code-Doku erzeugen (ab AP-01)
 python3 docs/code-doku/generate.py
 ```
+
+### Lokale Testumgebung (Docker)
+
+Zum Ausprobieren dient eine lokale Home-Assistant-Instanz in Docker. Die Integration wird dabei read-only in
+`/config/custom_components/task_wheel` eingebunden, Änderungen am Backend wirken nach einem Neustart des Containers.
+
+```bash
+cd frontend && npm ci && npm run build && cd ..   # Panel-Bundle erzeugen
+docker compose -f dev/docker-compose.yml up -d     # Home Assistant auf http://localhost:8123
+docker compose -f dev/docker-compose.yml restart   # nach Backend-Änderungen
+```
+
+Danach *Einstellungen → Geräte & Dienste → Integration hinzufügen → Aufgaben-Glücksrad*.
+
+### Continuous Integration
+
+Pull Requests und `main` durchlaufen die Jobs `hassfest`, `HACS validation`, `lint`, `typecheck`, `architecture`
+(Importrichtung, Duplikate), `test-backend`, `test-frontend`, `build-frontend` (inkl. Bundle-Budget), `audit` und
+`docs-check` (Code geändert ⇒ `docs/CODE_DOKU.md` geändert). Dependabot hält pip, npm und GitHub Actions aktuell.
+
+Sicherheitslücken bitte vertraulich melden, siehe [SECURITY.md](SECURITY.md).
+
+## Lizenz
+
+[MIT](LICENSE)

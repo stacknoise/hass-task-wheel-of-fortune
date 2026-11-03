@@ -1,0 +1,35 @@
+name: Fehler melden
+description: Etwas funktioniert nicht wie erwartet
+labels: [bug]
+body:
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home-Assistant-Version
+      placeholder: "2025.6.0"
+    validations:
+      required: true
+  - type: input
+    id: integration_version
+    attributes:
+      label: Version der Erweiterung
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Beschreibung und Schritte zur Reproduktion
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevante Auszüge aus dem Home-Assistant-Log (bitte ohne Zugangsdaten).
+      render: text
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnose-Download
+      description: Datei aus Einstellungen → Geräte & Dienste → Aufgaben-Glücksrad → Diagnose herunterladen (sobald verfügbar).
