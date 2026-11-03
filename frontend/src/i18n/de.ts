@@ -97,7 +97,7 @@ export const de = {
   'frequency.summary_interval': 'alle {days} Tage ± {tolerance}',
   'timeline.earliest': 'frühestens',
   'timeline.latest': 'spätestens',
-  'timeline.day': 'Tag',
+  'timeline.target': 'Ziel',
   'schedules.add': 'Zeitplan hinzufügen',
   'schedules.new': 'Neuer Zeitplan',
   'schedules.edit': 'Zeitplan bearbeiten',

@@ -78,6 +78,9 @@ export const DEFAULT_RECURRING_WEEKDAYS: readonly Weekday[] = [0];
 export const DEFAULT_REMIND_DAYS = 7;
 export const DEFAULT_EVERY_N_WEEKS = 1;
 
+/** Zeitstrahl: höchstens so viele Tageszahlen an der Skala, in diesen Schrittweiten. */
+export const TIMELINE_SCALE_LABELS = 8;
+export const TIMELINE_SCALE_STEPS = [1, 2, 5, 10, 20, 50, 100, 200, 500] as const;
 export const NOTIFY_PREFIX = 'notify.';
 export const NOTIFY_DOMAIN = 'notify';
 /** Dienst, der zu den Entitäten führt und selbst kein Ziel ist. */
