@@ -72,7 +72,7 @@ export const en: Record<keyof typeof de, string> = {
   'tasks.add': 'Add task',
   'tasks.new': 'New task',
   'tasks.edit': 'Edit task',
-  'tasks.allowed': 'Allowed persons',
+  'tasks.allowed': 'Allowed persons (empty = everyone)',
   'tasks.points': 'Points (effort)',
   'tasks.due_days': 'Deadline in days',
   'tasks.rules': 'Extra rules',

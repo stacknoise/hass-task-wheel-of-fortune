@@ -81,6 +81,36 @@ export function drawableSchedules(snapshot: Snapshot): readonly ScheduleInfo[] {
     .filter((schedule) => !schedule.archived);
 }
 
+/** Ob die Person die Aufgabe bekommen darf (ohne erlaubte Personen: jede). */
+export function allowsPerson(allowed: ReadonlySet<string>, personId: string): boolean {
+  return allowed.size === 0 || allowed.has(personId);
+}
+
+/** Wie viele Personen die Aufgabe noch bekommen können (erlaubt und noch ohne Aufgabe der Runde). */
+export function openCandidates(
+  persons: ReadonlyMap<string, PersonInfo>,
+  task: TaskInfo,
+  taken: ReadonlySet<string | null>,
+): number {
+  return [...persons.keys()].filter((id) => allowsPerson(task.allowed, id) && !taken.has(id))
+    .length;
+}
+
+/** Personen der Runde: nur wer für mindestens eine ihrer Aufgaben erlaubt ist (ohne Runde: alle). */
+export function participantsOf(
+  persons: ReadonlyMap<string, PersonInfo>,
+  tasks: ReadonlyMap<string, TaskInfo>,
+  taskIds: readonly string[],
+): ReadonlyMap<string, PersonInfo> {
+  const roundTasks = taskIds.flatMap((id) => tasks.get(id) ?? []);
+  if (roundTasks.length === 0) {
+    return persons;
+  }
+  return new Map(
+    [...persons].filter(([id]) => roundTasks.some((task) => allowsPerson(task.allowed, id))),
+  );
+}
+
 /** Die offene Panel-Runde des Zeitplans, falls es eine gibt. */
 export function openRoundFor(snapshot: Snapshot, scheduleId: string): PanelRoundWire | undefined {
   return (snapshot.panel_rounds as readonly unknown[] as readonly PanelRoundWire[]).find(

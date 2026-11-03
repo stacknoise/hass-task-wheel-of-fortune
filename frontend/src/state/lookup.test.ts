@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import { EMPTY_SNAPSHOT } from '../api/fake-hass.testing.ts';
 import type { Snapshot } from '../api/index.ts';
-import { drawableSchedules, openRoundFor, personsById, tasksById } from './lookup.ts';
+import {
+  allowsPerson,
+  drawableSchedules,
+  openRoundFor,
+  participantsOf,
+  personsById,
+  tasksById,
+} from './lookup.ts';
 
 const SNAPSHOT: Snapshot = {
   ...EMPTY_SNAPSHOT,
@@ -16,6 +23,20 @@ const SNAPSHOT: Snapshot = {
 };
 
 describe('lookup', () => {
+  it('erlaubt ohne erlaubte Personen jede Person', () => {
+    expect(allowsPerson(new Set(), 'p9')).toBe(true);
+    expect(allowsPerson(new Set(['p1']), 'p1')).toBe(true);
+    expect(allowsPerson(new Set(['p1']), 'p2')).toBe(false);
+  });
+
+  it('zählt nur Personen zur Runde, die für eine ihrer Aufgaben erlaubt sind', () => {
+    const persons = personsById(SNAPSHOT);
+    const tasks = tasksById(SNAPSHOT);
+    expect([...participantsOf(persons, tasks, ['t1']).keys()]).toEqual(['p1']);
+    expect([...participantsOf(persons, tasks, ['t1', 't2']).keys()]).toEqual(['p1', 'p2']);
+    expect([...participantsOf(persons, tasks, []).keys()]).toEqual(['p1', 'p2']);
+  });
+
   it('liest Personen mit Rückfallwerten', () => {
     const persons = personsById(SNAPSHOT);
     expect(persons.get('p1')).toEqual({ id: 'p1', name: 'Anna', color: '#c05600' });
