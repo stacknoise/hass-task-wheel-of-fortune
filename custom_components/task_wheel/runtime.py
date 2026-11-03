@@ -13,6 +13,7 @@ from .application.live_view import LiveView, ObservedTimers
 from .application.maintenance_service import MaintenanceService, Spawn
 from .application.notification_service import NotificationService
 from .application.protocols import ConfigRepository, HistoryRepository, RoundEvents, TimerPort
+from .application.round_service import RoundService
 from .application.schedule_service import ScheduleService
 from .application.statistics_service import StatisticsService
 from .application.swap_service import SwapService
@@ -35,6 +36,7 @@ class TaskWheelData:
     statistics: StatisticsService
     draws: DrawService
     assignments: AssignmentService
+    rounds: RoundService
     swaps: SwapService
     schedules: ScheduleService
     maintenance: MaintenanceService
@@ -81,6 +83,7 @@ def compose(
         statistics=statistics,
         draws=draws,
         assignments=assignments,
+        rounds=RoundService(history, statistics, events),
         swaps=swaps,
         schedules=schedules,
         maintenance=MaintenanceService(config, history, assignments, observed, spawn),

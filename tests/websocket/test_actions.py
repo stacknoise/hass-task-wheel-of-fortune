@@ -83,3 +83,25 @@ def test_cancel_discards_round_without_effect(api: Api) -> None:
 def test_begin_unknown_schedule(api: Api) -> None:
     with pytest.raises(NotFoundError):
         api.run("draw/begin", schedule_id="nope")
+
+
+def test_round_delete_removes_round_and_updates_snapshot(api: Api) -> None:
+    _, unsubscribe = api.data.live.subscribe(api.pushed.append)
+    api.run("round/delete", round_id="r1")
+    assert "r1" not in api.history.rounds
+    assert api.history.get_assignment("a1") is None
+    assert api.pushed[-1]["rounds"]["remove"] == ["r1"]
+    assert len(api.events.deleted) == 1
+    unsubscribe()
+
+
+def test_round_delete_unknown_round(api: Api) -> None:
+    with pytest.raises(NotFoundError):
+        api.run("round/delete", round_id="nope")
+
+
+def test_snapshot_lists_rounds_with_open_assignments(api: Api) -> None:
+    head = api.data.live.snapshot().collections["rounds"]["r1"]
+    assert head["schedule_id"] == "s1"
+    assert head["total"] == 3
+    assert head["closed"] == 1

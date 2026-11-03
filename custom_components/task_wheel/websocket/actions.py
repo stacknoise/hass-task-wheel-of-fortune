@@ -12,6 +12,7 @@ from ..const.events import (
     WS_DRAW_COMMIT,
     WS_DRAW_SPIN,
     WS_DRAW_SPIN_REST,
+    WS_ROUND_DELETE,
 )
 from ..const.keys import (
     WIRE_PANEL_ROUND,
@@ -19,15 +20,17 @@ from ..const.keys import (
     WIRE_RESULTS,
     WS_FIELD_ASSIGNMENT_ID,
     WS_FIELD_PANEL_ROUND_ID,
+    WS_FIELD_ROUND_ID,
     WS_FIELD_SCHEDULE_ID,
     WS_FIELD_TO_PERSON_ID,
 )
-from .command import Command, Reply, Request
+from .command import Access, Command, Reply, Request
 from .schemas import ID, required_fields
 
 _ASSIGNMENT: Final = required_fields((WS_FIELD_ASSIGNMENT_ID, ID))
 _SWAP: Final = required_fields((WS_FIELD_ASSIGNMENT_ID, ID), (WS_FIELD_TO_PERSON_ID, ID))
 _SCHEDULE: Final = required_fields((WS_FIELD_SCHEDULE_ID, ID))
+_ROUND: Final = required_fields((WS_FIELD_ROUND_ID, ID))
 _PANEL_ROUND: Final = required_fields((WS_FIELD_PANEL_ROUND_ID, ID))
 
 
@@ -44,6 +47,12 @@ def _swap(request: Request) -> Reply:
         params[WS_FIELD_ASSIGNMENT_ID], params[WS_FIELD_TO_PERSON_ID], request.now
     )
     return Reply(to_json(swapped))
+
+
+def _delete_round(request: Request) -> Reply:
+    """Löscht die Auslosung samt Zuteilungen; Punkte und Statistik werden zurückgerechnet."""
+    request.data.rounds.delete(request.params[WS_FIELD_ROUND_ID])
+    return Reply()
 
 
 def _view(request: Request) -> dict[str, object]:
@@ -85,6 +94,7 @@ def _cancel(request: Request) -> Reply:
 COMMANDS: Final = (
     Command(WS_ASSIGNMENT_COMPLETE, _ASSIGNMENT, _complete, mutates=True),
     Command(WS_ASSIGNMENT_SWAP, _SWAP, _swap, mutates=True),
+    Command(WS_ROUND_DELETE, _ROUND, _delete_round, access=Access.ADMIN, mutates=True),
     Command(WS_DRAW_BEGIN, _SCHEDULE, _begin, mutates=True),
     Command(WS_DRAW_SPIN, _PANEL_ROUND, _spin, mutates=True),
     Command(WS_DRAW_SPIN_REST, _PANEL_ROUND, _spin_rest, mutates=True),

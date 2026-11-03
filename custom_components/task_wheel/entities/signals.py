@@ -35,6 +35,10 @@ class EntityEvents(NoEvents):
         persons = {item.person_id for item in round_.assignments}
         self._send(signal_schedule(round_.schedule_id), *map(signal_person, persons))
 
+    def round_deleted(self, round_: Round) -> None:
+        """Wie bei einer neuen Runde: alle Personen der Runde und der Zeitplan."""
+        self.round_drawn(round_)
+
     def assignment_completed(self, assignment: Assignment) -> None:
         """Offene Aufgaben und Punkte der Person aktualisieren."""
         self._send(signal_person(assignment.person_id))
