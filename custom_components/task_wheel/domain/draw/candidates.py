@@ -132,39 +132,45 @@ class CandidateSelector:
         unlösbar machen (`rest` sind die noch folgenden Aufgaben); erst dann greifen weiche
         Filter wie „nicht zweimal dieselbe Aufgabe“.
         """
-        remaining = [context.persons[pid] for pid in sorted(context.persons) if task.allows(pid)]
         exclusions: list[Exclusion] = []
         chain = self.factory.create_chain(task)
-        remaining = self._apply(
-            tuple(f for f in chain if not f.soft), task, context, remaining, exclusions
-        )
-        if rest:
-            keep = self._safe(remaining, rest, context)
-            exclusions.extend(
-                Exclusion(p.id, ExclusionReason.NEEDED) for p in remaining if p.id not in keep
-            )
-            remaining = [p for p in remaining if p.id in keep]
-        remaining = self._apply(
-            tuple(f for f in chain if f.soft), task, context, remaining, exclusions
-        )
+        hard = tuple(f for f in chain if not f.soft)
+        soft = tuple(f for f in chain if f.soft)
+        remaining = self._apply(hard, task, context, self._allowed(task, context), exclusions)
+        remaining = self._reserve(remaining, rest, context, exclusions)
+        remaining = self._apply(soft, task, context, remaining, exclusions)
         return CandidateSelection(tuple(remaining), tuple(exclusions))
 
     def eligible(self, task: Task, context: DrawContext) -> frozenset[str]:
         """Personen, die `task` bekommen dürfen (nur harte Filter), für die Zuordnung der Runde."""
-        remaining = [context.persons[pid] for pid in sorted(context.persons) if task.allows(pid)]
         hard = tuple(f for f in self.factory.create_chain(task) if not f.soft)
-        remaining = self._apply(hard, task, context, remaining, [])
+        remaining = self._apply(hard, task, context, self._allowed(task, context), [])
         return frozenset(p.id for p in remaining)
 
-    def _safe(
+    @staticmethod
+    def _allowed(task: Task, context: DrawContext) -> list[Person]:
+        """Bekannte Personen, die die Aufgabe laut Konfiguration bekommen dürfen."""
+        return [context.persons[pid] for pid in sorted(context.persons) if task.allows(pid)]
+
+    def _reserve(
         self,
-        candidates: Sequence[Person],
+        candidates: list[Person],
         rest: Sequence[Task],
         context: DrawContext,
-    ) -> frozenset[str]:
-        """Kandidaten, bei denen insgesamt so viele Aufgaben verteilt werden wie möglich."""
+        exclusions: list[Exclusion],
+    ) -> list[Person]:
+        """Behält Personen, bei denen insgesamt so viele Aufgaben wie möglich verteilt werden.
+
+        Die übrigen kommen mit Grund `needed` ins Protokoll.
+        """
+        if not rest:
+            return candidates
         options = [self.eligible(t, context) for t in rest]
-        return frozenset(safe_winners(frozenset(p.id for p in candidates), options))
+        keep = safe_winners(frozenset(p.id for p in candidates), options)
+        exclusions.extend(
+            Exclusion(p.id, ExclusionReason.NEEDED) for p in candidates if p.id not in keep
+        )
+        return [p for p in candidates if p.id in keep]
 
     @staticmethod
     def _apply(
