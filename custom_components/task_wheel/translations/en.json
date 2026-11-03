@@ -155,6 +155,9 @@
     "swap_person_absent": {
       "message": "The person is absent during the deadline window."
     },
+    "round_has_done_assignments": {
+      "message": "The draw cannot be deleted: {done} tasks are already done."
+    },
     "no_jokers_left": {
       "message": "No swaps are left."
     },

@@ -50,6 +50,9 @@ class HassRoundEvents:
         """`task_wheel_missed` für die verpasste Zuteilung."""
         self._fire(EVENT_MISSED, payloads.assignment_payload(self._config, assignment))
 
+    def round_deleted(self, round_: Round) -> None:
+        """Tut nichts: das Panel erfährt es über den Live-Stand, Entitäten über Signale."""
+
     def animation_requested(self, round_: Round, target: str) -> None:
         """`task_wheel_animate`: Hinweis für die Anzeige `target` mit dem Inhalt der Runde."""
         payload = payloads.round_payload(self._config, round_)

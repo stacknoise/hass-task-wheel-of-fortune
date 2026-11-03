@@ -294,6 +294,13 @@ dürfte (erlaubt, nicht pausiert, anwesend) und die abgebende Person im laufende
 Ist eine Aufgabe in mehreren Zeitplänen, kann sie mehrfach ausgelost werden (auch an dieselbe Person); jede Zuteilung kennt ihren Zeitplan und wird einzeln erledigt. Die Häufigkeitsregeln zählen Zuteilungen je Aufgabe über alle Zeitpläne.
 Statusübergänge sind eine Tabelle `dict[(Status, Aktion), Status]` – keine Verzweigungsketten.
 
+**Auslosung löschen** (`round/delete`, nur Administratoren): nur solange **keine** Zuteilung der Runde erledigt (pünktlich
+oder verspätet) ist, sonst `round_has_done_assignments`. Die Runde verschwindet mit allen ihren Zuteilungen aus Historie und
+Verlauf; die Monatsaggregate (Anzahl und Punkte) werden um genau diese Zuteilungen verringert, die Statistik sieht die Runde
+danach nicht mehr. Getauschte Zuteilungen zählen ihre Joker nicht mehr mit, weil die Joker aus den Zuteilungen gezählt
+werden. Entitäten der betroffenen Personen und des Zeitplans werden aktualisiert. Das Panel sperrt den Knopf mit Begründung,
+sobald eine Aufgabe erledigt ist, und fragt sonst vor dem Löschen nach.
+
 ### 5.5 Zeitpläne
 
 | Art | Umsetzung |
@@ -349,6 +356,7 @@ Präfix `task_wheel/`. Befehle je Bereich in eigenen Modulen; jeder Befehl hat e
 |---|---|---|
 | Lesen | `snapshot`, `subscribe` (Deltas), `history/list`, `statistics/get` | angemeldeter Benutzer |
 | Erledigen/Tauschen | `assignment/complete`, `assignment/swap` | angemeldeter Benutzer |
+| Auslosung löschen | `round/delete` | **Administrator** |
 | Auslosen | `draw/begin`, `draw/spin`, `draw/spin_rest`, `draw/commit`, `draw/cancel` | angemeldeter Benutzer |
 | Konfiguration | `person/*`, `task/*`, `schedule/*`, `settings/update` | **Administrator** (`@websocket_api.require_admin`) |
 

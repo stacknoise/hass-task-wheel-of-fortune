@@ -12,6 +12,7 @@ export const COMPONENT_TAGS = {
   badge: 'tw-badge',
   wheel: 'tw-wheel',
   confetti: 'tw-confetti',
+  confirmDelete: 'tw-confirm-delete',
 } as const;
 
 export const VIEW_TAGS = {
@@ -24,5 +25,7 @@ export const VIEW_TAGS = {
   statistics: 'tw-statistics-view',
 } as const;
 
+/** Ereignis von `tw-confirm-delete`, wenn die Löschung bestätigt wurde. */
+export const EVENT_CONFIRM = 'tw-confirm';
 export const EVENT_TAB_SELECT = 'tw-tab-select';
 export const EVENT_LOCATION_CHANGED = 'location-changed';

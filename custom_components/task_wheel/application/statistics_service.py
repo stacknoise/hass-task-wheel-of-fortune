@@ -50,6 +50,10 @@ class StatisticsService:
         """Nimmt alle Zuteilungen einer neuen Runde auf."""
         self.record(round_, (AssignmentChange(None, item) for item in round_.assignments))
 
+    def forget_round(self, round_: Round) -> None:
+        """Nimmt alle Zuteilungen einer gelöschten Runde aus den Aggregaten (inkl. Punkte)."""
+        self.record(round_, (AssignmentChange(item, None) for item in round_.assignments))
+
     def rebuild(self) -> None:
         """Berechnet alle Aggregate aus den Rohdaten neu (Reparatur, z. B. nach Datenfehlern)."""
         self._history.set_aggregates(aggregate.recompute(self._history.rounds.values()))

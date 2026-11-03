@@ -77,9 +77,11 @@ vorerst nur Zähler und werden mit AP-15 ausgebaut.
 
 - **Übersicht:** nächste Auslosung (mit Blättern durch die Zeitpläne), offene Zuteilungen je Zeitplan mit Filter nach Person,
   Erledigen und Tauschen (nur erlaubte, nicht pausierte Personen, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
-  fairen Anteil und die jüngste Aktivität. Jede Zuteilung erscheint unter dem Zeitplan, der sie ausgelost hat. Ist eine Aufgabe in
-  mehreren Zeitplänen, kann sie mehrfach ausgelost werden; jede Zuteilung wird einzeln erledigt.
-- **Historie:** Runden aufklappbar (Zeitplan, Herkunft, Zuteilungen mit Chance und Status), Filter nach Person, Nachladen in
+  fairen Anteil und die jüngste Aktivität. Die offenen Zuteilungen sind nach **Auslosung** gruppiert (jüngste zuerst, mit
+  Zeitplan und Zeitpunkt); eine Auslosung ohne offene Zuteilungen verschwindet aus der Liste. Eine ganze Auslosung lässt sich
+  nach Rückfrage **löschen**, solange keine ihrer Aufgaben erledigt ist; sie verschwindet dann auch aus Historie und Statistik.
+  Ist eine Aufgabe in mehreren Zeitplänen, kann sie mehrfach ausgelost werden; jede Zuteilung wird einzeln erledigt.
+- **Historie:** Runden aufklappbar (Zeitplan, Herkunft, Zuteilungen mit Chance und Status, Löschen einer Runde nach Rückfrage), Filter nach Person, Nachladen in
   Seiten und **CSV-Export** (Semikolon, UTF-8 mit Marke; Felder, die mit `=`, `+`, `-`, `@`, Tabulator oder Zeilenumbruch
   beginnen, werden mit einem Hochkomma entschärft, damit Tabellenprogramme sie nicht als Formel ausführen).
 - **Statistik:** Zeitraum (Monat, 3 oder 12 Monate), Kennzahlen, Punkte gegen fairen Anteil, Erledigungsquote je Woche
@@ -107,7 +109,7 @@ die Karten, rechts das Formular; Fehler des Backends erscheinen am betroffenen F
 Das Panel spricht mit dem Backend über WebSocket-Befehle mit dem Präfix `task_wheel/`: `snapshot`, `subscribe`
 (erst der Gesamtstand, danach nur Änderungen je Objekt), `history/list`, `statistics/get`,
 `assignment/complete`, `assignment/swap`, `draw/begin|spin|spin_rest|commit|cancel` für jeden angemeldeten
-Benutzer sowie `person/*`, `task/*`, `schedule/*` und `settings/update` nur für Administratoren. Alle Eingaben
+Benutzer sowie `round/delete`, `person/*`, `task/*`, `schedule/*` und `settings/update` nur für Administratoren. Alle Eingaben
 werden gegen strenge Schemas geprüft (keine unbekannten Felder, begrenzte Längen). Ist in den Einstellungen
 „Panel nur für Administratoren“ gesetzt, sind auch die Lesebefehle Administratoren vorbehalten. Details:
 [docs/KONZEPT.md](docs/KONZEPT.md) §6.4.
