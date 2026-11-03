@@ -140,7 +140,10 @@ describe('Übersicht', () => {
 
   it('löscht eine Auslosung erst nach der Rückfrage', async () => {
     const { view, hass } = await mount();
-    const remove = view.shadowRoot?.querySelector('tw-confirm-delete');
+    const [blocked, remove] = view.shadowRoot?.querySelectorAll('tw-confirm-delete') ?? [];
+    const blockedButton = blocked?.shadowRoot?.querySelector('button');
+    expect(blockedButton?.disabled).toBe(true);
+    expect(blockedButton?.title).toBe('Nicht löschbar: 1 Aufgaben sind schon erledigt.');
     const inner = (): ShadowRoot | null => remove?.shadowRoot ?? null;
     const click = (label: string) =>
       [...(inner()?.querySelectorAll('button') ?? [])]
@@ -148,7 +151,7 @@ describe('Übersicht', () => {
         ?.click();
     click('Auslosung löschen');
     await (remove as HTMLElement & { updateComplete: Promise<boolean> }).updateComplete;
-    expect(inner()?.textContent).toContain('1 davon sind schon abgeschlossen');
+    expect(inner()?.textContent).toContain('Sie verschwindet auch aus Historie und Statistik');
     expect(hass.messages.some((m) => m.type === WS_ROUND_DELETE)).toBe(false);
     click('Abbrechen');
     await (remove as HTMLElement & { updateComplete: Promise<boolean> }).updateComplete;
@@ -159,7 +162,7 @@ describe('Übersicht', () => {
     await vi.waitFor(() => {
       expect(hass.messages.find((m) => m.type === WS_ROUND_DELETE)).toEqual({
         type: WS_ROUND_DELETE,
-        round_id: 'r1',
+        round_id: 'r2',
       });
     });
     await vi.waitFor(() => {

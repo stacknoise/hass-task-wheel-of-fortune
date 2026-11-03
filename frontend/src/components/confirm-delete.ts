@@ -14,6 +14,7 @@ export class TwConfirmDelete extends LocalizedElement {
     ...LocalizedElement.properties,
     label: { type: String },
     question: { type: String },
+    blocked: { type: String },
     busy: { type: Boolean },
     _asking: { state: true },
   };
@@ -42,6 +43,8 @@ export class TwConfirmDelete extends LocalizedElement {
 
   declare label: string;
   declare question: string;
+  /** Grund, warum Löschen gesperrt ist; leer, wenn es erlaubt ist. */
+  declare blocked: string;
   declare busy: boolean;
   declare _asking: boolean;
 
@@ -49,6 +52,7 @@ export class TwConfirmDelete extends LocalizedElement {
     super();
     this.label = '';
     this.question = '';
+    this.blocked = '';
     this.busy = false;
     this._asking = false;
   }
@@ -87,7 +91,8 @@ export class TwConfirmDelete extends LocalizedElement {
       : html`<button
           type="button"
           class="action"
-          ?disabled=${this.busy}
+          title=${this.blocked}
+          ?disabled=${this.busy || this.blocked !== ''}
           @click=${() => {
             this._asking = true;
           }}

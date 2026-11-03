@@ -6,8 +6,10 @@ from custom_components.task_wheel.domain.errors import (
     DrawRejectedError,
     InvalidTransitionError,
     NotFoundError,
+    RoundHasDoneError,
 )
 
+from ..domain import factories as f
 from .harness import Api
 
 
@@ -85,14 +87,28 @@ def test_begin_unknown_schedule(api: Api) -> None:
         api.run("draw/begin", schedule_id="nope")
 
 
+def _undone_round(api: Api) -> None:
+    api.history.put_round(
+        f.finished_round(id="r2", assignments=(f.assignment(id="x1", round_id="r2"),))
+    )
+
+
 def test_round_delete_removes_round_and_updates_snapshot(api: Api) -> None:
+    _undone_round(api)
     _, unsubscribe = api.data.live.subscribe(api.pushed.append)
-    api.run("round/delete", round_id="r1")
-    assert "r1" not in api.history.rounds
-    assert api.history.get_assignment("a1") is None
-    assert api.pushed[-1]["rounds"]["remove"] == ["r1"]
+    api.run("round/delete", round_id="r2")
+    assert "r2" not in api.history.rounds
+    assert api.history.get_assignment("x1") is None
+    assert api.pushed[-1]["rounds"]["remove"] == ["r2"]
     assert len(api.events.deleted) == 1
     unsubscribe()
+
+
+def test_round_delete_is_rejected_when_a_task_is_done(api: Api) -> None:
+    with pytest.raises(RoundHasDoneError):
+        api.run("round/delete", round_id="r1")
+    assert "r1" in api.history.rounds
+    assert api.events.deleted == []
 
 
 def test_round_delete_unknown_round(api: Api) -> None:
@@ -104,7 +120,7 @@ def test_snapshot_lists_rounds_with_open_assignments(api: Api) -> None:
     head = api.data.live.snapshot().collections["rounds"]["r1"]
     assert head["schedule_id"] == "s1"
     assert head["total"] == 3
-    assert head["closed"] == 1
+    assert head["done"] == 1
 
 
 def test_preview_shows_the_wheel_of_the_next_task_without_drawing(api: Api) -> None:

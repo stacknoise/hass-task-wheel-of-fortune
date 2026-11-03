@@ -5,7 +5,7 @@ import datetime as dt
 import pytest
 
 from custom_components.task_wheel.application.round_service import RoundService
-from custom_components.task_wheel.domain.errors import NotFoundError
+from custom_components.task_wheel.domain.errors import NotFoundError, RoundHasDoneError
 from custom_components.task_wheel.domain.statistics.aggregate import recompute
 
 from ..domain import factories as f
@@ -30,14 +30,27 @@ def test_delete_removes_round_assignments_and_index() -> None:
     assert events.deleted == [removed]
 
 
-def test_delete_takes_done_points_out_of_the_statistics() -> None:
+def test_delete_takes_missed_points_out_of_the_statistics() -> None:
+    world = World(missed_points_factor=-1.0)
+    world.add_round(_open(), _open("a2", person_id="p2"))
+    world.statistics.record_round(world.history.rounds["r1"])
+    world.assignments.mark_missed(f.NOW + dt.timedelta(days=30))
+    assert dict(world.history.aggregates) != {}
+    service, _ = _service(world)
+    service.delete("r1")
+    assert dict(world.history.aggregates) == {}
+
+
+def test_delete_is_rejected_when_a_task_is_done() -> None:
     world = World()
     world.add_round(_open(), _open("a2", person_id="p2"))
     world.statistics.record_round(world.history.rounds["r1"])
     world.assignments.complete("a1", f.NOW)
-    service, _ = _service(world)
-    service.delete("r1")
-    assert dict(world.history.aggregates) == {}
+    service, events = _service(world)
+    with pytest.raises(RoundHasDoneError):
+        service.delete("r1")
+    assert "r1" in world.history.rounds
+    assert events.deleted == []
 
 
 def test_delete_keeps_other_rounds_in_the_statistics() -> None:

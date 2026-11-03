@@ -7,7 +7,7 @@ from typing import Final
 
 from ..const.keys import (
     WIRE_ASSIGNMENTS,
-    WIRE_CLOSED,
+    WIRE_DONE,
     WIRE_EXPIRES_AT,
     WIRE_JOKERS_LEFT,
     WIRE_NEXT_RUN,
@@ -28,7 +28,7 @@ from ..const.keys import (
     WS_FIELD_SCHEDULE_ID,
 )
 from ..domain.models import Person, Round, Schedule
-from ..domain.status import PENDING_STATUSES
+from ..domain.status import DONE_STATUSES
 from .draw_service import DrawService, PanelRound
 from .history_service import HistoryEntry
 from .protocols import ConfigRepository, HistoryRepository
@@ -81,14 +81,14 @@ def panel_round_view(panel_round: PanelRound) -> Json:
 
 
 def round_head(round_: Round) -> Json:
-    """Kopf einer Runde für die Übersicht: Zeitplan, Beginn, Zahl der abgeschlossenen."""
+    """Kopf einer Runde für die Übersicht: Zeitplan, Beginn, Zahl der erledigten."""
     return {
         KEY_ID: round_.id,
         WS_FIELD_SCHEDULE_ID: round_.schedule_id,
         WIRE_ORIGIN: round_.origin.value,
         WIRE_STARTED_AT: round_.started_at.isoformat(),
         WIRE_TOTAL: len(round_.assignments),
-        WIRE_CLOSED: sum(item.status not in PENDING_STATUSES for item in round_.assignments),
+        WIRE_DONE: sum(item.status in DONE_STATUSES for item in round_.assignments),
     }
 
 

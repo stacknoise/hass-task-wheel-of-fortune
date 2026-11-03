@@ -61,7 +61,7 @@ describe('upcomingDraws', () => {
 
 describe('groupByRound', () => {
   const head = (id: string, scheduleId: string, startedAt: string) =>
-    ({ id, schedule_id: scheduleId, started_at: startedAt, total: 2, closed: 0 }) as RoundHead;
+    ({ id, schedule_id: scheduleId, started_at: startedAt, total: 2, done: 0 }) as RoundHead;
 
   it('gruppiert nach Auslosung, die jüngste zuerst, und lässt leere Gruppen weg', () => {
     const items = [

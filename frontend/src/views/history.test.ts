@@ -122,7 +122,7 @@ describe('Historie', () => {
 
   it('löscht eine Runde nach der Rückfrage und lädt die Liste neu', async () => {
     const { view, hass } = await mount();
-    const remove = view.shadowRoot?.querySelector('tw-confirm-delete') as HTMLElement & {
+    const remove = view.shadowRoot?.querySelectorAll('tw-confirm-delete')[1] as HTMLElement & {
       updateComplete: Promise<boolean>;
     };
     const click = (label: string) =>
@@ -131,12 +131,12 @@ describe('Historie', () => {
         ?.click();
     click('Auslosung löschen');
     await remove.updateComplete;
-    expect(remove.shadowRoot?.textContent).toContain('2 Zuteilungen');
+    expect(remove.shadowRoot?.textContent).toContain('1 Zuteilungen');
     click('Löschen');
     await vi.waitFor(() => {
       expect(hass.messages.find((m) => m.type === WS_ROUND_DELETE)).toEqual({
         type: WS_ROUND_DELETE,
-        round_id: 'r1',
+        round_id: 'r0',
       });
     });
     await vi.waitFor(() => {
@@ -147,7 +147,7 @@ describe('Historie', () => {
   it('meldet einen Fehler beim Löschen', async () => {
     const { view, hass } = await mount();
     hass.callWS = () => Promise.reject(new Error('nein'));
-    const remove = view.shadowRoot?.querySelector('tw-confirm-delete') as HTMLElement & {
+    const remove = view.shadowRoot?.querySelectorAll('tw-confirm-delete')[1] as HTMLElement & {
       updateComplete: Promise<boolean>;
     };
     const click = (label: string) =>

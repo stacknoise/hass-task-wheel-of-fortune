@@ -189,7 +189,7 @@ function groupHead(
         ? roundDelete({
             language: context.language,
             total: round.total,
-            closed: round.closed,
+            done: round.done,
             busy: context.busy,
             onConfirm: () => {
               context.handlers.deleteRound(round.id);

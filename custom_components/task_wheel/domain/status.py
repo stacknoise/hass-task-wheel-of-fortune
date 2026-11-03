@@ -32,6 +32,9 @@ TRANSITIONS: Final[Mapping[tuple[AssignmentStatus, AssignmentAction], Assignment
 # Noch nicht abgeschlossen: kann erledigt oder verpasst werden (offen oder getauscht).
 PENDING_STATUSES: Final[frozenset[AssignmentStatus]] = frozenset({_S.OPEN, _S.SWAPPED})
 
+# Erledigt (pünktlich oder verspätet): solche Zuteilungen verhindern das Löschen ihrer Auslosung.
+DONE_STATUSES: Final[frozenset[AssignmentStatus]] = frozenset({_S.ON_TIME, _S.LATE})
+
 # Status -> Faktor auf die Aufgabenpunkte; nicht gelistete Status zählen noch nicht.
 _POINT_FACTORS: Final[Mapping[AssignmentStatus, Callable[[Settings], float]]] = MappingProxyType(
     {

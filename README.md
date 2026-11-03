@@ -78,8 +78,8 @@ vorerst nur Zähler und werden mit AP-15 ausgebaut.
 - **Übersicht:** nächste Auslosung (mit Blättern durch die Zeitpläne), offene Zuteilungen je Zeitplan mit Filter nach Person,
   Erledigen und Tauschen (nur erlaubte, nicht pausierte Personen, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
   fairen Anteil und die jüngste Aktivität. Die offenen Zuteilungen sind nach **Auslosung** gruppiert (jüngste zuerst, mit
-  Zeitplan und Zeitpunkt). Eine ganze Auslosung lässt sich nach Rückfrage **löschen**; das gilt auch für schon erledigte
-  Zuteilungen, ihre Punkte werden aus der Statistik abgezogen.
+  Zeitplan und Zeitpunkt); eine Auslosung ohne offene Zuteilungen verschwindet aus der Liste. Eine ganze Auslosung lässt sich
+  nach Rückfrage **löschen**, solange keine ihrer Aufgaben erledigt ist; sie verschwindet dann auch aus Historie und Statistik.
 - **Historie:** Runden aufklappbar (Zeitplan, Herkunft, Zuteilungen mit Chance und Status, Löschen einer Runde nach Rückfrage), Filter nach Person, Nachladen in
   Seiten und **CSV-Export** (Semikolon, UTF-8 mit Marke; Felder, die mit `=`, `+`, `-`, `@`, Tabulator oder Zeilenumbruch
   beginnen, werden mit einem Hochkomma entschärft, damit Tabellenprogramme sie nicht als Formel ausführen).

@@ -1,7 +1,8 @@
 """Auslosungen löschen: Runde samt Zuteilungen entfernen, Punkte und Statistik zurückrechnen."""
 
-from ..domain.errors import NotFoundError
+from ..domain.errors import NotFoundError, RoundHasDoneError
 from ..domain.models import Round
+from ..domain.status import DONE_STATUSES
 from ..domain.types import RoundId
 from .protocols import AssignmentRecorder, HistoryRepository, NoEvents, RoundEvents
 
@@ -9,7 +10,7 @@ RESOURCE_ROUND = "round"
 
 
 class RoundService:
-    """Löscht eine Runde mit allen Zuteilungen (auch erledigten, KONZEPT §5.5)."""
+    """Löscht eine Runde mit allen Zuteilungen, solange keine davon erledigt ist (KONZEPT §5.4)."""
 
     def __init__(
         self,
@@ -27,10 +28,15 @@ class RoundService:
 
         Raises:
             NotFoundError: Die Runde gibt es nicht (mehr).
+            RoundHasDoneError: Mindestens eine Zuteilung der Runde ist schon erledigt.
         """
-        removed = self._history.remove_round(round_id)
-        if removed is None:
+        round_ = self._history.rounds.get(round_id)
+        if round_ is None:
             raise NotFoundError(RESOURCE_ROUND, round_id)
-        self._recorder.forget_round(removed)
-        self._events.round_deleted(removed)
-        return removed
+        done = sum(item.status in DONE_STATUSES for item in round_.assignments)
+        if done:
+            raise RoundHasDoneError(round_id, done)
+        self._history.remove_round(round_id)
+        self._recorder.forget_round(round_)
+        self._events.round_deleted(round_)
+        return round_

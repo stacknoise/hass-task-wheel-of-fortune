@@ -28,7 +28,8 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'overview.roundMeta': '{date} · {open} of {total} open',
   'round.delete': 'Delete draw',
   'round.deleteQuestion':
-    'Delete this draw with {total} assignments? {closed} of them are already closed; their points are taken back. This cannot be undone.',
+    'Delete this draw with {total} assignments? It also disappears from history and statistics. This cannot be undone.',
+  'round.deleteBlocked': 'Cannot be deleted: {done} tasks are already done.',
   'overview.due': 'Due {date}',
   'overview.chance': 'Chance {chance}',
   'overview.points': '{points} points',

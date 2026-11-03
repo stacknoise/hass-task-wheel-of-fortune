@@ -31,7 +31,7 @@ def test_changes_arrive_as_deltas_per_object(api: Api) -> None:
     delta = api.pushed[0]
     assert set(delta) == {"assignments", "rounds"}
     assert delta["assignments"] == {"upsert": [], "remove": ["a1"]}
-    assert delta["rounds"]["upsert"][0]["closed"] == 2
+    assert delta["rounds"]["upsert"][0]["done"] == 2
 
 
 def test_swap_moves_assignment_between_persons(api: Api) -> None:

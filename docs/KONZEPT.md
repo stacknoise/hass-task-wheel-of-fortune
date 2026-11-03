@@ -294,11 +294,12 @@ dürfte (erlaubt, nicht pausiert, anwesend) und die abgebende Person im laufende
 Ist eine Aufgabe in mehreren Zeitplänen, gilt ihr Erledigen für alle: Solange eine Zuteilung der Aufgabe aus einem anderen Zeitplan offen oder getauscht ist, lost dieser Plan sie nicht noch einmal aus. Die Häufigkeitsregeln zählen Zuteilungen je Aufgabe über alle Zeitpläne.
 Statusübergänge sind eine Tabelle `dict[(Status, Aktion), Status]` – keine Verzweigungsketten.
 
-**Auslosung löschen** (`round/delete`, nur Administratoren): Die Runde verschwindet mit **allen** Zuteilungen, auch den
-schon erledigten oder verpassten. Die Monatsaggregate (Anzahl und Punkte) werden um genau diese Zuteilungen verringert, die
-Statistik sieht die Runde danach nicht mehr, als hätte es sie nie gegeben; Joker aus getauschten Zuteilungen gelten wieder
-als nicht verbraucht, weil sie aus den Zuteilungen gezählt werden. Entitäten der betroffenen Personen und des Zeitplans werden
-aktualisiert. Das Panel fragt vor dem Löschen nach und nennt, wie viele Zuteilungen schon abgeschlossen sind.
+**Auslosung löschen** (`round/delete`, nur Administratoren): nur solange **keine** Zuteilung der Runde erledigt (pünktlich
+oder verspätet) ist, sonst `round_has_done_assignments`. Die Runde verschwindet mit allen ihren Zuteilungen aus Historie und
+Verlauf; die Monatsaggregate (Anzahl und Punkte) werden um genau diese Zuteilungen verringert, die Statistik sieht die Runde
+danach nicht mehr. Getauschte Zuteilungen zählen ihre Joker nicht mehr mit, weil die Joker aus den Zuteilungen gezählt
+werden. Entitäten der betroffenen Personen und des Zeitplans werden aktualisiert. Das Panel sperrt den Knopf mit Begründung,
+sobald eine Aufgabe erledigt ist, und fragt sonst vor dem Löschen nach.
 
 ### 5.5 Zeitpläne
 

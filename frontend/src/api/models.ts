@@ -44,7 +44,8 @@ export interface RoundHead extends WireObject {
   readonly origin: string;
   readonly started_at: string;
   readonly total: number;
-  readonly closed: number;
+  /** Erledigte (pünktlich oder verspätet) Zuteilungen; dann ist Löschen gesperrt. */
+  readonly done: number;
 }
 
 export interface RoundObject extends WireObject {

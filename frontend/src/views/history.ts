@@ -25,7 +25,7 @@ import { personChips } from './person-chips.ts';
 import { buildCsv } from './csv.ts';
 import { roundDelete } from './round-delete.ts';
 import { downloadText } from './download.ts';
-import { closedCount, csvRows, doneCount, originText } from './history-model.ts';
+import { csvRows, doneCount, originText } from './history-model.ts';
 import type { HistoryLookups } from './history-model.ts';
 
 interface Loaded {
@@ -232,7 +232,7 @@ export class TwHistoryView extends LitElement {
         ${roundDelete({
           language: this.language,
           total: round.assignments.length,
-          closed: closedCount(round.assignments),
+          done: doneCount(round.assignments),
           busy: this._busy,
           onConfirm: () => {
             this.#delete(round.id);

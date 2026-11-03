@@ -5,7 +5,7 @@ import type {
   ScheduleObject,
   TaskObject,
 } from '../api/index.ts';
-import { DONE_STATUSES, PENDING_STATUSES, PERCENT } from '../constants/index.ts';
+import { DONE_STATUSES, PERCENT } from '../constants/index.ts';
 import { formatDateTime } from '../i18n/format.ts';
 import type { TextKey } from '../i18n/index.ts';
 
@@ -39,11 +39,6 @@ const HEADER_KEYS: readonly TextKey[] = [
 /** Anzahl der Zuteilungen, die erledigt wurden (pünktlich oder verspätet). */
 export function doneCount(assignments: readonly AssignmentObject[]): number {
   return assignments.filter((assignment) => DONE_STATUSES.includes(assignment.status)).length;
-}
-
-/** Anzahl der abgeschlossenen Zuteilungen (erledigt oder verpasst); ihre Punkte zählen in der Statistik. */
-export function closedCount(assignments: readonly AssignmentObject[]): number {
-  return assignments.filter((assignment) => !PENDING_STATUSES.includes(assignment.status)).length;
 }
 
 /** Text der Herkunft einer Runde; Unbekanntes wird unverändert angezeigt. */
