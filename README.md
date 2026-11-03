@@ -15,9 +15,10 @@ richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie b
 - **Aufgaben** mit erlaubten Personen, Punkten (Aufwand), Frist und Häufigkeit: jede Runde,
   höchstens n× pro Tag/Woche/Monat oder festes Intervall mit Toleranz
 - **Zeitpläne**: wiederkehrend, einmalig oder nur manuell
-- **Auslosung** automatisch oder im Panel mit Glücksrad-Animation; Segmentgröße = Chance
+- **Auslosung** automatisch oder im Panel mit Animation: Glücksrad, Lostrommel, Slot-Machine, Plinko oder Scheinwerfer; die Größe (Segment, Kugel, Zeile, Fach, Kachel) entspricht der Chance. Je Zeitplan wählt man per Mehrfachauswahl die erlaubten Varianten; bei mehreren wird bei jeder Auslosung zufällig eine genommen
 - **Fairness**: Wer im Verhältnis zu seinem fairen Anteil weniger Punkte hatte, bekommt ein größeres Stück
-- **Tauschen mit Joker**, nur mit Personen, die die Aufgabe bekommen dürfen
+- **Tauschen mit Joker**, nur mit Personen derselben Auslosung, die die Aufgabe bekommen dürfen
+- **„Bleibt unerledigt“**: eine Zuteilung bewusst nicht machen; zählt in Punkten und Statistik wie verpasst
 - **Historie** mit CSV-Export und **Statistiken** (fairer Anteil, Erledigungsquote, Matrix Aufgabe × Person)
 - **Home-Assistant-Anbindung**: Dienste, Events, Sensoren, To-do-Listen je Person, Buttons je Zeitplan
 
@@ -69,14 +70,14 @@ Ein Ziel, das mehrere Personen teilen (z. B. ein Familienkanal), bekommt jede Me
 Nach dem Einrichten erscheint in der Seitenleiste der Eintrag „Aufgaben-Glücksrad“ (`/task-wheel`). Das Panel hat die
 Tabs Übersicht, Auslosung, Aufgaben, Personen, Zeitpläne, Historie und Statistik, lädt den Stand per `snapshot` und
 bleibt über `subscribe` aktuell. Der Tab **Auslosung** ist fertig: Zeitplan wählen, Runde starten (eine offene Runde
-lässt sich fortsetzen), je Aufgabe das Glücksrad drehen (Segmentgröße = Chance, „Wer ist im Rad?“ mit Gründen; wer in der Runde schon eine Aufgabe hat, ist für die weiteren nicht mehr im Rad; überzählige Aufgaben bleiben als „nicht verteilbar“ offen; bleibt für eine Aufgabe nur noch eine Person übrig, wird sie ohne Drehen zugewiesen),
-den Rest ohne Animation verlosen und die Runde abschließen. Das Ergebnis bestimmt immer das Backend; das Rad dreht
+lässt sich fortsetzen), je Aufgabe die Animation des Zeitplans abspielen (Glücksrad, Lostrommel, Slot-Machine, Plinko oder Scheinwerfer, Größe = Chance, „Wer ist dabei?“ mit Gründen; wer in der Runde schon eine Aufgabe hat, ist für die weiteren nicht mehr im Rad; überzählige Aufgaben bleiben als „nicht verteilbar“ offen; bleibt für eine Aufgabe nur noch eine Person übrig, wird sie ohne Drehen zugewiesen),
+den Rest ohne Animation verlosen und die Runde abschließen. Das Ergebnis bestimmt immer das Backend; die Animation läuft
 nur dorthin, bei „reduzierte Bewegung“ im Betriebssystem ohne Animation. Fertig sind außerdem **Übersicht**, **Historie** und **Statistik** (AP-17); Aufgaben, Personen und Zeitpläne zeigen
 vorerst nur Zähler und werden mit AP-15 ausgebaut.
 
 
 - **Übersicht:** nächste Auslosung (mit Blättern durch die Zeitpläne), offene Zuteilungen je Zeitplan mit Filter nach Person,
-  Erledigen und Tauschen (nur erlaubte, nicht pausierte Personen, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
+  Erledigen, „Bleibt unerledigt“ (mit Rückfrage) und Tauschen (nur erlaubte, nicht pausierte Personen derselben Auslosung, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
   fairen Anteil und die jüngste Aktivität. Die offenen Zuteilungen sind nach **Auslosung** gruppiert (jüngste zuerst, mit
   Zeitplan und Zeitpunkt); eine Auslosung ohne offene Zuteilungen verschwindet aus der Liste. Eine ganze Auslosung lässt sich
   nach Rückfrage **löschen**, solange keine ihrer Aufgaben erledigt ist; sie verschwindet dann auch aus Historie und Statistik.
@@ -108,7 +109,7 @@ die Karten, rechts das Formular; Fehler des Backends erscheinen am betroffenen F
 
 Das Panel spricht mit dem Backend über WebSocket-Befehle mit dem Präfix `task_wheel/`: `snapshot`, `subscribe`
 (erst der Gesamtstand, danach nur Änderungen je Objekt), `history/list`, `statistics/get`,
-`assignment/complete`, `assignment/swap`, `draw/begin|spin|spin_rest|commit|cancel` für jeden angemeldeten
+`assignment/complete`, `assignment/swap`, `assignment/skip`, `draw/begin|spin|spin_rest|commit|cancel` für jeden angemeldeten
 Benutzer sowie `round/delete`, `person/*`, `task/*`, `schedule/*` und `settings/update` nur für Administratoren. Alle Eingaben
 werden gegen strenge Schemas geprüft (keine unbekannten Felder, begrenzte Längen). Ist in den Einstellungen
 „Panel nur für Administratoren“ gesetzt, sind auch die Lesebefehle Administratoren vorbehalten. Details:

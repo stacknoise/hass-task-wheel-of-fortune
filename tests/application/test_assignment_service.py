@@ -39,8 +39,22 @@ class World:
         self.swaps = SwapService(self.config, self.history, self.statistics)
 
     def add_round(self, *assignments: object, started: dt.datetime = f.NOW) -> None:
+        """Legt die Runde an; p2 und p3 sind mit verpassten Zuteilungen dabei (Tauschpartner)."""
+        partners = tuple(
+            f.assignment(
+                id=f"partner-{ident}",
+                person_id=ident,
+                status=S.MISSED,
+                due_at=started,
+            )
+            for ident in ("p2", "p3")
+        )
         self.history.put_round(
-            f.finished_round(started_at=started, finished_at=started, assignments=assignments)  # type: ignore[arg-type]
+            f.finished_round(
+                started_at=started,
+                finished_at=started,
+                assignments=(*assignments, *partners),  # type: ignore[arg-type]
+            )
         )
 
     def stored(self, assignment_id: str):
@@ -164,3 +178,42 @@ def test_swap_validation_errors() -> None:
     world.swaps.swap("a1", "p2", f.NOW)
     with pytest.raises(InvalidTransitionError):
         world.swaps.swap("a1", "p3", f.NOW)
+
+
+def test_swap_only_with_persons_of_the_same_round() -> None:
+    world = World()
+    world.history.put_round(
+        f.finished_round(
+            assignments=(_open(), _open("a2", person_id="p2")),
+        )
+    )
+    with pytest.raises(SwapRejectedError) as caught:
+        world.swaps.swap("a1", "p3", f.NOW)
+    assert caught.value.key == keys.ERR_SWAP_NOT_IN_ROUND
+    assert world.stored("a1").status is S.OPEN  # type: ignore[union-attr]
+    assert world.swaps.swap("a1", "p2", f.NOW).person_id == "p2"
+
+
+def test_skip_marks_assignment_and_counts_like_missed() -> None:
+    world = World(missed_points_factor=-0.5)
+    world.add_round(_open(), _open("a2", person_id="p2"))
+    for round_ in world.history.rounds.values():
+        world.statistics.record_round(round_)
+    skipped = world.assignments.skip("a1")
+    assert (skipped.status, skipped.done_at) == (S.SKIPPED, None)
+    assert world.history.open_assignments("p1") == ()
+    assert world.assignments.points(skipped) == -2  # 5 Punkte * -0.5, gerundet
+    assert world.history.aggregates["2026-11"]["p1"]["t1"]["skipped"][0] == 1
+
+
+def test_skip_swapped_assignment_and_rejects_closed_ones() -> None:
+    world = World()
+    world.add_round(_open(), _open("a2"))
+    world.swaps.swap("a1", "p2", f.NOW)
+    assert world.assignments.skip("a1").status is S.SKIPPED
+    world.assignments.complete("a2", f.NOW)
+    for ident in ("a1", "a2"):
+        with pytest.raises(InvalidTransitionError):
+            world.assignments.skip(ident)
+    with pytest.raises(NotFoundError):
+        world.assignments.skip("nope")

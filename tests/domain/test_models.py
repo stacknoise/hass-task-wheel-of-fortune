@@ -7,7 +7,7 @@ import pytest
 
 from custom_components.task_wheel.const import defaults, limits
 from custom_components.task_wheel.const.keys import KEY_KIND
-from custom_components.task_wheel.domain.enums import AssignmentStatus, Load, Period
+from custom_components.task_wheel.domain.enums import AnimationKind, AssignmentStatus, Load, Period
 from custom_components.task_wheel.domain.errors import (
     TaskWheelError,
     UnknownKindError,
@@ -144,6 +144,8 @@ def test_load_factors():
         (lambda: f.schedule(task_ids=()), "task_ids"),
         (lambda: f.schedule(task_ids=("t1", "t1")), "task_ids"),
         (lambda: f.schedule(slug=""), "slug"),
+        (lambda: f.schedule(animations=()), "animations"),
+        (lambda: f.schedule(animations=(AnimationKind.DRUM, AnimationKind.DRUM)), "animations"),
         (lambda: Swap(from_person_id="p1", to_person_id="p1", at=f.NOW), "to_person_id"),
         (lambda: Swap(from_person_id="p1", to_person_id="p2", at=dt.datetime(2026, 1, 1)), "at"),
         (lambda: f.assignment(chance=1.5), "chance"),
@@ -177,6 +179,19 @@ def test_invariants_reject(build, field):
 def test_open_round_and_unfinished_assignment_are_valid():
     assert f.finished_round(finished_at=None).finished_at is None
     assert Assignment.from_dict(f.assignment().to_dict()).status is AssignmentStatus.OPEN
+
+
+def test_schedule_animations_default_to_wheel_and_roundtrip():
+    legacy = {key: value for key, value in f.schedule().to_dict().items() if key != "animations"}
+    assert Schedule.from_dict(legacy).animations == (AnimationKind.WHEEL,)
+    chosen = f.schedule(animations=(AnimationKind.SLOT, AnimationKind.PLINKO))
+    assert Schedule.from_dict(chosen.to_dict()) == chosen
+    assert chosen.to_dict()["animations"] == ["slot", "plinko"]
+
+
+def test_schedule_rejects_unknown_animation():
+    with pytest.raises(ValidationError):
+        Schedule.from_dict({**f.schedule().to_dict(), "animations": ["confetti"]})
 
 
 @pytest.mark.parametrize(

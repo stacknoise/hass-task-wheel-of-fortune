@@ -10,6 +10,7 @@ from ..const.keys import (
     ERR_SWAP_ABSENT,
     ERR_SWAP_DISABLED,
     ERR_SWAP_NOT_ALLOWED,
+    ERR_SWAP_NOT_IN_ROUND,
     ERR_SWAP_PAUSED,
     ERR_SWAP_SAME_PERSON,
 )
@@ -29,6 +30,8 @@ class SwapContext:
     receiver: Person
     jokers_left: int
     now: dt.datetime
+    #: Personen, die in derselben Auslosung eine Zuteilung haben (Tausch nur untereinander).
+    round_persons: frozenset[str]
 
 
 def _present_until_due(context: SwapContext) -> bool:
@@ -44,6 +47,7 @@ def _present_until_due(context: SwapContext) -> bool:
 _CHECKS: Final[tuple[tuple[Callable[[SwapContext], bool], str], ...]] = (
     (lambda c: c.task.swap_allowed, ERR_SWAP_DISABLED),
     (lambda c: c.receiver.id != c.assignment.person_id, ERR_SWAP_SAME_PERSON),
+    (lambda c: c.receiver.id in c.round_persons, ERR_SWAP_NOT_IN_ROUND),
     (lambda c: c.jokers_left > 0, ERR_NO_JOKERS),
     (lambda c: c.task.allows(c.receiver.id), ERR_SWAP_NOT_ALLOWED),
     (lambda c: c.receiver.load is not Load.PAUSED, ERR_SWAP_PAUSED),

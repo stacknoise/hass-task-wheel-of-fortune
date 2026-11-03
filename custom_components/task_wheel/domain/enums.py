@@ -89,6 +89,7 @@ class AssignmentStatus(StrEnum):
     LATE = "late"
     SWAPPED = "swapped"
     MISSED = "missed"
+    SKIPPED = "skipped"
 
 
 class AssignmentAction(StrEnum):
@@ -98,6 +99,7 @@ class AssignmentAction(StrEnum):
     COMPLETE_LATE = "complete_late"
     MISS = "miss"
     SWAP = "swap"
+    SKIP = "skip"
 
 
 class WeightingKind(StrEnum):
@@ -114,3 +116,13 @@ class ExclusionReason(StrEnum):
     ABSENT = "absent"
     REPEAT = "no_repeat"
     TAKEN = "taken"
+
+
+class AnimationKind(StrEnum):
+    """Darstellung der Auslosung im Panel (Wahl je Zeitplan; gezogen wird im Backend)."""
+
+    WHEEL = "wheel"
+    DRUM = "drum"
+    SLOT = "slot"
+    PLINKO = "plinko"
+    SPOTLIGHT = "spotlight"

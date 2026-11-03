@@ -10,6 +10,7 @@ from ..const.keys import ERR_INCONSISTENT, ERR_ORDER, ERR_REQUIRED
 from .enums import (
     AbsenceKind,
     AfterOnce,
+    AnimationKind,
     AssignmentStatus,
     FrequencyKind,
     Load,
@@ -282,6 +283,9 @@ class Task(Model):
         return not self.allowed or person_id in self.allowed
 
 
+DEFAULT_ANIMATIONS: Final = (AnimationKind.WHEEL,)
+
+
 @dataclass(slots=True, frozen=True, kw_only=True)
 class Schedule(Model):
     """Zeitplan: Auslöser und die Aufgaben, die er verteilt."""
@@ -295,15 +299,20 @@ class Schedule(Model):
     notify: bool = spec(to_bool, default=True)
     skip_absent: bool = spec(to_bool, default=True)
     archived: bool = spec(to_bool, default=False)
+    animations: tuple[AnimationKind, ...] = spec(
+        tuple_of(enum_of(AnimationKind)), default=DEFAULT_ANIMATIONS
+    )
 
     def __post_init__(self) -> None:
-        """Prüft Kennung, Namen, Slug, Aufgabenliste und dass Archivierte nicht aktiv sind."""
+        """Prüft Kennung, Namen, Slug, Aufgaben, Animationen und Archivierung."""
         ensure_id("id", self.id)
         ensure_name("name", self.name)
         ensure_length("slug", self.slug, 1, limits.SLUG_MAX_LENGTH)
         ensure_pattern("slug", self.slug, limits.SLUG_PATTERN)
         ensure_size("task_ids", self.task_ids, 1, limits.MAX_TASKS_PER_SCHEDULE)
         ensure_unique("task_ids", self.task_ids)
+        ensure_size("animations", self.animations, 1, len(AnimationKind))
+        ensure_unique("animations", self.animations)
         ensure(not (self.archived and self.enabled), "archived", ERR_INCONSISTENT)
 
 
@@ -325,7 +334,9 @@ class Swap(Model):
 
 
 _DONE_STATUSES = frozenset({AssignmentStatus.ON_TIME, AssignmentStatus.LATE})
-_UNDONE_STATUSES = frozenset({AssignmentStatus.OPEN, AssignmentStatus.MISSED})
+_UNDONE_STATUSES = frozenset(
+    {AssignmentStatus.OPEN, AssignmentStatus.MISSED, AssignmentStatus.SKIPPED}
+)
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)

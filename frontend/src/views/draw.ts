@@ -6,8 +6,16 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import type { TaskDrawWire } from '../api/index.ts';
 import { percentText } from '../components/index.ts';
 import '../components/index.ts';
-import type { TwWheel, WheelSegment } from '../components/index.ts';
-import { EMPTY_TEXT, EVENT_TAB_SELECT, FALLBACK_COLOR, VIEW_TAGS } from '../constants/index.ts';
+import type { TwStage, WheelSegment } from '../components/index.ts';
+import {
+  DEFAULT_ANIMATIONS,
+  EMPTY_TEXT,
+  EVENT_TAB_SELECT,
+  FALLBACK_COLOR,
+  START_PLACEMENT,
+  VIEW_TAGS,
+} from '../constants/index.ts';
+import type { AnimationKind } from '../constants/index.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import {
@@ -19,6 +27,7 @@ import {
   openRoundFor,
   participantsOf,
   personsById,
+  pickAnimation,
   tasksById,
 } from '../state/index.ts';
 import type { DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
@@ -51,7 +60,9 @@ export class TwDrawView extends LitElement {
   declare _scheduleId: string;
 
   readonly #store = new StoreController(this);
-  readonly #wheel = createRef<TwWheel>();
+  readonly #stage = createRef<TwStage>();
+  /** Die Animation der laufenden Auslosung; wird bei jedem Start zufällig neu gewählt. */
+  #kind: AnimationKind = DEFAULT_ANIMATIONS[0] ?? 'wheel';
   #session: DrawSession | undefined;
   #animating: TaskDrawWire | undefined;
   #autoSpun = EMPTY_TEXT;
@@ -127,7 +138,7 @@ export class TwDrawView extends LitElement {
     const persons = participantsOf(personsById(snapshot), tasks, state.taskIds);
     return html`
       <div class="layout">
-        ${this.#side(state, tasks, persons)} ${this.#stage(state, tasks, persons)}
+        ${this.#side(state, tasks, persons)} ${this.#stagePanel(state, tasks, persons)}
       </div>
     `;
   }
@@ -141,10 +152,10 @@ export class TwDrawView extends LitElement {
   }
 
   async #animate(result: TaskDrawWire): Promise<void> {
-    const wheel = this.#wheel.value;
-    if (wheel && result.winner_id && result.segments.length > 1) {
-      await wheel.updateComplete;
-      await wheel.spinTo(result.winner_id);
+    const stage = this.#stage.value;
+    if (stage && result.winner_id && result.segments.length > 1) {
+      await stage.updateComplete;
+      await stage.spinTo(result.winner_id);
     }
     this.#session?.landed();
   }
@@ -202,7 +213,10 @@ export class TwDrawView extends LitElement {
         <button
           class="button primary"
           ?disabled=${!scheduleId}
-          @click=${() => void session?.begin(scheduleId)}
+          @click=${() => {
+            this.#kind = this.#pick(scheduleId);
+            void session?.begin(scheduleId);
+          }}
         >
           ${this.#text('draw.start')}
         </button>
@@ -214,6 +228,7 @@ export class TwDrawView extends LitElement {
                   const snapshot = this.#store.state?.snapshot;
                   const round = snapshot && openRoundFor(snapshot, scheduleId);
                   if (round) {
+                    this.#kind = this.#pick(scheduleId);
                     session?.resume(round);
                   }
                 }}
@@ -225,6 +240,15 @@ export class TwDrawView extends LitElement {
       </div>
       <p class="muted">${this.#text('draw.choose')}</p>
     `;
+  }
+
+  /** Wählt zufällig eine der Animationen, die der Zeitplan erlaubt. */
+  #pick(scheduleId: string): AnimationKind {
+    const snapshot = this.#store.state?.snapshot;
+    const schedule = snapshot
+      ? drawableSchedules(snapshot).find((candidate) => candidate.id === scheduleId)
+      : undefined;
+    return pickAnimation(schedule?.animations ?? DEFAULT_ANIMATIONS);
   }
 
   #failure(state: DrawState): TemplateResult {
@@ -313,7 +337,7 @@ export class TwDrawView extends LitElement {
 
   // ----- Bühne: Rad, Wer ist im Rad?, Ergebnis, Abschluss -----
 
-  #stage(
+  #stagePanel(
     state: DrawState,
     tasks: ReadonlyMap<string, TaskInfo>,
     persons: ReadonlyMap<string, PersonInfo>,
@@ -366,14 +390,15 @@ export class TwDrawView extends LitElement {
   #wheelBox(state: DrawState, persons: ReadonlyMap<string, PersonInfo>): TemplateResult {
     const segments = this.#wheelSegments(state.current ?? state.preview, persons);
     return html`
-      <div class="wheel-box">
-        <tw-wheel
-          ${ref(this.#wheel)}
+      <div class="wheel-box ${START_PLACEMENT[this.#kind]}">
+        <tw-stage
+          ${ref(this.#stage)}
+          .kind=${this.#kind}
           .segments=${segments}
-          .label=${this.#text('draw.wheel')}
-        ></tw-wheel>
+          .label=${this.#text(`animation.${this.#kind}` as TextKey)}
+        ></tw-stage>
         <button
-          class="hub"
+          class="hub ${START_PLACEMENT[this.#kind]}"
           aria-label=${this.#text('draw.spin.label')}
           ?disabled=${state.phase !== 'ready'}
           @click=${() => void this.#session?.spin()}

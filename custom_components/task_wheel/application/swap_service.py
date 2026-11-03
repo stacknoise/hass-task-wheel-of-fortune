@@ -67,7 +67,9 @@ class SwapService:
             raise NotFoundError(_RESOURCE_PERSON, to_person_id)
         status.next_status(assignment.status, AssignmentAction.SWAP)
         left = self.jokers_left(assignment.person_id, now)
-        ensure_swap_possible(SwapContext(assignment, task, receiver, left, now))
+        round_ = self._history.rounds[assignment.round_id]
+        holders = frozenset(item.person_id for item in round_.assignments)
+        ensure_swap_possible(SwapContext(assignment, task, receiver, left, now, holders))
         swapped = store_assignment(
             self._history, self._recorder, status.swap(assignment, to_person_id, now)
         )

@@ -149,6 +149,9 @@
     "swap_person_not_allowed": {
       "message": "The person may not take over this task."
     },
+    "swap_person_not_in_round": {
+      "message": "Swaps are only possible with people from the same draw."
+    },
     "swap_person_paused": {
       "message": "The person is paused."
     },

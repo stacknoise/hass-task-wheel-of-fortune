@@ -60,6 +60,18 @@ class AssignmentService:
         self._events.assignment_completed(done)
         return done
 
+    def skip(self, assignment_id: AssignmentId) -> Assignment:
+        """Markiert die offene Zuteilung als „Bleibt unerledigt“ (zählt wie verpasst).
+
+        Raises:
+            NotFoundError: Die Zuteilung gibt es nicht.
+            InvalidTransitionError: Die Zuteilung ist nicht mehr offen.
+        """
+        assignment = require_assignment(self._history, assignment_id)
+        skipped = store_assignment(self._history, self._recorder, status.skip(assignment))
+        self._events.assignment_skipped(skipped)
+        return skipped
+
     def mark_missed(self, now: dt.datetime) -> tuple[Assignment, ...]:
         """Täglicher Lauf: markiert Zuteilungen als verpasst, deren Kulanzzeit abgelaufen ist."""
         settings = self._config.settings

@@ -5,6 +5,7 @@ import type { HistoryPage, StatisticsReport, Snapshot } from '../api/index.ts';
 import { FakeHass } from '../api/fake-hass.testing.ts';
 import {
   WS_ASSIGNMENT_COMPLETE,
+  WS_ASSIGNMENT_SKIP,
   WS_ASSIGNMENT_SWAP,
   WS_HISTORY_LIST,
   WS_ROUND_DELETE,
@@ -53,6 +54,7 @@ export const SNAPSHOT: Snapshot = {
       started_at: '2026-11-02T18:00:00+00:00',
       total: 3,
       done: 1,
+      person_ids: ['p1', 'p2'],
     },
     {
       id: 'r2',
@@ -61,6 +63,7 @@ export const SNAPSHOT: Snapshot = {
       started_at: '2026-11-01T18:00:00+00:00',
       total: 1,
       done: 0,
+      person_ids: ['p2'],
     },
   ],
   panel_rounds: [],
@@ -151,6 +154,7 @@ export function fakeHass(): FakeHass {
   hass.replies.set(WS_STATISTICS_GET, REPORT);
   hass.replies.set(WS_ASSIGNMENT_COMPLETE, { id: 'a1' });
   hass.replies.set(WS_ASSIGNMENT_SWAP, { id: 'a1' });
+  hass.replies.set(WS_ASSIGNMENT_SKIP, { id: 'a1' });
   hass.replies.set(WS_ROUND_DELETE, {});
 
   return hass;
