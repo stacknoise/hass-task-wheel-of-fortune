@@ -48,3 +48,12 @@ ERR_LIMIT_REACHED: Final = "limit_reached"
 ERR_NOT_FOUND: Final = "not_found"
 ERR_STORAGE_CORRUPT: Final = "storage_corrupt"
 ERR_STORAGE_VERSION: Final = "storage_version_unsupported"
+
+# Fehlerschlüssel für Statusübergänge und Tausch
+ERR_INVALID_TRANSITION: Final = "invalid_transition"
+ERR_SWAP_DISABLED: Final = "swap_disabled"
+ERR_SWAP_SAME_PERSON: Final = "swap_same_person"
+ERR_SWAP_NOT_ALLOWED: Final = "swap_person_not_allowed"
+ERR_SWAP_PAUSED: Final = "swap_person_paused"
+ERR_SWAP_ABSENT: Final = "swap_person_absent"
+ERR_NO_JOKERS: Final = "no_jokers_left"

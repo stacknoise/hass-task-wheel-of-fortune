@@ -157,6 +157,14 @@ def test_history_indexes_follow_changes() -> None:
     assert repo.get_assignment("a1") == finished
 
 
+def test_history_indexes_swapped_assignment_as_open_for_receiver() -> None:
+    repo = HistoryStore(MemoryStore())
+    swapped = f.assignment(id="a1", person_id="p2", status=AssignmentStatus.SWAPPED, swap=f.swap())
+    repo.put_round(_round("r1", f.NOW, swapped))  # type: ignore[arg-type]
+    assert repo.open_assignments("p2") == (swapped,)
+    assert repo.open_assignments("p1") == ()
+
+
 def test_history_last_assignment_and_ordering() -> None:
     repo = HistoryStore(MemoryStore())
     newer = f.assignment(id="a2", round_id="r2", task_id="t1")
