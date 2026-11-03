@@ -50,6 +50,29 @@ describe('plinko-geometry', () => {
     expect(binAt([], 200)).toBeUndefined();
   });
 
+  it('wirft nicht am Ziel orientiert ein: jedes Fach ist von mehreren Einwurfstellen aus erreichbar', () => {
+    let seed = 7;
+    const random = (): number => {
+      seed = (seed * 16807) % 2147483647;
+      return seed / 2147483647;
+    };
+    for (const bin of BINS) {
+      const starts = new Set<number>();
+      for (let run = 0; run < 200; run++) {
+        const path = buildPath(bin, random);
+        starts.add(Math.round(path[1]?.x ?? 0));
+        expect(binAt(BINS, path.at(-1)?.x ?? 0)?.id).toBe(bin.id);
+      }
+      expect(starts.size).toBeGreaterThan(2);
+    }
+    const middle = BINS[1] ?? BINS[0];
+    const spread = new Set<number>();
+    for (let run = 0; run < 200; run++) {
+      spread.add(Math.round(buildPath(middle as (typeof BINS)[number], random)[1]?.x ?? 0));
+    }
+    expect(spread.size).toBeGreaterThan(4);
+  });
+
   it('hat versetzte Stiftreihen innerhalb des Bretts', () => {
     expect(new Set(PEGS.map((peg) => peg.key)).size).toBe(PEGS.length);
     for (const peg of PEGS) {
