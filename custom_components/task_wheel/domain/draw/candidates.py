@@ -1,12 +1,13 @@
 """Kandidatenfilter (KONZEPT §5.2): jeder Filter ein Objekt mit Ausschlussgrund."""
 
 import datetime as dt
-from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from collections.abc import Callable, MutableMapping, Sequence
+from dataclasses import dataclass, replace
 from typing import ClassVar, Protocol
 
 from ..enums import ExclusionReason, Load
 from ..models import Person, Task
+from ..types import PersonId, TaskId
 from .matching import safe_winners
 from .types import CandidateSelection, DrawContext, Exclusion
 
@@ -124,7 +125,11 @@ class CandidateSelector:
     factory: CandidateFilterFactory = CandidateFilterFactory()  # noqa: RUF009
 
     def select(
-        self, task: Task, context: DrawContext, rest: Sequence[Task] = ()
+        self,
+        task: Task,
+        context: DrawContext,
+        rest: Sequence[Task] = (),
+        reach: MutableMapping[TaskId, frozenset[PersonId]] | None = None,
     ) -> CandidateSelection:
         """Erlaubte, bekannte Personen (nach Kennung sortiert) durch die Filterkette schicken.
 
@@ -137,15 +142,28 @@ class CandidateSelector:
         hard = tuple(f for f in chain if not f.soft)
         soft = tuple(f for f in chain if f.soft)
         remaining = self._apply(hard, task, context, self._allowed(task, context), exclusions)
-        remaining = self._reserve(remaining, rest, context, exclusions)
+        remaining = self._reserve(remaining, rest, context, exclusions, reach)
         remaining = self._apply(soft, task, context, remaining, exclusions)
         return CandidateSelection(tuple(remaining), tuple(exclusions))
 
     def eligible(self, task: Task, context: DrawContext) -> frozenset[str]:
-        """Personen, die `task` bekommen dürfen (nur harte Filter), für die Zuordnung der Runde."""
+        """Personen, die `task` bekommen dürfen (harte Filter), ohne die Besetzung der Runde."""
         hard = tuple(f for f in self.factory.create_chain(task) if not f.soft)
-        remaining = self._apply(hard, task, context, self._allowed(task, context), [])
+        free = replace(context, round_holders=frozenset())
+        remaining = self._apply(hard, task, free, self._allowed(task, free), [])
         return frozenset(p.id for p in remaining)
+
+    def _options(
+        self,
+        tasks: Sequence[Task],
+        context: DrawContext,
+        reach: MutableMapping[TaskId, frozenset[PersonId]] | None,
+    ) -> list[frozenset[PersonId]]:
+        """Mögliche Personen je Aufgabe ohne die Besetzung der Runde (aus `reach`, falls da)."""
+        memo = {} if reach is None else reach
+        return [
+            memo.setdefault(t.id, self.eligible(t, context)) - context.round_holders for t in tasks
+        ]
 
     @staticmethod
     def _allowed(task: Task, context: DrawContext) -> list[Person]:
@@ -158,6 +176,7 @@ class CandidateSelector:
         rest: Sequence[Task],
         context: DrawContext,
         exclusions: list[Exclusion],
+        reach: MutableMapping[TaskId, frozenset[PersonId]] | None,
     ) -> list[Person]:
         """Behält Personen, bei denen insgesamt so viele Aufgaben wie möglich verteilt werden.
 
@@ -165,7 +184,7 @@ class CandidateSelector:
         """
         if not rest:
             return candidates
-        options = [self.eligible(t, context) for t in rest]
+        options = self._options(rest, context, reach)
         keep = safe_winners(frozenset(p.id for p in candidates), options)
         exclusions.extend(
             Exclusion(p.id, ExclusionReason.NEEDED) for p in candidates if p.id not in keep

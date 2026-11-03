@@ -3,11 +3,11 @@
 import datetime as dt
 import secrets
 from bisect import bisect_right
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from itertools import accumulate
 
 from ..models import Person, Task
-from ..types import PersonId
+from ..types import PersonId, TaskId
 from .candidates import CandidateSelector
 from .types import (
     CandidateSelection,
@@ -72,6 +72,7 @@ class DrawEngine:
         round_holders = set(context.round_holders)
         results: list[TaskDraw] = []
         ordered = tuple(tasks)
+        reach: dict[TaskId, frozenset[PersonId]] = {}
         for index, task in enumerate(ordered):
             current = DrawContext(
                 context.now,
@@ -82,7 +83,9 @@ class DrawEngine:
                 context.fairness_window_days,
                 frozenset(round_holders),
             )
-            result = self._draw_task(task, current, capacity, points, ordered[index + 1 :])
+            result = self._draw_task(
+                task, current, capacity, points, rest=ordered[index + 1 :], reach=reach
+            )
             if result.winner_id is not None:
                 points[result.winner_id] = points.get(result.winner_id, 0) + task.points
                 last_holders[task.id] = result.winner_id
@@ -92,7 +95,7 @@ class DrawEngine:
 
     def draw_task(self, task: Task, context: DrawContext, rest: Sequence[Task] = ()) -> TaskDraw:
         """Zieht für eine einzelne Aufgabe; `rest` sind die noch folgenden Aufgaben der Runde."""
-        return self._draw_task(task, context, capacities(context), context.points, rest)
+        return self._draw_task(task, context, capacities(context), context.points, rest=rest)
 
     def preview_task(self, task: Task, context: DrawContext, rest: Sequence[Task] = ()) -> TaskDraw:
         """Das Rad für eine Aufgabe ohne Ziehung: Segmente und Ausschlüsse, aber kein Gewinner.
@@ -100,7 +103,7 @@ class DrawEngine:
         Stimmt mit dem Rad der späteren Ziehung überein, solange sich der Stand nicht ändert.
         """
         selection, segments, _weights = self._wheel(
-            task, context, capacities(context), context.points, rest
+            task, context, capacities(context), context.points, rest=rest
         )
         return TaskDraw(task.id, None, 0.0, segments, selection.exclusions)
 
@@ -110,10 +113,12 @@ class DrawEngine:
         context: DrawContext,
         capacity: Mapping[PersonId, float],
         points: Mapping[PersonId, float],
+        *,
         rest: Sequence[Task] = (),
+        reach: MutableMapping[TaskId, frozenset[PersonId]] | None = None,
     ) -> tuple[CandidateSelection, tuple[Segment, ...], Sequence[float]]:
         """Filtert und gewichtet: Kandidaten, Segmente des Rads und deren Gewichte."""
-        selection = self._selector.select(task, context, rest)
+        selection = self._selector.select(task, context, rest, reach)
         if not selection.candidates:
             return selection, (), ()
         inputs = [
@@ -128,10 +133,14 @@ class DrawEngine:
         context: DrawContext,
         capacity: Mapping[PersonId, float],
         points: Mapping[PersonId, float],
+        *,
         rest: Sequence[Task] = (),
+        reach: MutableMapping[TaskId, frozenset[PersonId]] | None = None,
     ) -> TaskDraw:
         """Filtert, gewichtet und zieht; ohne Kandidaten bleibt die Aufgabe unverteilt."""
-        selection, segments, weights = self._wheel(task, context, capacity, points, rest)
+        selection, segments, weights = self._wheel(
+            task, context, capacity, points, rest=rest, reach=reach
+        )
         if not segments:
             return TaskDraw(task.id, None, 0.0, (), selection.exclusions)
         winner = self._pick(segments, weights)
