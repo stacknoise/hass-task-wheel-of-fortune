@@ -19,3 +19,8 @@ export { TwTimeline } from './timeline.ts';
 export { TwToggle } from './toggle.ts';
 export { TwTriggerEditor } from './trigger-editor.ts';
 export { TwWeekPreview } from './week-preview.ts';
+export { TwConfetti } from './confetti.ts';
+export { TwWheel } from './wheel.ts';
+export { layoutWedges, pointAt, spinRotation, wedgePath } from './wheel-geometry.ts';
+export type { Wedge, WheelSegment } from './wheel-geometry.ts';
+export { numberText, percentText } from './format.ts';

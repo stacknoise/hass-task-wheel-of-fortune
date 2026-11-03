@@ -38,6 +38,10 @@ export const EMPTY_SNAPSHOT: Snapshot = {
 export class FakeHass implements HassApi {
   readonly language = 'de';
   readonly calls: string[] = [];
+  /** Die vollständigen Nachrichten (mit Feldern), in der Reihenfolge der Aufrufe. */
+  readonly messages: { type: string; [field: string]: unknown }[] = [];
+  /** Antworten je Befehl; ein Fehlerobjekt wird als Ablehnung geliefert. */
+  readonly replies = new Map<string, unknown>();
   snapshot: Snapshot = EMPTY_SNAPSHOT;
   failSnapshot = false;
   unsubscribed = 0;
@@ -61,20 +65,12 @@ export class FakeHass implements HassApi {
     },
   };
 
-  /** Alle Nachrichten mit Feldern, in der Reihenfolge der Aufrufe. */
-  readonly messages: { type: string; [field: string]: unknown }[] = [];
-  /** Fehler, mit dem der nächste Aufruf eines Befehls ungleich `snapshot` scheitert. */
-  rejectNext: unknown;
-
   callWS<T>(message: { type: string; [field: string]: unknown }): Promise<T> {
     this.calls.push(message.type);
     this.messages.push(message);
-    if (this.rejectNext !== undefined && !message.type.endsWith('snapshot')) {
-      const error = this.rejectNext;
-      this.rejectNext = undefined;
-      // Home Assistant lehnt mit einfachen Objekten ab (`{ code, message }`), nicht mit `Error`.
-      // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-      return Promise.reject(error);
+    if (this.replies.has(message.type)) {
+      const reply = this.replies.get(message.type);
+      return reply instanceof Error ? Promise.reject(reply) : Promise.resolve(reply as T);
     }
     return this.failSnapshot
       ? Promise.reject(new Error('offline'))

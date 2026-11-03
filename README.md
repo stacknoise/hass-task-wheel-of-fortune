@@ -68,7 +68,11 @@ Ein Ziel, das mehrere Personen teilen (z. B. ein Familienkanal), bekommt jede Me
 
 Nach dem Einrichten erscheint in der Seitenleiste der Eintrag „Aufgaben-Glücksrad“ (`/task-wheel`). Das Panel hat die
 Tabs Übersicht, Auslosung, Aufgaben, Personen, Zeitpläne, Historie und Statistik, lädt den Stand per `snapshot` und
-bleibt über `subscribe` aktuell; die Ansichten zeigen vorerst nur Zähler und werden mit AP-15 bis AP-17 ausgebaut.
+bleibt über `subscribe` aktuell. Der Tab **Auslosung** ist fertig: Zeitplan wählen, Runde starten (eine offene Runde
+lässt sich fortsetzen), je Aufgabe das Glücksrad drehen (Segmentgröße = Chance, „Wer ist im Rad?“ mit Gründen),
+den Rest ohne Animation verlosen und die Runde abschließen. Das Ergebnis bestimmt immer das Backend; das Rad dreht
+nur dorthin, bei „reduzierte Bewegung“ im Betriebssystem ohne Animation. Die übrigen Ansichten zeigen vorerst nur
+Zähler und werden mit AP-15 und AP-17 ausgebaut.
 Texte gibt es auf Deutsch und Englisch (Sprache aus Home Assistant). Das Bundle ist nicht eingecheckt: vor dem
 Ausprobieren `cd frontend && npm ci && npm run build`. Fehlt es, bleibt die Integration nutzbar und schreibt eine
 Warnung ins Protokoll.

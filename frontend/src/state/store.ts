@@ -30,13 +30,13 @@ export class Store {
     this.#client = client;
   }
 
-  get state(): StoreState {
-    return this.#state;
-  }
-
-  /** Der Client, über den Ansichten Änderungen an das Backend senden. */
+  /** Der Zugang zur API für Befehle (Auslosen, Erledigen …). */
   get client(): ApiClient {
     return this.#client;
+  }
+
+  get state(): StoreState {
+    return this.#state;
   }
 
   /** Meldet einen Zuhörer an, der nach jeder Änderung des Standes aufgerufen wird. */

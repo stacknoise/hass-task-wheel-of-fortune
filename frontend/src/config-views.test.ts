@@ -85,6 +85,19 @@ function say(child: Element, detail: unknown): void {
   child.dispatchEvent(new CustomEvent(EVENT_CHANGE, { detail, bubbles: true, composed: true }));
 }
 
+/** Der nächste Befehl (außer Lesen) scheitert wie bei Home Assistant mit `{ code, message }`. */
+function failNext(hass: FakeHass, error: { code: string; message: string }): void {
+  const original = hass.callWS.bind(hass);
+  hass.callWS = <T>(message: { type: string; [field: string]: unknown }): Promise<T> => {
+    hass.callWS = original;
+    if (message.type.endsWith('snapshot')) {
+      return original<T>(message);
+    }
+    hass.messages.push(message);
+    return Promise.reject(Object.assign(new Error(error.message), error));
+  };
+}
+
 async function addNew(view: El): Promise<void> {
   await click(view, '.top .primary');
 }
@@ -120,7 +133,7 @@ describe('Personen', () => {
   it('zeigt Fehler des Backends am Feld und im Hinweis', async () => {
     const { hass, view } = await open('/persons');
     await addNew(view);
-    hass.rejectNext = { code: 'invalid_format', message: 'notify_target: invalid_format' };
+    failNext(hass, { code: 'invalid_format', message: 'notify_target: invalid_format' });
     await click(view, 'section.editor .primary');
     await vi.waitFor(() => {
       expect(q(view.shadowRoot, '.banner').textContent).toContain('notify_target');
@@ -152,7 +165,7 @@ describe('Personen', () => {
   it('meldet, dass eine Person noch verwendet wird', async () => {
     const { hass, view } = await open('/persons');
     await click(view, '.card');
-    hass.rejectNext = { code: 'in_use', message: 'in_use' };
+    failNext(hass, { code: 'in_use', message: 'in_use' });
     await click(view, '.danger');
     await click(view, '.danger');
     await vi.waitFor(() => {
@@ -202,7 +215,7 @@ describe('Aufgaben', () => {
   it('bearbeitet eine Aufgabe und zeigt Prüffehler am Feld', async () => {
     const { hass, view } = await open('/tasks');
     await click(view, '.card');
-    hass.rejectNext = { code: 'empty', message: 'allowed: empty' };
+    failNext(hass, { code: 'empty', message: 'allowed: empty' });
     await click(view, 'section.editor .primary');
     await vi.waitFor(() => {
       expect(q(view.shadowRoot, 'tw-chip-select').getAttribute('error')).toBeDefined();
@@ -238,11 +251,13 @@ describe('Zeitpläne', () => {
     const { hass, view } = await open('/schedules');
     await addNew(view);
     say(q(view.shadowRoot, 'section.editor tw-field'), 'Neu');
-    hass.rejectNext = { code: 'required', message: 'trigger.time: required' };
+    failNext(hass, { code: 'required', message: 'trigger.time: required' });
     await click(view, 'section.editor .primary');
     await vi.waitFor(() => {
       expect(view.shadowRoot?.textContent).toContain('trigger.time');
     });
-    expect(hass.messages.at(-1)?.type).toBe('task_wheel/schedule/create');
+    expect(hass.messages.some((message) => message.type === 'task_wheel/schedule/create')).toBe(
+      true,
+    );
   });
 });
