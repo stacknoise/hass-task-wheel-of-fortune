@@ -47,7 +47,7 @@ addopts = "--cov=custom_components/task_wheel --cov=tools --cov-report=term-miss
 branch = true
 
 [tool.importlinter]
-root_packages = ["custom_components.task_wheel"]
+root_packages = ["custom_components"]
 include_external_packages = true
 
 [[tool.importlinter.contracts]]
