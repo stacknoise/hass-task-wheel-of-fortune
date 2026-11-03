@@ -208,7 +208,7 @@ export class TwHistoryView extends LitElement {
               ${originText(round.origin, text)}</span
             >
           </span>
-          <span class="muted"
+          <span class="muted fixed"
             >${this.#text('history.summary', {
               done: doneCount(round.assignments),
               total: round.assignments.length,

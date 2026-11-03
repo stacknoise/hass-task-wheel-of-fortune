@@ -84,6 +84,9 @@ describe('Auslosung', () => {
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
     const hass = hassWith();
     hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
+    hass.replies.set('task_wheel/draw/preview', {
+      result: { ...result('t1', null), segments: result('t1', 'p1').segments },
+    });
     hass.replies.set('task_wheel/draw/spin', {
       result: result('t1', 'p2'),
       panel_round: round([result('t1', 'p2')], ['t2']),
@@ -97,10 +100,20 @@ describe('Auslosung', () => {
     });
     expect(text(view)).toContain('Bad putzen');
 
+    // Das Rad ist schon vor dem Drehen gefüllt, die Personen zeigen ihre Chance.
+    const wheel = (): ParentNode => view().querySelector('tw-wheel')?.shadowRoot as ShadowRoot;
+    await vi.waitFor(() => {
+      expect(wheel().querySelectorAll('path.wedge')).toHaveLength(2);
+    });
+    expect(text(view)).toContain('60 %');
+
     await click(view, '.hub');
     await vi.waitFor(() => {
       expect(text(view)).toContain('Ben übernimmt Bad putzen');
     });
+    // Nach dem Anhalten bleibt die Drehung erhalten (kein Zurückspringen beim Neuzeichnen).
+    const rotor = wheel().querySelector<SVGGElement>('.rotor');
+    expect(rotor?.style.transform).not.toBe('rotate(0deg)');
     expect(text(view)).toContain('Chance 60 %');
     expect(text(view)).toContain('Abwesend');
     expect(view().querySelector('tw-confetti')).not.toBeNull();

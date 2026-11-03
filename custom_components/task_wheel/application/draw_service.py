@@ -108,6 +108,10 @@ class DrawService:
         updated = self._store(replace(panel_round, draft=panel_round.draft.spin(self._engine())))
         return updated.draft.results[-1]
 
+    def preview(self, panel_round_id: str, now: dt.datetime) -> TaskDraw:
+        """Das Rad der nächsten Aufgabe (Segmente, Ausschlüsse) ohne zu ziehen."""
+        return self.get(panel_round_id, now).draft.preview(self._engine())
+
     def spin_rest(self, panel_round_id: str, now: dt.datetime) -> tuple[TaskDraw, ...]:
         """Zieht alle übrigen Aufgaben und liefert deren Ergebnisse."""
         panel_round = self.get(panel_round_id, now)

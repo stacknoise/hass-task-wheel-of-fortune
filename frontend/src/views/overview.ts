@@ -57,8 +57,11 @@ export class TwOverviewView extends LitElement {
       :host {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 0 var(--tw-space-m);
-        align-items: start;
+        gap: var(--tw-space-m);
+        align-items: stretch;
+      }
+      .card {
+        margin: 0;
       }
       .wide {
         grid-column: 1 / -1;
@@ -285,13 +288,13 @@ export class TwOverviewView extends LitElement {
                   (standing) => standing.person_id,
                   (standing) => {
                     const person = personById.get(standing.person_id);
-                    return html`<li class="row">
+                    return html`<li class="row nowrap">
                       <tw-avatar
                         name=${person?.name ?? ''}
                         color=${person?.color ?? ''}
                       ></tw-avatar>
                       <span class="grow">${person?.name}</span>
-                      <strong>${standing.points}</strong>
+                      <strong class="fixed">${standing.points}</strong>
                       <span class="muted"
                         >${this.#text('overview.pointsFair', {
                           fair: formatNumber(standing.fair_points, this.language),
@@ -323,7 +326,7 @@ export class TwOverviewView extends LitElement {
                   items,
                   (item) => item.assignment.id,
                   ({ assignment, at }) =>
-                    html`<li class="row">
+                    html`<li class="row nowrap">
                       <span class="grow">
                         ${
                           personById.get(assignment.person_id)?.name ??
@@ -333,7 +336,7 @@ export class TwOverviewView extends LitElement {
                         ${taskById.get(assignment.task_id)?.name ?? this.#text('common.unknownTask')}
                         <span class="muted">${formatDateTime(at, this.language)}</span>
                       </span>
-                      <tw-badge tone=${STATUS_TONES[assignment.status]}
+                      <tw-badge class="fixed" tone=${STATUS_TONES[assignment.status]}
                         >${this.#text(`status.${assignment.status}`)}</tw-badge
                       >
                     </li>`,

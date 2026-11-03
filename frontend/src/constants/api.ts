@@ -4,6 +4,7 @@ export const WS_PREFIX = 'task_wheel/';
 export const WS_SNAPSHOT = `${WS_PREFIX}snapshot`;
 export const WS_SUBSCRIBE = `${WS_PREFIX}subscribe`;
 export const WS_DRAW_BEGIN = `${WS_PREFIX}draw/begin`;
+export const WS_DRAW_PREVIEW = `${WS_PREFIX}draw/preview`;
 export const WS_DRAW_SPIN = `${WS_PREFIX}draw/spin`;
 export const WS_DRAW_SPIN_REST = `${WS_PREFIX}draw/spin_rest`;
 export const WS_DRAW_COMMIT = `${WS_PREFIX}draw/commit`;

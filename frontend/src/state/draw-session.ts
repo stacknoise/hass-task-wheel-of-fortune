@@ -12,6 +12,8 @@ export interface DrawState {
   readonly results: readonly TaskDrawWire[];
   /** Das Ergebnis, das gerade gedreht oder gezeigt wird. */
   readonly current: TaskDrawWire | undefined;
+  /** Das Rad der nächsten Aufgabe vor dem Drehen (Segmente und Ausschlüsse, ohne Gewinner). */
+  readonly preview: TaskDrawWire | undefined;
   readonly errorCode: string | undefined;
 }
 
@@ -24,6 +26,7 @@ const INITIAL: DrawState = {
   taskIds: [],
   results: [],
   current: undefined,
+  preview: undefined,
   errorCode: undefined,
 };
 const UNKNOWN_ERROR = 'unknown';
@@ -61,7 +64,8 @@ export class DrawSession {
     }
     await this.#run(async () => {
       this.#open(scheduleId, await this.#client.beginDraw(scheduleId));
-      return this.#finishIfNothingPending();
+      await this.#finishIfNothingPending();
+      await this.#loadPreview();
     });
   }
 
@@ -69,6 +73,7 @@ export class DrawSession {
   resume(round: PanelRoundWire): void {
     if (this.#idle()) {
       this.#open(round.schedule_id, round);
+      void this.#loadPreview();
     }
   }
 
@@ -101,7 +106,8 @@ export class DrawSession {
       return;
     }
     if (this.#pending() > 0) {
-      this.#set({ phase: 'ready', current: undefined });
+      this.#set({ phase: 'ready', current: undefined, preview: undefined });
+      await this.#loadPreview();
       return;
     }
     await this.#commit();
@@ -129,6 +135,11 @@ export class DrawSession {
     }
   }
 
+  /** Die aktuelle Phase, frisch gelesen (sie kann sich während eines Aufrufs ändern). */
+  #phase(): DrawPhase {
+    return this.#state.phase;
+  }
+
   #idle(): boolean {
     return this.#state.phase === 'choose' || this.#state.phase === 'error';
   }
@@ -146,6 +157,22 @@ export class DrawSession {
       taskIds: [...round.results.map((result) => result.task_id), ...round.pending_task_ids],
       results: round.results,
     });
+  }
+
+  /** Holt das Rad der nächsten Aufgabe; schlägt es fehl, bleibt das Rad vor dem Drehen leer. */
+  async #loadPreview(): Promise<void> {
+    const { roundId } = this.#state;
+    if (this.#state.phase !== 'ready' || !roundId) {
+      return;
+    }
+    try {
+      const { result } = await this.#client.previewDraw(roundId);
+      if (this.#state.roundId === roundId && this.#phase() === 'ready') {
+        this.#set({ preview: result });
+      }
+    } catch {
+      // Die Vorschau ist nur Anzeige; das Drehen funktioniert auch ohne sie.
+    }
   }
 
   async #finishIfNothingPending(): Promise<void> {
