@@ -26,3 +26,20 @@ export function translate(key: TextKey, language: string, params?: TextParams): 
     ? text.replace(PLACEHOLDER, (whole, name: string) => String(params[name] ?? whole))
     : text;
 }
+
+const ERROR_PREFIX = 'error.';
+const UNKNOWN_ERROR: TextKey = 'error.unknown';
+
+/** Text zu einem Fehlerschlüssel des Backends (`out_of_range`); unbekannte Schlüssel ergeben den allgemeinen Text. */
+export function translateError(code: string, language: string): string {
+  const key = `${ERROR_PREFIX}${code}`;
+  return translate(key in de ? (key as TextKey) : UNKNOWN_ERROR, language);
+}
+
+/** Setzt Platzhalter wie `{count}` in einem Text ein. */
+export function fill(text: string, values: Readonly<Record<string, string | number>>): string {
+  return Object.entries(values).reduce(
+    (result, [name, value]) => result.replaceAll(`{${name}}`, String(value)),
+    text,
+  );
+}

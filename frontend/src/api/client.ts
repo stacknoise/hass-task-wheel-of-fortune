@@ -4,6 +4,9 @@ import {
   FIELD_MONTHS,
   FIELD_PANEL_ROUND_ID,
   FIELD_SCHEDULE_ID,
+  WS_ACTION_CREATE,
+  WS_ACTION_DELETE,
+  WS_ACTION_UPDATE,
   FIELD_TO_PERSON_ID,
   FIELD_WEEKS,
   WS_ASSIGNMENT_COMPLETE,
@@ -13,11 +16,13 @@ import {
   WS_DRAW_COMMIT,
   WS_DRAW_SPIN,
   WS_DRAW_SPIN_REST,
+  WS_PREFIX,
   WS_HISTORY_LIST,
   WS_SNAPSHOT,
   WS_STATISTICS_GET,
   WS_SUBSCRIBE,
 } from '../constants/index.ts';
+import type { ConfigResource } from '../constants/index.ts';
 import type { HistoryPage, HistoryQuery, StatisticsReport } from './models.ts';
 import type {
   Delta,
@@ -52,6 +57,21 @@ export class ApiClient {
     return () => {
       void stop();
     };
+  }
+
+  /** Legt ein Konfigurationsobjekt an (ohne `id`) oder ändert es (mit `id`); liefert das gespeicherte Objekt. */
+  saveConfig<T>(resource: ConfigResource, id: string | undefined, object: object): Promise<T> {
+    const type = `${WS_PREFIX}${resource}/${id === undefined ? WS_ACTION_CREATE : WS_ACTION_UPDATE}`;
+    const message = id === undefined ? { type } : { type, [`${resource}_id`]: id };
+    return this.#hass.callWS<T>({ ...message, [resource]: object });
+  }
+
+  /** Löscht ein Konfigurationsobjekt. */
+  async deleteConfig(resource: ConfigResource, id: string): Promise<void> {
+    await this.#hass.callWS<unknown>({
+      type: `${WS_PREFIX}${resource}/${WS_ACTION_DELETE}`,
+      [`${resource}_id`]: id,
+    });
   }
 
   /** Eine Seite der Historie (neueste Runde zuerst), optional für eine Person. */

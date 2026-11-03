@@ -90,6 +90,18 @@ Texte gibt es auf Deutsch und Englisch (Sprache aus Home Assistant). Das Bundle 
 Ausprobieren `cd frontend && npm ci && npm run build`. Fehlt es, bleibt die Integration nutzbar und schreibt eine
 Warnung ins Protokoll.
 
+### Personen, Aufgaben und Zeitpläne im Panel (AP-15)
+
+Die Tabs *Personen*, *Aufgaben* und *Zeitpläne* legen Objekte an, ändern und löschen sie (nur Administratoren). Links stehen
+die Karten, rechts das Formular; Fehler des Backends erscheinen am betroffenen Feld und als Hinweis über den Knöpfen.
+
+- **Personen:** Farbe im Rad, Belastbarkeit (voll, halb, pausiert), Anwesenheit (einmalig, Wochentage, Wochenrhythmus) mit
+  Vorschau der nächsten vier Wochen und optional eine Benachrichtigungs-Entität (`notify.…`, wird beim Speichern geprüft).
+- **Aufgaben:** erlaubte Personen, Häufigkeit (jede Runde, höchstens n× je Zeitraum, festes Intervall mit Zeitstrahl),
+  Punkte, Frist und die Zusatzregeln „keine Wiederholung“, „Abwesenheit beachten“, „Tausch erlaubt“.
+- **Zeitpläne:** wiederkehrend, einmalig oder nur manuell, Aufgabenwahl, Optionen und ein Beispiel für `task_wheel.draw`
+  und das Ereignis `task_wheel_drawn`.
+
 ## Panel-API (WebSocket)
 
 Das Panel spricht mit dem Backend über WebSocket-Befehle mit dem Präfix `task_wheel/`: `snapshot`, `subscribe`
