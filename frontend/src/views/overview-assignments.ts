@@ -3,6 +3,7 @@ import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 
 import type { AssignmentObject, PersonObject, TaskObject } from '../api/index.ts';
+import type { ActionItem } from '../components/index.ts';
 
 import { STATUS } from '../constants/index.ts';
 import { formatDateTime } from '../i18n/format.ts';
@@ -91,49 +92,55 @@ function swapChoice(
   `;
 }
 
-function rowButtons(
+const ACTION = { complete: 'complete', skip: 'skip', swap: 'swap' } as const;
+
+function rowActions(
   assignment: AssignmentObject,
   context: AssignmentsContext,
   text: Translate,
 ): TemplateResult {
   const person = context.personById.get(assignment.person_id);
   const task = context.taskById.get(assignment.task_id);
+  const items: readonly ActionItem[] = [
+    {
+      id: ACTION.complete,
+      label: text('overview.complete'),
+      question: text('overview.completeQuestion'),
+      primary: true,
+    },
+    {
+      id: ACTION.swap,
+      label: text('overview.swap'),
+      title: swapHint(task, person, text),
+      disabled: !canSwap(task, person),
+    },
+    {
+      id: ACTION.skip,
+      label: text('overview.skip'),
+      question: text('overview.skipQuestion'),
+    },
+  ];
+  const run: Readonly<Record<string, () => void>> = {
+    [ACTION.complete]: () => {
+      context.handlers.complete(assignment.id);
+    },
+    [ACTION.skip]: () => {
+      context.handlers.skip(assignment.id);
+    },
+    [ACTION.swap]: () => {
+      context.handlers.toggleSwap(assignment.id);
+    },
+  };
   return html`
-    <div class="actions">
-      <button
-        type="button"
-        class="action"
-        title=${swapHint(task, person, text)}
-        ?disabled=${context.busy || !canSwap(task, person)}
-        aria-expanded=${context.swapOpen === assignment.id ? 'true' : 'false'}
-        @click=${() => {
-          context.handlers.toggleSwap(assignment.id);
-        }}
-      >
-        ${text('overview.swap')}
-      </button>
-      <tw-confirm-action
-        language=${context.language}
-        label=${text('overview.skip')}
-        confirm=${text('overview.skip')}
-        question=${text('overview.skipQuestion')}
-        ?busy=${context.busy}
-        @tw-confirm=${() => {
-          context.handlers.skip(assignment.id);
-        }}
-      ></tw-confirm-action>
-      <tw-confirm-action
-        language=${context.language}
-        label=${text('overview.complete')}
-        confirm=${text('overview.complete')}
-        question=${text('overview.completeQuestion')}
-        primary
-        ?busy=${context.busy}
-        @tw-confirm=${() => {
-          context.handlers.complete(assignment.id);
-        }}
-      ></tw-confirm-action>
-    </div>
+    <tw-action-menu
+      language=${context.language}
+      label=${text('overview.actions')}
+      .items=${items}
+      ?busy=${context.busy}
+      @tw-action=${(event: CustomEvent<string>) => {
+        run[event.detail]?.();
+      }}
+    ></tw-action-menu>
   `;
 }
 
@@ -174,7 +181,7 @@ function assignmentRow(
             ? html`<tw-badge>${text('status.swapped')}</tw-badge>`
             : nothing
         }
-        ${rowButtons(assignment, context, text)}
+        ${rowActions(assignment, context, text)}
       </div>
       ${context.swapOpen === assignment.id ? swapChoice(assignment, context, roundPersonIds, text) : nothing}
     </li>

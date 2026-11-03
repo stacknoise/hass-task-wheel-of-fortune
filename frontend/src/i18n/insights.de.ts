@@ -32,6 +32,7 @@ export const insightsDe = {
   'overview.due': 'Frist {date}',
   'overview.points': '{points} Punkte',
   'overview.complete': 'Erledigt',
+  'overview.actions': 'Aktionen',
   'overview.swap': 'Tauschen',
   'overview.swapWith': 'Tauschen mit',
   'overview.cancel': 'Abbrechen',

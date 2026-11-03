@@ -34,6 +34,7 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'overview.due': 'Due {date}',
   'overview.points': '{points} points',
   'overview.complete': 'Done',
+  'overview.actions': 'Actions',
   'overview.swap': 'Swap',
   'overview.swapWith': 'Swap with',
   'overview.cancel': 'Cancel',

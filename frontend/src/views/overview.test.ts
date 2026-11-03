@@ -9,6 +9,7 @@ import {
   WS_ROUND_DELETE,
   WS_STATISTICS_GET,
 } from '../constants/index.ts';
+import { press } from '../components/press.testing.ts';
 import { fakeHass, mountView, text } from './fixtures.testing.ts';
 import { VIEW_LOADERS } from './registry.ts';
 
@@ -28,13 +29,23 @@ function buttons(view: Element, label: string): HTMLButtonElement[] {
   );
 }
 
-/** Fragt per Popup nach und bestätigt: erst der Knopf der Aktion, dann „Bestätigen“ im Dialog. */
-async function confirmAction(view: HTMLElement, label: string): Promise<void> {
-  const action = view.shadowRoot?.querySelector(`tw-confirm-action[label="${label}"]`) as
-    (HTMLElement & { updateComplete: Promise<boolean> }) | null;
-  action?.shadowRoot?.querySelector('button')?.click();
-  await action?.updateComplete;
-  action?.shadowRoot?.querySelector<HTMLButtonElement>('.ask button')?.click();
+/** Öffnet das Aktionsmenü der `index`-ten Zuteilung. */
+async function openMenu(view: HTMLElement, index = 0): Promise<HTMLElement> {
+  const menu = view.shadowRoot?.querySelectorAll<HTMLElement>('tw-action-menu')[
+    index
+  ] as HTMLElement;
+  menu.shadowRoot?.querySelector('button')?.click();
+  await (menu as HTMLElement & { updateComplete: Promise<boolean> }).updateComplete;
+  return menu;
+}
+
+/** Wählt einen Menüeintrag; mit `confirm` auch die Bestätigung im Dialog. */
+async function choose(view: HTMLElement, label: string, confirm = false, index = 0): Promise<void> {
+  const menu = await openMenu(view, index);
+  await press(menu, label);
+  if (confirm) {
+    await press(menu, label);
+  }
 }
 
 describe('Übersicht', () => {
@@ -79,7 +90,7 @@ describe('Übersicht', () => {
 
   it('erledigt eine Zuteilung und lädt Punkte und Aktivität neu', async () => {
     const { view, hass } = await mount();
-    await confirmAction(view, 'Erledigt');
+    await choose(view, 'Erledigt', true);
     await vi.waitFor(() => {
       expect(hass.messages.find((m) => m.type === WS_ASSIGNMENT_COMPLETE)).toEqual({
         type: WS_ASSIGNMENT_COMPLETE,
@@ -93,7 +104,7 @@ describe('Übersicht', () => {
 
   it('bietet nur erlaubte, nicht pausierte Personen zum Tausch an', async () => {
     const { view, hass } = await mount();
-    buttons(view, 'Tauschen')[0]?.click();
+    await choose(view, 'Tauschen');
     await view.updateComplete;
     const choice = view.shadowRoot?.querySelector('.swap');
     expect(choice?.textContent).toContain('Ben');
@@ -113,20 +124,13 @@ describe('Übersicht', () => {
 
   it('markiert eine Zuteilung erst nach der Rückfrage als „Bleibt unerledigt“', async () => {
     const { view, hass } = await mount();
-    const skip = view.shadowRoot?.querySelector(
-      'tw-confirm-action[label="Bleibt unerledigt"]',
-    ) as HTMLElement & {
-      updateComplete: Promise<boolean>;
-    };
-    const click = (label: string) =>
-      [...(skip.shadowRoot?.querySelectorAll('button') ?? [])]
-        .find((b) => b.textContent.includes(label))
-        ?.click();
-    click('Bleibt unerledigt');
-    await skip.updateComplete;
-    expect(skip.shadowRoot?.textContent).toContain('zählt in der Statistik wie verpasst');
+    const menu = await openMenu(view);
+    await press(menu, 'Bleibt unerledigt');
+    expect(menu.shadowRoot?.querySelector('tw-confirm-dialog')?.shadowRoot?.textContent).toContain(
+      'zählt in der Statistik wie verpasst',
+    );
     expect(hass.messages.some((m) => m.type === WS_ASSIGNMENT_SKIP)).toBe(false);
-    skip.shadowRoot?.querySelector<HTMLButtonElement>('.ask button')?.click();
+    await press(menu, 'Bleibt unerledigt');
     await vi.waitFor(() => {
       expect(hass.messages.find((m) => m.type === WS_ASSIGNMENT_SKIP)).toEqual({
         type: WS_ASSIGNMENT_SKIP,
@@ -137,7 +141,14 @@ describe('Übersicht', () => {
 
   it('sperrt das Tauschen ohne Joker oder wenn die Aufgabe es nicht erlaubt', async () => {
     const { view } = await mount();
-    const swap = buttons(view, 'Tauschen');
+    const swap: HTMLButtonElement[] = [];
+    for (const index of [0, 1, 2]) {
+      const menu = await openMenu(view, index);
+      const item = [...(menu.shadowRoot?.querySelectorAll('button') ?? [])].find((button) =>
+        button.textContent.includes('Tauschen'),
+      );
+      swap.push(item as HTMLButtonElement);
+    }
     expect(swap[0]?.disabled).toBe(false);
     expect(swap[0]?.title).toBe('Joker übrig: 2');
     expect(swap[1]?.disabled).toBe(true);
@@ -147,7 +158,7 @@ describe('Übersicht', () => {
 
   it('klappt die Tauschauswahl wieder zu', async () => {
     const { view } = await mount();
-    buttons(view, 'Tauschen')[0]?.click();
+    await choose(view, 'Tauschen');
     await view.updateComplete;
     buttons(view, 'Abbrechen')[0]?.click();
     await view.updateComplete;
@@ -157,7 +168,7 @@ describe('Übersicht', () => {
   it('zeigt einen Fehler, wenn die Aktion scheitert', async () => {
     const { view, hass } = await mount();
     hass.callWS = () => Promise.reject(new Error('nein'));
-    await confirmAction(view, 'Erledigt');
+    await choose(view, 'Erledigt', true);
     await vi.waitFor(() => {
       expect(text(view)).toContain('Die Aktion ist fehlgeschlagen.');
     });
@@ -179,21 +190,16 @@ describe('Übersicht', () => {
     const blockedButton = blocked?.shadowRoot?.querySelector('button');
     expect(blockedButton?.disabled).toBe(true);
     expect(blockedButton?.title).toBe('Nicht löschbar: 1 Aufgaben sind schon erledigt.');
-    const inner = (): ShadowRoot | null => remove?.shadowRoot ?? null;
-    const click = (label: string) =>
-      [...(inner()?.querySelectorAll('button') ?? [])]
-        .find((b) => b.textContent.includes(label))
-        ?.click();
-    click('Auslosung löschen');
-    await (remove as HTMLElement & { updateComplete: Promise<boolean> }).updateComplete;
-    expect(inner()?.textContent).toContain('Sie verschwindet auch aus Historie und Statistik');
+    const host = remove as HTMLElement;
+    await press(host, 'Auslosung löschen');
+    expect(host.shadowRoot?.querySelector('tw-confirm-dialog')?.shadowRoot?.textContent).toContain(
+      'Sie verschwindet auch aus Historie und Statistik',
+    );
     expect(hass.messages.some((m) => m.type === WS_ROUND_DELETE)).toBe(false);
-    click('Abbrechen');
-    await (remove as HTMLElement & { updateComplete: Promise<boolean> }).updateComplete;
+    await press(host, 'Abbrechen');
     expect(hass.messages.some((m) => m.type === WS_ROUND_DELETE)).toBe(false);
-    click('Auslosung löschen');
-    await (remove as HTMLElement & { updateComplete: Promise<boolean> }).updateComplete;
-    click('Löschen');
+    await press(host, 'Auslosung löschen');
+    await press(host, 'Löschen');
     await vi.waitFor(() => {
       expect(hass.messages.find((m) => m.type === WS_ROUND_DELETE)).toEqual({
         type: WS_ROUND_DELETE,

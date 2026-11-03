@@ -77,7 +77,7 @@ vorerst nur Zähler und werden mit AP-15 ausgebaut.
 
 
 - **Übersicht:** nächste Auslosung (mit Blättern durch die Zeitpläne), offene Zuteilungen je Zeitplan mit Filter nach Person,
-  Erledigen, „Bleibt unerledigt“ (mit Rückfrage) und Tauschen (nur erlaubte, nicht pausierte Personen derselben Auslosung, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
+  Aktionsmenü je Zuteilung mit Erledigen und „Bleibt unerledigt“ (beide mit Rückfrage per Popup) und Tauschen (nur erlaubte, nicht pausierte Personen derselben Auslosung, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
   fairen Anteil und die jüngste Aktivität. Die offenen Zuteilungen sind nach **Auslosung** gruppiert (jüngste zuerst, mit
   Zeitplan und Zeitpunkt); eine Auslosung ohne offene Zuteilungen verschwindet aus der Liste. Eine ganze Auslosung lässt sich
   nach Rückfrage **löschen**, solange keine ihrer Aufgaben erledigt ist; sie verschwindet dann auch aus Historie und Statistik.

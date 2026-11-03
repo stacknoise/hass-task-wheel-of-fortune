@@ -63,6 +63,20 @@ export class TwHistoryView extends LitElement {
         text-align: left;
         cursor: pointer;
       }
+      .titles {
+        display: flex;
+        flex-direction: column;
+        gap: var(--tw-space-field);
+      }
+      .card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--tw-space-field);
+      }
+      .card > .table {
+        align-self: stretch;
+      }
       .chevron {
         transition: transform var(--tw-duration);
       }
@@ -213,8 +227,8 @@ export class TwHistoryView extends LitElement {
             this.#toggle(round.id);
           }}
         >
-          <span class="grow">
-            <strong>${schedule ?? this.#text('common.unknownSchedule')}</strong><br />
+          <span class="grow titles">
+            <strong>${schedule ?? this.#text('common.unknownSchedule')}</strong>
             <span class="muted"
               >${formatDateTime(round.started_at, this.language)} ·
               ${originText(round.origin, text)}</span
