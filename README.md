@@ -1,4 +1,4 @@
-# Aufgaben-Glücksrad für Home Assistant
+# Task Wheel of Fortune for Home Assistant
 
 Verteilt Haushaltsaufgaben fair und mit etwas Spaß: Ein Glücksrad lost aus, wer was übernimmt. Die Chancen
 richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie belastbar ist.
@@ -33,9 +33,9 @@ Adresse der Instanz hinterlegen). Von Hand geht es so:
 
 1. HACS → Menü (⋮) → *Benutzerdefinierte Repositories* → `https://github.com/stacknoise/hass-task-wheel-of-fortune`,
    Typ *Integration* → *Hinzufügen*
-2. „Aufgaben-Glücksrad“ in HACS suchen, *Herunterladen* (die neueste Version wählen) und Home Assistant neu starten
-3. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Aufgaben-Glücksrad*
-4. In der Seitenleiste erscheint **Glücksrad**; dort Personen, Aufgaben und Zeitpläne anlegen
+2. „Task Wheel of Fortune“ in HACS suchen, *Herunterladen* (die neueste Version wählen) und Home Assistant neu starten
+3. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Task Wheel of Fortune*
+4. In der Seitenleiste erscheint **Task Wheel of Fortune**; dort Personen, Aufgaben und Zeitpläne anlegen
 
 Updates meldet HACS wie bei jeder anderen Integration. Ohne HACS: den Ordner `custom_components/task_wheel` aus der
 Datei `task_wheel.zip` des jeweiligen [Releases](https://github.com/stacknoise/hass-task-wheel-of-fortune/releases)
@@ -85,7 +85,7 @@ Ein Ziel, das mehrere Personen teilen (z. B. ein Familienkanal), bekommt jede Me
 
 ## Panel (Gerüst)
 
-Nach dem Einrichten erscheint in der Seitenleiste der Eintrag „Aufgaben-Glücksrad“ (`/task-wheel`). Das Panel hat die
+Nach dem Einrichten erscheint in der Seitenleiste der Eintrag „Task Wheel of Fortune“ (`/task-wheel`). Das Panel hat die
 Tabs Übersicht, Auslosung, Aufgaben, Personen, Zeitpläne, Historie und Statistik, lädt den Stand per `snapshot` und
 bleibt über `subscribe` aktuell. Der Tab **Auslosung** ist fertig: Zeitplan wählen, Runde starten (eine offene Runde
 lässt sich fortsetzen), je Aufgabe die Animation des Zeitplans abspielen (Glücksrad, Lostrommel, Slot-Machine, Plinko oder Scheinwerfer, Größe = Chance, „Wer ist dabei?“ mit Gründen; wer in der Runde schon eine Aufgabe hat, ist für die weiteren nicht mehr im Rad; überzählige Aufgaben bleiben als „nicht verteilbar“ offen; bleibt für eine Aufgabe nur noch eine Person übrig, wird sie ohne Drehen zugewiesen),

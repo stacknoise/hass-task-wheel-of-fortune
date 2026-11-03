@@ -1,6 +1,6 @@
 {
   "domain": "task_wheel",
-  "name": "Aufgaben-Glücksrad",
+  "name": "Task Wheel of Fortune",
   "codeowners": ["@stacknoise"],
   "config_flow": true,
   "dependencies": ["http", "frontend", "panel_custom", "websocket_api"],
@@ -10,5 +10,5 @@
   "issue_tracker": "https://github.com/stacknoise/hass-task-wheel-of-fortune/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
