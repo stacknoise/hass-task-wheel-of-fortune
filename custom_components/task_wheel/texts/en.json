@@ -1,0 +1,21 @@
+{
+  "common": {
+    "date_format": "%m/%d",
+    "list_separator": ", ",
+    "line_separator": "\n"
+  },
+  "round_drawn": {
+    "title": "New tasks: {schedule}",
+    "message": "{summary}",
+    "person_line": "{person}: {tasks}",
+    "task_item": "{task} (due {due})"
+  },
+  "swapped": {
+    "title": "Task taken over",
+    "message": "{from_person} handed \"{task}\" over to you (due {due})."
+  },
+  "reminder": {
+    "title": "Reminder: {schedule}",
+    "message": "\"{schedule}\" has not been drawn for {days} days."
+  }
+}

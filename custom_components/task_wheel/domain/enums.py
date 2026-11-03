@@ -25,6 +25,14 @@ _LOAD_FACTORS = {
 }
 
 
+class NotifyTargetKind(StrEnum):
+    """Art des Benachrichtigungsziels einer Person."""
+
+    NOTIFY_ENTITY = "notify_entity"
+    NOTIFY_SERVICE = "notify_service"
+    NONE = "none"
+
+
 class AbsenceKind(StrEnum):
     """Art einer Anwesenheitsregel."""
 
