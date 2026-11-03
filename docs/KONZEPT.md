@@ -291,6 +291,12 @@ Tausch ist nur erlaubt, wenn die Aufgabe `swap_allowed` hat, die neue Person die
 dürfte (erlaubt, nicht pausiert, anwesend) und die abgebende Person im laufenden Monat noch Joker hat.
 Statusübergänge sind eine Tabelle `dict[(Status, Aktion), Status]` – keine Verzweigungsketten.
 
+**Auslosung löschen** (`round/delete`, nur Administratoren): Die Runde verschwindet mit **allen** Zuteilungen, auch den
+schon erledigten oder verpassten. Die Monatsaggregate (Anzahl und Punkte) werden um genau diese Zuteilungen verringert, die
+Statistik sieht die Runde danach nicht mehr, als hätte es sie nie gegeben; Joker aus getauschten Zuteilungen gelten wieder
+als nicht verbraucht, weil sie aus den Zuteilungen gezählt werden. Entitäten der betroffenen Personen und des Zeitplans werden
+aktualisiert. Das Panel fragt vor dem Löschen nach und nennt, wie viele Zuteilungen schon abgeschlossen sind.
+
 ### 5.5 Zeitpläne
 
 | Art | Umsetzung |
@@ -346,6 +352,7 @@ Präfix `task_wheel/`. Befehle je Bereich in eigenen Modulen; jeder Befehl hat e
 |---|---|---|
 | Lesen | `snapshot`, `subscribe` (Deltas), `history/list`, `statistics/get` | angemeldeter Benutzer |
 | Erledigen/Tauschen | `assignment/complete`, `assignment/swap` | angemeldeter Benutzer |
+| Auslosung löschen | `round/delete` | **Administrator** |
 | Auslosen | `draw/begin`, `draw/spin`, `draw/spin_rest`, `draw/commit`, `draw/cancel` | angemeldeter Benutzer |
 | Konfiguration | `person/*`, `task/*`, `schedule/*`, `settings/update` | **Administrator** (`@websocket_api.require_admin`) |
 

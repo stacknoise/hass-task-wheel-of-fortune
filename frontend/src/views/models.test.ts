@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import type { AssignmentObject, ScheduleObject, WeekRate } from '../api/index.ts';
+import type { AssignmentObject, RoundHead, ScheduleObject, WeekRate } from '../api/index.ts';
 import { buildCsv, csvCell } from './csv.ts';
-import { groupBySchedule, recentActivity, upcomingDraws } from './overview-model.ts';
+import { groupByRound, recentActivity, upcomingDraws } from './overview-model.ts';
 import { barRows, chartPoints, chartSegments } from './statistics-model.ts';
 
 function schedule(
@@ -59,22 +59,31 @@ describe('upcomingDraws', () => {
   });
 });
 
-describe('groupBySchedule', () => {
-  it('ordnet jede Zuteilung dem ersten Zeitplan mit ihrer Aufgabe zu und lässt leere Gruppen weg', () => {
+describe('groupByRound', () => {
+  const head = (id: string, scheduleId: string, startedAt: string) =>
+    ({ id, schedule_id: scheduleId, started_at: startedAt, total: 2, closed: 0 }) as RoundHead;
+
+  it('gruppiert nach Auslosung, die jüngste zuerst, und lässt leere Gruppen weg', () => {
     const items = [
-      { id: '1', task_id: 'x' },
-      { id: '2', task_id: 'y' },
-      { id: '3', task_id: 'z' },
+      { id: '1', round_id: 'old' },
+      { id: '2', round_id: 'new' },
+      { id: '3', round_id: 'lost' },
     ] as unknown as AssignmentObject[];
-    const groups = groupBySchedule(items, [
-      schedule('s1', ['x']),
-      schedule('s2', ['x', 'y']),
-      schedule('s3', []),
-    ]);
-    expect(groups.map((g) => [g.schedule?.id, g.assignments.map((a) => a.id)])).toEqual([
-      ['s1', ['1']],
-      ['s2', ['2']],
-      [undefined, ['3']],
+    const groups = groupByRound(
+      items,
+      [
+        head('old', 's1', '2026-10-01T00:00:00Z'),
+        head('new', 'gone', '2026-11-01T00:00:00Z'),
+        head('empty', 's1', '2026-11-02T00:00:00Z'),
+      ],
+      [schedule('s1', [])],
+    );
+    expect(
+      groups.map((g) => [g.round?.id, g.schedule?.id, g.assignments.map((a) => a.id)]),
+    ).toEqual([
+      ['new', undefined, ['2']],
+      ['old', 's1', ['1']],
+      [undefined, undefined, ['3']],
     ]);
   });
 });

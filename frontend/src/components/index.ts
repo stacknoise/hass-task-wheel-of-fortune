@@ -13,6 +13,7 @@ export { TwStepper } from './stepper.ts';
 export { describeFrequency, describeTrigger } from './summaries.ts';
 export { TwAvatar } from './avatar.ts';
 export { TwBadge } from './badge.ts';
+export { TwConfirmDelete } from './confirm-delete.ts';
 export { TwChips } from './chips.ts';
 export type { ChipItem } from './chips.ts';
 export { TwTabBar } from './tab-bar.ts';

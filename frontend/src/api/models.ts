@@ -36,6 +36,15 @@ export interface AssignmentObject extends WireObject {
   readonly done_at: string | null;
 }
 
+/** Kopf einer Auslosung mit offenen Zuteilungen (Sammlung `rounds` des Snapshots). */
+export interface RoundHead extends WireObject {
+  readonly schedule_id: string;
+  readonly origin: string;
+  readonly started_at: string;
+  readonly total: number;
+  readonly closed: number;
+}
+
 export interface RoundObject extends WireObject {
   readonly schedule_id: string;
   readonly origin: string;
@@ -107,6 +116,7 @@ export interface ModelsOf {
   readonly tasks: TaskObject;
   readonly schedules: ScheduleObject;
   readonly assignments: AssignmentObject;
+  readonly rounds: RoundHead;
 }
 
 /** Sicht auf eine Sammlung des Snapshots; die Form der Objekte garantiert das Backend (KONZEPT §6.4). */

@@ -29,6 +29,7 @@ export const EMPTY_SNAPSHOT: Snapshot = {
   ],
   schedules: [],
   assignments: [],
+  rounds: [],
   panel_rounds: [],
   settings: {},
   now: '2026-11-03T12:00:00+00:00',

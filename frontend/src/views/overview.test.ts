@@ -5,6 +5,7 @@ import {
   WS_ASSIGNMENT_COMPLETE,
   WS_ASSIGNMENT_SWAP,
   WS_HISTORY_LIST,
+  WS_ROUND_DELETE,
   WS_STATISTICS_GET,
 } from '../constants/index.ts';
 import { fakeHass, mountView, text } from './fixtures.testing.ts';
@@ -125,6 +126,44 @@ describe('Übersicht', () => {
     buttons(view, 'Erledigt')[0]?.click();
     await vi.waitFor(() => {
       expect(text(view)).toContain('Die Aktion ist fehlgeschlagen.');
+    });
+  });
+
+  it('gruppiert nach Auslosung mit Zeitplan, Zeitpunkt und offenen Zuteilungen', async () => {
+    const { view } = await mount();
+    const sections = [...(view.shadowRoot?.querySelectorAll('.assignments section') ?? [])];
+    expect(sections).toHaveLength(2);
+    expect(sections[0]?.textContent).toContain('Wochenplan');
+    expect(sections[0]?.textContent).toContain('3 offen');
+    expect(sections[1]?.textContent).toContain('Ohne Zeitplan');
+  });
+
+  it('löscht eine Auslosung erst nach der Rückfrage', async () => {
+    const { view, hass } = await mount();
+    const remove = view.shadowRoot?.querySelector('tw-confirm-delete');
+    const inner = (): ShadowRoot | null => remove?.shadowRoot ?? null;
+    const click = (label: string) =>
+      [...(inner()?.querySelectorAll('button') ?? [])]
+        .find((b) => b.textContent.includes(label))
+        ?.click();
+    click('Auslosung löschen');
+    await (remove as HTMLElement & { updateComplete: Promise<boolean> }).updateComplete;
+    expect(inner()?.textContent).toContain('1 davon sind schon abgeschlossen');
+    expect(hass.messages.some((m) => m.type === WS_ROUND_DELETE)).toBe(false);
+    click('Abbrechen');
+    await (remove as HTMLElement & { updateComplete: Promise<boolean> }).updateComplete;
+    expect(hass.messages.some((m) => m.type === WS_ROUND_DELETE)).toBe(false);
+    click('Auslosung löschen');
+    await (remove as HTMLElement & { updateComplete: Promise<boolean> }).updateComplete;
+    click('Löschen');
+    await vi.waitFor(() => {
+      expect(hass.messages.find((m) => m.type === WS_ROUND_DELETE)).toEqual({
+        type: WS_ROUND_DELETE,
+        round_id: 'r1',
+      });
+    });
+    await vi.waitFor(() => {
+      expect(hass.calls.filter((call) => call === WS_STATISTICS_GET)).toHaveLength(2);
     });
   });
 

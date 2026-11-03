@@ -25,6 +25,10 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'overview.filterAll': 'All',
   'overview.noAssignments': 'No open assignments.',
   'overview.noSchedule': 'No schedule',
+  'overview.roundMeta': '{date} · {open} of {total} open',
+  'round.delete': 'Delete draw',
+  'round.deleteQuestion':
+    'Delete this draw with {total} assignments? {closed} of them are already closed; their points are taken back. This cannot be undone.',
   'overview.due': 'Due {date}',
   'overview.chance': 'Chance {chance}',
   'overview.points': '{points} points',

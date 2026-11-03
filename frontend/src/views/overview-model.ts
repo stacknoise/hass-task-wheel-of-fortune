@@ -1,6 +1,7 @@
 import type {
   AssignmentObject,
   PersonObject,
+  RoundHead,
   RoundObject,
   ScheduleObject,
   TaskObject,
@@ -8,7 +9,9 @@ import type {
 import { FILTER_ALL, LOAD_PAUSED } from '../constants/index.ts';
 
 export interface AssignmentGroup {
-  /** Der Zeitplan, zu dem die Aufgabe gehört; leer, wenn kein Zeitplan sie mehr enthält. */
+  /** Die Auslosung; leer bei Zuteilungen, deren Runde nicht mehr bekannt ist. */
+  readonly round: RoundHead | undefined;
+  /** Der Zeitplan der Auslosung; leer, wenn es ihn nicht mehr gibt. */
   readonly schedule: ScheduleObject | undefined;
   readonly assignments: readonly AssignmentObject[];
 }
@@ -31,31 +34,27 @@ export function filterByPerson(
 }
 
 /**
- * Gruppiert nach Zeitplan in der Reihenfolge der Zeitpläne. Eine Zuteilung kennt nur ihre Aufgabe;
- * sie gehört zum ersten Zeitplan, der diese Aufgabe enthält.
+ * Gruppiert nach Auslosung, die jüngste zuerst. Der Kopf der Runde nennt Zeitplan und Beginn;
+ * Zuteilungen ohne bekannte Runde stehen am Ende.
  */
-export function groupBySchedule(
+export function groupByRound(
   assignments: readonly AssignmentObject[],
+  rounds: readonly RoundHead[],
   schedules: readonly ScheduleObject[],
 ): readonly AssignmentGroup[] {
-  const owner = new Map<string, ScheduleObject>();
-  for (const schedule of schedules) {
-    for (const taskId of schedule.task_ids) {
-      if (!owner.has(taskId)) {
-        owner.set(taskId, schedule);
-      }
-    }
-  }
-  const groups = new Map<ScheduleObject | undefined, AssignmentObject[]>();
-  for (const schedule of [...schedules, undefined]) {
-    groups.set(schedule, []);
-  }
-  for (const assignment of assignments) {
-    groups.get(owner.get(assignment.task_id))?.push(assignment);
-  }
-  return [...groups]
-    .filter(([, items]) => items.length > 0)
-    .map(([schedule, items]) => ({ schedule, assignments: items }));
+  const scheduleById = new Map(schedules.map((schedule) => [schedule.id, schedule]));
+  const known = new Set(rounds.map((round) => round.id));
+  const newestFirst = [...rounds].sort((a, b) => b.started_at.localeCompare(a.started_at));
+  const heads: (RoundHead | undefined)[] = [...newestFirst, undefined];
+  return heads
+    .map((round) => ({
+      round,
+      schedule: round && scheduleById.get(round.schedule_id),
+      assignments: assignments.filter((assignment) =>
+        round ? assignment.round_id === round.id : !known.has(assignment.round_id),
+      ),
+    }))
+    .filter((group) => group.assignments.length > 0);
 }
 
 /** Personen, auf die getauscht werden darf: erlaubt für die Aufgabe, nicht die jetzige, nicht pausiert. */

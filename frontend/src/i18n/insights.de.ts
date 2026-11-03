@@ -23,6 +23,10 @@ export const insightsDe = {
   'overview.filterAll': 'Alle',
   'overview.noAssignments': 'Keine offenen Zuteilungen.',
   'overview.noSchedule': 'Ohne Zeitplan',
+  'overview.roundMeta': '{date} · {open} von {total} offen',
+  'round.delete': 'Auslosung löschen',
+  'round.deleteQuestion':
+    'Diese Auslosung mit {total} Zuteilungen löschen? {closed} davon sind schon abgeschlossen; ihre Punkte werden abgezogen. Das lässt sich nicht rückgängig machen.',
   'overview.due': 'Frist {date}',
   'overview.chance': 'Chance {chance}',
   'overview.points': '{points} Punkte',

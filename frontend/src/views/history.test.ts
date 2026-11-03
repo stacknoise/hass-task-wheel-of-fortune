@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { VIEW_TAGS, WS_HISTORY_LIST } from '../constants/index.ts';
+import { VIEW_TAGS, WS_HISTORY_LIST, WS_ROUND_DELETE } from '../constants/index.ts';
 import { HISTORY, fakeHass, mountView, text } from './fixtures.testing.ts';
 import { VIEW_LOADERS } from './registry.ts';
 
@@ -117,6 +117,48 @@ describe('Historie', () => {
     const broken = await mountView(VIEW_TAGS.history, failing);
     await vi.waitFor(() => {
       expect(text(broken)).toContain('konnten nicht geladen werden');
+    });
+  });
+
+  it('löscht eine Runde nach der Rückfrage und lädt die Liste neu', async () => {
+    const { view, hass } = await mount();
+    const remove = view.shadowRoot?.querySelector('tw-confirm-delete') as HTMLElement & {
+      updateComplete: Promise<boolean>;
+    };
+    const click = (label: string) =>
+      [...(remove.shadowRoot?.querySelectorAll('button') ?? [])]
+        .find((b) => b.textContent.includes(label))
+        ?.click();
+    click('Auslosung löschen');
+    await remove.updateComplete;
+    expect(remove.shadowRoot?.textContent).toContain('2 Zuteilungen');
+    click('Löschen');
+    await vi.waitFor(() => {
+      expect(hass.messages.find((m) => m.type === WS_ROUND_DELETE)).toEqual({
+        type: WS_ROUND_DELETE,
+        round_id: 'r1',
+      });
+    });
+    await vi.waitFor(() => {
+      expect(hass.calls.filter((call) => call === WS_HISTORY_LIST)).toHaveLength(2);
+    });
+  });
+
+  it('meldet einen Fehler beim Löschen', async () => {
+    const { view, hass } = await mount();
+    hass.callWS = () => Promise.reject(new Error('nein'));
+    const remove = view.shadowRoot?.querySelector('tw-confirm-delete') as HTMLElement & {
+      updateComplete: Promise<boolean>;
+    };
+    const click = (label: string) =>
+      [...(remove.shadowRoot?.querySelectorAll('button') ?? [])]
+        .find((b) => b.textContent.includes(label))
+        ?.click();
+    click('Auslosung löschen');
+    await remove.updateComplete;
+    click('Löschen');
+    await vi.waitFor(() => {
+      expect(text(view)).toContain('Die Aktion ist fehlgeschlagen.');
     });
   });
 });

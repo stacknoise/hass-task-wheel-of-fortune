@@ -9,9 +9,11 @@ import { formatDateTime, formatPercent } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
 import { canSwap, swapTargets } from './overview-model.ts';
+import { roundDelete } from './round-delete.ts';
 import type { AssignmentGroup } from './overview-model.ts';
 
 export interface AssignmentHandlers {
+  readonly deleteRound: (roundId: string) => void;
   readonly complete: (assignmentId: string) => void;
   readonly toggleSwap: (assignmentId: string) => void;
   readonly swap: (assignmentId: string, personId: string) => void;
@@ -164,20 +166,49 @@ function assignmentRow(
   `;
 }
 
-/** Die Zuteilungen, gruppiert nach Zeitplan. */
+function groupHead(
+  group: AssignmentGroup,
+  context: AssignmentsContext,
+  text: Translate,
+): TemplateResult {
+  const { round, schedule } = group;
+  const title = schedule?.name ?? text('overview.noSchedule');
+  const meta = round
+    ? text('overview.roundMeta', {
+        date: formatDateTime(round.started_at, context.language),
+        open: group.assignments.length,
+        total: round.total,
+      })
+    : text('overview.openCount', { count: group.assignments.length });
+  return html`
+    <div class="row">
+      <h3 class="grow">${title} <span class="muted">${meta}</span></h3>
+    </div>
+    ${
+      round
+        ? roundDelete({
+            language: context.language,
+            total: round.total,
+            closed: round.closed,
+            busy: context.busy,
+            onConfirm: () => {
+              context.handlers.deleteRound(round.id);
+            },
+          })
+        : nothing
+    }
+  `;
+}
+
+/** Die offenen Zuteilungen, gruppiert nach Auslosung (jüngste zuerst). */
 export function assignmentGroups(context: AssignmentsContext): TemplateResult {
   const text: Translate = (key, params) => translate(key, context.language, params);
   return html`${repeat(
     context.groups,
-    (group) => group.schedule?.id ?? '',
+    (group) => group.round?.id ?? '',
     (group) => html`
       <section aria-label=${group.schedule?.name ?? text('overview.noSchedule')}>
-        <h3>
-          ${group.schedule?.name ?? text('overview.noSchedule')}
-          <span class="muted"
-            >${text('overview.openCount', { count: group.assignments.length })}</span
-          >
-        </h3>
+        ${groupHead(group, context, text)}
         <ul>
           ${repeat(
             group.assignments,
