@@ -4,7 +4,7 @@ import { writeFileSync } from 'node:fs';
 
 export const AUTH_FILE = new URL('../.auth.json', import.meta.url);
 export const DOMAIN = 'task_wheel';
-const USER = { name: 'Test', username: 'test', password: 'e2e-passwort-2026', language: 'de' };
+const USER = { name: 'Test', username: 'test', password: 'e2e-passwort-2026', language: process.env['HA_LANGUAGE'] ?? 'de' };
 
 export interface Tokens {
   readonly access_token: string;
