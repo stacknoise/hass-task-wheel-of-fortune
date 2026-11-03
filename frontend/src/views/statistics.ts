@@ -38,16 +38,18 @@ export class TwStatisticsView extends LitElement {
     baseStyles,
     viewStyles,
     css`
+      :host {
+        display: grid;
+        gap: var(--tw-space-field);
+      }
+      .card {
+        margin: 0;
+      }
       .kpis,
       .highlights {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: var(--tw-space-m);
-        margin-bottom: var(--tw-space-m);
-      }
-      .kpis .card,
-      .highlights .card {
-        margin: 0;
+        gap: var(--tw-space-field);
       }
       .kpi-value {
         font-size: 1.9em;
@@ -56,13 +58,10 @@ export class TwStatisticsView extends LitElement {
       .pair {
         display: flex;
         flex-wrap: wrap;
-        gap: var(--tw-space-m);
-      }
-      .pair {
+        gap: var(--tw-space-field);
         align-items: stretch;
       }
       .pair > .card {
-        margin: 0;
         flex: 1 1 340px;
       }
       .bar-row {
