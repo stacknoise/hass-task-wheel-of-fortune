@@ -154,6 +154,7 @@ export class PersonsView extends ConfigView<PersonWire, PersonDraft> {
         .value=${draft.notifyTarget}
         .placeholder=${NOTIFY_PREFIX}
         .maxlength=${FORM_LIMITS.notifyMax}
+        .suggestions=${this.store.client?.notifyTargets() ?? []}
         .error=${this.fieldError('notify_target')}
         @tw-change=${onChange<string>((notifyTarget) => {
           this.patch({ notifyTarget });

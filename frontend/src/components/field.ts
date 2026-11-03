@@ -7,6 +7,8 @@ import { formStyles } from './formStyles.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import { defineOnce } from './define.ts';
 
+const LIST_ID = 'suggestions';
+
 /** Beschriftetes Eingabefeld (Text, Zeit, Datum, Datum mit Uhrzeit); meldet den Text bei jeder Eingabe. */
 export class TwField extends LitElement {
   static override properties = {
@@ -16,6 +18,7 @@ export class TwField extends LitElement {
     error: { type: String },
     placeholder: { type: String },
     maxlength: { type: Number },
+    suggestions: { attribute: false },
   };
 
   static override styles = [
@@ -38,6 +41,8 @@ export class TwField extends LitElement {
   declare error: string;
   declare placeholder: string;
   declare maxlength: number;
+  /** Vorschläge zum Suchen und Wählen; freie Eingabe bleibt möglich. */
+  declare suggestions: readonly { readonly id: string; readonly label: string }[];
 
   constructor() {
     super();
@@ -47,6 +52,7 @@ export class TwField extends LitElement {
     this.error = '';
     this.placeholder = '';
     this.maxlength = 0;
+    this.suggestions = [];
   }
 
   protected override render(): TemplateResult {
@@ -59,11 +65,17 @@ export class TwField extends LitElement {
           type=${this.type}
           placeholder=${this.placeholder}
           maxlength=${this.maxlength > 0 ? this.maxlength : nothing}
+          list=${this.suggestions.length > 0 ? LIST_ID : nothing}
           aria-invalid=${this.error ? 'true' : 'false'}
           @input=${(event: Event) => {
             emitChange(this, (event.target as HTMLInputElement).value);
           }}
         />
+        <datalist id=${LIST_ID}>
+          ${this.suggestions.map(
+            (item) => html`<option value=${item.id} label=${item.label}></option>`,
+          )}
+        </datalist>
       </label>
       ${this.error ? html`<div class="error" role="alert">${this.error}</div>` : nothing}
     `;

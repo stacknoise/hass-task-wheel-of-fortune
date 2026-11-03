@@ -78,5 +78,9 @@ export const DEFAULT_REMIND_DAYS = 7;
 export const DEFAULT_EVERY_N_WEEKS = 1;
 
 export const NOTIFY_PREFIX = 'notify.';
+export const NOTIFY_DOMAIN = 'notify';
+/** Dienst, der zu den Entitäten führt und selbst kein Ziel ist. */
+export const NOTIFY_SEND_MESSAGE = 'send_message';
+export const ATTR_FRIENDLY_NAME = 'friendly_name';
 export const SERVICE_DRAW = 'task_wheel.draw';
 export const EVENT_DRAWN_NAME = 'task_wheel_drawn';

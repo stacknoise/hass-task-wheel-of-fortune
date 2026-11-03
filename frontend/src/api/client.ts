@@ -11,6 +11,9 @@ import {
   FIELD_TO_PERSON_ID,
   REPLY_PRESENT,
   FIELD_WEEKS,
+  NOTIFY_DOMAIN,
+  NOTIFY_PREFIX,
+  NOTIFY_SEND_MESSAGE,
   WS_ASSIGNMENT_COMPLETE,
   WS_AVAILABILITY_PREVIEW,
   WS_ASSIGNMENT_SWAP,
@@ -32,6 +35,7 @@ import type { HistoryPage, HistoryQuery, StatisticsReport } from './models.ts';
 import type {
   Delta,
   HassApi,
+  NotifyTarget,
   PanelRoundWire,
   PreviewReply,
   Snapshot,
@@ -48,6 +52,21 @@ export class ApiClient {
 
   constructor(hass: HassApi) {
     this.#hass = hass;
+  }
+
+  /** Benachrichtigungsziele aus Home Assistant: `notify`-Entitäten und -Dienste, sortiert. */
+  notifyTargets(): readonly NotifyTarget[] {
+    const entities = Object.entries(this.#hass.states ?? {})
+      .filter(([id]) => id.startsWith(NOTIFY_PREFIX))
+      .map(([id, state]) => {
+        const name = state.attributes?.friendly_name;
+        return { id, label: typeof name === 'string' ? name : id };
+      });
+    const services = Object.keys(this.#hass.services?.[NOTIFY_DOMAIN] ?? {})
+      .filter((name) => name !== NOTIFY_SEND_MESSAGE)
+      .map((name) => ({ id: `${NOTIFY_PREFIX}${name}`, label: name }));
+    const unique = new Map([...services, ...entities].map((target) => [target.id, target]));
+    return [...unique.values()].sort((a, b) => a.id.localeCompare(b.id));
   }
 
   /** Der aktuelle Gesamtstand. */
