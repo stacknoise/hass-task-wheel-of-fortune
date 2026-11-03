@@ -291,7 +291,7 @@ Aufgaben an dieselbe Person verteilt. Aufwand pro Runde: `O(Aufgaben × Personen
 
 Tausch ist nur erlaubt, wenn die Aufgabe `swap_allowed` hat, die neue Person die Aufgabe laut Regel bekommen
 dürfte (erlaubt, nicht pausiert, anwesend) und die abgebende Person im laufenden Monat noch Joker hat.
-Ist eine Aufgabe in mehreren Zeitplänen, gilt ihr Erledigen für alle: Solange eine Zuteilung der Aufgabe aus einem anderen Zeitplan offen oder getauscht ist, lost dieser Plan sie nicht noch einmal aus. Die Häufigkeitsregeln zählen Zuteilungen je Aufgabe über alle Zeitpläne.
+Ist eine Aufgabe in mehreren Zeitplänen, kann sie mehrfach ausgelost werden (auch an dieselbe Person); jede Zuteilung kennt ihren Zeitplan und wird einzeln erledigt. Die Häufigkeitsregeln zählen Zuteilungen je Aufgabe über alle Zeitpläne.
 Statusübergänge sind eine Tabelle `dict[(Status, Aktion), Status]` – keine Verzweigungsketten.
 
 ### 5.5 Zeitpläne
