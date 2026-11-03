@@ -35,3 +35,11 @@ export const formStyles: CSSResult = css`
     padding: 0 12px;
   }
 `;
+
+/** Gemeinsamer Feldabstand für Bausteine, die mehrere Felder untereinander zeigen (Editoren). */
+export const stackStyles: CSSResult = css`
+  :host {
+    display: grid;
+    gap: var(--tw-space-field);
+  }
+`;
