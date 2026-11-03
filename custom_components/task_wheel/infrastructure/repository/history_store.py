@@ -101,10 +101,17 @@ class HistoryStore:
             return None
         return max(entries.values(), key=lambda entry: entry[0].started_at)[1]
 
+    def rounds_since(self, since: dt.datetime) -> Iterator[Round]:
+        """Runden, die ab `since` begonnen haben, die neueste zuerst."""
+        for round_ in reversed(self._rounds.values()):
+            if round_.started_at < since:
+                return
+            yield round_
+
     def assignments_since(self, since: dt.datetime) -> tuple[Assignment, ...]:
         """Zuteilungen aus Runden, die ab `since` begonnen haben (neueste Runde zuerst)."""
         return tuple(
-            assignment for round_ in self._rounds_since(since) for assignment in round_.assignments
+            assignment for round_ in self.rounds_since(since) for assignment in round_.assignments
         )
 
     async def async_purge(self, cutoff: dt.datetime) -> int:
@@ -116,12 +123,6 @@ class HistoryStore:
         if expired:
             self._changed()
         return len(expired)
-
-    def _rounds_since(self, since: dt.datetime) -> Iterator[Round]:
-        for round_ in reversed(self._rounds.values()):
-            if round_.started_at < since:
-                return
-            yield round_
 
     def _breaks_order(self, round_: Round, previous: Round | None) -> bool:
         """Prüft, ob das Einfügen die Sortierung nach Rundenbeginn stören würde."""

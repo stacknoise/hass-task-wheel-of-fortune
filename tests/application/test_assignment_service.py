@@ -5,6 +5,7 @@ import datetime as dt
 import pytest
 
 from custom_components.task_wheel.application.assignment_service import AssignmentService
+from custom_components.task_wheel.application.statistics_service import StatisticsService
 from custom_components.task_wheel.application.swap_service import SwapService
 from custom_components.task_wheel.const import keys
 from custom_components.task_wheel.domain.enums import AssignmentStatus as S
@@ -33,8 +34,9 @@ class World:
             self.config.put_person(f.person(id=ident, slug=ident, name=ident, absences=()))
         self.config.put_task(f.task(allowed=frozenset({"p1", "p2", "p3"})))
         self.config.set_settings(f.settings(**settings))
-        self.assignments = AssignmentService(self.config, self.history)
-        self.swaps = SwapService(self.config, self.history)
+        self.statistics = StatisticsService(self.config, self.history)
+        self.assignments = AssignmentService(self.config, self.history, self.statistics)
+        self.swaps = SwapService(self.config, self.history, self.statistics)
 
     def add_round(self, *assignments: object, started: dt.datetime = f.NOW) -> None:
         self.history.put_round(

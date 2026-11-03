@@ -1,10 +1,11 @@
 """Protokolle der Anwendungsschicht: Persistenz (Repository-Muster, KONZEPT §3.2)."""
 
 import datetime as dt
-from collections.abc import Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from typing import Protocol
 
 from ..domain.models import Assignment, Person, Round, Schedule, Settings, Task
+from ..domain.statistics.aggregate import AssignmentChange
 from ..domain.types import AssignmentId, PersonId, RoundId, ScheduleId, TaskId
 
 
@@ -113,10 +114,22 @@ class HistoryRepository(Protocol):
         """Jüngste Zuteilung einer Aufgabe (nach Rundenbeginn) über den Index."""
         ...
 
+    def rounds_since(self, since: dt.datetime) -> Iterator[Round]:
+        """Runden, die ab `since` begonnen haben, die neueste zuerst."""
+        ...
+
     def assignments_since(self, since: dt.datetime) -> tuple[Assignment, ...]:
         """Zuteilungen aus Runden, die ab `since` begonnen haben."""
         ...
 
     async def async_purge(self, cutoff: dt.datetime) -> int:
         """Entfernt Runden, die vor `cutoff` begonnen haben; liefert die Anzahl."""
+        ...
+
+
+class AssignmentRecorder(Protocol):
+    """Nimmt Änderungen an Zuteilungen entgegen (hält die Monatsaggregate aktuell)."""
+
+    def record(self, round_: Round, changes: Iterable[AssignmentChange]) -> None:
+        """Schreibt die Änderungen der Zuteilungen einer Runde fort."""
         ...
