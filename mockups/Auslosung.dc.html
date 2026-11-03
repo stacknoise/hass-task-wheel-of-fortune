@@ -158,7 +158,12 @@ a{color:#0262a0}a:hover{color:#01497a}
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { idx: 0, phase: 'ready', rot: 0, anim: false, results: {} };
+    var plan = 0;
+    try {
+      var v = window.localStorage.getItem('tw-draw-plan');
+      if (v !== null) { plan = parseInt(v, 10) || 0; window.localStorage.removeItem('tw-draw-plan'); }
+    } catch (e) {}
+    this.state = { plan: plan, idx: 0, phase: 'ready', rot: 0, anim: false, results: {} };
     this.timer = null;
   }
   componentWillUnmount() { if (this.timer) clearTimeout(this.timer); }
@@ -187,7 +192,9 @@ class Component extends DCLogic {
     var plans = [
       { id: 'week', name: 'Wochenplan', tasks: [0, 1, 2, 3], hint: 'Automatisch jeden Montag 07:00 · jetzt vorzeitig manuell auslösen' },
       { id: 'daily', name: 'Täglich morgens', tasks: [4], hint: 'Automatisch täglich 06:30 · jetzt vorzeitig manuell auslösen' },
-      { id: 'big', name: 'Großputz', tasks: [0, 1, 3], hint: 'Nur manuell · zuletzt ausgelost Sa, 10. Okt' }
+      { id: 'big', name: 'Großputz', tasks: [0, 1, 3], hint: 'Nur manuell · zuletzt ausgelost Sa, 10. Okt', mode: 'nur manuell' },
+      { id: 'xmas', name: 'Vor dem Weihnachtsbesuch', tasks: [0, 1, 3], hint: 'Einmalig am Sa, 19. Dez · jetzt vorzeitig manuell auslösen', mode: 'einmalig' },
+      { id: 'garden', name: 'Garten (Sommer)', tasks: [2], hint: 'Pausiert · manuell trotzdem möglich', mode: 'pausiert' }
     ];
     return { P: P, tasks: tasks, plans: plans };
   }
@@ -204,10 +211,10 @@ class Component extends DCLogic {
   }
   renderVals() {
     var self = this, D = this.data(), P = D.P, s = this.state;
-    var planIdx = s.plan || 0, plan = D.plans[planIdx];
+    var planIdx = Math.min(Math.max(s.plan || 0, 0), D.plans.length - 1), plan = D.plans[planIdx];
     var tasks = plan.tasks.map(function (i) { return D.tasks[i]; });
     var planChips = D.plans.map(function (p, i) {
-      return { label: p.name, value: String(i), mode: p.id === 'big' ? 'nur manuell' : 'automatisch' };
+      return { label: p.name, value: String(i), mode: p.mode || 'automatisch' };
     });
     var pickPlan = function (e) {
       var i = parseInt(e && e.target ? e.target.value : 0, 10) || 0;

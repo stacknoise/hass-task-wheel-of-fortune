@@ -69,7 +69,7 @@ a{color:#0262a0}a:hover{color:#01497a}
         </button>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <a href="Zeitplan.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid #c4c9d0; color: #0262a0; text-decoration: none; font-size: 14px; font-weight: 500;">Zeitplan bearbeiten</a>
-          <a href="Auslosung.dc.html" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 20px; background: #0262a0; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500;">Manuell auslosen</a>
+          <a href="Auslosung.dc.html" onClick="{{rememberPlan}}" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 20px; background: #0262a0; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 500;">„{{np.name}}" manuell auslosen</a>
         </div>
       </section>
 
@@ -250,6 +250,7 @@ class Component extends DCLogic {
       return { label: p.name, on: on, w: on ? 22 : 8, bg: on ? '#0262a0' : '#c4c9d0', pick: function () { self.setState({ planIdx: i }); } };
     });
     return { np: np, planDots: planDots,
+      rememberPlan: function () { try { window.localStorage.setItem('tw-draw-plan', String(pi)); } catch (e) {} },
       prevPlan: function () { self.setState({ planIdx: (pi - 1 + NP.length) % NP.length }); },
       nextPlan: function () { self.setState({ planIdx: (pi + 1) % NP.length }); },
       haNav: haNav, tabs: tabs, filters: filters, groups: groups, doneCount: doneCount, totalCount: totalCount, points: points };
