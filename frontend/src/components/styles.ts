@@ -51,6 +51,13 @@ export const viewStyles: CSSResult = css`
     align-items: center;
     gap: var(--tw-space-s) var(--tw-space-m);
   }
+  .nowrap {
+    flex-wrap: nowrap;
+  }
+  .fixed {
+    flex: none;
+    white-space: nowrap;
+  }
   .grow {
     flex: 1 1 auto;
     min-width: 0;
