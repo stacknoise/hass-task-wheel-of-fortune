@@ -77,9 +77,19 @@ export class TwOverviewView extends LitElement {
         border-top: 1px solid var(--tw-color-divider);
       }
       h3 {
-        margin: var(--tw-space-m) 0 0;
+        margin: 0;
         font-size: 1em;
         font-weight: 500;
+      }
+      .group-head {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--tw-space-field);
+        margin-top: var(--tw-space-field);
+      }
+      .group-head + ul {
+        margin-top: var(--tw-space-field);
       }
       .swap {
         padding: var(--tw-space-s) 0 0 40px;

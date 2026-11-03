@@ -194,22 +194,22 @@ function groupHead(
       })
     : text('overview.openCount', { count: group.assignments.length });
   return html`
-    <div class="row">
-      <h3 class="grow">${title} <span class="muted">${meta}</span></h3>
+    <div class="group-head">
+      <h3>${title} <span class="muted">${meta}</span></h3>
+      ${
+        round
+          ? roundDelete({
+              language: context.language,
+              total: round.total,
+              done: round.done,
+              busy: context.busy,
+              onConfirm: () => {
+                context.handlers.deleteRound(round.id);
+              },
+            })
+          : nothing
+      }
     </div>
-    ${
-      round
-        ? roundDelete({
-            language: context.language,
-            total: round.total,
-            done: round.done,
-            busy: context.busy,
-            onConfirm: () => {
-              context.handlers.deleteRound(round.id);
-            },
-          })
-        : nothing
-    }
   `;
 }
 
