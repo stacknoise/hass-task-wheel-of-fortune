@@ -9,8 +9,8 @@ from ..const import defaults, limits
 from ..const.keys import ERR_INCONSISTENT, ERR_ORDER, ERR_REQUIRED
 from .enums import (
     AbsenceKind,
-    AnimationKind,
     AfterOnce,
+    AnimationKind,
     AssignmentStatus,
     FrequencyKind,
     Load,
@@ -297,7 +297,7 @@ class Schedule(Model):
     )
 
     def __post_init__(self) -> None:
-        """Prüft Kennung, Namen, Slug, Aufgabenliste, Animationen und dass Archivierte nicht aktiv sind."""
+        """Prüft Kennung, Namen, Slug, Aufgaben, Animationen und Archivierung."""
         ensure_id("id", self.id)
         ensure_name("name", self.name)
         ensure_length("slug", self.slug, 1, limits.SLUG_MAX_LENGTH)

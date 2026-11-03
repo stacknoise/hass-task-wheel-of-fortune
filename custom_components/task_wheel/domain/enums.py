@@ -117,7 +117,7 @@ class ExclusionReason(StrEnum):
 
 
 class AnimationKind(StrEnum):
-    """Darstellung der Auslosung im Panel (Wahl je Zeitplan; die Ziehung selbst bleibt im Backend)."""
+    """Darstellung der Auslosung im Panel (Wahl je Zeitplan; gezogen wird im Backend)."""
 
     WHEEL = "wheel"
     DRUM = "drum"
