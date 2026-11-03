@@ -31,8 +31,14 @@ UNKNOWN_VERSION: Final = "unbekannt"
 DEFAULT_OUTPUT: Final = "docs/code-doku/index.html"
 DEFAULT_TEMPLATE: Final = "docs/code-doku/template.html"
 DEFAULT_DOC: Final = "docs/CODE_DOKU.md"
-DATA_PLACEHOLDER: Final = "__CODE_DOKU_DATA__"
-JSON_LT_ESCAPE: Final = "\\u003c"
+TEMPLATE_HASH_FILE: Final = "template.sha256"
+SCHEMA_VERSION: Final = 2
+PRODUCT_NAME: Final = "Task Wheel"
+PLACEHOLDER_TITLE: Final = "__TITLE__"
+PLACEHOLDER_DATA: Final = '{"__DATA__":1}'
+PLACEHOLDER_FILES: Final = '{"__FILES__":1}'
+JSON_CLOSE_ESCAPE: Final = "<\\/"
+JSON_CLOSE: Final = "</"
 
 # --- Schichten (CODE_DOKU.md §2) ---
 LAYER_CONST: Final = "Const"
@@ -103,6 +109,25 @@ KIND_ENUM: Final = "enum"
 KIND_FUNCTION: Final = "function"
 KIND_METHOD: Final = "method"
 PY_ASYNC_PREFIX: Final = "async "
+PY_PRIVATE_PREFIX: Final = "_"
+PY_ABSTRACT_DECORATOR: Final = "abstractmethod"
+PY_DUNDER: Final = "__"
+PY_ENUM_MARKER: Final = "Enum"
+PY_FLAG_MARKER: Final = "Flag"
+PY_FINAL_MARKER: Final = "Final"
+PY_CLASSVAR_MARKER: Final = "ClassVar"
+PY_FROZEN_MARKER: Final = "frozen=True"
+PY_NAMEDTUPLE_MARKER: Final = "NamedTuple"
+PROP_PROPERTY: Final = "property"
+PROP_FIELD: Final = "field"
+PROP_CONST: Final = "const"
+PROP_ENUM: Final = "enum"
+ACCESS_GET_SET: Final = "get; set"
+ACCESS_READONLY: Final = "readonly"
+VIS_PUBLIC: Final = "public"
+VIS_PRIVATE: Final = "private"
+INIT_MAX_LENGTH: Final = 60
+ELLIPSIS: Final = "…"
 PY_RETURN_ARROW: Final = " -> "
 
 # --- TypeScript-Scanner ---
@@ -239,6 +264,13 @@ TS_MEMBER_MODIFIERS: Final = frozenset(
 )
 TS_TYPE_KEYWORDS: Final = {"class": KIND_CLASS, "interface": KIND_INTERFACE, "enum": KIND_ENUM}
 TS_VARIABLE_KEYWORDS: Final = frozenset({"const", "let", "var"})
+TS_PROPERTY_FOLLOWERS: Final = frozenset({":", "?", "=", ";", ",", "!"})
+TS_VISIBILITIES: Final = frozenset({"public", "private", "protected"})
+TS_READONLY: Final = "readonly"
+TS_STATIC: Final = "static"
+TOK_COLON_TEXT: Final = ":"
+TOK_COMMA: Final = ","
+TS_CONST: Final = "const"
 TS_STATEMENT_END_PREFIX: Final = frozenset(";})]")
 TS_NOT_MEMBER_NAMES: Final = frozenset({"if", "for", "while", "switch", "catch", "return", "new"})
 TS_IMPORT_KEYWORD: Final = "import"
@@ -286,7 +318,10 @@ STATUS_RED: Final = "red"
 EXIT_OK: Final = 0
 EXIT_VIOLATIONS: Final = 1
 EXIT_ERROR: Final = 2
-MSG_WRITTEN: Final = "Code-Doku geschrieben: {path} ({modules} Module)"
+MSG_WRITTEN: Final = (
+    "Code-Doku geschrieben: {path} ({types} Typen, {methods} Methoden, "
+    "{props} Properties/Felder, {files} Dateien)"
+)
 MSG_CHECK_OK: Final = "Schwellwerte eingehalten."
 MSG_VIOLATION: Final = "{location}: {scope} = {value} überschreitet den Grenzwert {limit}"
 MSG_ERROR: Final = "Fehler: {error}"
@@ -299,3 +334,23 @@ TOK_BRACKETS_OPEN: Final = "([{"
 TS_MODULE_DOC_MAX_LINE: Final = 2
 
 FACTORY_MARKER: Final = "factory"
+
+# --- Schema 2 (Leitfaden) ---
+KIND_CTOR: Final = "ctor"
+CTOR_NAMES: Final = frozenset({"__init__", "constructor"})
+DOC_PARAGRAPH_BREAK: Final = "\n\n"
+STEM_FILES: Final = frozenset({"__init__", "index"})
+NAMESPACE_ROOTS: Final = (SRC_PYTHON + "/", SRC_TS + "/")
+LAYER_INNER_TO_OUTER: Final = (
+    LAYER_CONST,
+    LAYER_DOMAIN,
+    LAYER_APP,
+    LAYER_INFRA,
+    LAYER_API,
+    LAYER_ENTRY,
+    LAYER_PANEL,
+    LAYER_OTHER,
+)
+DUPLICATE_MARK: Final = "#"
+ID_SEPARATOR: Final = "|"
+MI_ROUND_DIGITS: Final = 0

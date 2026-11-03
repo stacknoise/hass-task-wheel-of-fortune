@@ -182,3 +182,59 @@ def test_module_mi_is_weighted_over_methods() -> None:
     module = scan_python("pkg/m.py", source, c.LAYER_DOMAIN)
     assert module.metrics.mi == module.functions[0].metrics.mi
     assert scan_python("pkg/k.py", "A = 1\n", c.LAYER_CONST).metrics.mi < c.MI_EMPTY
+
+
+def test_python_properties_and_constants() -> None:
+    module = scan_python(
+        "m.py",
+        "from dataclasses import dataclass\nLIMIT: int = 3\n_hidden = []\n\n"
+        "@dataclass(frozen=True)\nclass Point:\n    x: int = 0\n    y: float = 1.5\n",
+        "Domain",
+    )
+    assert [(p.name, p.kind, p.visibility) for p in module.constants] == [
+        ("LIMIT", c.PROP_CONST, c.VIS_PUBLIC),
+        ("_hidden", c.PROP_FIELD, c.VIS_PRIVATE),
+    ]
+    point = module.types[0]
+    assert [(p.name, p.type, p.access, p.init) for p in point.props] == [
+        ("x", "int", c.ACCESS_READONLY, "0"),
+        ("y", "float", c.ACCESS_READONLY, "1.5"),
+    ]
+
+
+def test_typescript_properties_and_constants() -> None:
+    module = scan_typescript(
+        "m.ts",
+        "export const A = 1;\nexport const f = (x: number) => x;\n"
+        "export interface I { a: string; readonly b?: number; run(): void; }\n"
+        "export enum E { X = 'x', Y, Z = 3 }\n"
+        "export class K { static s = 3; private readonly p: Map<string, number> = new Map();"
+        " go() { return 1; } }\n",
+        "Panel",
+    )
+    assert [p.name for p in module.constants] == ["A"]
+    types = {t.name: t for t in module.types}
+    assert [(p.name, p.access) for p in types["I"].props] == [
+        ("a", c.ACCESS_GET_SET),
+        ("b", c.ACCESS_READONLY),
+    ]
+    assert [p.name for p in types["E"].props] == ["X", "Y", "Z"]
+    assert types["E"].props[0].access == "'x'"
+    fields = {p.name: p for p in types["K"].props}
+    assert fields["s"].static and fields["s"].init == "3"
+    assert fields["p"].visibility == "private" and fields["p"].type == "Map<string, number>"
+    assert [m.name for m in types["K"].methods] == ["go"]
+
+
+def test_python_protocol_members_are_abstract() -> None:
+    module = scan_python(
+        "m.py",
+        'class P:\n    def go(self) -> int:\n        """Doc."""\n        ...\n'
+        "    def run(self):\n        work()\n    def real(self):\n        return 1\n",
+        "Domain",
+    )
+    assert [(m.name, m.abstract) for m in module.types[0].methods] == [
+        ("go", True),
+        ("run", False),
+        ("real", False),
+    ]

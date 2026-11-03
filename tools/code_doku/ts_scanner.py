@@ -4,19 +4,30 @@ from __future__ import annotations
 
 import posixpath
 import re
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from .constants import (
+    ACCESS_GET_SET,
+    ACCESS_READONLY,
     BASE_COMPLEXITY,
+    ELLIPSIS,
     EMPTY,
     INDEX_FILE,
+    INIT_MAX_LENGTH,
     KIND_CLASS,
+    KIND_ENUM,
     KIND_FUNCTION,
+    KIND_INTERFACE,
     KIND_METHOD,
     KIND_NAME,
     KIND_OP,
     KIND_STRING,
     LANG_TYPESCRIPT,
+    PROP_CONST,
+    PROP_ENUM,
+    PROP_FIELD,
+    PROP_PROPERTY,
     SLASH,
     SPACE,
     SUFFIX_JS,
@@ -27,6 +38,8 @@ from .constants import (
     TOK_AT,
     TOK_BRACE_OPEN,
     TOK_BRACKETS_OPEN,
+    TOK_COLON_TEXT,
+    TOK_COMMA,
     TOK_DOT,
     TOK_FUNCTION,
     TOK_PAREN_OPEN,
@@ -40,14 +53,19 @@ from .constants import (
     TS_MEMBER_MODIFIERS,
     TS_MODULE_DOC_MAX_LINE,
     TS_NOT_MEMBER_NAMES,
+    TS_PROPERTY_FOLLOWERS,
+    TS_READONLY,
     TS_RELATIVE_PREFIX,
     TS_STATEMENT_END_PREFIX,
+    TS_STATIC,
     TS_TERNARY,
     TS_TERNARY_NOT_BEFORE,
     TS_TYPE_KEYWORDS,
     TS_VARIABLE_KEYWORDS,
+    TS_VISIBILITIES,
+    VIS_PUBLIC,
 )
-from .models import ModuleInfo
+from .models import ModuleInfo, PropertyInfo
 from .segments import Source, module_metrics
 from .ts_tokens import Comment, match_brackets, tokenize_typescript
 
@@ -91,6 +109,7 @@ class _Analyzer:
         self.source = Source(text, self.tokens, TS_KEYWORDS)
         self.types: list[TypeInfo] = []
         self.functions: list[MethodInfo] = []
+        self.constants: list[PropertyInfo] = []
 
     # --- Hilfen -------------------------------------------------------------------------------
     def _doc(self, line: int) -> str:
@@ -174,6 +193,101 @@ class _Analyzer:
                 methods.append(method)
         return tuple(methods)
 
+    # --- Eigenschaften, Felder und Aufzählungswerte ---------------------------------------------
+    def _slice(self, first: int, last: int) -> str:
+        """Quelltext von Token `first` bis vor Token `last`, Leerraum zusammengefasst."""
+        return self._signature(first, last) if first < last else EMPTY
+
+    def _property(
+        self, index: int, bounds: tuple[int, int], kind: str
+    ) -> tuple[PropertyInfo | None, int]:
+        """Liefert die Eigenschaft ab `index` (falls vorhanden) und den nächsten Index."""
+        opener, closer = bounds
+        token = self.tokens[index]
+        following = self.tokens[index + 1]
+        if (
+            token.kind != KIND_NAME
+            or not (following.text in TS_PROPERTY_FOLLOWERS or index + 1 == closer)
+            or not (
+                self._is_member_start(index, opener)
+                or (kind == KIND_ENUM and self.tokens[index - 1].text == TOK_COMMA)
+            )
+        ):
+            return None, self._skip(index)
+        stop = TOK_COMMA if kind == KIND_ENUM else TOK_SEMICOLON
+        end = self._first_before(index + 1, {stop}, closer) or closer
+        return self._build_property(index, end, opener, kind), end + 1
+
+    def _modifiers(self, index: int, opener: int) -> set[str]:
+        """Modifikatoren (`static`, `readonly`, Sichtbarkeit) vor dem Namen."""
+        found: set[str] = set()
+        while index - 1 > opener and self.tokens[index - 1].text in TS_MEMBER_MODIFIERS:
+            index -= 1
+            found.add(self.tokens[index].text)
+        return found
+
+    def _build_property(self, index: int, end: int, opener: int, kind: str) -> PropertyInfo:
+        """Baut die `PropertyInfo` für den Name an `index` bis zum Ende `end`."""
+        modifiers = self._modifiers(index, opener)
+        colon = self._first_before(index + 1, {TOK_COLON_TEXT}, end)
+        assign = self._first_before(index + 1, {TOK_ASSIGN}, end)
+        type_end = assign if assign is not None else end
+        declared = (
+            self._slice(colon + 1, type_end) if colon is not None and colon < type_end else EMPTY
+        )
+        value = self._slice(assign + 1, end) if assign is not None else EMPTY
+        member = (
+            PROP_ENUM
+            if kind == KIND_ENUM
+            else (PROP_PROPERTY if kind == KIND_INTERFACE else PROP_FIELD)
+        )
+        readonly = TS_READONLY in modifiers
+        return PropertyInfo(
+            name=self.tokens[index].text,
+            kind=member,
+            type=declared,
+            access=_access(member, value, readonly=readonly),
+            init=EMPTY if member == PROP_ENUM else _shorten(value),
+            visibility=next((item for item in modifiers if item in TS_VISIBILITIES), VIS_PUBLIC),
+            static=TS_STATIC in modifiers,
+            line_start=self.tokens[index].line,
+            line_end=self.tokens[min(end, len(self.tokens) - 1)].line,
+        )
+
+    def _properties(self, opener: int, closer: int, kind: str) -> tuple[PropertyInfo, ...]:
+        found: list[PropertyInfo] = []
+        index = opener + 1
+        while index < closer:
+            prop, index = self._property(index, (opener, closer), kind)
+            if prop:
+                found.append(prop)
+        return tuple(found)
+
+    def _constant(self, name_index: int, end: int) -> None:
+        """Hält eine Variable auf oberster Ebene (keine Funktion) als Konstante fest."""
+        token = self.tokens[name_index]
+        stop = self._first_before(name_index + 1, {TOK_SEMICOLON}, end) or end - 1
+        assign = self._first_before(name_index + 1, {TOK_ASSIGN}, stop)
+        colon = self._first_before(name_index + 1, {TOK_COLON_TEXT}, stop)
+        type_end = assign if assign is not None else stop
+        declared = (
+            self._slice(colon + 1, type_end) if colon is not None and colon < type_end else EMPTY
+        )
+        value = self._slice(assign + 1, stop) if assign is not None else EMPTY
+        self.constants.append(
+            PropertyInfo(
+                name=token.text,
+                kind=PROP_CONST,
+                type=declared,
+                access=ACCESS_READONLY,
+                init=_shorten(value),
+                visibility=VIS_PUBLIC,
+                static=False,
+                line_start=token.line,
+                line_end=self.tokens[stop].line,
+            )
+        )
+
     # --- Deklarationen auf oberster Ebene ---------------------------------------------------------
     def _declaration(self, index: int, end: int) -> int:
         """Verarbeitet eine Deklaration ab `index` und liefert den Index dahinter."""
@@ -186,7 +300,7 @@ class _Analyzer:
         if token.text == TOK_FUNCTION and index + 1 < end:
             return self._function(first, index + 1, end)
         if token.text in TS_VARIABLE_KEYWORDS and index + 1 < end:
-            return self._variable_function(first, index + 1, end)
+            return self._variable(first, index + 1, end)
         return self._skip(first if index == first else index)
 
     def _type(self, first: int, keyword: int, end: int) -> int:
@@ -198,9 +312,8 @@ class _Analyzer:
         kind = TS_TYPE_KEYWORDS[self.tokens[keyword].text]
         bounds = (self.tokens[first].line, self.tokens[closer].end_line)
         methods = self._members(opener, closer) if kind == KIND_CLASS else ()
-        self.types.append(
-            self.source.type_info(name.text, kind, self._doc(bounds[0]), bounds, methods)
-        )
+        info = self.source.type_info(name.text, kind, self._doc(bounds[0]), bounds, methods)
+        self.types.append(replace(info, props=self._properties(opener, closer, kind)))
         return closer + 1
 
     def _function(self, first: int, name_index: int, end: int) -> int:
@@ -214,6 +327,14 @@ class _Analyzer:
         last = self.pairs[body]
         self.functions.append(self._emit_method(name.text, KIND_FUNCTION, (first, body, last)))
         return last + 1
+
+    def _variable(self, first: int, name_index: int, end: int) -> int:
+        """Funktion (`const f = () => …`) oder sonst Konstante auf oberster Ebene."""
+        before = len(self.functions)
+        index = self._variable_function(first, name_index, end)
+        if len(self.functions) == before and self.tokens[name_index].kind == KIND_NAME:
+            self._constant(name_index, end)
+        return index
 
     def _variable_function(self, first: int, name_index: int, end: int) -> int:
         """`const name = (…) => { … }` bzw. `= function`: als Funktion erfassen."""
@@ -276,6 +397,20 @@ class _Analyzer:
         return candidate.text.strip(QUOTES) if candidate.kind == KIND_STRING else None
 
 
+def _shorten(text: str) -> str:
+    """Kürzt einen Initialwert auf `INIT_MAX_LENGTH` Zeichen."""
+    return text if len(text) <= INIT_MAX_LENGTH else f"{text[: INIT_MAX_LENGTH - 1]}{ELLIPSIS}"
+
+
+def _access(kind: str, value: str, *, readonly: bool) -> str:
+    """Zugriff laut Leitfaden: Wert bei Aufzählungen, `readonly`, sonst `get; set` bzw. leer."""
+    if kind == PROP_ENUM:
+        return _shorten(value)
+    if readonly:
+        return ACCESS_READONLY
+    return ACCESS_GET_SET if kind == PROP_PROPERTY else EMPTY
+
+
 def _clean_doc(comment: Comment) -> str:
     """Entfernt Kommentar-Rahmen und Sternchen aus einem JSDoc-Block."""
     return DOC_PREFIX.sub(EMPTY, comment.text).removesuffix(DOC_SUFFIX).strip()
@@ -302,5 +437,7 @@ def scan_typescript(path: str, text: str, layer: str) -> ModuleInfo:
         metrics=module_metrics(analyzer.tokens, methods, TS_KEYWORDS),
         types=tuple(analyzer.types),
         functions=tuple(analyzer.functions),
+        constants=tuple(analyzer.constants),
+        refs=analyzer.source.names_between(1, len(analyzer.source.lines)),
         imports=analyzer.imports(),
     )
