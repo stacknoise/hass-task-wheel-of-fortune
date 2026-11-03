@@ -2,7 +2,9 @@
 
 import datetime as dt
 from typing import TYPE_CHECKING, Any
+from unittest.mock import MagicMock
 
+from custom_components.task_wheel.application.notification_service import NotificationService
 from custom_components.task_wheel.domain.models import EveryRound, ManualTrigger
 from custom_components.task_wheel.infrastructure.repository.config_store import ConfigStore
 from custom_components.task_wheel.infrastructure.repository.history_store import HistoryStore
@@ -11,6 +13,7 @@ from custom_components.task_wheel.runtime import TaskWheelData, compose
 from custom_components.task_wheel.websocket.command import Reply, Request
 from custom_components.task_wheel.websocket.registry import COMMANDS
 
+from ..application.test_notification_service import FakeNotifier
 from ..application.world import FakeTimers, RecordingEvents
 from ..domain import factories as f
 from ..domain.draw.helpers import FixedRandom
@@ -44,11 +47,15 @@ class Api:
         self.timers = FakeTimers()
         self.events = RecordingEvents()
         self.pushed: list[Json] = []
+        self.notifier = FakeNotifier()
         self.data: TaskWheelData = compose(
             self.config,
             self.history,
             timers=self.timers,
             events=self.events,
+            notifications=NotificationService(
+                self.config, self.notifier, MagicMock(), lambda coro: coro.close()
+            ),
             clock=lambda: self.now,
             spawn=lambda coro: coro.close(),
             rng=FixedRandom(*(randoms or (0.1,))),

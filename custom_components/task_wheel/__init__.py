@@ -2,14 +2,20 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers import config_validation as cv
 from homeassistant.util import dt as dt_util
 
+from .application.fanout import FanOutRoundEvents
+from .application.notification_service import NotificationService
 from .const import DOMAIN
+from .const.notification import TEXTS_DIRECTORY
 from .infrastructure.events import HassRoundEvents
+from .infrastructure.notifier.hass_notifier import HassNotifier
+from .infrastructure.notifier.texts import load_catalog
 from .infrastructure.repository.factory import create_config_store, create_history_store
 from .infrastructure.scheduler import HassTimerScheduler
 from .runtime import TaskWheelData, compose
@@ -38,11 +44,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: TaskWheelConfigEntry) ->
     history = create_history_store(hass)
     await config.async_load()
     await history.async_load()
+    texts = await hass.async_add_executor_job(
+        load_catalog, Path(__file__).parent / TEXTS_DIRECTORY, hass.config.language
+    )
+    notifications = NotificationService(config, HassNotifier(hass), texts, hass.async_create_task)
     data = compose(
         config,
         history,
         timers=HassTimerScheduler(hass),
-        events=HassRoundEvents(hass, config),
+        events=FanOutRoundEvents(HassRoundEvents(hass, config), notifications),
+        notifications=notifications,
         clock=dt_util.now,
         spawn=hass.async_create_task,
     )

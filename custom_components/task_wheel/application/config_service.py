@@ -7,7 +7,7 @@ Die Eingaben sind unvertraute Felder aus dem Panel. Jedes Modell prüft sie stre
 import datetime as dt
 import re
 import unicodedata
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import replace
 from typing import Final, Protocol
 
@@ -35,6 +35,8 @@ _SLUG_FALLBACK: Final = "item"
 _NOT_SLUG: Final = re.compile(r"[^a-z0-9]+")
 
 type Fields = Mapping[str, object]
+# Prüft das Benachrichtigungsziel einer Person (wirft bei unbekanntem Ziel)
+type TargetCheck = Callable[[str | None], None]
 
 
 class Sluggable(Protocol):
@@ -79,9 +81,11 @@ class ConfigService:
         config: ConfigRepository,
         schedules: ScheduleService,
         draws: DrawService,
+        check_target: TargetCheck,
         id_factory: IdFactory = new_id,
     ) -> None:
-        """Hält Konfiguration, Zeitplan-Dienst, Auslosung und Kennungsquelle."""
+        """Hält Konfiguration, Zeitplan-Dienst, Auslosung, Zielprüfung und Kennungsquelle."""
+        self._check_target = check_target
         self._config = config
         self._schedules = schedules
         self._draws = draws
@@ -93,6 +97,7 @@ class ConfigService:
         """Legt eine Person an (Kennung und Kurzname vergibt der Dienst, falls nötig)."""
         person = Person.from_dict(self._with_identity(fields, self._config.persons.values()))
         self._ensure_slug_free(person, self._config.persons.values())
+        self._check_target(person.notify_target)
         self._config.put_person(person)
         return person
 
@@ -101,6 +106,8 @@ class ConfigService:
         current = _require(self._config.persons, person_id, RESOURCE_PERSON)
         person = Person.from_dict({**current.to_dict(), **fields})
         self._ensure_slug_free(person, self._config.persons.values())
+        if person.notify_target != current.notify_target:
+            self._check_target(person.notify_target)
         self._config.put_person(person)
         return person
 

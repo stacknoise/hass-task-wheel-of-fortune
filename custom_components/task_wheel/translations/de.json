@@ -160,6 +160,12 @@
     },
     "out_of_range": {
       "message": "Der Wert ist außerhalb von {low} bis {high}."
+    },
+    "notify_target_invalid": {
+      "message": "Das Benachrichtigungsziel „{target}“ gibt es nicht. Erlaubt sind vorhandene notify-Entitäten und -Dienste."
+    },
+    "notify_failed": {
+      "message": "Die Benachrichtigung an „{target}“ konnte nicht gesendet werden."
     }
   }
 }

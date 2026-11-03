@@ -178,18 +178,17 @@ async def test_closing_the_connection_unsubscribes(
     assert not _listeners(data)
 
 
-async def test_changes_made_elsewhere_are_part_of_the_next_delta(
-    hass: HomeAssistant, hass_ws_client: Any
-) -> None:
+async def test_changes_made_elsewhere_are_pushed(hass: HomeAssistant, hass_ws_client: Any) -> None:
     _, data = await _setup(hass)
     client = await hass_ws_client(hass)
     await client.send_json_auto_id({"type": "task_wheel/subscribe"})
     await client.receive_json()
     data.config.set_settings(f.settings(jokers_per_month=4))
+    settings_event = await client.receive_json()
+    assert settings_event["event"]["settings"]["jokers_per_month"] == 4
     await hass.services.async_call(DOMAIN, "draw", {"schedule": "wochenplan"}, blocking=True)
-    event = await client.receive_json()
-    assert event["event"]["settings"]["jokers_per_month"] == 4
-    assert len(event["event"]["assignments"]["upsert"]) == 1
+    drawn_event = await client.receive_json()
+    assert len(drawn_event["event"]["assignments"]["upsert"]) == 1
 
 
 def _listeners(data: TaskWheelData) -> dict[int, Any]:

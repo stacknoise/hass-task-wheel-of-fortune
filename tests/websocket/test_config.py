@@ -5,6 +5,7 @@ import voluptuous as vol
 
 from custom_components.task_wheel.domain.errors import (
     InUseError,
+    InvalidNotifyTargetError,
     LimitReachedError,
     NotFoundError,
     ValidationError,
@@ -193,3 +194,20 @@ def test_update_settings(api: Api) -> None:
         api.run("settings/update", settings={"jokers_per_month": 999})
     with pytest.raises(ValidationError):
         api.run("settings/update", settings={"weighting": "magic"})
+
+
+def test_notify_target_is_checked_when_saving_a_person(api: Api) -> None:
+    api.notifier.unknown.add("notify.nope")
+    with pytest.raises(InvalidNotifyTargetError):
+        api.run("person/create", person={"name": "Neu", "notify_target": "notify.nope"})
+    with pytest.raises(InvalidNotifyTargetError):
+        api.run("person/update", person_id="p1", person={"notify_target": "notify.nope"})
+    created = api.result("person/create", person={"name": "Neu", "notify_target": "notify.ok"})
+    assert created["notify_target"] == "notify.ok"
+    assert "notify.nope" not in {p.notify_target for p in api.config.persons.values()}
+
+
+def test_unchanged_notify_target_is_not_rechecked(api: Api) -> None:
+    api.run("person/update", person_id="p1", person={"notify_target": "notify.ok"})
+    api.notifier.unknown.add("notify.ok")
+    api.run("person/update", person_id="p1", person={"color": "#112233"})

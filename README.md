@@ -4,7 +4,7 @@ Verteilt Haushaltsaufgaben fair und mit etwas Spaß: Ein Glücksrad lost aus, we
 richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie belastbar ist.
 
 > **Status:** Entwicklung, Version 0.0.1. Das Projektgerüst steht (Integration lässt sich hinzufügen und
-> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03), Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07), Statistik und Historie (AP-13), Runden und Zeitpläne (AP-08), Einstieg, Dienste, Events und Einstellungen (AP-09) sowie die WebSocket-API für das Panel (AP-10) sind umgesetzt, Panel, Entitäten und Benachrichtigungen folgen mit den Arbeitspaketen. Es gibt noch keine Veröffentlichung
+> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03), Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07), Statistik und Historie (AP-13) Runden und Zeitpläne (AP-08), Einstieg, Dienste, Events und Einstellungen (AP-09), Benachrichtigungen (AP-12) sowie die WebSocket-API für das Panel (AP-10) sind umgesetzt, Panel und Entitäten folgen mit den Arbeitspaketen. Es gibt noch keine Veröffentlichung
 > über HACS.
 
 ## Funktionen (geplant)
@@ -51,6 +51,18 @@ Events: `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_
 Zeitplan und Person lassen sich über Kennung oder Kurzname ansprechen, die Aufgabe über Kennung oder Namen. `task_wheel.complete` nimmt entweder `assignment_id` oder `person` zusammen mit `task`.
 
 Einstellungen (Joker, Fairness-Fenster, Aufbewahrung, Punktefaktoren, Kulanzzeit, Panel nur für Administratoren) ändert man unter *Einstellungen → Geräte & Dienste → Aufgaben-Glücksrad → Konfigurieren*. Jede Nacht um 03:00 werden verpasste Zuteilungen markiert und Runden nach der Aufbewahrungsfrist gelöscht.
+
+## Benachrichtigungen
+
+Jede Person kann ein Ziel haben: eine `notify`-Entität (über `notify.send_message`) oder einen Legacy-Dienst `notify.<name>`, z. B. `notify.mobile_app_anna`. Es sind nur vorhandene Ziele der Domäne `notify` erlaubt; geprüft wird beim Speichern und bei jedem Senden.
+
+| Anlass | Empfänger |
+|---|---|
+| Runde ausgelost (nur wenn der Zeitplan „Ergebnis als Push-Nachricht senden“ aktiv hat) | alle Personen mit Ziel, eine Zeile je Person |
+| Aufgabe getauscht | die Person, die die Aufgabe übernimmt |
+| Erinnerung (Zeitplan „nur manuell“, nach n, 2n, … Tagen ohne Auslosung) | alle Personen mit Ziel |
+
+Ein Ziel, das mehrere Personen teilen (z. B. ein Familienkanal), bekommt jede Meldung nur einmal. Die Texte stehen in `custom_components/task_wheel/texts/` (de, en; andere Sprachen fallen auf Englisch zurück). Ein fehlgeschlagener Versand wird protokolliert und blockiert weder die Auslosung noch andere Ziele.
 
 ## Panel-API (WebSocket)
 

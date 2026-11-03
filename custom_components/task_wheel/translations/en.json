@@ -160,6 +160,12 @@
     },
     "out_of_range": {
       "message": "The value is outside {low} to {high}."
+    },
+    "notify_target_invalid": {
+      "message": "The notification target \"{target}\" does not exist. Existing notify entities and services are allowed."
+    },
+    "notify_failed": {
+      "message": "The notification to \"{target}\" could not be sent."
     }
   }
 }

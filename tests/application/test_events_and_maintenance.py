@@ -1,6 +1,7 @@
 """Events aus Zuteilungen, Wartungslauf, Zeitplan speichern/löschen, Komposition, Nachschlagen."""
 
 import datetime as dt
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -12,6 +13,7 @@ from custom_components.task_wheel.application.maintenance_service import (
     TIMER_MAINTENANCE,
     MaintenanceService,
 )
+from custom_components.task_wheel.application.notification_service import NotificationService
 from custom_components.task_wheel.application.schedule_service import timer_key
 from custom_components.task_wheel.application.statistics_service import StatisticsService
 from custom_components.task_wheel.application.swap_service import SwapService
@@ -195,6 +197,9 @@ def test_compose_shares_statistics_and_events() -> None:
         world.history,
         timers=FakeTimers(),
         events=events,
+        notifications=NotificationService(
+            world.config, MagicMock(), MagicMock(), lambda coro: coro.close()
+        ),
         clock=lambda: f.NOW,
         spawn=lambda coro: coro.close(),
     )

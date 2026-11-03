@@ -137,3 +137,7 @@ WIRE_PANEL_ROUND: Final = "panel_round"
 WIRE_EXPIRES_AT: Final = "expires_at"
 WIRE_PENDING: Final = "pending_task_ids"
 WIRE_NEXT_RUN: Final = "next_run"
+
+# Fehlerschlüssel der Benachrichtigung
+ERR_NOTIFY_TARGET: Final = "notify_target_invalid"
+ERR_NOTIFY_FAILED: Final = "notify_failed"
