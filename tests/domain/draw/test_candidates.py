@@ -82,8 +82,8 @@ def test_person_with_a_task_in_this_round_is_not_on_the_wheel():
     assert reasons(selection) == {("a", ExclusionReason.TAKEN)}
 
 
-def test_everyone_is_back_on_the_wheel_when_all_candidates_already_have_a_task():
+def test_nobody_is_left_when_every_candidate_already_has_a_task():
     ctx = make_context([make_person("a"), make_person("b")], round_holders=AB)
     selection = CandidateSelector().select(task(allowed=AB), ctx)
-    assert [p.id for p in selection.candidates] == ["a", "b"]
-    assert not selection.exclusions
+    assert not selection.candidates
+    assert reasons(selection) == {("a", ExclusionReason.TAKEN), ("b", ExclusionReason.TAKEN)}

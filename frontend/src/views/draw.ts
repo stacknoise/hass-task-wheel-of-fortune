@@ -405,7 +405,8 @@ export class TwDrawView extends LitElement {
                   >
                 </div>`
             : html`<div class="text">
-                <strong>${this.#text('draw.nobody')} ${task?.name}</strong>
+                <strong>${this.#text('draw.nobody')} ${task?.name}</strong><br />
+                <span class="muted">${this.#text('draw.nobody.hint')}</span>
               </div>`
         }
         <button class="button primary" @click=${() => void this.#session?.next()}>

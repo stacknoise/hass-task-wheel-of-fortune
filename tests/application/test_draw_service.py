@@ -195,3 +195,10 @@ def test_a_person_with_a_task_is_not_on_the_wheel_for_the_next_task_of_the_round
     first, second = world.draws.draw("s1", AUTO, NOW).assignments
     assert (first.person_id, second.person_id) == ("p1", "p2")
     assert second.chance == 1.0
+
+
+def test_surplus_tasks_stay_unassigned_instead_of_giving_a_person_a_second_one():
+    world = World(0.1)
+    world.config.remove_person("p2")
+    round_ = world.draws.draw("s1", AUTO, NOW)
+    assert [a.person_id for a in round_.assignments] == ["p1"]

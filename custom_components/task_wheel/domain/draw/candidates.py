@@ -70,7 +70,7 @@ class NoRepeatFilter:
 
 
 class RoundTakenFilter:
-    """Wer in dieser Runde schon eine Aufgabe hat, bleibt draußen, sofern noch andere übrig sind."""
+    """Wer in dieser Runde schon eine Aufgabe hat, bekommt keine zweite."""
 
     reason: ClassVar[ExclusionReason] = ExclusionReason.TAKEN
 
@@ -80,9 +80,8 @@ class RoundTakenFilter:
         candidates: Sequence[Person],
         context: DrawContext,
     ) -> frozenset[str]:
-        """Die Personen mit Aufgabe in der Runde, wenn mindestens eine andere Person bleibt."""
-        holders = frozenset(p.id for p in candidates if p.id in context.round_holders)
-        return holders if len(holders) < len(candidates) else frozenset()
+        """Alle Kandidaten mit Aufgabe in der Runde."""
+        return frozenset(p.id for p in candidates if p.id in context.round_holders)
 
 
 type FilterBuilder = tuple[Callable[[Task], bool], CandidateFilter]
