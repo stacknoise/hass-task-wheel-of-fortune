@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Glücksrad – Auslosung</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f2f4f7;font-family:Roboto,system-ui,sans-serif;color:#1f2328}
+a{color:#0262a0}a:hover{color:#01497a}
+@keyframes tw-fall{0%{transform:translateY(-40px) rotate(0deg);opacity:1}100%{transform:translateY(460px) rotate(540deg);opacity:0}}
+@keyframes tw-pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.06);opacity:1}100%{transform:scale(1)}}
+@keyframes tw-pulse{0%,100%{box-shadow:0 0 0 0 rgba(2,98,160,.45)}50%{box-shadow:0 0 0 14px rgba(2,98,160,0)}}
+@keyframes tw-glow{0%,100%{opacity:.35}50%{opacity:.9}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 900px; background: #f2f4f7; font-family: Roboto, system-ui, sans-serif; color: #1f2328;">
+  <nav aria-label="Home Assistant Seitenleiste" style="flex: 1 1 220px; max-width: 256px; background: #ffffff; border-right: 1px solid #e3e6ea; display: flex; flex-direction: column; padding: 12px 8px; gap: 2px; box-sizing: border-box;">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px 16px; font-size: 20px; font-weight: 400;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5f6670" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      <span>Home Assistant</span>
+    </div>
+    <sc-for list="{{haNav}}" as="n" hint-placeholder-count="7">
+      <a href="{{n.href}}" style="display: flex; align-items: center; gap: 20px; min-height: 44px; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 500; color: {{n.fg}}; background: {{n.bg}};">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.icon}}"></path></svg>
+        <span>{{n.label}}</span>
+      </a>
+    </sc-for>
+  </nav>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+    <header style="background: #ffffff; border-bottom: 1px solid #e3e6ea;">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px;">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 400; flex: 1 1 auto;">Aufgaben-Glücksrad</h1>
+        <button type="button" onClick="{{restart}}" style="display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid #c4c9d0; background: #ffffff; color: #0262a0; font: 500 14px Roboto, sans-serif; cursor: pointer;">Runde neu starten</button>
+      </div>
+      <div role="tablist" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 0 16px;">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="7">
+          <a href="{{t.href}}" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; text-decoration: none; font-size: 14px; font-weight: 500; color: {{t.fg}}; border-bottom: 3px solid {{t.line}};">{{t.label}}</a>
+        </sc-for>
+      </div>
+    </header>
+
+    <div style="padding: 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; max-width: 1200px; box-sizing: border-box; width: 100%;">
+
+      <section style="flex: 1 1 260px; max-width: 320px; background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 8px 0;">
+        <div style="padding: 12px 20px; display: flex; flex-direction: column; gap: 2px;">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 500;">Runde „Wochenplan"</h2>
+          <span style="font-size: 13px; color: #5a616b;">Manuell gestartet · {{doneTasks}} von {{totalTasks}} verlost</span>
+        </div>
+        <sc-for list="{{round}}" as="r" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-top: 1px solid #eef0f3; background: {{r.rowBg}};">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: {{r.dot}}; flex: none;"></div>
+            <div style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <span style="font-size: 15px; font-weight: 500;">{{r.task}}</span>
+              <span style="font-size: 12px; color: #5a616b;">{{r.rule}}</span>
+            </div>
+            <span style="font-size: 13px; font-weight: 500; color: {{r.statusFg}};">{{r.status}}</span>
+          </div>
+        </sc-for>
+        <div style="padding: 12px 20px; border-top: 1px solid #eef0f3;">
+          <button type="button" onClick="{{drawAll}}" style="width: 100%; min-height: 40px; border-radius: 20px; border: 1px solid #c4c9d0; background: #ffffff; color: #0262a0; font: 500 14px Roboto, sans-serif; cursor: pointer;">Rest ohne Animation verlosen</button>
+        </div>
+      </section>
+
+      <section style="flex: 999 1 520px; min-width: 0; background: #10243a; border-radius: 16px; padding: 24px; color: #ffffff; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+        <div style="flex: 1 1 100%; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;">
+          <span style="font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: #9fc4e4; font-weight: 500;">{{stepLabel}}</span>
+          <span style="font-size: 30px; font-weight: 900;">{{taskName}}</span>
+        </div>
+
+        <div style="position: relative; width: 380px; max-width: 100%; aspect-ratio: 1 / 1;">
+          <div style="position: absolute; inset: -18px; border-radius: 50%; background: radial-gradient(circle, rgba(79,166,232,0.55), rgba(79,166,232,0) 70%); animation: tw-glow 2.4s ease-in-out infinite;" aria-hidden="true"></div>
+          <svg viewBox="0 0 360 360" style="position: absolute; inset: 0; width: 100%; height: 100%;" role="img" aria-label="Glücksrad mit {{wheelCount}} Personen">
+            <circle cx="180" cy="180" r="176" fill="#f5c542"></circle>
+            <g style="transform: rotate({{rot}}deg); transform-origin: 180px 180px; transition: {{trans}};">
+              <sc-for list="{{wedges}}" as="w" hint-placeholder-count="4">
+                <path d="{{w.d}}" fill="{{w.color}}" stroke="#ffffff" stroke-width="3"></path>
+                <text x="180" y="{{w.ly}}" text-anchor="middle" transform="rotate({{w.mid}} 180 180)" fill="#ffffff" style="font: 700 20px Roboto, sans-serif;">{{w.name}}</text>
+                <text x="180" y="{{w.py}}" text-anchor="middle" transform="rotate({{w.mid}} 180 180)" fill="#ffffff" style="font: 500 13px Roboto, sans-serif; opacity: 0.85;">{{w.pct}} %</text>
+              </sc-for>
+              <sc-for list="{{pegs}}" as="p" hint-placeholder-count="24">
+                <circle cx="{{p.x}}" cy="{{p.y}}" r="3.5" fill="#ffffff"></circle>
+              </sc-for>
+            </g>
+            <path d="M162 0 L198 0 L180 38 Z" fill="#ffffff" stroke="#10243a" stroke-width="3"></path>
+          </svg>
+          <button type="button" onClick="{{spin}}" disabled="{{spinDisabled}}" aria-label="Rad drehen" style="position: absolute; left: 50%; top: 50%; width: 104px; height: 104px; margin: -52px 0 0 -52px; border-radius: 50%; border: 5px solid #ffffff; background: {{hubBg}}; color: #ffffff; font: 900 18px Roboto, sans-serif; letter-spacing: 0.04em; cursor: pointer; animation: {{hubAnim}};">{{hubLabel}}</button>
+        </div>
+
+        <div style="flex: 1 1 220px; max-width: 280px; display: flex; flex-direction: column; gap: 10px;">
+          <span style="font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #9fc4e4; font-weight: 500;">Wer ist im Rad?</span>
+          <sc-for list="{{people}}" as="p" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 10px; opacity: {{p.opacity}};">
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: {{p.color}}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex: none; border: 2px solid #ffffff;">{{p.initial}}</div>
+              <div style="display: flex; flex-direction: column; min-width: 0;">
+                <span style="font-size: 14px; font-weight: 500;">{{p.name}}</span>
+                <span style="font-size: 12px; color: #c9dcec;">{{p.note}}</span>
+              </div>
+            </div>
+          </sc-for>
+          <span style="font-size: 12px; color: #c9dcec; line-height: 1.5; padding-top: 6px;">Segmentgröße = Chance. Wer im letzten Monat weniger Punkte gesammelt hat, bekommt ein größeres Stück.</span>
+        </div>
+
+        <sc-if value="{{showResult}}" hint-placeholder-val="{{ false }}">
+          <div style="position: absolute; inset: 0; pointer-events: none;" aria-hidden="true">
+            <sc-for list="{{confetti}}" as="c" hint-placeholder-count="0">
+              <span style="position: absolute; top: 0; left: {{c.left}}%; width: {{c.w}}px; height: {{c.h}}px; background: {{c.color}}; border-radius: 2px; animation: tw-fall {{c.dur}}s ease-in {{c.delay}}s both;"></span>
+            </sc-for>
+          </div>
+          <div role="status" style="flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px; background: #ffffff; color: #1f2328; border-radius: 12px; padding: 16px 20px; animation: tw-pop 0.5s ease-out both; position: relative;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: {{winColor}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font: 900 24px Roboto, sans-serif;">{{winInitial}}</div>
+            <div style="display: flex; flex-direction: column; gap: 2px; flex: 1 1 200px;">
+              <span style="font-size: 22px; font-weight: 900;">{{winName}} übernimmt {{taskName}}</span>
+              <span style="font-size: 13px; color: #5a616b;">{{winDetail}}</span>
+            </div>
+            <button type="button" onClick="{{next}}" style="min-height: 44px; padding: 0 22px; border-radius: 22px; border: none; background: #0262a0; color: #ffffff; font: 500 15px Roboto, sans-serif; cursor: pointer;">{{nextLabel}}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{showDone}}" hint-placeholder-val="{{ false }}">
+          <div style="position: absolute; inset: 0; background: rgba(16,36,58,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; animation: tw-pop 0.4s ease-out both;">
+            <span style="font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: #9fc4e4; font-weight: 500;">Runde abgeschlossen</span>
+            <span style="font-size: 30px; font-weight: 900;">Alle Aufgaben sind verteilt</span>
+            <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 420px;">
+              <sc-for list="{{round}}" as="r" hint-placeholder-count="4">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; background: rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 14px;">
+                  <span style="font-size: 15px;">{{r.task}}</span>
+                  <span style="font-size: 15px; font-weight: 700;">{{r.status}}</span>
+                </div>
+              </sc-for>
+            </div>
+            <span style="font-size: 13px; color: #c9dcec;">Gespeichert in der Historie · Push-Benachrichtigung an alle verschickt</span>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+              <a href="Historie.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; border-radius: 22px; background: #ffffff; color: #0262a0; text-decoration: none; font-size: 15px; font-weight: 500;">Zur Historie</a>
+              <button type="button" onClick="{{restart}}" style="min-height: 44px; padding: 0 20px; border-radius: 22px; border: 1px solid #9fc4e4; background: transparent; color: #ffffff; font: 500 15px Roboto, sans-serif; cursor: pointer;">Nochmal von vorn</button>
+            </div>
+          </div>
+        </sc-if>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"spinSeconds":{"editor":"range","default":5,"min":2,"max":10,"step":0.5,"unit":"s"},"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { idx: 0, phase: 'ready', rot: 0, anim: false, results: {} };
+    this.timer = null;
+  }
+  componentWillUnmount() { if (this.timer) clearTimeout(this.timer); }
+  data() {
+    var P = {
+      A: { name: 'Anna', color: '#c05600' }, B: { name: 'Ben', color: '#1a5fd0' }, C: { name: 'Clara', color: '#137333' },
+      D: { name: 'David', color: '#7b2cbf' }, E: { name: 'Emma', color: '#b0136f' }
+    };
+    var tasks = [
+      { task: 'Bad putzen', rule: 'Nur Anna, Ben, Clara, David · max. 1× in 2 Wochen pro Person',
+        wheel: [['A', 30], ['B', 34], ['D', 36]],
+        out: { C: 'Pause – hatte die Aufgabe letzte Woche', E: 'Nicht erlaubt für diese Aufgabe' } },
+      { task: 'Müll rausbringen', rule: 'Alle · 1× pro Woche',
+        wheel: [['A', 22], ['B', 22], ['C', 20], ['E', 36]],
+        out: { D: 'Abwesend (Urlaub bis 12.11.)' } },
+      { task: 'Rasen mähen', rule: 'Nur Ben, Clara, David · alle 2 Wochen ± 1 Tag',
+        wheel: [['B', 45], ['C', 55]],
+        out: { A: 'Nicht erlaubt für diese Aufgabe', D: 'Abwesend (Urlaub bis 12.11.)', E: 'Nicht erlaubt für diese Aufgabe' } },
+      { task: 'Staubsaugen Wohnzimmer', rule: 'Alle · max. 2× pro Woche',
+        wheel: [['A', 24], ['B', 26], ['C', 18], ['E', 32]],
+        out: { D: 'Abwesend (Urlaub bis 12.11.)' } }
+    ];
+    return { P: P, tasks: tasks };
+  }
+  pickFor(t) {
+    var total = t.wheel.reduce(function (s, w) { return s + w[1]; }, 0);
+    var u = Math.random() * 360;
+    var acc = 0, win = t.wheel[0][0];
+    for (var i = 0; i < t.wheel.length; i++) {
+      var span = t.wheel[i][1] / total * 360;
+      if (u >= acc && u < acc + span) { win = t.wheel[i][0]; break; }
+      acc += span;
+    }
+    return { u: u, win: win };
+  }
+  renderVals() {
+    var self = this, D = this.data(), P = D.P, tasks = D.tasks, s = this.state;
+    var secs = this.props.spinSeconds ?? 5;
+    var ICONS = {
+      home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z', map: 'M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
+      energy: 'M13 2L4 14h7l-1 8 9-12h-7z', log: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01', history: 'M3 3v18h18M7 15l4-4 3 3 5-6',
+      wheel: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4', media: 'M6 4l13 8-13 8z',
+      settings: 'M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6zM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1'
+    };
+    var haNav = [['Übersicht', 'home'], ['Karte', 'map'], ['Energie', 'energy'], ['Logbuch', 'log'], ['Verlauf', 'history'], ['Glücksrad', 'wheel', true], ['Medien', 'media'], ['Einstellungen', 'settings']]
+      .map(function (n) { return { label: n[0], icon: ICONS[n[1]], href: n[2] ? 'Main.dc.html' : '#', fg: n[2] ? '#01497a' : '#3c424a', bg: n[2] ? '#dcecf8' : 'transparent' }; });
+    var current = 'Auslosung.dc.html';
+    var tabs = [['Übersicht', 'Main.dc.html'], ['Auslosung', 'Auslosung.dc.html'], ['Aufgaben', 'Aufgaben.dc.html'], ['Personen', 'Personen.dc.html'], ['Zeitpläne', 'Zeitplan.dc.html'], ['Historie', 'Historie.dc.html'], ['Statistik', 'Statistik.dc.html']]
+      .map(function (t) { var on = t[1] === current; return { label: t[0], href: t[1], fg: on ? '#0262a0' : '#5a616b', line: on ? '#0262a0' : 'transparent' }; });
+
+    var idx = Math.min(s.idx, tasks.length - 1);
+    var t = tasks[idx];
+    var total = t.wheel.reduce(function (a, w) { return a + w[1]; }, 0);
+    var cx = 180, cy = 180, r = 168;
+    function pt(deg, rad) { var a = deg * Math.PI / 180; return [(cx + rad * Math.sin(a)).toFixed(2), (cy - rad * Math.cos(a)).toFixed(2)]; }
+    var acc = 0;
+    var wedges = t.wheel.map(function (w) {
+      var span = w[1] / total * 360, a0 = acc, a1 = acc + span; acc = a1;
+      var p0 = pt(a0, r), p1 = pt(a1, r);
+      return {
+        d: 'M180 180 L' + p0[0] + ' ' + p0[1] + ' A' + r + ' ' + r + ' 0 ' + (span > 180 ? 1 : 0) + ' 1 ' + p1[0] + ' ' + p1[1] + ' Z',
+        color: P[w[0]].color, name: P[w[0]].name, pct: Math.round(w[1] / total * 100), mid: (a0 + a1) / 2, ly: 62, py: 82
+      };
+    });
+    var pegs = [];
+    for (var i = 0; i < 24; i++) { var q = pt(i * 15, 172); pegs.push({ x: q[0], y: q[1] }); }
+
+    var inWheel = {}; t.wheel.forEach(function (w) { inWheel[w[0]] = Math.round(w[1] / total * 100); });
+    var people = ['A', 'B', 'C', 'D', 'E'].map(function (k) {
+      var on = inWheel[k] !== undefined;
+      return { name: P[k].name, color: P[k].color, initial: P[k].name.charAt(0), opacity: on ? 1 : 0.5, note: on ? 'Chance ' + inWheel[k] + ' %' : t.out[k] };
+    });
+
+    var doneTasks = Object.keys(s.results).length;
+    var round = tasks.map(function (x, i) {
+      var res = s.results[i];
+      var active = i === idx && s.phase !== 'done';
+      return {
+        task: x.task, rule: x.rule,
+        status: res ? P[res].name : (active ? (s.phase === 'spinning' ? 'dreht …' : 'als Nächstes') : 'offen'),
+        statusFg: res ? '#0f5c28' : (active ? '#0262a0' : '#5a616b'),
+        dot: res ? P[res].color : (active ? '#0262a0' : '#c4c9d0'),
+        rowBg: active ? '#eef6fc' : 'transparent'
+      };
+    });
+
+    var win = s.results[idx];
+    var confetti = [];
+    var cols = ['#f5c542', '#ffffff', '#4fa6e8', '#ff8a65', '#81c995', '#c58af9'];
+    for (var j = 0; j < 36; j++) {
+      confetti.push({ left: (j * 37) % 100, w: 6 + (j % 3) * 3, h: 10 + (j % 4) * 3, color: cols[j % cols.length], dur: (1.8 + (j % 5) * 0.35).toFixed(2), delay: ((j % 9) * 0.08).toFixed(2) });
+    }
+    var isLast = idx === tasks.length - 1;
+
+    return {
+      haNav: haNav, tabs: tabs, round: round, doneTasks: doneTasks, totalTasks: tasks.length,
+      stepLabel: 'Aufgabe ' + (idx + 1) + ' von ' + tasks.length,
+      taskName: t.task, wedges: wedges, pegs: pegs, people: people, wheelCount: t.wheel.length,
+      rot: s.rot, trans: s.anim ? 'transform ' + secs + 's cubic-bezier(0.12, 0.65, 0.08, 1)' : 'none',
+      spinDisabled: s.phase !== 'ready',
+      hubLabel: s.phase === 'spinning' ? '…' : (s.phase === 'result' ? 'OK' : 'DREHEN'),
+      hubBg: s.phase === 'ready' ? '#0262a0' : '#3a556f',
+      hubAnim: s.phase === 'ready' ? 'tw-pulse 1.6s ease-in-out infinite' : 'none',
+      showResult: s.phase === 'result' && !!win, showDone: s.phase === 'done', confetti: confetti,
+      winName: win ? P[win].name : '', winColor: win ? P[win].color : '#0262a0', winInitial: win ? P[win].name.charAt(0) : '',
+      winDetail: 'Chance war ' + (win ? inWheel[win] : 0) + ' % · fällig bis Sonntag, 15. November · +' + (idx === 0 ? 5 : 3) + ' Punkte',
+      nextLabel: isLast ? 'Runde abschließen' : 'Nächste Aufgabe',
+      spin: function () {
+        if (self.state.phase !== 'ready') return;
+        var pick = self.pickFor(t);
+        var cur = self.state.rot;
+        var target = ((-pick.u - cur) % 360 + 360) % 360;
+        var next = cur + 360 * 6 + target;
+        self.setState({ phase: 'spinning', anim: true, rot: next });
+        self.timer = setTimeout(function () {
+          var res = Object.assign({}, self.state.results); res[idx] = pick.win;
+          self.setState({ phase: 'result', results: res });
+        }, secs * 1000 + 150);
+      },
+      next: function () {
+        if (isLast) { self.setState({ phase: 'done' }); return; }
+        self.setState({ idx: idx + 1, phase: 'ready', rot: 0, anim: false });
+      },
+      drawAll: function () {
+        if (self.timer) clearTimeout(self.timer);
+        var res = Object.assign({}, self.state.results);
+        tasks.forEach(function (x, i) { if (!res[i]) res[i] = self.pickFor(x).win; });
+        self.setState({ results: res, phase: 'done', anim: false });
+      },
+      restart: function () {
+        if (self.timer) clearTimeout(self.timer);
+        self.setState({ idx: 0, phase: 'ready', rot: 0, anim: false, results: {} });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

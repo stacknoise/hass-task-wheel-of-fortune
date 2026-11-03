@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Glücksrad – Historie</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f2f4f7;font-family:Roboto,system-ui,sans-serif;color:#1f2328}
+a{color:#0262a0}a:hover{color:#01497a}
+</style>
+</helmet>
+<div style="display: flex; flex-wrap: wrap; min-height: 900px; background: #f2f4f7; font-family: Roboto, system-ui, sans-serif; color: #1f2328;">
+  <nav aria-label="Home Assistant Seitenleiste" style="flex: 1 1 220px; max-width: 256px; background: #ffffff; border-right: 1px solid #e3e6ea; display: flex; flex-direction: column; padding: 12px 8px; gap: 2px; box-sizing: border-box;">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 8px 12px 16px; font-size: 20px; font-weight: 400;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5f6670" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      <span>Home Assistant</span>
+    </div>
+    <sc-for list="{{haNav}}" as="n" hint-placeholder-count="7">
+      <a href="{{n.href}}" style="display: flex; align-items: center; gap: 20px; min-height: 44px; padding: 0 12px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 500; color: {{n.fg}}; background: {{n.bg}};">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.icon}}"></path></svg>
+        <span>{{n.label}}</span>
+      </a>
+    </sc-for>
+  </nav>
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+    <header style="background: #ffffff; border-bottom: 1px solid #e3e6ea;">
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 24px;">
+        <h1 style="margin: 0; font-size: 22px; font-weight: 400; flex: 1 1 auto;">Aufgaben-Glücksrad</h1>
+        <button type="button" style="display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid #c4c9d0; background: #ffffff; color: #0262a0; font: 500 14px Roboto, sans-serif; cursor: pointer;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>
+          CSV exportieren
+        </button>
+      </div>
+      <div role="tablist" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 0 16px;">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="7">
+          <a href="{{t.href}}" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; text-decoration: none; font-size: 14px; font-weight: 500; color: {{t.fg}}; border-bottom: 3px solid {{t.line}};">{{t.label}}</a>
+        </sc-for>
+      </div>
+    </header>
+
+    <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px; max-width: 1000px; box-sizing: border-box; width: 100%;">
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+        <span style="font-size: 13px; color: #5a616b; margin-right: 4px;">Filtern nach</span>
+        <sc-for list="{{filters}}" as="f" hint-placeholder-count="6">
+          <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.on}}" style="display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid {{f.border}}; background: {{f.bg}}; color: {{f.fg}}; font: 500 13px Roboto, sans-serif; cursor: pointer;">
+            <span style="width: 10px; height: 10px; border-radius: 50%; background: {{f.dot}};"></span>{{f.label}}
+          </button>
+        </sc-for>
+      </div>
+
+      <sc-for list="{{rounds}}" as="r" hint-placeholder-count="5">
+        <section style="background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea;">
+          <button type="button" onClick="{{r.toggle}}" aria-expanded="{{r.open}}" style="display: flex; width: 100%; align-items: center; gap: 16px; padding: 16px 20px; border: none; background: transparent; font: inherit; color: inherit; text-align: left; cursor: pointer;">
+            <span style="width: 40px; height: 40px; border-radius: 10px; background: {{r.kindBg}}; color: {{r.kindFg}}; display: inline-flex; align-items: center; justify-content: center; flex: none;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{r.icon}}"></path></svg>
+            </span>
+            <span style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <span style="font-size: 15px; font-weight: 500;">{{r.title}}</span>
+              <span style="font-size: 13px; color: #5a616b;">{{r.meta}}</span>
+            </span>
+            <span style="font-size: 13px; color: #5a616b;">{{r.summary}}</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5a616b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate({{r.chev}}deg);"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+          <sc-if value="{{r.open}}" hint-placeholder-val="{{ false }}">
+            <div style="border-top: 1px solid #eef0f3; overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px;">
+                <thead>
+                  <tr style="text-align: left; color: #5a616b; font-size: 12px;">
+                    <th style="padding: 10px 20px; font-weight: 500;">Aufgabe</th>
+                    <th style="padding: 10px 12px; font-weight: 500;">Person</th>
+                    <th style="padding: 10px 12px; font-weight: 500;">Chance</th>
+                    <th style="padding: 10px 12px; font-weight: 500;">Status</th>
+                    <th style="padding: 10px 20px; font-weight: 500;">Erledigt am</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{r.rows}}" as="x" hint-placeholder-count="4">
+                    <tr style="border-top: 1px solid #eef0f3;">
+                      <td style="padding: 10px 20px;">{{x.task}}</td>
+                      <td style="padding: 10px 12px;"><span style="display: inline-flex; align-items: center; gap: 8px;"><span style="width: 24px; height: 24px; border-radius: 50%; background: {{x.color}}; color: #ffffff; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;">{{x.initial}}</span>{{x.person}}</span></td>
+                      <td style="padding: 10px 12px; color: #5a616b;">{{x.chance}} %</td>
+                      <td style="padding: 10px 12px;"><span style="font-size: 12px; font-weight: 500; border-radius: 10px; padding: 3px 8px; background: {{x.stBg}}; color: {{x.stFg}};">{{x.status}}</span></td>
+                      <td style="padding: 10px 20px; color: #5a616b;">{{x.doneAt}}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </sc-if>
+        </section>
+      </sc-for>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'all', open: { 0: true } };
+  }
+  renderVals() {
+    var self = this, s = this.state;
+    var ICONS = {
+      home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z', map: 'M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14',
+      energy: 'M13 2L4 14h7l-1 8 9-12h-7z', log: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01', history: 'M3 3v18h18M7 15l4-4 3 3 5-6',
+      wheel: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4', media: 'M6 4l13 8-13 8z',
+      settings: 'M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6zM12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1'
+    };
+    var haNav = [['Übersicht', 'home'], ['Karte', 'map'], ['Energie', 'energy'], ['Logbuch', 'log'], ['Verlauf', 'history'], ['Glücksrad', 'wheel', true], ['Medien', 'media'], ['Einstellungen', 'settings']]
+      .map(function (n) { return { label: n[0], icon: ICONS[n[1]], href: n[2] ? 'Main.dc.html' : '#', fg: n[2] ? '#01497a' : '#3c424a', bg: n[2] ? '#dcecf8' : 'transparent' }; });
+    var current = 'Historie.dc.html';
+    var tabs = [['Übersicht', 'Main.dc.html'], ['Auslosung', 'Auslosung.dc.html'], ['Aufgaben', 'Aufgaben.dc.html'], ['Personen', 'Personen.dc.html'], ['Zeitpläne', 'Zeitplan.dc.html'], ['Historie', 'Historie.dc.html'], ['Statistik', 'Statistik.dc.html']]
+      .map(function (t) { var on = t[1] === current; return { label: t[0], href: t[1], fg: on ? '#0262a0' : '#5a616b', line: on ? '#0262a0' : 'transparent' }; });
+
+    var P = { A: ['Anna', '#c05600'], B: ['Ben', '#1a5fd0'], C: ['Clara', '#137333'], D: ['David', '#7b2cbf'], E: ['Emma', '#b0136f'] };
+    var ST = {
+      ok: ['Pünktlich', '#e3f1e6', '#0f5c28'], late: ['Verspätet', '#fdf0dc', '#7a4a00'], open: ['Offen', '#e6eef7', '#01497a'],
+      swap: ['Getauscht', '#f1e7fb', '#5b1f99'], miss: ['Verpasst', '#fbe5e3', '#8c1d18']
+    };
+    var data = [
+      { title: 'Wochenplan · KW 45', meta: 'Mo, 2. Nov 2026 · 07:00 · automatisch', kind: 'auto', rows: [
+        ['Müll rausbringen', 'B', 22, 'ok', 'Mo, 18:42'], ['Bad putzen', 'C', 31, 'open', '–'], ['Staubsaugen Wohnzimmer', 'E', 36, 'open', '–'],
+        ['Rasen mähen', 'D', 50, 'open', '–'], ['Katzenklo reinigen', 'A', 24, 'open', '–'], ['Wocheneinkauf', 'A', 34, 'open', '–']] },
+      { title: 'Manuelle Auslosung', meta: 'Sa, 31. Okt 2026 · 11:03 · von Anna mit Glücksrad', kind: 'manual', rows: [
+        ['Rasen mähen', 'D', 48, 'ok', 'Sa, 15:20']] },
+      { title: 'Wochenplan · KW 44', meta: 'Mo, 26. Okt 2026 · 07:00 · automatisch', kind: 'auto', rows: [
+        ['Müll rausbringen', 'A', 20, 'ok', 'Di, 07:15'], ['Bad putzen', 'E', 26, 'swap', 'Sa · übernommen von Clara'], ['Staubsaugen Wohnzimmer', 'B', 28, 'late', 'So, 21:40'],
+        ['Katzenklo reinigen', 'C', 22, 'ok', 'Di, 17:02'], ['Wocheneinkauf', 'D', 30, 'miss', '–']] },
+      { title: 'Wochenplan · KW 43', meta: 'Mo, 19. Okt 2026 · 07:00 · automatisch', kind: 'auto', rows: [
+        ['Müll rausbringen', 'C', 21, 'ok', 'Mo, 19:10'], ['Bad putzen', 'B', 30, 'ok', 'Fr, 16:45'], ['Rasen mähen', 'B', 52, 'late', 'Mo (nächste Woche)'],
+        ['Katzenklo reinigen', 'E', 25, 'ok', 'Mi, 08:00']] }
+    ];
+    var filter = s.filter;
+    var filters = [['all', 'Alle', '#8a929c']].concat(Object.keys(P).map(function (k) { return [k, P[k][0], P[k][1]]; })).map(function (f) {
+      var on = filter === f[0];
+      return { label: f[1], dot: f[2], on: on, bg: on ? '#dcecf8' : '#ffffff', border: on ? '#0262a0' : '#c4c9d0', fg: on ? '#01497a' : '#1f2328',
+        pick: function () { self.setState({ filter: f[0] }); } };
+    });
+    var rounds = [];
+    data.forEach(function (r, i) {
+      var rows = r.rows.filter(function (x) { return filter === 'all' || x[1] === filter; });
+      if (!rows.length) return;
+      var done = rows.filter(function (x) { return x[3] === 'ok' || x[3] === 'late' || x[3] === 'swap'; }).length;
+      var open = !!s.open[i];
+      rounds.push({
+        title: r.title, meta: r.meta, open: open, chev: open ? 180 : 0,
+        summary: done + '/' + rows.length + ' erledigt',
+        icon: r.kind === 'auto' ? 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2' : 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 3v18M3 12h18',
+        kindBg: r.kind === 'auto' ? '#e6eef7' : '#fdf0dc', kindFg: r.kind === 'auto' ? '#01497a' : '#7a4a00',
+        toggle: function () { var o = Object.assign({}, self.state.open); o[i] = !o[i]; self.setState({ open: o }); },
+        rows: rows.map(function (x) {
+          return { task: x[0], person: P[x[1]][0], initial: P[x[1]][0].charAt(0), color: P[x[1]][1], chance: x[2],
+            status: ST[x[3]][0], stBg: ST[x[3]][1], stFg: ST[x[3]][2], doneAt: x[4] };
+        })
+      });
+    });
+    return { haNav: haNav, tabs: tabs, filters: filters, rounds: rounds };
+  }
+}
+</script>
+</body>
+</html>
