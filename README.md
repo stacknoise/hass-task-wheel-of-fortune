@@ -3,11 +3,10 @@
 Verteilt Haushaltsaufgaben fair und mit etwas Spaß: Ein Glücksrad lost aus, wer was übernimmt. Die Chancen
 richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie belastbar ist.
 
-> **Status:** Entwicklung, Version 0.0.1. Das Projektgerüst steht (Integration lässt sich hinzufügen und
-> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03), Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07), Statistik und Historie (AP-13) Runden und Zeitpläne (AP-08), Einstieg, Dienste, Events und Einstellungen (AP-09), Benachrichtigungen (AP-12) Entitäten (AP-11) sowie die WebSocket-API für das Panel (AP-10) und das Frontend-Gerüst des Panels (AP-14: Tabs, Store, Seitenleisten-Eintrag) sind umgesetzt, die Ansichten folgen mit den Arbeitspaketen. Die erste Veröffentlichung über HACS
-> (Version 0.1.0) ist in Vorbereitung.
+> **Status:** Version 0.1.0, die erste Veröffentlichung. Alle Funktionen unten sind umgesetzt; die Installation läuft über HACS als
+> benutzerdefiniertes Repository (siehe unten). Rückmeldungen gern als [Issue](https://github.com/stacknoise/hass-task-wheel-of-fortune/issues).
 
-## Funktionen (geplant)
+## Funktionen
 
 - **Personen** als eigene Objekte, unabhängig von HA-Benutzern: Farbe im Rad, volle oder halbe Last oder Pause,
   Abwesenheiten (einmalig, an festen Wochentagen, im Wochenrhythmus wie „jede 2. Woche Fr–Fr“),
