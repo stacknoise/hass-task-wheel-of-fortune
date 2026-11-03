@@ -13,6 +13,8 @@ export default defineConfig({
   use: {
     baseURL: HA_URL,
     locale: 'de-DE',
+    // Der Service-Worker der Oberfläche lädt die Seite neu, sobald er die Kontrolle übernimmt (mitten im Test)
+    serviceWorkers: 'block',
     trace: 'retain-on-failure',
   },
 });
