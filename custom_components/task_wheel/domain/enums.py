@@ -97,3 +97,11 @@ class WeightingKind(StrEnum):
 
     FAIRNESS = "fairness"
     UNIFORM = "uniform"
+
+
+class ExclusionReason(StrEnum):
+    """Grund, warum eine Person nicht im Rad einer Aufgabe ist (Anzeige „Wer ist im Rad?“)."""
+
+    PAUSED = "paused"
+    ABSENT = "absent"
+    REPEAT = "no_repeat"
