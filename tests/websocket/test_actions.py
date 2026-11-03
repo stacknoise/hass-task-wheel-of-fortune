@@ -140,3 +140,21 @@ def test_preview_of_a_finished_round_is_rejected(api: Api) -> None:
     api.run("draw/spin_rest", panel_round_id=rid)
     with pytest.raises(DrawRejectedError):
         api.run("draw/preview", panel_round_id=rid)
+
+
+def test_skip_marks_assignment_and_notifies(api: Api) -> None:
+    skipped = api.result("assignment/skip", assignment_id="a1")
+    assert skipped["status"] == "skipped"
+    assert api.history.get_assignment("a1").status == "skipped"
+    assert [item.id for item in api.events.skipped] == ["a1"]
+
+
+def test_skip_twice_is_rejected(api: Api) -> None:
+    api.run("assignment/skip", assignment_id="a1")
+    with pytest.raises(InvalidTransitionError):
+        api.run("assignment/skip", assignment_id="a1")
+
+
+def test_round_head_lists_all_holders_for_the_swap_choice(api: Api) -> None:
+    head = api.data.live.snapshot().collections["rounds"]["r1"]
+    assert head["person_ids"] == ["p1", "p2"]

@@ -149,6 +149,9 @@
     "swap_person_not_allowed": {
       "message": "Die Person darf diese Aufgabe nicht übernehmen."
     },
+    "swap_person_not_in_round": {
+      "message": "Getauscht wird nur mit Personen derselben Auslosung."
+    },
     "swap_person_paused": {
       "message": "Die Person pausiert."
     },

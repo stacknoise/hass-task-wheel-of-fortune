@@ -6,14 +6,15 @@ import { LocalizedElement } from './localized.ts';
 import { baseStyles, tokenStyles, viewStyles } from './styles.ts';
 
 /**
- * Löschen mit Rückfrage: erst der Knopf, dann die Frage mit „Löschen“ und „Abbrechen“.
- * Erst die Bestätigung löst `tw-confirm` aus; die Frage ist die Warnung der Aufrufer (`question`).
+ * Aktion mit Rückfrage (Löschen, „Bleibt unerledigt“): erst der Knopf (`label`), dann die Frage mit
+ * Bestätigen (`confirm`, sonst „Löschen“) und „Abbrechen“. Erst die Bestätigung löst `tw-confirm` aus.
  */
-export class TwConfirmDelete extends LocalizedElement {
+export class TwConfirmAction extends LocalizedElement {
   static override properties = {
     ...LocalizedElement.properties,
     label: { type: String },
     question: { type: String },
+    confirm: { type: String },
     blocked: { type: String },
     busy: { type: Boolean },
     _asking: { state: true },
@@ -43,6 +44,8 @@ export class TwConfirmDelete extends LocalizedElement {
 
   declare label: string;
   declare question: string;
+  /** Beschriftung der Bestätigung; leer heißt „Löschen“. */
+  declare confirm: string;
   /** Grund, warum Löschen gesperrt ist; leer, wenn es erlaubt ist. */
   declare blocked: string;
   declare busy: boolean;
@@ -52,6 +55,7 @@ export class TwConfirmDelete extends LocalizedElement {
     super();
     this.label = '';
     this.question = '';
+    this.confirm = '';
     this.blocked = '';
     this.busy = false;
     this._asking = false;
@@ -74,7 +78,7 @@ export class TwConfirmDelete extends LocalizedElement {
                   );
                 }}
               >
-                ${this.text('form.delete')}
+                ${this.confirm || this.text('form.delete')}
               </button>
               <button
                 type="button"
@@ -102,4 +106,4 @@ export class TwConfirmDelete extends LocalizedElement {
   }
 }
 
-customElements.define(COMPONENT_TAGS.confirmDelete, TwConfirmDelete);
+customElements.define(COMPONENT_TAGS.confirmAction, TwConfirmAction);

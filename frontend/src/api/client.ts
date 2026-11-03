@@ -14,6 +14,7 @@ import {
   NOTIFY_PREFIX,
   NOTIFY_SEND_MESSAGE,
   WS_ASSIGNMENT_COMPLETE,
+  WS_ASSIGNMENT_SKIP,
   WS_ASSIGNMENT_SWAP,
   WS_ROUND_DELETE,
   WS_DRAW_BEGIN,
@@ -115,6 +116,14 @@ export class ApiClient {
   complete(assignmentId: string): Promise<WireObject> {
     return this.#hass.callWS<WireObject>({
       type: WS_ASSIGNMENT_COMPLETE,
+      [FIELD_ASSIGNMENT_ID]: assignmentId,
+    });
+  }
+
+  /** Markiert die Zuteilung als „Bleibt unerledigt“ (zählt in der Statistik wie verpasst). */
+  skip(assignmentId: string): Promise<WireObject> {
+    return this.#hass.callWS<WireObject>({
+      type: WS_ASSIGNMENT_SKIP,
       [FIELD_ASSIGNMENT_ID]: assignmentId,
     });
   }

@@ -19,7 +19,7 @@ nachvollziehbar per Glücksrad an Personen verteilt.
 | Aufgaben | Erlaubte Personen, Punkte (Aufwand), Frist in Tagen, Häufigkeitsregel, Zusatzregeln (keine Wiederholung, Abwesenheit beachten, Tausch erlaubt) |
 | Zeitpläne | Wiederkehrend (Wochentage + Uhrzeit + Rhythmus), einmalig (Datum + Uhrzeit), nur manuell (mit Erinnerung) |
 | Auslosung | Automatisch per Zeitplan oder manuell im Panel mit Animation (Glücksrad, Lostrommel, Slot-Machine, Plinko, Scheinwerfer, je Zeitplan wählbar, bei mehreren zufällig je Auslosung); jede Auslosung gehört zu einem Zeitplan |
-| Zuteilungen | Abhaken, Fristen, Status (offen, pünktlich, verspätet, getauscht, verpasst), Tausch per Joker |
+| Zuteilungen | Abhaken, Fristen, Status (offen, pünktlich, verspätet, getauscht, verpasst, „Bleibt unerledigt“), Tausch per Joker |
 | Historie | Runden mit Zuteilungen, Chance, Status, Filter, CSV-Export |
 | Statistik | KPIs, Punkte vs. fairer Anteil, Erledigungsquote pro Woche, Matrix Aufgabe × Person, Glückspilz/Pechvogel |
 | HA-Integration | Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen, Frontend-Panel in der Seitenleiste |
@@ -287,9 +287,10 @@ Aufgaben an dieselbe Person verteilt. Aufwand pro Runde: `O(Aufgaben × Personen
 | offen → pünktlich | `complete` vor `due_at` | Punkte zählen |
 | offen → verspätet | `complete` nach `due_at` | Punkte × `late_points_factor` (einstellbar, Standard 1,0) |
 | offen → verpasst | täglicher Lauf nach `due_at + missed_grace_hours` | Punkte × `missed_points_factor` (einstellbar, Standard 0; negativ = Abzug) |
+| offen/getauscht → bleibt unerledigt | `skip` (Knopf „Bleibt unerledigt“, mit Rückfrage) | Punkte wie verpasst; in der Statistik zählt die Zuteilung als nicht erledigt (Erledigungsquote, Kennzahl „Verpasst“, Zuverlässigkeit), in der Historie bleibt sie als eigener Status sichtbar |
 | offen → getauscht | `swap` mit Joker | neue Person übernimmt, Punkte gehen an sie, Joker −1 |
 
-Tausch ist nur erlaubt, wenn die Aufgabe `swap_allowed` hat, die neue Person die Aufgabe laut Regel bekommen
+Tausch ist nur innerhalb derselben Auslosung möglich (die neue Person hat in der Runde selbst eine Zuteilung, sonst `swap_person_not_in_round`) und nur, wenn die Aufgabe `swap_allowed` hat, die neue Person die Aufgabe laut Regel bekommen
 dürfte (erlaubt, nicht pausiert, anwesend) und die abgebende Person im laufenden Monat noch Joker hat.
 Ist eine Aufgabe in mehreren Zeitplänen, kann sie mehrfach ausgelost werden (auch an dieselbe Person); jede Zuteilung kennt ihren Zeitplan und wird einzeln erledigt. Die Häufigkeitsregeln zählen Zuteilungen je Aufgabe über alle Zeitpläne.
 Statusübergänge sind eine Tabelle `dict[(Status, Aktion), Status]` – keine Verzweigungsketten.
@@ -355,7 +356,7 @@ Präfix `task_wheel/`. Befehle je Bereich in eigenen Modulen; jeder Befehl hat e
 | Bereich | Befehle | Recht |
 |---|---|---|
 | Lesen | `snapshot`, `subscribe` (Deltas), `history/list`, `statistics/get` | angemeldeter Benutzer |
-| Erledigen/Tauschen | `assignment/complete`, `assignment/swap` | angemeldeter Benutzer |
+| Erledigen/Tauschen | `assignment/complete`, `assignment/swap`, `assignment/skip` | angemeldeter Benutzer |
 | Auslosung löschen | `round/delete` | **Administrator** |
 | Auslosen | `draw/begin`, `draw/spin`, `draw/spin_rest`, `draw/commit`, `draw/cancel` | angemeldeter Benutzer |
 | Konfiguration | `person/*`, `task/*`, `schedule/*`, `settings/update` | **Administrator** (`@websocket_api.require_admin`) |
