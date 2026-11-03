@@ -39,7 +39,7 @@ export class TwChipSelect extends LitElement {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        min-height: 36px;
+        min-height: var(--tw-control-height);
         padding: 0 14px;
         border-radius: 18px;
         border: 1px solid var(--tw-color-divider);

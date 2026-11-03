@@ -48,7 +48,7 @@ export class TwStatisticsView extends LitElement {
       .kpis,
       .highlights {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
         gap: var(--tw-space-field);
       }
       .kpi-value {

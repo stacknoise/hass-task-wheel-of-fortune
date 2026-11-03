@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Panel für Tablet und Smartphone optimiert, vor allem die Auslosung (Bühne oben, kompaktes Layout, Menü-Knopf, Touch-Größen)
+
 ## [0.1.1] – 2026-11-03
 
 - Der Name ist überall englisch: „Task Wheel of Fortune“ in HACS, in der Integrationsliste, im Seitenleisten-Eintrag und im Panel (auch bei deutscher Oberfläche)

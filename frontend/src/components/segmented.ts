@@ -34,7 +34,7 @@ export class TwSegmented extends LitElement {
         overflow: hidden;
       }
       button {
-        min-height: 36px;
+        min-height: var(--tw-control-height);
         padding: 0 14px;
         border: 0;
         background: var(--tw-color-surface);

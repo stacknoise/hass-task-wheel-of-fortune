@@ -1,22 +1,26 @@
-import { css } from 'lit';
+import { css, unsafeCSS } from 'lit';
 import type { CSSResult } from 'lit';
 
-import { baseStyles, tokenStyles } from '../components/index.ts';
+import { baseStyles, phoneQuery, stackedQuery, tokenStyles } from '../components/index.ts';
+
+const CARD_MIN = unsafeCSS('260px');
+const CARD_MAX = unsafeCSS('340px');
 
 /** Gestaltung der Auslosung (Karte links, Bühne rechts). */
 export const drawStyles: CSSResult[] = [
   tokenStyles,
   baseStyles,
   css`
+    :host {
+      container-type: inline-size;
+    }
     .layout {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: minmax(${CARD_MIN}, ${CARD_MAX}) minmax(0, 1fr);
       gap: var(--tw-space-m);
-      align-items: flex-start;
+      align-items: start;
     }
     .card {
-      flex: 1 1 260px;
-      max-width: 340px;
       background: var(--tw-color-surface);
       border: 1px solid var(--tw-color-divider);
       border-radius: var(--tw-radius);
@@ -88,10 +92,9 @@ export const drawStyles: CSSResult[] = [
       cursor: default;
     }
     .stage {
-      flex: 999 1 520px;
       min-width: 0;
       position: relative;
-      overflow: hidden;
+      overflow: clip;
       display: flex;
       flex-wrap: wrap;
       gap: var(--tw-space-l);
@@ -216,15 +219,13 @@ export const drawStyles: CSSResult[] = [
       flex: 1 1 200px;
     }
     .done {
-      position: absolute;
-      inset: 0;
+      flex: 1 1 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: var(--tw-space-m);
-      padding: var(--tw-space-l);
-      background: var(--tw-color-background);
+      padding: var(--tw-space-l) 0;
     }
     .summary {
       width: 100%;
@@ -259,6 +260,76 @@ export const drawStyles: CSSResult[] = [
     }
     .error {
       color: var(--tw-color-error);
+    }
+    /* Tablet hochkant und Smartphone: Bühne zuerst, Karte darunter über die ganze Breite. */
+    @container ${stackedQuery} {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .stage {
+        order: -1;
+      }
+      .stage.idle {
+        display: none;
+      }
+      /* Das Ergebnis steht direkt unter dem Rad, die Personenliste folgt danach. */
+      .result {
+        order: 1;
+      }
+      .people {
+        order: 2;
+      }
+    }
+    /* Smartphone: kompaktere Bühne, Personen in zwei Spalten, Ergebnis mit voller Breite. */
+    @container ${phoneQuery} {
+      .stage {
+        gap: var(--tw-space-m);
+        padding: var(--tw-space-s) 0;
+      }
+      .title {
+        font-size: 1.45em;
+      }
+      .hub {
+        width: 88px;
+        height: 88px;
+        margin: -44px 0 0 -44px;
+        font-size: 0.9em;
+      }
+      .hub.below {
+        width: 100%;
+        height: auto;
+        margin: 0;
+      }
+      .people {
+        flex: 1 1 100%;
+        max-width: none;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--tw-space-s) var(--tw-space-m);
+      }
+      .people .eyebrow,
+      .people .hint {
+        grid-column: 1 / -1;
+      }
+      .people .person {
+        margin-top: 0;
+      }
+      .people .hint {
+        margin-top: 0;
+      }
+      .result {
+        flex-direction: column;
+        text-align: center;
+      }
+      .result .text {
+        flex: none;
+      }
+      .result .button {
+        width: 100%;
+      }
+      .task {
+        padding: var(--tw-space-s) var(--tw-space-m);
+      }
     }
   `,
 ];
