@@ -1,0 +1,13 @@
+{
+  "name": "task-wheel-e2e",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "End-to-End-Test des Panels gegen eine echte Home-Assistant-Instanz (AP-18)",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

@@ -106,10 +106,20 @@ class EntityFactory:
                 self._rename_device(key, item.name)
                 async_dispatcher_send(self._hass, group.signal(key))
 
+    def _device_of(self, registry: dr.DeviceRegistry, item_id: str) -> dr.DeviceEntry | None:
+        """Das Gerät eines Elements unter den Geräten dieser Config Entry.
+
+        Statt des ab Home Assistant 2027.8 entfallenden `async_get_device` wird über die Geräte der
+        Config Entry gesucht (höchstens eine Person oder ein Zeitplan je Gerät).
+        """
+        identifier = (DOMAIN, item_id)
+        devices = dr.async_entries_for_config_entry(registry, self._entry.entry_id)
+        return next((device for device in devices if identifier in device.identifiers), None)
+
     def _rename_device(self, item_id: str, name: str) -> None:
         """Übernimmt einen geänderten Namen in das Gerät (die Entity-IDs bleiben stabil)."""
         registry = dr.async_get(self._hass)
-        device = registry.async_get_device(identifiers={(DOMAIN, item_id)})
+        device = self._device_of(registry, item_id)
         if device is not None and device.name != device_name(name):
             registry.async_update_device(device.id, name=device_name(name))
 
@@ -130,7 +140,7 @@ class EntityFactory:
         """Entfernt die Geräte der Elemente, an denen keine Entität mehr hängt."""
         devices = dr.async_get(self._hass)
         for item in item_ids:
-            device = devices.async_get_device(identifiers={(DOMAIN, item)})
+            device = self._device_of(devices, item)
             if device is not None and not er.async_entries_for_device(
                 entities, device.id, include_disabled_entities=True
             ):

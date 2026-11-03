@@ -40,6 +40,7 @@ import {
 } from './plinko-geometry.ts';
 import type { BallState, Bin, PathPoint } from './plinko-geometry.ts';
 import { StageElement, sharesOf } from './stage-base.ts';
+import { defineOnce } from './define.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 
 interface Ball {
@@ -232,4 +233,4 @@ export class TwPlinko extends StageElement {
   }
 }
 
-customElements.define(STAGE_TAGS.plinko, TwPlinko);
+defineOnce(STAGE_TAGS.plinko, TwPlinko);

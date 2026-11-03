@@ -33,6 +33,7 @@ import { personChips } from './person-chips.ts';
 import { assignmentGroups } from './overview-assignments.ts';
 import type { AssignmentHandlers } from './overview-assignments.ts';
 import { filterByPerson, groupByRound, recentActivity, upcomingDraws } from './overview-model.ts';
+import { defineOnce } from '../components/define.ts';
 
 /** Übersicht: nächste Auslosung, offene Zuteilungen mit Erledigen und Tauschen, Punkte, Aktivität. */
 export class TwOverviewView extends LitElement {
@@ -89,6 +90,9 @@ export class TwOverviewView extends LitElement {
       }
       .group-head + ul {
         margin-top: var(--tw-space-field);
+      }
+      .info {
+        flex-basis: 16em;
       }
       .swap {
         padding: var(--tw-space-s) 0 0 40px;
@@ -391,4 +395,4 @@ export class TwOverviewView extends LitElement {
   }
 }
 
-customElements.define(VIEW_TAGS.overview, TwOverviewView);
+defineOnce(VIEW_TAGS.overview, TwOverviewView);

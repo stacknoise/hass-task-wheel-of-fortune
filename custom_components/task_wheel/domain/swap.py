@@ -1,6 +1,7 @@
 """Regeln für den Tausch mit Joker (KONZEPT §5.4): Berechtigung der neuen Person und Jokerzähler."""
 
 import datetime as dt
+from collections import Counter
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Final
@@ -66,15 +67,19 @@ def ensure_swap_possible(context: SwapContext) -> None:
             raise SwapRejectedError(key)
 
 
+def jokers_used_by_person(assignments: Iterable[Assignment], now: dt.datetime) -> Counter[str]:
+    """Eingesetzte Joker je Person im Kalendermonat von `now` (ein Durchlauf für alle Personen)."""
+    start = period_start(Period.MONTH, now)
+    return Counter(
+        item.swap.from_person_id
+        for item in assignments
+        if item.swap is not None and start <= local_date(item.swap.at, now) <= now.date()
+    )
+
+
 def jokers_used(assignments: Iterable[Assignment], person_id: str, now: dt.datetime) -> int:
     """Anzahl der Joker, die `person_id` im Kalendermonat von `now` bereits eingesetzt hat."""
-    start = period_start(Period.MONTH, now)
-    return sum(
-        item.swap is not None
-        and item.swap.from_person_id == person_id
-        and start <= local_date(item.swap.at, now) <= now.date()
-        for item in assignments
-    )
+    return jokers_used_by_person(assignments, now)[person_id]
 
 
 def jokers_left(settings: Settings, used: int) -> int:

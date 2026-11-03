@@ -13,6 +13,8 @@ export const COMPONENT_TAGS = {
   wheel: 'tw-wheel',
   confetti: 'tw-confetti',
   confirmAction: 'tw-confirm-action',
+  confirmDialog: 'tw-confirm-dialog',
+  actionMenu: 'tw-action-menu',
 } as const;
 
 export const VIEW_TAGS = {
@@ -27,5 +29,9 @@ export const VIEW_TAGS = {
 
 /** Ereignis von `tw-confirm-action`, wenn die Löschung bestätigt wurde. */
 export const EVENT_CONFIRM = 'tw-confirm';
+/** Ereignis von `tw-confirm-dialog`, wenn die Rückfrage abgebrochen wurde. */
+export const EVENT_CANCEL = 'tw-cancel';
+/** Ereignis von `tw-action-menu` mit der Kennung der gewählten Aktion als `detail`. */
+export const EVENT_ACTION = 'tw-action';
 export const EVENT_TAB_SELECT = 'tw-tab-select';
 export const EVENT_LOCATION_CHANGED = 'location-changed';

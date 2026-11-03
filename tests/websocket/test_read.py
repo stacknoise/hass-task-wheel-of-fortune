@@ -88,3 +88,36 @@ def test_statistics_get_returns_report(api: Api) -> None:
 def test_statistics_get_rejects_out_of_range(api: Api) -> None:
     with pytest.raises(ValidationError):
         api.run("statistics/get", months=13)
+
+
+WEEKDAYS_OFF = {"kind": "weekly_days", "weekdays": [5, 6]}
+
+
+def test_availability_preview_starts_on_monday_of_the_current_week(api: Api) -> None:
+    # NOW ist Dienstag, 2026-11-03: die Vorschau beginnt am Montag davor
+    result = api.result("availability/preview", absences=[WEEKDAYS_OFF], weeks=2)
+    assert result["present"] == [True] * 5 + [False] * 2 + [True] * 5 + [False] * 2
+
+
+def test_availability_preview_without_rules_is_all_present(api: Api) -> None:
+    assert api.result("availability/preview", absences=[])["present"] == [True] * 28
+
+
+def test_availability_preview_combines_rules(api: Api) -> None:
+    once = {"kind": "once", "start": "2026-11-02", "end": "2026-11-03"}
+    present = api.result("availability/preview", absences=[WEEKDAYS_OFF, once], weeks=1)["present"]
+    assert present == [False, False, True, True, True, False, False]
+
+
+@pytest.mark.parametrize(
+    "fields",
+    [
+        {"absences": [{"kind": "unbekannt"}]},
+        {"absences": [{"kind": "once", "start": "2026-11-05", "end": "2026-11-01"}]},
+        {"absences": [], "weeks": 0},
+        {"absences": [], "weeks": 13},
+    ],
+)
+def test_availability_preview_rejects_invalid_rules(api: Api, fields: dict[str, object]) -> None:
+    with pytest.raises(ValidationError):
+        api.run("availability/preview", **fields)

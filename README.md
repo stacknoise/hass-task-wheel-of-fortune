@@ -77,7 +77,7 @@ vorerst nur Zähler und werden mit AP-15 ausgebaut.
 
 
 - **Übersicht:** nächste Auslosung (mit Blättern durch die Zeitpläne), offene Zuteilungen je Zeitplan mit Filter nach Person,
-  Erledigen, „Bleibt unerledigt“ (mit Rückfrage) und Tauschen (nur erlaubte, nicht pausierte Personen derselben Auslosung, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
+  Aktionsmenü je Zuteilung mit Erledigen und „Bleibt unerledigt“ (beide mit Rückfrage per Popup) und Tauschen (nur erlaubte, nicht pausierte Personen derselben Auslosung, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
   fairen Anteil und die jüngste Aktivität. Die offenen Zuteilungen sind nach **Auslosung** gruppiert (jüngste zuerst, mit
   Zeitplan und Zeitpunkt); eine Auslosung ohne offene Zuteilungen verschwindet aus der Liste. Eine ganze Auslosung lässt sich
   nach Rückfrage **löschen**, solange keine ihrer Aufgaben erledigt ist; sie verschwindet dann auch aus Historie und Statistik.
@@ -108,7 +108,7 @@ die Karten, rechts das Formular; Fehler des Backends erscheinen am betroffenen F
 ## Panel-API (WebSocket)
 
 Das Panel spricht mit dem Backend über WebSocket-Befehle mit dem Präfix `task_wheel/`: `snapshot`, `subscribe`
-(erst der Gesamtstand, danach nur Änderungen je Objekt), `history/list`, `statistics/get`,
+(erst der Gesamtstand, danach nur Änderungen je Objekt), `history/list`, `statistics/get`, `availability/preview` (Vorschau der Anwesenheit),
 `assignment/complete`, `assignment/swap`, `assignment/skip`, `draw/begin|spin|spin_rest|commit|cancel` für jeden angemeldeten
 Benutzer sowie `round/delete`, `person/*`, `task/*`, `schedule/*` und `settings/update` nur für Administratoren. Alle Eingaben
 werden gegen strenge Schemas geprüft (keine unbekannten Felder, begrenzte Längen). Ist in den Einstellungen
@@ -158,6 +158,10 @@ ruff check . && ruff format --check . && mypy && lint-imports && pytest
 
 # Frontend (Node 22)
 cd frontend && npm ci && npm run lint && npm run typecheck && npm test && npm run build && npm run bundle-budget
+
+# End-to-End-Test (Playwright gegen eine echte, frische HA-Instanz mit der Integration; läuft in CI als Job `e2e`)
+# Ablauf: Frontend bauen, `hass -c <config>` mit `custom_components/task_wheel` starten, dann
+cd e2e && npm ci && npx playwright install chromium && HA_URL=http://localhost:8123 npx playwright test
 
 # Code-Doku erzeugen (docs/code-doku/index.html) und Schwellwerte prüfen
 python3 docs/code-doku/generate.py --check

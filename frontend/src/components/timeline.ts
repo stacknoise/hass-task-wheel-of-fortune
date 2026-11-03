@@ -5,6 +5,7 @@ import { FORM_TAGS, TIMELINE_SCALE_LABELS, TIMELINE_SCALE_STEPS } from '../const
 import { translate } from '../i18n/index.ts';
 import { formStyles } from './formStyles.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
+import { defineOnce } from './define.ts';
 
 /** Zeitstrahl eines festen Intervalls: gesperrt, Toleranz und frei, in Tagen nach der letzten Zuteilung. */
 export class TwTimeline extends LitElement {
@@ -121,4 +122,4 @@ export class TwTimeline extends LitElement {
   }
 }
 
-customElements.define(FORM_TAGS.timeline, TwTimeline);
+defineOnce(FORM_TAGS.timeline, TwTimeline);

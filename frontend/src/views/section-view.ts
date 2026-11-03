@@ -7,6 +7,7 @@ import '../components/index.ts';
 import type { CollectionName } from '../constants/index.ts';
 import { translate } from '../i18n/index.ts';
 import { StoreController } from '../state/index.ts';
+import { defineOnce } from '../components/define.ts';
 
 /** Gerüst einer Ansicht: zeigt die Anzahl der Objekte ihrer Sammlungen; wird in AP-15 bis AP-17 ausgebaut. */
 export class SectionView extends LitElement {
@@ -63,7 +64,7 @@ export class SectionView extends LitElement {
 
 /** Registriert eine Ansicht, die die Anzahl der genannten Sammlungen zeigt. */
 export function defineView(tag: string, sections: readonly CollectionName[]): void {
-  customElements.define(
+  defineOnce(
     tag,
     class extends SectionView {
       static override sections = sections;

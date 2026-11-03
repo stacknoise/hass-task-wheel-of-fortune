@@ -13,6 +13,7 @@ import './select.ts';
 import './stepper.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import './timeline.ts';
+import { defineOnce } from './define.ts';
 
 type Renderer = (frequency: never) => TemplateResult | typeof nothing;
 
@@ -97,4 +98,4 @@ export class TwFrequencyEditor extends LocalizedElement {
   }
 }
 
-customElements.define(FORM_TAGS.frequencyEditor, TwFrequencyEditor);
+defineOnce(FORM_TAGS.frequencyEditor, TwFrequencyEditor);

@@ -2,17 +2,28 @@
 
 from typing import Any, Final
 
+import voluptuous as vol
+
 from ..application.views import history_entry_view
 from ..application.wire import to_json
 from ..const.defaults import (
     DEFAULT_HISTORY_PAGE_SIZE,
+    DEFAULT_PREVIEW_WEEKS,
     DEFAULT_STATISTICS_MONTHS,
     DEFAULT_STATISTICS_WEEKS,
 )
-from ..const.events import WS_HISTORY_LIST, WS_SNAPSHOT, WS_STATISTICS_GET, WS_SUBSCRIBE
+from ..const.events import (
+    WS_AVAILABILITY_PREVIEW,
+    WS_HISTORY_LIST,
+    WS_SNAPSHOT,
+    WS_STATISTICS_GET,
+    WS_SUBSCRIBE,
+)
 from ..const.keys import (
     WIRE_ENTRIES,
     WIRE_NEXT_OFFSET,
+    WIRE_PRESENT,
+    WS_FIELD_ABSENCES,
     WS_FIELD_LIMIT,
     WS_FIELD_MONTHS,
     WS_FIELD_OFFSET,
@@ -24,11 +35,14 @@ from ..const.keys import (
     WS_FIELD_UNTIL,
     WS_FIELD_WEEKS,
 )
+from ..const.limits import MAX_ABSENCES_PER_PERSON
+from ..domain.availability import PersonAvailability
 from ..domain.enums import AssignmentStatus
 from ..domain.history import HistoryFilter
+from ..domain.models import decode_absence
 from ..domain.serialization import enum_of, optional, to_datetime
 from .command import Command, Params, Reply, Request
-from .schemas import ID, INTEGER, ISO_TEXT, optional_fields
+from .schemas import ID, INTEGER, ISO_TEXT, bounded, optional_fields, required_fields
 
 _DECODE_STATUS: Final = optional(enum_of(AssignmentStatus))
 _DECODE_TIME: Final = optional(to_datetime)
@@ -46,6 +60,12 @@ _HISTORY_FIELDS: Final[dict[Any, Any]] = optional_fields(
 _STATISTICS_FIELDS: Final[dict[Any, Any]] = optional_fields(
     (WS_FIELD_MONTHS, INTEGER), (WS_FIELD_WEEKS, INTEGER)
 )
+_PREVIEW_FIELDS: Final[dict[Any, Any]] = {
+    **required_fields(
+        (WS_FIELD_ABSENCES, vol.All([bounded], vol.Length(max=MAX_ABSENCES_PER_PERSON)))
+    ),
+    **optional_fields((WS_FIELD_WEEKS, INTEGER)),
+}
 
 
 def _snapshot(request: Request) -> Reply:
@@ -94,9 +114,23 @@ def _statistics_get(request: Request) -> Reply:
     return Reply(to_json(report))
 
 
+def _availability_preview(request: Request) -> Reply:
+    """Anwesenheit der nächsten Wochen für einen noch nicht gespeicherten Satz von Regeln.
+
+    Die Regeln rechnet nur das Backend aus (eine Quelle der Wahrheit); das Panel zeigt das Ergebnis.
+    """
+    params = request.params
+    rules = tuple(decode_absence(item) for item in params[WS_FIELD_ABSENCES])
+    days = PersonAvailability.of_rules(rules).week_preview(
+        request.now.date(), params.get(WS_FIELD_WEEKS, DEFAULT_PREVIEW_WEEKS)
+    )
+    return Reply({WIRE_PRESENT: [entry.present for entry in days]})
+
+
 COMMANDS: Final = (
     Command(WS_SNAPSHOT, {}, _snapshot),
     Command(WS_SUBSCRIBE, {}, _subscribe),
     Command(WS_HISTORY_LIST, _HISTORY_FIELDS, _history_list),
     Command(WS_STATISTICS_GET, _STATISTICS_FIELDS, _statistics_get),
+    Command(WS_AVAILABILITY_PREVIEW, _PREVIEW_FIELDS, _availability_preview),
 )

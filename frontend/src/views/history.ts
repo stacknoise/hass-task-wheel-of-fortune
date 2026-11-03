@@ -27,6 +27,7 @@ import { roundDelete } from './round-delete.ts';
 import { downloadText } from './download.ts';
 import { csvRows, doneCount, originText } from './history-model.ts';
 import type { HistoryLookups } from './history-model.ts';
+import { defineOnce } from '../components/define.ts';
 
 interface Loaded {
   readonly rounds: readonly RoundObject[];
@@ -62,6 +63,20 @@ export class TwHistoryView extends LitElement {
         font: inherit;
         text-align: left;
         cursor: pointer;
+      }
+      .titles {
+        display: flex;
+        flex-direction: column;
+        gap: var(--tw-space-field);
+      }
+      .card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--tw-space-field);
+      }
+      .card > .table {
+        align-self: stretch;
       }
       .chevron {
         transition: transform var(--tw-duration);
@@ -213,8 +228,8 @@ export class TwHistoryView extends LitElement {
             this.#toggle(round.id);
           }}
         >
-          <span class="grow">
-            <strong>${schedule ?? this.#text('common.unknownSchedule')}</strong><br />
+          <span class="grow titles">
+            <strong>${schedule ?? this.#text('common.unknownSchedule')}</strong>
             <span class="muted"
               >${formatDateTime(round.started_at, this.language)} ·
               ${originText(round.origin, text)}</span
@@ -371,4 +386,4 @@ export class TwHistoryView extends LitElement {
   }
 }
 
-customElements.define(VIEW_TAGS.history, TwHistoryView);
+defineOnce(VIEW_TAGS.history, TwHistoryView);
