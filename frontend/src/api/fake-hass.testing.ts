@@ -1,8 +1,32 @@
 import type { Delta, HassApi, Snapshot } from './index.ts';
 
+function person(id: string): Record<string, unknown> & { id: string } {
+  return {
+    id,
+    name: id,
+    slug: id,
+    color: '#4f8cff',
+    load: 'full',
+    absences: [],
+    notify_target: null,
+  };
+}
+
 export const EMPTY_SNAPSHOT: Snapshot = {
-  persons: [{ id: 'p1' }, { id: 'p2' }],
-  tasks: [{ id: 't1' }],
+  persons: [person('p1'), person('p2')],
+  tasks: [
+    {
+      id: 't1',
+      name: 'Aufgabe',
+      allowed: ['p1', 'p2'],
+      frequency: { kind: 'every_round' },
+      points: 1,
+      due_days: 7,
+      no_repeat: false,
+      respect_absence: true,
+      swap_allowed: true,
+    },
+  ],
   schedules: [],
   assignments: [],
   panel_rounds: [],
