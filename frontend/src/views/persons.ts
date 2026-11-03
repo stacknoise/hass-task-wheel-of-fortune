@@ -14,7 +14,7 @@ import {
   VIEW_TAGS,
 } from '../constants/index.ts';
 import type { Load } from '../constants/index.ts';
-import { dayOf } from '../state/index.ts';
+import { AsyncValue, dayOf } from '../state/index.ts';
 import type { AbsenceWire } from '../state/index.ts';
 import { ConfigView } from './config-view.ts';
 import type { ConfigTexts } from './config-view.ts';
@@ -66,9 +66,23 @@ export class PersonsView extends ConfigView<PersonWire, PersonDraft> {
     `,
   ];
 
+  /** Anwesenheit der nächsten Wochen für die Regeln im Entwurf; gerechnet wird im Backend. */
+  readonly #preview = new AsyncValue<readonly boolean[]>(this);
+  #previewFor: readonly AbsenceWire[] | undefined;
+
   protected readonly resource = 'person';
   protected readonly collection = 'persons';
   protected readonly texts = TEXTS;
+
+  protected override willUpdate(): void {
+    super.willUpdate();
+    const absences = this._draft?.absences;
+    const client = this.store.client;
+    if (absences !== undefined && client !== undefined && absences !== this.#previewFor) {
+      this.#previewFor = absences;
+      void this.#preview.run(() => client.availabilityPreview(absences));
+    }
+  }
 
   protected blank(): PersonDraft {
     return {
@@ -129,6 +143,7 @@ export class PersonsView extends ConfigView<PersonWire, PersonDraft> {
         .language=${this.language}
         .today=${dayOf(snapshot.now)}
         .value=${draft.absences}
+        .present=${this.#preview.value ?? []}
         @tw-change=${onChange<readonly AbsenceWire[]>((absences) => {
           this.patch({ absences });
         })}

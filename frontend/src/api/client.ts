@@ -1,5 +1,6 @@
 import {
   EVENT_CONNECTION_READY,
+  FIELD_ABSENCES,
   FIELD_ASSIGNMENT_ID,
   FIELD_MONTHS,
   FIELD_PANEL_ROUND_ID,
@@ -8,8 +9,10 @@ import {
   WS_ACTION_DELETE,
   WS_ACTION_UPDATE,
   FIELD_TO_PERSON_ID,
+  REPLY_PRESENT,
   FIELD_WEEKS,
   WS_ASSIGNMENT_COMPLETE,
+  WS_AVAILABILITY_PREVIEW,
   WS_ASSIGNMENT_SWAP,
   WS_DRAW_BEGIN,
   WS_DRAW_CANCEL,
@@ -23,6 +26,7 @@ import {
   WS_SUBSCRIBE,
 } from '../constants/index.ts';
 import type { ConfigResource } from '../constants/index.ts';
+import type { AbsenceWire } from './config-types.ts';
 import type { HistoryPage, HistoryQuery, StatisticsReport } from './models.ts';
 import type {
   Delta,
@@ -72,6 +76,15 @@ export class ApiClient {
       type: `${WS_PREFIX}${resource}/${WS_ACTION_DELETE}`,
       [`${resource}_id`]: id,
     });
+  }
+
+  /** Anwesenheit der nächsten Wochen (ab Montag) für Abwesenheitsregeln; gerechnet wird im Backend. */
+  async availabilityPreview(absences: readonly AbsenceWire[]): Promise<readonly boolean[]> {
+    const reply = await this.#hass.callWS<Record<typeof REPLY_PRESENT, readonly boolean[]>>({
+      type: WS_AVAILABILITY_PREVIEW,
+      [FIELD_ABSENCES]: absences,
+    });
+    return reply[REPLY_PRESENT];
   }
 
   /** Eine Seite der Historie (neueste Runde zuerst), optional für eine Person. */

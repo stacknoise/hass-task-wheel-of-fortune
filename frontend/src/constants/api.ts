@@ -3,14 +3,17 @@
 export const WS_PREFIX = 'task_wheel/';
 export const WS_SNAPSHOT = `${WS_PREFIX}snapshot`;
 export const WS_SUBSCRIBE = `${WS_PREFIX}subscribe`;
+export const WS_AVAILABILITY_PREVIEW = `${WS_PREFIX}availability/preview`;
 export const WS_DRAW_BEGIN = `${WS_PREFIX}draw/begin`;
 export const WS_DRAW_SPIN = `${WS_PREFIX}draw/spin`;
 export const WS_DRAW_SPIN_REST = `${WS_PREFIX}draw/spin_rest`;
 export const WS_DRAW_COMMIT = `${WS_PREFIX}draw/commit`;
 export const WS_DRAW_CANCEL = `${WS_PREFIX}draw/cancel`;
 
+export const FIELD_ABSENCES = 'absences';
 export const FIELD_SCHEDULE_ID = 'schedule_id';
 export const FIELD_PANEL_ROUND_ID = 'panel_round_id';
+export const REPLY_PRESENT = 'present';
 export const REPLY_RESULT = 'result';
 export const REPLY_RESULTS = 'results';
 export const REPLY_PANEL_ROUND = 'panel_round';
