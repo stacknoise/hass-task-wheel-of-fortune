@@ -46,6 +46,8 @@ export interface RoundHead extends WireObject {
   readonly total: number;
   /** Erledigte (pünktlich oder verspätet) Zuteilungen; dann ist Löschen gesperrt. */
   readonly done: number;
+  /** Alle Personen, die in der Auslosung eine Zuteilung haben (Tauschpartner). */
+  readonly person_ids: readonly string[];
 }
 
 export interface RoundObject extends WireObject {

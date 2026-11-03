@@ -55,8 +55,11 @@ def _open_assignment(data: TaskWheelData) -> str:
     """Eine offene Zuteilung für p1 mit Frist in einer Woche."""
     now = data.clock()
     item = f.assignment(id="a1", round_id="r1", person_id="p1", due_at=now + 7 * DAY)
+    partner = f.assignment(
+        id="a2", round_id="r1", person_id="p2", due_at=now, status=AssignmentStatus.MISSED
+    )  # getauscht wird nur innerhalb einer Auslosung
     data.history.put_round(
-        f.finished_round(id="r1", started_at=now, finished_at=now, assignments=(item,))
+        f.finished_round(id="r1", started_at=now, finished_at=now, assignments=(item, partner))
     )
     return item.id
 

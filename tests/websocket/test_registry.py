@@ -18,6 +18,7 @@ EXPECTED = {
     events.WS_STATISTICS_GET,
     events.WS_ASSIGNMENT_COMPLETE,
     events.WS_ASSIGNMENT_SWAP,
+    events.WS_ASSIGNMENT_SKIP,
     events.WS_ROUND_DELETE,
     events.WS_DRAW_BEGIN,
     events.WS_DRAW_SPIN,

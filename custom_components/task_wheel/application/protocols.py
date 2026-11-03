@@ -179,6 +179,10 @@ class RoundEvents(Protocol):
         """Eine Zuteilung wurde als verpasst markiert."""
         ...
 
+    def assignment_skipped(self, assignment: Assignment) -> None:
+        """Eine Zuteilung wurde als „Bleibt unerledigt“ markiert."""
+        ...
+
     def round_deleted(self, round_: Round) -> None:
         """Eine Runde wurde samt Zuteilungen gelöscht (Statistik ist zurückgerechnet)."""
         ...
@@ -204,6 +208,9 @@ class NoEvents:
         """Tut nichts."""
 
     def assignment_missed(self, assignment: Assignment) -> None:
+        """Tut nichts."""
+
+    def assignment_skipped(self, assignment: Assignment) -> None:
         """Tut nichts."""
 
     def round_deleted(self, round_: Round) -> None:

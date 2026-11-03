@@ -15,7 +15,9 @@ from .aggregate import StatRow
 
 _S = AssignmentStatus
 _DONE: Final = (_S.ON_TIME, _S.LATE)
-_CLOSED: Final = (_S.ON_TIME, _S.LATE, _S.MISSED)
+# „Bleibt unerledigt“ zählt in der Statistik wie verpasst: die Aufgabe wurde nicht gemacht.
+_UNDONE: Final = (_S.MISSED, _S.SKIPPED)
+_CLOSED: Final = (*_DONE, *_UNDONE)
 _PERFECT_INDEX: Final = 1.0
 _HALF: Final = 0.5
 _MIN_COMPARED: Final = 2
@@ -124,7 +126,7 @@ class StatisticsReport:
 
 def _kpis(tally: Tally) -> Kpis:
     done = tally.count(_DONE)
-    missed = tally.count((_S.MISSED,))
+    missed = tally.count(_UNDONE)
     return Kpis(
         assigned=tally.count(tuple(_S)),
         on_time=tally.count((_S.ON_TIME,)),
@@ -207,8 +209,7 @@ def weekly_rates(rounds: Iterable[Round], week_starts: tuple[dt.date, ...]) -> t
         for assignment in round_.assignments:
             tally.add(assignment.status, 1)
     return tuple(
-        WeekRate(start, tally.count(_DONE), tally.count((_S.MISSED,)))
-        for start, tally in wanted.items()
+        WeekRate(start, tally.count(_DONE), tally.count(_UNDONE)) for start, tally in wanted.items()
     )
 
 

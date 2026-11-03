@@ -17,7 +17,8 @@ richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie b
 - **Zeitpläne**: wiederkehrend, einmalig oder nur manuell
 - **Auslosung** automatisch oder im Panel mit Glücksrad-Animation; Segmentgröße = Chance
 - **Fairness**: Wer im Verhältnis zu seinem fairen Anteil weniger Punkte hatte, bekommt ein größeres Stück
-- **Tauschen mit Joker**, nur mit Personen, die die Aufgabe bekommen dürfen
+- **Tauschen mit Joker**, nur mit Personen derselben Auslosung, die die Aufgabe bekommen dürfen
+- **„Bleibt unerledigt“**: eine Zuteilung bewusst nicht machen; zählt in Punkten und Statistik wie verpasst
 - **Historie** mit CSV-Export und **Statistiken** (fairer Anteil, Erledigungsquote, Matrix Aufgabe × Person)
 - **Home-Assistant-Anbindung**: Dienste, Events, Sensoren, To-do-Listen je Person, Buttons je Zeitplan
 
@@ -76,7 +77,7 @@ vorerst nur Zähler und werden mit AP-15 ausgebaut.
 
 
 - **Übersicht:** nächste Auslosung (mit Blättern durch die Zeitpläne), offene Zuteilungen je Zeitplan mit Filter nach Person,
-  Erledigen und Tauschen (nur erlaubte, nicht pausierte Personen, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
+  Erledigen, „Bleibt unerledigt“ (mit Rückfrage) und Tauschen (nur erlaubte, nicht pausierte Personen derselben Auslosung, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
   fairen Anteil und die jüngste Aktivität. Die offenen Zuteilungen sind nach **Auslosung** gruppiert (jüngste zuerst, mit
   Zeitplan und Zeitpunkt); eine Auslosung ohne offene Zuteilungen verschwindet aus der Liste. Eine ganze Auslosung lässt sich
   nach Rückfrage **löschen**, solange keine ihrer Aufgaben erledigt ist; sie verschwindet dann auch aus Historie und Statistik.
@@ -108,7 +109,7 @@ die Karten, rechts das Formular; Fehler des Backends erscheinen am betroffenen F
 
 Das Panel spricht mit dem Backend über WebSocket-Befehle mit dem Präfix `task_wheel/`: `snapshot`, `subscribe`
 (erst der Gesamtstand, danach nur Änderungen je Objekt), `history/list`, `statistics/get`,
-`assignment/complete`, `assignment/swap`, `draw/begin|spin|spin_rest|commit|cancel` für jeden angemeldeten
+`assignment/complete`, `assignment/swap`, `assignment/skip`, `draw/begin|spin|spin_rest|commit|cancel` für jeden angemeldeten
 Benutzer sowie `round/delete`, `person/*`, `task/*`, `schedule/*` und `settings/update` nur für Administratoren. Alle Eingaben
 werden gegen strenge Schemas geprüft (keine unbekannten Felder, begrenzte Längen). Ist in den Einstellungen
 „Panel nur für Administratoren“ gesetzt, sind auch die Lesebefehle Administratoren vorbehalten. Details:

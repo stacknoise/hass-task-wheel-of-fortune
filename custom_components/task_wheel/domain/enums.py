@@ -89,6 +89,7 @@ class AssignmentStatus(StrEnum):
     LATE = "late"
     SWAPPED = "swapped"
     MISSED = "missed"
+    SKIPPED = "skipped"
 
 
 class AssignmentAction(StrEnum):
@@ -98,6 +99,7 @@ class AssignmentAction(StrEnum):
     COMPLETE_LATE = "complete_late"
     MISS = "miss"
     SWAP = "swap"
+    SKIP = "skip"
 
 
 class WeightingKind(StrEnum):

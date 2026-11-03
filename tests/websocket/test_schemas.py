@@ -34,6 +34,7 @@ def api() -> Api:
         ("assignment/complete", {"assignment_id": 5}),
         ("assignment/complete", {"assignment_id": ""}),
         ("assignment/swap", {"assignment_id": "a1"}),
+        ("assignment/skip", {}),
         ("draw/begin", {"schedule_id": "s1", "extra": "x"}),
         ("round/delete", {}),
         ("round/delete", {"round_id": ""}),

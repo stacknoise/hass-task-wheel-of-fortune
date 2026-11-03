@@ -263,6 +263,9 @@ export class TwOverviewView extends LitElement {
       deleteRound: (id) => {
         this.#act((client) => client.deleteRound(id));
       },
+      skip: (id) => {
+        this.#act((client) => client.skip(id));
+      },
       toggleSwap: (id) => {
         this._swapOpen = this._swapOpen === id ? '' : id;
       },

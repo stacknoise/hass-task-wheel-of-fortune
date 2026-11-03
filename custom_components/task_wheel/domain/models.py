@@ -318,7 +318,9 @@ class Swap(Model):
 
 
 _DONE_STATUSES = frozenset({AssignmentStatus.ON_TIME, AssignmentStatus.LATE})
-_UNDONE_STATUSES = frozenset({AssignmentStatus.OPEN, AssignmentStatus.MISSED})
+_UNDONE_STATUSES = frozenset(
+    {AssignmentStatus.OPEN, AssignmentStatus.MISSED, AssignmentStatus.SKIPPED}
+)
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)

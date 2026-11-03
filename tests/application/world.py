@@ -48,6 +48,7 @@ class RecordingEvents:
     def __init__(self) -> None:
         self.drawn: list[Round] = []
         self.deleted: list[Round] = []
+        self.skipped: list[Assignment] = []
         self.reminders: list[tuple[Schedule, int]] = []
         self.completed: list[Assignment] = []
         self.swapped: list[Assignment] = []
@@ -68,6 +69,9 @@ class RecordingEvents:
 
     def assignment_missed(self, assignment: Assignment) -> None:
         self.missed.append(assignment)
+
+    def assignment_skipped(self, assignment: Assignment) -> None:
+        self.skipped.append(assignment)
 
     def round_deleted(self, round_: Round) -> None:
         self.deleted.append(round_)

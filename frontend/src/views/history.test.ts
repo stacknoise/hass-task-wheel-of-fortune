@@ -122,7 +122,7 @@ describe('Historie', () => {
 
   it('löscht eine Runde nach der Rückfrage und lädt die Liste neu', async () => {
     const { view, hass } = await mount();
-    const remove = view.shadowRoot?.querySelectorAll('tw-confirm-delete')[1] as HTMLElement & {
+    const remove = view.shadowRoot?.querySelectorAll('tw-confirm-action')[1] as HTMLElement & {
       updateComplete: Promise<boolean>;
     };
     const click = (label: string) =>
@@ -147,7 +147,7 @@ describe('Historie', () => {
   it('meldet einen Fehler beim Löschen', async () => {
     const { view, hass } = await mount();
     hass.callWS = () => Promise.reject(new Error('nein'));
-    const remove = view.shadowRoot?.querySelectorAll('tw-confirm-delete')[1] as HTMLElement & {
+    const remove = view.shadowRoot?.querySelectorAll('tw-confirm-action')[1] as HTMLElement & {
       updateComplete: Promise<boolean>;
     };
     const click = (label: string) =>
