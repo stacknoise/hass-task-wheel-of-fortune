@@ -81,6 +81,16 @@ export function allowsPerson(allowed: ReadonlySet<string>, personId: string): bo
   return allowed.size === 0 || allowed.has(personId);
 }
 
+/** Wie viele Personen die Aufgabe noch bekommen können (erlaubt und noch ohne Aufgabe der Runde). */
+export function openCandidates(
+  persons: ReadonlyMap<string, PersonInfo>,
+  task: TaskInfo,
+  taken: ReadonlySet<string | null>,
+): number {
+  return [...persons.keys()].filter((id) => allowsPerson(task.allowed, id) && !taken.has(id))
+    .length;
+}
+
 /** Personen der Runde: nur wer für mindestens eine ihrer Aufgaben erlaubt ist (ohne Runde: alle). */
 export function participantsOf(
   persons: ReadonlyMap<string, PersonInfo>,

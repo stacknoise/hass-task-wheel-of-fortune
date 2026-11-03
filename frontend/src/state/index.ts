@@ -22,6 +22,7 @@ export {
   allowsPerson,
   drawableSchedules,
   indexById,
+  openCandidates,
   openRoundFor,
   participantsOf,
   personsById,
