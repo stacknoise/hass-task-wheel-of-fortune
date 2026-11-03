@@ -6,6 +6,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 ## [Unveröffentlicht]
 
 - Panel für Tablet und Smartphone optimiert, vor allem die Auslosung (Bühne oben, kompaktes Layout, Menü-Knopf, Touch-Größen)
+- README erklärt Fairness und fairen Anteil (Belastbarkeit, Anwesenheitstage, Punktefaktoren) mit Beispielen
 
 ## [0.1.1] – 2026-11-03
 
