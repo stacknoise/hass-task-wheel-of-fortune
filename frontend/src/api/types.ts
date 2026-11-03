@@ -43,7 +43,19 @@ export interface HassApi {
   readonly connection: HassConnection;
   readonly language?: string;
   readonly locale?: { readonly language?: string };
+  /** Alle Entitäten (nur die Kennungen und Anzeigenamen braucht das Panel). */
+  readonly states?: Readonly<
+    Record<string, { readonly attributes?: { readonly friendly_name?: unknown } }>
+  >;
+  /** Alle Dienste je Bereich. */
+  readonly services?: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
   callWS<T>(message: { readonly type: string; readonly [field: string]: unknown }): Promise<T>;
+}
+
+/** Ein mögliches Benachrichtigungsziel: Kennung und Anzeigename. */
+export interface NotifyTarget {
+  readonly id: string;
+  readonly label: string;
 }
 
 /** Ein Segment im Rad: Person und normierte Chance (Summe aller Chancen = 1). */
