@@ -84,6 +84,9 @@ describe('Auslosung', () => {
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
     const hass = hassWith();
     hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
+    hass.replies.set('task_wheel/draw/preview', {
+      result: { ...result('t1', null), segments: result('t1', 'p1').segments },
+    });
     hass.replies.set('task_wheel/draw/spin', {
       result: result('t1', 'p2'),
       panel_round: round([result('t1', 'p2')], ['t2']),
@@ -97,10 +100,20 @@ describe('Auslosung', () => {
     });
     expect(text(view)).toContain('Bad putzen');
 
+    // Das Rad ist schon vor dem Drehen gefüllt, die Personen zeigen ihre Chance.
+    const wheel = (): ParentNode => view().querySelector('tw-wheel')?.shadowRoot as ShadowRoot;
+    await vi.waitFor(() => {
+      expect(wheel().querySelectorAll('path.wedge')).toHaveLength(2);
+    });
+    expect(text(view)).toContain('60 %');
+
     await click(view, '.hub');
     await vi.waitFor(() => {
       expect(text(view)).toContain('Ben übernimmt Bad putzen');
     });
+    // Nach dem Anhalten bleibt die Drehung erhalten (kein Zurückspringen beim Neuzeichnen).
+    const rotor = wheel().querySelector<SVGGElement>('.rotor');
+    expect(rotor?.style.transform).not.toBe('rotate(0deg)');
     expect(text(view)).toContain('Chance 60 %');
     expect(text(view)).toContain('Abwesend');
     expect(view().querySelector('tw-confetti')).not.toBeNull();
@@ -111,7 +124,7 @@ describe('Auslosung', () => {
       panel_round: round([], []),
     });
     await click(view, '.result .button');
-    await click(view, '.hub');
+    // Für „Müll“ bleibt nur Anna übrig: die Ziehung läuft ohne Klick auf „Drehen“.
     await vi.waitFor(() => {
       expect(text(view)).toContain('Niemand verfügbar für Müll');
       expect(text(view)).toContain('Nicht erlaubt');
@@ -153,21 +166,29 @@ describe('Auslosung', () => {
     expect(text(view)).toContain('Anna');
   });
 
-  it('setzt eine offene Runde fort und zeigt Fehler des Backends', async () => {
+  it('setzt eine offene Runde fort und zieht die letzte Aufgabe ohne Drehen', async () => {
     const hass = hassWith([round([result('t1', 'p1')], ['t2'])]);
+    hass.replies.set('task_wheel/draw/spin', {
+      result: result('t2', null),
+      panel_round: round([], []),
+    });
     const { view } = await mount(hass);
     await click(view, '.actions .button:not(.primary)');
     await vi.waitFor(() => {
-      expect(text(view)).toContain('1 / 2 verlost');
+      expect(text(view)).toContain('Niemand verfügbar für Müll');
     });
     expect(text(view)).toContain('Anna');
+    expect(hass.calls.filter((call) => call === 'task_wheel/draw/spin')).toHaveLength(1);
+  });
 
-    hass.replies.set('task_wheel/draw/spin', Object.assign(new Error('x'), { code: 'not_found' }));
-    await click(view, '.hub');
+  it('zeigt Fehler des Backends mit ihrem Code', async () => {
+    const hass = hassWith();
+    hass.replies.set('task_wheel/draw/begin', Object.assign(new Error('x'), { code: 'not_found' }));
+    const { view } = await mount(hass);
+    await click(view, '.button.primary');
     await vi.waitFor(() => {
       expect(view().querySelector('[role="alert"]')?.textContent).toContain('not_found');
     });
-    await click(view, '.button.primary');
   });
 
   it('bietet ohne Zeitplan keinen Start an', async () => {

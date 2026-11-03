@@ -86,3 +86,7 @@ export interface SpinRestReply {
   readonly results: readonly TaskDrawWire[];
   readonly panel_round: PanelRoundWire;
 }
+
+export interface PreviewReply {
+  readonly result: TaskDrawWire;
+}

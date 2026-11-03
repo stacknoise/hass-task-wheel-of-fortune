@@ -51,6 +51,8 @@ export class TwDrawView extends LitElement {
   readonly #wheel = createRef<TwWheel>();
   #session: DrawSession | undefined;
   #animating: TaskDrawWire | undefined;
+  #autoSpun = EMPTY_TEXT;
+  #wheelCache: { key: string; segments: readonly WheelSegment[] } | undefined;
 
   constructor() {
     super();
@@ -75,10 +77,33 @@ export class TwDrawView extends LitElement {
 
   protected override updated(): void {
     const state = this.#session?.state;
-    const current = state?.phase === 'spinning' ? state.current : undefined;
+    if (!state) {
+      return;
+    }
+    const current = state.phase === 'spinning' ? state.current : undefined;
     if (current && current !== this.#animating) {
       this.#animating = current;
       void this.#animate(current);
+    }
+    this.#autoSpin(state);
+  }
+
+  /**
+   * Bleibt für die nächste Aufgabe höchstens eine Person übrig, gibt es nichts zu drehen: die
+   * Ziehung läuft ohne Klick, das Backend entscheidet weiterhin (es prüft auch Pause und Abwesenheit).
+   */
+  #autoSpin(state: DrawState): void {
+    const snapshot = this.#store.state?.snapshot;
+    const taskId = state.taskIds[state.results.length];
+    const task = snapshot && taskId ? tasksById(snapshot).get(taskId) : undefined;
+    const key = `${state.roundId ?? EMPTY_TEXT}:${String(state.results.length)}`;
+    if (state.phase !== 'ready' || !task || key === this.#autoSpun) {
+      return;
+    }
+    const taken = new Set(state.results.map((result) => result.winner_id));
+    if ([...task.allowed].filter((id) => !taken.has(id)).length <= 1) {
+      this.#autoSpun = key;
+      void this.#session?.spin();
     }
   }
 
@@ -108,7 +133,7 @@ export class TwDrawView extends LitElement {
 
   async #animate(result: TaskDrawWire): Promise<void> {
     const wheel = this.#wheel.value;
-    if (wheel && result.winner_id) {
+    if (wheel && result.winner_id && result.segments.length > 1) {
       await wheel.updateComplete;
       await wheel.spinTo(result.winner_id);
     }
@@ -305,8 +330,15 @@ export class TwDrawView extends LitElement {
     `;
   }
 
-  #wheelBox(state: DrawState, persons: ReadonlyMap<string, PersonInfo>): TemplateResult {
-    const segments: readonly WheelSegment[] = (state.current?.segments ?? []).map((segment) => {
+  /**
+   * Die Segmente des Rads: vor dem Drehen aus der Vorschau, danach aus dem Ergebnis. Gleicher
+   * Inhalt ergibt dieselbe Liste, damit das Rad bei jedem Neuzeichnen seine Drehung behält.
+   */
+  #wheelSegments(
+    result: TaskDrawWire | undefined,
+    persons: ReadonlyMap<string, PersonInfo>,
+  ): readonly WheelSegment[] {
+    const segments = (result?.segments ?? []).map((segment) => {
       const person = persons.get(segment.person_id);
       return {
         id: segment.person_id,
@@ -315,6 +347,15 @@ export class TwDrawView extends LitElement {
         chance: segment.chance,
       };
     });
+    const key = JSON.stringify(segments);
+    if (this.#wheelCache?.key !== key) {
+      this.#wheelCache = { key, segments };
+    }
+    return this.#wheelCache.segments;
+  }
+
+  #wheelBox(state: DrawState, persons: ReadonlyMap<string, PersonInfo>): TemplateResult {
+    const segments = this.#wheelSegments(state.current ?? state.preview, persons);
     return html`
       <div class="wheel-box">
         <tw-wheel
@@ -339,7 +380,7 @@ export class TwDrawView extends LitElement {
     task: TaskInfo | undefined,
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
-    const rows = this.#rows(state.current, task, persons);
+    const rows = this.#rows(state.current ?? state.preview, task, persons);
     return html`
       <div class="people">
         <span class="eyebrow">${this.#text('draw.who')}</span>
@@ -355,7 +396,7 @@ export class TwDrawView extends LitElement {
             </div>
           `,
         )}
-        <span class="muted">${this.#text('draw.who.hint')}</span>
+        <span class="muted hint">${this.#text('draw.who.hint')}</span>
       </div>
     `;
   }
@@ -405,7 +446,8 @@ export class TwDrawView extends LitElement {
                   >
                 </div>`
             : html`<div class="text">
-                <strong>${this.#text('draw.nobody')} ${task?.name}</strong>
+                <strong>${this.#text('draw.nobody')} ${task?.name}</strong><br />
+                <span class="muted">${this.#text('draw.nobody.hint')}</span>
               </div>`
         }
         <button class="button primary" @click=${() => void this.#session?.next()}>

@@ -47,6 +47,7 @@ def test_points_and_last_holder_flow_into_the_next_spin():
     after = draft(tasks_ab()).spin(engine(0.1))
     assert after.context.points == {"p1": 5}
     assert after.context.last_holders == {"t1": "p1"}
+    assert after.context.round_holders == {"p1"}
 
 
 def test_spin_rest_draws_everything_that_is_left():
@@ -70,7 +71,7 @@ def test_to_round_creates_assignments_with_points_chance_and_due_date():
     first, second = round_.assignments
     assert (round_.id, round_.schedule_id, round_.origin) == ("r1", "s1", RoundOrigin.MANUAL)
     assert (first.id, first.task_id, first.person_id, first.points) == ("a1", "t1", "p1", 5)
-    assert (second.person_id, second.chance) == ("p2", 0.5)
+    assert (second.person_id, second.chance) == ("p2", 1.0)
     assert first.due_at == NOW + dt.timedelta(days=7)
     assert round_.started_at == NOW and round_.finished_at == NOW
 

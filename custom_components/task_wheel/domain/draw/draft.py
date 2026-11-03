@@ -50,6 +50,16 @@ class RoundDraft:
         result = engine.draw_task(task, self.context)
         return replace(self, context=self._advance(task, result), results=(*self.results, result))
 
+    def preview(self, engine: DrawEngine) -> TaskDraw:
+        """Das Rad der nächsten Aufgabe ohne Ziehung.
+
+        Raises:
+            DrawRejectedError: Es ist nichts mehr zu ziehen.
+        """
+        if self.complete:
+            raise DrawRejectedError(ERR_ROUND_COMPLETE)
+        return engine.preview_task(self.tasks[len(self.results)], self.context)
+
     def spin_rest(self, engine: DrawEngine) -> "RoundDraft":
         """Zieht alle übrigen Aufgaben."""
         draft = self
@@ -107,10 +117,11 @@ class RoundDraft:
         )
 
     def _advance(self, task: Task, result: TaskDraw) -> DrawContext:
-        """Kontext nach der Ziehung: Punkte und letzter Inhaber des Gewinners."""
+        """Kontext nach der Ziehung: Punkte, letzter Inhaber und Besetzung der Runde."""
         winner = result.winner_id
         if winner is None:
             return self.context
         points = {**self.context.points, winner: self.context.points.get(winner, 0) + task.points}
         holders = {**self.context.last_holders, task.id: winner}
-        return replace(self.context, points=points, last_holders=holders)
+        taken = self.context.round_holders | {winner}
+        return replace(self.context, points=points, last_holders=holders, round_holders=taken)
