@@ -52,7 +52,7 @@ test('Auslosung, Erledigen und Tausch im Panel', async ({ page, baseURL }) => {
   // Auslosung: Runde starten, drehen, abschließen
   await page.goto(`${PANEL}/draw`);
   await page.getByRole('button', { name: 'Runde starten' }).click();
-  await page.getByRole('button', { name: 'Rad drehen' }).click();
+  await page.getByRole('button', { name: 'Auslosung starten' }).click();
   await page.getByRole('button', { name: 'Runde abschließen' }).click({ timeout: READY_MS });
   await expect(page.getByText('Runde abgeschlossen')).toBeVisible();
 
