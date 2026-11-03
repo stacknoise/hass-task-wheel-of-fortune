@@ -56,8 +56,9 @@ a{color:#0262a0}a:hover{color:#01497a}
             {{np.kicker}}
             <span style="text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 500; border-radius: 10px; padding: 2px 8px; background: {{np.stBg}}; color: {{np.stFg}};">{{np.state}}</span>
           </span>
-          <span style="font-size: 24px; font-weight: 500;">{{np.when}}</span>
-          <span style="font-size: 14px; color: #5a616b;">Zeitplan „{{np.name}}" · {{np.detail}}</span>
+          <span style="font-size: 24px; font-weight: 500;">{{np.name}}</span>
+          <span style="font-size: 15px; font-weight: 500; color: #1f2328;">{{np.when}}</span>
+          <span style="font-size: 14px; color: #5a616b;">{{np.detail}}</span>
           <span style="display: flex; gap: 6px; padding-top: 6px;" aria-label="Zeitplan {{np.pos}} von {{np.count}}">
             <sc-for list="{{planDots}}" as="d" hint-placeholder-count="4">
               <button type="button" onClick="{{d.pick}}" aria-label="{{d.label}}" aria-current="{{d.on}}" style="width: {{d.w}}px; height: 8px; border-radius: 4px; border: none; padding: 0; background: {{d.bg}}; cursor: pointer;"></button>
