@@ -108,10 +108,11 @@ class RoundDraft:
         )
 
     def _advance(self, task: Task, result: TaskDraw) -> DrawContext:
-        """Kontext nach der Ziehung: Punkte und letzter Inhaber des Gewinners."""
+        """Kontext nach der Ziehung: Punkte, letzter Inhaber und Besetzung der Runde."""
         winner = result.winner_id
         if winner is None:
             return self.context
         points = {**self.context.points, winner: self.context.points.get(winner, 0) + task.points}
         holders = {**self.context.last_holders, task.id: winner}
-        return replace(self.context, points=points, last_holders=holders)
+        taken = self.context.round_holders | {winner}
+        return replace(self.context, points=points, last_holders=holders, round_holders=taken)

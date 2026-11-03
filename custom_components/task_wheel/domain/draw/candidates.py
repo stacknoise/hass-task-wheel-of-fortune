@@ -69,6 +69,21 @@ class NoRepeatFilter:
         )
 
 
+class RoundTakenFilter:
+    """Wer in dieser Runde schon eine Aufgabe hat, bekommt keine zweite."""
+
+    reason: ClassVar[ExclusionReason] = ExclusionReason.TAKEN
+
+    def excluded(
+        self,
+        task: Task,  # noqa: ARG002
+        candidates: Sequence[Person],
+        context: DrawContext,
+    ) -> frozenset[str]:
+        """Alle Kandidaten mit Aufgabe in der Runde."""
+        return frozenset(p.id for p in candidates if p.id in context.round_holders)
+
+
 type FilterBuilder = tuple[Callable[[Task], bool], CandidateFilter]
 
 # Reihenfolge laut KONZEPT §5.2; die Bedingung entscheidet, ob der Filter für die Aufgabe gilt.
@@ -76,6 +91,7 @@ _FILTERS: tuple[FilterBuilder, ...] = (
     (lambda _task: True, PausedFilter()),
     (lambda task: task.respect_absence, AbsenceFilter()),
     (lambda task: task.no_repeat, NoRepeatFilter()),
+    (lambda _task: True, RoundTakenFilter()),
 )
 
 

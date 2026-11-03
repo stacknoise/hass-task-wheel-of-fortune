@@ -51,6 +51,7 @@ export class TwDrawView extends LitElement {
   readonly #wheel = createRef<TwWheel>();
   #session: DrawSession | undefined;
   #animating: TaskDrawWire | undefined;
+  #autoSpun = EMPTY_TEXT;
 
   constructor() {
     super();
@@ -75,10 +76,33 @@ export class TwDrawView extends LitElement {
 
   protected override updated(): void {
     const state = this.#session?.state;
-    const current = state?.phase === 'spinning' ? state.current : undefined;
+    if (!state) {
+      return;
+    }
+    const current = state.phase === 'spinning' ? state.current : undefined;
     if (current && current !== this.#animating) {
       this.#animating = current;
       void this.#animate(current);
+    }
+    this.#autoSpin(state);
+  }
+
+  /**
+   * Bleibt für die nächste Aufgabe höchstens eine Person übrig, gibt es nichts zu drehen: die
+   * Ziehung läuft ohne Klick, das Backend entscheidet weiterhin (es prüft auch Pause und Abwesenheit).
+   */
+  #autoSpin(state: DrawState): void {
+    const snapshot = this.#store.state?.snapshot;
+    const taskId = state.taskIds[state.results.length];
+    const task = snapshot && taskId ? tasksById(snapshot).get(taskId) : undefined;
+    const key = `${state.roundId ?? EMPTY_TEXT}:${String(state.results.length)}`;
+    if (state.phase !== 'ready' || !task || key === this.#autoSpun) {
+      return;
+    }
+    const taken = new Set(state.results.map((result) => result.winner_id));
+    if ([...task.allowed].filter((id) => !taken.has(id)).length <= 1) {
+      this.#autoSpun = key;
+      void this.#session?.spin();
     }
   }
 
@@ -108,7 +132,7 @@ export class TwDrawView extends LitElement {
 
   async #animate(result: TaskDrawWire): Promise<void> {
     const wheel = this.#wheel.value;
-    if (wheel && result.winner_id) {
+    if (wheel && result.winner_id && result.segments.length > 1) {
       await wheel.updateComplete;
       await wheel.spinTo(result.winner_id);
     }
@@ -405,7 +429,8 @@ export class TwDrawView extends LitElement {
                   >
                 </div>`
             : html`<div class="text">
-                <strong>${this.#text('draw.nobody')} ${task?.name}</strong>
+                <strong>${this.#text('draw.nobody')} ${task?.name}</strong><br />
+                <span class="muted">${this.#text('draw.nobody.hint')}</span>
               </div>`
         }
         <button class="button primary" @click=${() => void this.#session?.next()}>
