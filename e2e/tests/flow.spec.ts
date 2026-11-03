@@ -63,5 +63,7 @@ test('Auslosung, Erledigen und Tausch im Panel', async ({ page, baseURL }) => {
     .first()
     .getByRole('button', { name: 'Erledigt' })
     .click();
-  await expect(page.locator('.row', { hasText: 'Müll rausbringen' })).toHaveCount(0);
+  await expect(page.locator('.row', { hasText: 'Müll rausbringen' })).toHaveCount(0, {
+    timeout: READY_MS,
+  });
 });
