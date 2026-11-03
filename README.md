@@ -63,6 +63,68 @@ nach `config/custom_components/task_wheel` entpacken (das Repository selbst enth
    `task_wheel.zip` an das neue GitHub-Release (siehe `hacs.json`: `zip_release`). Tags mit Suffix (`v0.2.0-beta.1`)
    werden als Vorabversion veröffentlicht.
 
+## Fairness und fairer Anteil
+
+Das Panel zeigt bei „Punkte im Monat“ (Übersicht) und in der Statistik neben den Punkten einer Person ihren **fairen Anteil**
+(„fair: 1,15“). Das ist **nicht** „alle gleich viel“, sondern der Anteil, der der Person nach ihrer **Belastbarkeit** und
+ihren **Anwesenheitstagen** im Zeitraum zusteht. Gleiche Punkte bedeuten deshalb nicht gleichen fairen Anteil.
+
+**Berechnung**
+
+1. Kapazität der Person = Belastbarkeit (voll 1,0 · halb 0,5 · Pause 0) × Anzahl der anwesenden Tage im Zeitraum.
+   Abwesenheiten (einmalig, feste Wochentage, Wochenrhythmus) verringern die Tage.
+2. Fairer Anteil = Gesamtpunkte aller Personen × Kapazität der Person ÷ Summe aller Kapazitäten.
+3. Punkte einer Zuteilung: pünktlich erledigt zählt voll, verspätet und verpasst („Bleibt unerledigt“ eingeschlossen) mit dem
+   Faktor aus den Einstellungen (Standard: verspätet 1,0, verpasst 0). Offene und getauschte Zuteilungen zählen in der
+   Statistik noch nicht, beim Auslosen aber voll als Last.
+4. Der Zeitraum der Statistik sind ganze Kalendermonate **bis heute**; beim Auslosen gilt das Fairness-Fenster
+   (Standard 30 Tage, in den Einstellungen änderbar).
+
+**Beispiel 1: alle erledigen genau 1 Punkt, trotzdem verschiedene faire Anteile**
+
+Es ist Dienstag, der 3. November. Der Zeitraum „Monat“ umfasst also nur Sonntag, Montag und Dienstag. Fünf Personen haben
+je eine Aufgabe mit 1 Punkt erledigt (zusammen 5 Punkte):
+
+| Person | Anwesenheit | Tage | Fairer Anteil | Punkte |
+|---|---|---|---|---|
+| Toni | immer | 3 | 5 × 3 ÷ 13 = **1,15** | 1 |
+| Andrea | immer | 3 | **1,15** | 1 |
+| Fabian | alle 2 Wochen Fr–Fr, jetzt gerade anwesend | 3 | **1,15** | 1 |
+| Felix | nicht Sa und So | 2 (Mo, Di) | 5 × 2 ÷ 13 = **0,77** | 1 |
+| Laurenz | nicht Sa, So, Mi | 2 (Mo, Di) | **0,77** | 1 |
+
+Die Summe der Tage ist 13. Wer an weniger Tagen da ist, hat weniger Anspruch auf Aufgaben, 1 Punkt liegt dort also **über**
+dem fairen Anteil (Felix und Laurenz). Mit jedem Tag gleicht sich das an, denn die Kapazität wächst nur an Anwesenheitstagen.
+Fabian steht nur gleichauf mit Toni und Andrea, solange seine Anwesenheitsphase den ganzen Zeitraum abdeckt. In seiner
+Abwesenheitswoche sinkt sein fairer Anteil.
+
+**Beispiel 2: halbe Belastbarkeit**
+
+Ein Monat mit 30 Tagen, Anna (voll) und Ben (halb) sind immer da: Kapazität Anna 30, Ben 15. Bei 9 Punkten insgesamt
+stehen Anna 9 × 30 ÷ 45 = **6** und Ben 9 × 15 ÷ 45 = **3** Punkte zu. Hat jede Person 4,5 Punkte, liegt Ben über seinem
+Anteil und Anna darunter.
+
+**Beispiel 3: verspätet und verpasst**
+
+Eine Aufgabe mit 2 Punkten wird verspätet erledigt. Ist der Faktor „verspätet“ auf 0,5 gestellt, bekommt die Person 1
+Punkt gutgeschrieben, bei „verpasst“ (Standard 0) bekommt sie 0.
+
+**Wirkung auf die Auslosung**
+
+Wer unter seinem fairen Anteil liegt, bekommt ein größeres Stück im Rad. Das Gewicht ist
+`w = f × exp((f − a) ÷ f)` mit dem fairen Anteil `f` und dem tatsächlichen Anteil `a` (Punkte der Person ÷ Punkte
+aller), danach auf mindestens 0,5 % und höchstens 100 % begrenzt und zu Chancen normiert. Beispiel: Anna und Ben sind
+beide voll belastbar und immer da (`f` = 50 %), Anna hat 3 und Ben 1 Punkt im Fenster (`a` = 75 % und 25 %). Dann ist
+Annas Gewicht 0,50 × e^−0,5 ≈ 0,30 und Bens 0,50 × e^0,5 ≈ 0,82. Ben hat damit etwa 73 %, Anna etwa 27 % Chance.
+Ohne Punkte im Fenster haben alle ihren fairen Anteil als Chance; Personen ohne Kapazität (Pause oder im Fenster nie anwesend) behalten nur das Mindestgewicht von 0,5 %.
+
+**Weitere Kennzahlen**
+
+- **Fairness-Index** (Statistik): 100 % bedeutet, alle haben genau ihren fairen Anteil; er sinkt mit der Summe der
+  Abweichungen (Index = 1 − ½ × Σ|Punkte − fairer Anteil| ÷ Gesamtpunkte).
+- **Glückspilz** liegt am weitesten unter seinem fairen Anteil, **Pechvogel** am weitesten darüber, beide nur bei echter
+  Abweichung und ab zwei Personen.
+
 ## Dienste und Events
 
 ```yaml
