@@ -158,15 +158,36 @@ a{color:#0262a0}a:hover{color:#01497a}
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    var plan = 0;
-    try {
-      var v = window.localStorage.getItem('tw-draw-plan');
-      if (v !== null) { plan = parseInt(v, 10) || 0; window.localStorage.removeItem('tw-draw-plan'); }
-    } catch (e) {}
-    this.state = { plan: plan, idx: 0, phase: 'ready', rot: 0, anim: false, results: {} };
+    this.state = { plan: 0, idx: 0, phase: 'ready', rot: 0, anim: false, results: {} };
     this.timer = null;
+    this.seen = null;
+    var v = this.readPlan();
+    if (v) { this.seen = v; this.state.plan = parseInt(v, 10) || 0; }
   }
-  componentWillUnmount() { if (this.timer) clearTimeout(this.timer); }
+  readPlan() {
+    var v = null;
+    try { v = window.localStorage.getItem('tw-draw-plan'); } catch (e) {}
+    if (!v) { try { v = window.sessionStorage.getItem('tw-draw-plan'); } catch (e) {} }
+    return v;
+  }
+  applyPlan(v) {
+    if (!v || v === this.seen) return;
+    this.seen = v;
+    if (this.timer) clearTimeout(this.timer);
+    this.setState({ plan: parseInt(v, 10) || 0, idx: 0, phase: 'ready', rot: 0, anim: false, results: {} });
+  }
+  componentDidMount() {
+    var self = this;
+    this.onStorage = function (e) { if (!e || e.key === 'tw-draw-plan') self.applyPlan(self.readPlan()); };
+    this.onMessage = function (e) { if (e && e.data && e.data.twDrawPlan) self.applyPlan(e.data.twDrawPlan); };
+    try { window.addEventListener('storage', this.onStorage); window.addEventListener('message', this.onMessage); } catch (e) {}
+    this.poll = setInterval(function () { self.applyPlan(self.readPlan()); }, 400);
+  }
+  componentWillUnmount() {
+    if (this.timer) clearTimeout(this.timer);
+    if (this.poll) clearInterval(this.poll);
+    try { window.removeEventListener('storage', this.onStorage); window.removeEventListener('message', this.onMessage); } catch (e) {}
+  }
   data() {
     var P = {
       A: { name: 'Anna', color: '#c05600' }, B: { name: 'Ben', color: '#1a5fd0' }, C: { name: 'Clara', color: '#137333' },
