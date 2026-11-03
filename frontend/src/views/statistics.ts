@@ -21,6 +21,7 @@ import type { TextKey, TextParams } from '../i18n/index.ts';
 import { AsyncValue, StoreController, indexById } from '../state/index.ts';
 import { pointBars, weeklyChart } from './statistics-charts.ts';
 import { barRows, matrixRows } from './statistics-model.ts';
+import { defineOnce } from '../components/define.ts';
 
 interface Kpi {
   readonly label: string;
@@ -355,4 +356,4 @@ export class TwStatisticsView extends LitElement {
   }
 }
 
-customElements.define(VIEW_TAGS.statistics, TwStatisticsView);
+defineOnce(VIEW_TAGS.statistics, TwStatisticsView);

@@ -4,6 +4,7 @@ import type { TemplateResult } from 'lit';
 import { COMPONENT_TAGS } from '../constants/index.ts';
 import type { Tone } from '../constants/index.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
+import { defineOnce } from './define.ts';
 
 /** Kleine Marke mit Text (Status); der Ton bestimmt die Farbe, der Text trägt die Bedeutung. */
 export class TwBadge extends LitElement {
@@ -50,4 +51,4 @@ export class TwBadge extends LitElement {
   }
 }
 
-customElements.define(COMPONENT_TAGS.badge, TwBadge);
+defineOnce(COMPONENT_TAGS.badge, TwBadge);

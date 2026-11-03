@@ -6,6 +6,7 @@ import { FORM_TAGS } from '../constants/index.ts';
 import { formStyles } from './formStyles.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import { emitChange } from './change.ts';
+import { defineOnce } from './define.ts';
 
 export interface SelectOption {
   readonly id: string;
@@ -67,4 +68,4 @@ export class TwSelect extends LitElement {
   }
 }
 
-customElements.define(FORM_TAGS.select, TwSelect);
+defineOnce(FORM_TAGS.select, TwSelect);

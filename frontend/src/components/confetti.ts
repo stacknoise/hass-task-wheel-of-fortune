@@ -14,6 +14,7 @@ import {
   PERCENT,
 } from '../constants/index.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
+import { defineOnce } from './define.ts';
 
 interface Piece {
   readonly left: number;
@@ -78,4 +79,4 @@ export class TwConfetti extends LitElement {
   }
 }
 
-customElements.define(COMPONENT_TAGS.confetti, TwConfetti);
+defineOnce(COMPONENT_TAGS.confetti, TwConfetti);
