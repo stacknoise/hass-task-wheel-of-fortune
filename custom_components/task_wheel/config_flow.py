@@ -67,7 +67,9 @@ def _number(name: str, default: float) -> tuple[vol.Marker, NumberSelector]:
 
 def options_schema(settings: Settings) -> vol.Schema:
     """Formular mit den aktuellen Einstellungen als Vorgabe."""
-    fields = dict(_number(name, getattr(settings, name)) for name in NUMBER_FIELDS)
+    fields: dict[vol.Marker, Any] = dict(
+        _number(name, getattr(settings, name)) for name in NUMBER_FIELDS
+    )
     fields[vol.Required(OPT_PANEL_ADMIN_ONLY, default=settings.panel_admin_only)] = (
         BooleanSelector()
     )

@@ -49,7 +49,7 @@ def _require_target(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
-SCHEMAS: Final[Mapping[str, vol.Schema]] = {
+SCHEMAS: Final[Mapping[str, Callable[[Any], Any]]] = {
     SERVICE_DRAW: vol.Schema(
         {vol.Required(ATTR_SCHEDULE): _REF, vol.Optional(ATTR_ANIMATE_ON): cv.entity_id}
     ),
