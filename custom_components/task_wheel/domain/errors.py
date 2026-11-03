@@ -8,6 +8,8 @@ from ..const.keys import (
     ERR_INVALID_TRANSITION,
     ERR_LIMIT_REACHED,
     ERR_NOT_FOUND,
+    ERR_NOTIFY_FAILED,
+    ERR_NOTIFY_TARGET,
     ERR_STORAGE_CORRUPT,
     ERR_STORAGE_VERSION,
     ERR_UNKNOWN_KIND,
@@ -100,3 +102,19 @@ class SwapRejectedError(TaskWheelError):
 
 class DrawRejectedError(TaskWheelError):
     """Die Auslosung ist nicht möglich; der Schlüssel nennt den Grund."""
+
+
+class InvalidNotifyTargetError(TaskWheelError):
+    """Das Benachrichtigungsziel ist keine vorhandene `notify`-Entität oder -Dienst."""
+
+    def __init__(self, target: str) -> None:
+        """Merkt sich das Ziel als Platzhalter."""
+        super().__init__(ERR_NOTIFY_TARGET, {"target": target})
+
+
+class NotifyFailedError(TaskWheelError):
+    """Das Senden einer Benachrichtigung ist fehlgeschlagen."""
+
+    def __init__(self, target: str) -> None:
+        """Merkt sich das Ziel als Platzhalter."""
+        super().__init__(ERR_NOTIFY_FAILED, {"target": target})

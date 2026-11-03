@@ -8,6 +8,7 @@ from .application.assignment_service import AssignmentService
 from .application.draw_service import DrawService
 from .application.history_service import HistoryService
 from .application.maintenance_service import MaintenanceService, Spawn
+from .application.notification_service import NotificationService
 from .application.protocols import ConfigRepository, HistoryRepository, RoundEvents, TimerPort
 from .application.schedule_service import ScheduleService
 from .application.statistics_service import StatisticsService
@@ -25,6 +26,7 @@ class TaskWheelData:
     config: ConfigRepository
     history: HistoryRepository
     events: RoundEvents
+    notifications: NotificationService
     clock: Clock
     statistics: StatisticsService
     draws: DrawService
@@ -41,11 +43,15 @@ def compose(
     *,
     timers: TimerPort,
     events: RoundEvents,
+    notifications: NotificationService,
     clock: Clock,
     spawn: Spawn,
     rng: RandomSource | None = None,
 ) -> TaskWheelData:
-    """Baut die Dienste; alle teilen Repositories, Events und den Statistik-Dienst."""
+    """Baut die Dienste; alle teilen Repositories, Events und den Statistik-Dienst.
+
+    `notifications` hängt bereits hinter `events`; es wird hier nur für die Zielprüfung angeboten.
+    """
     statistics = StatisticsService(config, history)
     draws = DrawService(config, history, rng or secure_random(), statistics, events=events)
     assignments = AssignmentService(config, history, statistics, events)
@@ -53,6 +59,7 @@ def compose(
         config=config,
         history=history,
         events=events,
+        notifications=notifications,
         clock=clock,
         statistics=statistics,
         draws=draws,
