@@ -122,9 +122,21 @@ export const drawStyles: CSSResult[] = [
       max-width: 100%;
       aspect-ratio: 1 / 1;
     }
-    tw-wheel {
+    tw-stage {
       position: absolute;
       inset: 0;
+    }
+    .wheel-box.below {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--tw-space-m);
+      aspect-ratio: auto;
+    }
+    .wheel-box.below tw-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
     }
     .hub {
       position: absolute;
@@ -142,6 +154,15 @@ export const drawStyles: CSSResult[] = [
       letter-spacing: 0.04em;
       text-transform: uppercase;
       cursor: pointer;
+    }
+    .hub.below {
+      position: static;
+      width: auto;
+      height: auto;
+      min-height: 44px;
+      margin: 0;
+      padding: 0 var(--tw-space-l);
+      border-radius: 22px;
     }
     .hub:disabled {
       background: var(--tw-color-text-muted);

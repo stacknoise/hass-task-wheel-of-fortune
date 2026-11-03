@@ -3,6 +3,7 @@
 import type {
   AbsenceKind,
   AfterOnce,
+  AnimationKind,
   FrequencyKind,
   Load,
   Period,
@@ -102,4 +103,5 @@ export interface ScheduleWire {
   readonly notify: boolean;
   readonly skip_absent: boolean;
   readonly archived: boolean;
+  readonly animations: readonly AnimationKind[];
 }
