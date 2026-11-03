@@ -6,6 +6,7 @@ import {
   PANEL_HEADING_CLASS,
 } from './constants/index.ts';
 import { FakeHass } from './api/fake-hass.testing.ts';
+import { assignment, fakeHass, text } from './views/fixtures.testing.ts';
 import type { TaskWheelPanel } from './task-wheel-panel.ts';
 import './task-wheel-panel.ts';
 
@@ -58,20 +59,17 @@ describe('task-wheel-panel', () => {
   });
 
   it('zeigt nach dem Laden die Ansicht mit dem Snapshot und reagiert auf Deltas', async () => {
-    const hass = new FakeHass();
+    const hass = fakeHass();
     const element = await mount(hass);
     await settle(element);
     const view = element.shadowRoot?.querySelector('tw-overview-view');
-    const values = (): string[] =>
-      [...(view?.shadowRoot?.querySelectorAll('tw-stat') ?? [])].map(
-        (stat) => stat.shadowRoot?.querySelector('.value')?.textContent ?? '',
-      );
+    const content = (): string => text(view as Element);
     await vi.waitFor(() => {
-      expect(values()).toEqual(['2', '1', '0', '0']);
+      expect(content()).toContain('3 offen');
     });
-    hass.emit({ persons: { upsert: [{ id: 'p3' }], remove: [] } });
+    hass.emit({ assignments: { upsert: [assignment('a9', 't2', 'p1', 'open')], remove: [] } });
     await vi.waitFor(() => {
-      expect(values()[0]).toBe('3');
+      expect(content()).toContain('4 offen');
     });
   });
 

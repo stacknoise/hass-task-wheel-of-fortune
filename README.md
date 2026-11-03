@@ -71,11 +71,36 @@ Tabs Übersicht, Auslosung, Aufgaben, Personen, Zeitpläne, Historie und Statist
 bleibt über `subscribe` aktuell. Der Tab **Auslosung** ist fertig: Zeitplan wählen, Runde starten (eine offene Runde
 lässt sich fortsetzen), je Aufgabe das Glücksrad drehen (Segmentgröße = Chance, „Wer ist im Rad?“ mit Gründen),
 den Rest ohne Animation verlosen und die Runde abschließen. Das Ergebnis bestimmt immer das Backend; das Rad dreht
-nur dorthin, bei „reduzierte Bewegung“ im Betriebssystem ohne Animation. Die übrigen Ansichten zeigen vorerst nur
-Zähler und werden mit AP-15 und AP-17 ausgebaut.
+nur dorthin, bei „reduzierte Bewegung“ im Betriebssystem ohne Animation. Fertig sind außerdem **Übersicht**, **Historie** und **Statistik** (AP-17); Aufgaben, Personen und Zeitpläne zeigen
+vorerst nur Zähler und werden mit AP-15 ausgebaut.
+
+
+- **Übersicht:** nächste Auslosung (mit Blättern durch die Zeitpläne), offene Zuteilungen je Zeitplan mit Filter nach Person,
+  Erledigen und Tauschen (nur erlaubte, nicht pausierte Personen, Hinweis auf verbleibende Joker), Punkte im Monat gegen den
+  fairen Anteil und die jüngste Aktivität. Eine Zuteilung kennt nur ihre Aufgabe; sie erscheint unter dem ersten Zeitplan, der
+  diese Aufgabe enthält.
+- **Historie:** Runden aufklappbar (Zeitplan, Herkunft, Zuteilungen mit Chance und Status), Filter nach Person, Nachladen in
+  Seiten und **CSV-Export** (Semikolon, UTF-8 mit Marke; Felder, die mit `=`, `+`, `-`, `@`, Tabulator oder Zeilenumbruch
+  beginnen, werden mit einem Hochkomma entschärft, damit Tabellenprogramme sie nicht als Formel ausführen).
+- **Statistik:** Zeitraum (Monat, 3 oder 12 Monate), Kennzahlen, Punkte gegen fairen Anteil, Erledigungsquote je Woche
+  (SVG-Liniendiagramm ohne Diagrammbibliothek), Matrix Aufgabe mal Person und Auszeichnungen (Glückspilz, Pechvogel,
+  Zuverlässigste Person). Leere Zeiträume zeigen einen Hinweis statt leerer Diagramme.
+
 Texte gibt es auf Deutsch und Englisch (Sprache aus Home Assistant). Das Bundle ist nicht eingecheckt: vor dem
 Ausprobieren `cd frontend && npm ci && npm run build`. Fehlt es, bleibt die Integration nutzbar und schreibt eine
 Warnung ins Protokoll.
+
+### Personen, Aufgaben und Zeitpläne im Panel (AP-15)
+
+Die Tabs *Personen*, *Aufgaben* und *Zeitpläne* legen Objekte an, ändern und löschen sie (nur Administratoren). Links stehen
+die Karten, rechts das Formular; Fehler des Backends erscheinen am betroffenen Feld und als Hinweis über den Knöpfen.
+
+- **Personen:** Farbe im Rad, Belastbarkeit (voll, halb, pausiert), Anwesenheit (einmalig, Wochentage, Wochenrhythmus) mit
+  Vorschau der nächsten vier Wochen und optional eine Benachrichtigungs-Entität (`notify.…`, wird beim Speichern geprüft).
+- **Aufgaben:** erlaubte Personen, Häufigkeit (jede Runde, höchstens n× je Zeitraum, festes Intervall mit Zeitstrahl),
+  Punkte, Frist und die Zusatzregeln „keine Wiederholung“, „Abwesenheit beachten“, „Tausch erlaubt“.
+- **Zeitpläne:** wiederkehrend, einmalig oder nur manuell, Aufgabenwahl, Optionen und ein Beispiel für `task_wheel.draw`
+  und das Ereignis `task_wheel_drawn`.
 
 ## Panel-API (WebSocket)
 

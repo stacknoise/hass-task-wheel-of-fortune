@@ -50,6 +50,11 @@ export default tseslint.config(
     },
   },
   {
+    // Konstanten sind der Ort für Literale
+    files: ['src/constants/**/*.ts'],
+    rules: { 'no-magic-numbers': 'off' },
+  },
+  {
     files: ['**/*.test.ts', '**/*.testing.ts'],
     rules: { 'no-magic-numbers': 'off' },
   },
