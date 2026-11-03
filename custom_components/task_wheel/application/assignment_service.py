@@ -4,10 +4,17 @@ import datetime as dt
 
 from ..const.limits import OPEN_ASSIGNMENT_MAX_AGE_DAYS
 from ..domain import status
+from ..domain.errors import NotFoundError
 from ..domain.models import Assignment
-from ..domain.types import AssignmentId
-from .protocols import AssignmentRecorder, ConfigRepository, HistoryRepository
-from .round_updates import require_assignment, store_assignment
+from ..domain.types import AssignmentId, PersonId, TaskId
+from .protocols import (
+    AssignmentRecorder,
+    ConfigRepository,
+    HistoryRepository,
+    NoEvents,
+    RoundEvents,
+)
+from .round_updates import RESOURCE_ASSIGNMENT, require_assignment, store_assignment
 
 _MAX_AGE = dt.timedelta(days=OPEN_ASSIGNMENT_MAX_AGE_DAYS)
 
@@ -16,12 +23,30 @@ class AssignmentService:
     """Statuswechsel einer Zuteilung und deren Punkte."""
 
     def __init__(
-        self, config: ConfigRepository, history: HistoryRepository, recorder: AssignmentRecorder
+        self,
+        config: ConfigRepository,
+        history: HistoryRepository,
+        recorder: AssignmentRecorder,
+        events: RoundEvents | None = None,
     ) -> None:
-        """Hält die Repositories und den Empfänger der Statusänderungen (Statistik)."""
+        """Hält die Repositories, den Empfänger der Statusänderungen (Statistik) und die Events."""
         self._config = config
         self._history = history
         self._recorder = recorder
+        self._events = events or NoEvents()
+
+    def find_open(self, person_id: PersonId, task_id: TaskId) -> Assignment:
+        """Die offene Zuteilung der Person für die Aufgabe (bei mehreren die mit frühester Frist).
+
+        Raises:
+            NotFoundError: Die Person hat die Aufgabe nicht offen.
+        """
+        matching = [
+            item for item in self._history.open_assignments(person_id) if item.task_id == task_id
+        ]
+        if not matching:
+            raise NotFoundError(RESOURCE_ASSIGNMENT, f"{person_id}/{task_id}")
+        return min(matching, key=lambda item: item.due_at)
 
     def complete(self, assignment_id: AssignmentId, now: dt.datetime) -> Assignment:
         """Erledigt die Zuteilung (pünktlich bis `due_at`, danach verspätet).
@@ -31,7 +56,9 @@ class AssignmentService:
             InvalidTransitionError: Die Zuteilung ist nicht mehr offen.
         """
         assignment = require_assignment(self._history, assignment_id)
-        return store_assignment(self._history, self._recorder, status.complete(assignment, now))
+        done = store_assignment(self._history, self._recorder, status.complete(assignment, now))
+        self._events.assignment_completed(done)
+        return done
 
     def mark_missed(self, now: dt.datetime) -> tuple[Assignment, ...]:
         """Täglicher Lauf: markiert Zuteilungen als verpasst, deren Kulanzzeit abgelaufen ist."""
@@ -41,9 +68,12 @@ class AssignmentService:
             for item in self._history.assignments_since(now - _MAX_AGE)
             if status.is_missable(item, settings, now)
         ]
-        return tuple(
+        missed = tuple(
             store_assignment(self._history, self._recorder, status.miss(item)) for item in due
         )
+        for item in missed:
+            self._events.assignment_missed(item)
+        return missed
 
     def points(self, assignment: Assignment) -> int:
         """Punkte, die die Zuteilung im aktuellen Status zählt (Faktoren aus den Einstellungen)."""

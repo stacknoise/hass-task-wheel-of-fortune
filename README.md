@@ -4,7 +4,7 @@ Verteilt Haushaltsaufgaben fair und mit etwas Spaß: Ein Glücksrad lost aus, we
 richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie belastbar ist.
 
 > **Status:** Entwicklung, Version 0.0.1. Das Projektgerüst steht (Integration lässt sich hinzufügen und
-> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03), Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07), Statistik und Historie (AP-13) sowie Runden und Zeitpläne (AP-08) sind umgesetzt, die Funktionen folgen mit den Arbeitspaketen. Es gibt noch keine Veröffentlichung
+> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03), Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07), Statistik und Historie (AP-13) Runden und Zeitpläne (AP-08) sowie Einstieg, Dienste, Events und Einstellungen (AP-09) sind umgesetzt, Panel, Entitäten und Benachrichtigungen folgen mit den Arbeitspaketen. Es gibt noch keine Veröffentlichung
 > über HACS.
 
 ## Funktionen (geplant)
@@ -31,7 +31,7 @@ richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie b
 
 Voraussetzung: Home Assistant 2025.6 oder neuer (wird mit dem ersten Release festgelegt).
 
-## Dienste und Events (geplant)
+## Dienste und Events
 
 ```yaml
 action: task_wheel.draw
@@ -46,7 +46,11 @@ data:
 | `task_wheel.swap` | Zuteilung per Joker tauschen |
 | `task_wheel.set_absence` | Abwesenheit einer Person eintragen |
 
-Events: `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_wheel_missed`, `task_wheel_reminder`.
+Events: `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_wheel_missed`, `task_wheel_reminder`. Mit `animate_on` meldet `task_wheel.draw` zusätzlich `task_wheel_animate` (Hinweis für eine Anzeige). Die Inhalte nennen nur Kennungen, Namen und Zahlen.
+
+Zeitplan und Person lassen sich über Kennung oder Kurzname ansprechen, die Aufgabe über Kennung oder Namen. `task_wheel.complete` nimmt entweder `assignment_id` oder `person` zusammen mit `task`.
+
+Einstellungen (Joker, Fairness-Fenster, Aufbewahrung, Punktefaktoren, Kulanzzeit, Panel nur für Administratoren) ändert man unter *Einstellungen → Geräte & Dienste → Aufgaben-Glücksrad → Konfigurieren*. Jede Nacht um 03:00 werden verpasste Zuteilungen markiert und Runden nach der Aufbewahrungsfrist gelöscht.
 
 ## Entitäten (geplant)
 

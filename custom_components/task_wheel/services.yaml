@@ -1,0 +1,54 @@
+draw:
+  fields:
+    schedule:
+      required: true
+      example: wochenplan
+      selector:
+        text:
+    animate_on:
+      required: false
+      example: sensor.task_wheel_display
+      selector:
+        entity:
+complete:
+  fields:
+    assignment_id:
+      required: false
+      selector:
+        text:
+    person:
+      required: false
+      example: anna
+      selector:
+        text:
+    task:
+      required: false
+      example: Müll rausbringen
+      selector:
+        text:
+swap:
+  fields:
+    assignment_id:
+      required: true
+      selector:
+        text:
+    to_person:
+      required: true
+      example: ben
+      selector:
+        text:
+set_absence:
+  fields:
+    person:
+      required: true
+      example: anna
+      selector:
+        text:
+    start:
+      required: true
+      selector:
+        date:
+    end:
+      required: true
+      selector:
+        date:

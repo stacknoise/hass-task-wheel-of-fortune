@@ -19,6 +19,9 @@ NAME_MAX_LENGTH: Final = 60
 SLUG_MAX_LENGTH: Final = 64
 ID_MAX_LENGTH: Final = 64
 NOTIFY_TARGET_MAX_LENGTH: Final = 255
+# Referenz aus einem Dienst: Kennung, Kurzname oder Name
+REF_MIN_LENGTH: Final = 1
+REF_MAX_LENGTH: Final = max(ID_MAX_LENGTH, SLUG_MAX_LENGTH, NAME_MAX_LENGTH)
 COLOR_PATTERN: Final = re.compile(r"^#[0-9a-f]{6}$")
 SLUG_PATTERN: Final = re.compile(r"^[a-z0-9_]+$")
 

@@ -5,14 +5,14 @@ import logging
 from typing import Final
 
 from ..const.defaults import REMINDER_HOUR
-from ..const.limits import WEEKDAY_MAX, WEEKDAY_MIN
 from ..domain.enums import RoundOrigin
 from ..domain.errors import TaskWheelError
-from ..domain.models import Recurring, Schedule
+from ..domain.models import Schedule
 from ..domain.triggers.factory import TriggerFactory
 from ..domain.triggers.lifecycle import after_fired
 from ..domain.triggers.reminder import reminder_age
 from ..domain.types import ScheduleId
+from .daily import next_daily
 from .draw_service import DrawService
 from .protocols import ConfigRepository, HistoryRepository, NoEvents, RoundEvents, TimerPort
 
@@ -20,11 +20,6 @@ _LOGGER = logging.getLogger(__name__)
 
 TIMER_PREFIX: Final = "schedule:"
 TIMER_REMINDERS: Final = "reminders"
-
-# Täglich zur vollen Stunde `REMINDER_HOUR`: derselbe Mechanismus wie bei wiederkehrenden Plänen
-_DAILY_REMINDER: Final = Recurring(
-    weekdays=frozenset(range(WEEKDAY_MIN, WEEKDAY_MAX + 1)), time=dt.time(REMINDER_HOUR)
-)
 
 
 def timer_key(schedule_id: ScheduleId) -> str:
@@ -77,6 +72,16 @@ class ScheduleService:
             self.arm(schedule_id, now)
         self.arm_reminders(now)
 
+    def save(self, schedule: Schedule, now: dt.datetime) -> None:
+        """Legt den Zeitplan an oder ersetzt ihn und setzt seinen Zeitgeber neu."""
+        self._config.put_schedule(schedule)
+        self.arm(schedule.id, now)
+
+    def delete(self, schedule_id: ScheduleId) -> None:
+        """Entfernt den Zeitplan und meldet seinen Zeitgeber ab."""
+        self._config.remove_schedule(schedule_id)
+        self.disarm(schedule_id)
+
     def disarm(self, schedule_id: ScheduleId) -> None:
         """Meldet den Zeitgeber eines Zeitplans ab (z. B. nach dem Löschen)."""
         self._timers.cancel(timer_key(schedule_id))
@@ -87,7 +92,7 @@ class ScheduleService:
 
     def arm_reminders(self, now: dt.datetime) -> None:
         """Setzt die tägliche Erinnerungsprüfung auf das nächste Mal."""
-        at = TriggerFactory.create(_DAILY_REMINDER).next_fire(now)
+        at = next_daily(REMINDER_HOUR, now)
         if at is not None:
             self._timers.schedule(TIMER_REMINDERS, at, self.check_reminders)
 

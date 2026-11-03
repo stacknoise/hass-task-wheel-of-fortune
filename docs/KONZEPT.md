@@ -322,7 +322,7 @@ Alle Dienste haben voluptuous-Schemas, unbekannte Felder werden abgelehnt. Fehle
 ### 6.2 Events
 
 `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_wheel_missed`, `task_wheel_reminder`.
-Payloads enthalten nur IDs, Namen und Zahlen (keine Konfiguration).
+Payloads enthalten nur IDs, Namen und Zahlen (keine Konfiguration). Zusätzlich meldet `task_wheel.draw` mit `animate_on` das Event `task_wheel_animate` (gleicher Inhalt wie `task_wheel_drawn` plus `animate_on`).
 
 ### 6.3 Entitäten (über `EntityFactory`)
 

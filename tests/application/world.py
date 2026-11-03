@@ -6,7 +6,13 @@ from itertools import count
 from custom_components.task_wheel.application.draw_service import DrawService
 from custom_components.task_wheel.application.schedule_service import ScheduleService
 from custom_components.task_wheel.application.statistics_service import StatisticsService
-from custom_components.task_wheel.domain.models import EveryRound, ManualTrigger, Round, Schedule
+from custom_components.task_wheel.domain.models import (
+    Assignment,
+    EveryRound,
+    ManualTrigger,
+    Round,
+    Schedule,
+)
 from custom_components.task_wheel.infrastructure.repository.config_store import ConfigStore
 from custom_components.task_wheel.infrastructure.repository.history_store import HistoryStore
 from custom_components.task_wheel.infrastructure.repository.memory import MemoryStore
@@ -42,12 +48,28 @@ class RecordingEvents:
     def __init__(self) -> None:
         self.drawn: list[Round] = []
         self.reminders: list[tuple[Schedule, int]] = []
+        self.completed: list[Assignment] = []
+        self.swapped: list[Assignment] = []
+        self.missed: list[Assignment] = []
+        self.animations: list[tuple[Round, str]] = []
 
     def round_drawn(self, round_: Round) -> None:
         self.drawn.append(round_)
 
     def reminder_due(self, schedule: Schedule, days_since: int) -> None:
         self.reminders.append((schedule, days_since))
+
+    def assignment_completed(self, assignment: Assignment) -> None:
+        self.completed.append(assignment)
+
+    def assignment_swapped(self, assignment: Assignment) -> None:
+        self.swapped.append(assignment)
+
+    def assignment_missed(self, assignment: Assignment) -> None:
+        self.missed.append(assignment)
+
+    def animation_requested(self, round_: Round, target: str) -> None:
+        self.animations.append((round_, target))
 
 
 class World:

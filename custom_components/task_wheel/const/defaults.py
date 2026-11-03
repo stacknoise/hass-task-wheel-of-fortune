@@ -12,6 +12,7 @@ DEFAULT_HISTORY_RETENTION_DAYS: Final = 365
 DEFAULT_LATE_POINTS_FACTOR: Final = 1.0
 DEFAULT_MISSED_POINTS_FACTOR: Final = 0.0
 DEFAULT_MISSED_GRACE_HOURS: Final = 24
+DEFAULT_PANEL_ADMIN_ONLY: Final = False
 
 # Personen, Aufgaben, Zeitpläne
 DEFAULT_PERSON_COLOR: Final = "#4f8cff"
@@ -42,6 +43,9 @@ PANEL_ROUND_TIMEOUT_MINUTES: Final = 15
 
 # Erinnerungen für Zeitpläne „nur manuell“ werden täglich zu dieser vollen Stunde geprüft
 REMINDER_HOUR: Final = 9
+
+# Täglicher Wartungslauf (verpasste Zuteilungen markieren, alte Runden löschen), nachts
+MAINTENANCE_HOUR: Final = 3
 
 # Statistik und Historie
 DEFAULT_STATISTICS_MONTHS: Final = 1
