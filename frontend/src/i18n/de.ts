@@ -17,6 +17,7 @@ export const de = {
   'stat.tasks': 'Aufgaben',
   'stat.schedules': 'Zeitpläne',
   'stat.assignments': 'Offene Zuteilungen',
+  'stat.rounds': 'Auslosungen mit offenen Zuteilungen',
   'stat.panel_rounds': 'Offene Auslosungen',
   'view.soon': 'Dieser Bereich folgt in einem der nächsten Arbeitspakete.',
   'form.save': 'Speichern',

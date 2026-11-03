@@ -80,6 +80,14 @@ class HistoryStore:
         self._index(round_)
         self._changed()
 
+    def remove_round(self, round_id: RoundId) -> Round | None:
+        """Entfernt eine Runde samt Zuteilungen und Indizes; liefert sie oder `None`."""
+        round_ = self._rounds.pop(round_id, None)
+        if round_ is not None:
+            self._unindex(round_)
+            self._changed()
+        return round_
+
     def set_aggregates(self, aggregates: Mapping[str, object]) -> None:
         """Ersetzt die Monatsaggregate."""
         self._aggregates = dict(aggregates)

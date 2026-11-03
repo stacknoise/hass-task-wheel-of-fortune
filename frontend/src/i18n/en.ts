@@ -18,6 +18,7 @@ export const en: Record<keyof typeof de, string> = {
   'stat.tasks': 'Tasks',
   'stat.schedules': 'Schedules',
   'stat.assignments': 'Open assignments',
+  'stat.rounds': 'Draws with open assignments',
   'stat.panel_rounds': 'Open draws',
   'view.soon': 'This section will follow in an upcoming work package.',
   'form.save': 'Save',

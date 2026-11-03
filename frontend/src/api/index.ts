@@ -39,6 +39,7 @@ export type {
   Matrix,
   PersonObject,
   Reliable,
+  RoundHead,
   RoundObject,
   ScheduleObject,
   Standing,

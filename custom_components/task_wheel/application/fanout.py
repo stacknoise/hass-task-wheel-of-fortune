@@ -44,6 +44,10 @@ class FanOutRoundEvents:
         """Eine Zuteilung wurde als verpasst markiert."""
         self._each(lambda sink: sink.assignment_missed(assignment))
 
+    def round_deleted(self, round_: Round) -> None:
+        """Eine Runde wurde gelöscht."""
+        self._each(lambda sink: sink.round_deleted(round_))
+
     def animation_requested(self, round_: Round, target: str) -> None:
         """Eine Anzeige soll die Auslosung zeigen."""
         self._each(lambda sink: sink.animation_requested(round_, target))

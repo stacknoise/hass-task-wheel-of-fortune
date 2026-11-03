@@ -31,6 +31,9 @@ class Recorder(NoEvents):
     def assignment_missed(self, assignment) -> None:
         self.seen.append("missed")
 
+    def round_deleted(self, round_) -> None:
+        self.seen.append("deleted")
+
     def animation_requested(self, round_, target) -> None:
         self.seen.append(f"animate:{target}")
 
@@ -50,13 +53,22 @@ def _all(events: FanOutRoundEvents) -> None:
     events.assignment_completed(assignment)
     events.assignment_swapped(assignment)
     events.assignment_missed(assignment)
+    events.round_deleted(round_)
     events.animation_requested(round_, "media_player.tv")
 
 
 def test_every_sink_receives_every_message() -> None:
     first, second = Recorder(), Recorder()
     _all(FanOutRoundEvents(first, second))
-    expected = ["drawn", "reminder", "completed", "swapped", "missed", "animate:media_player.tv"]
+    expected = [
+        "drawn",
+        "reminder",
+        "completed",
+        "swapped",
+        "missed",
+        "deleted",
+        "animate:media_player.tv",
+    ]
     assert first.seen == expected
     assert second.seen == expected
 

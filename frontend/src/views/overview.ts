@@ -8,6 +8,7 @@ import type {
   AssignmentObject,
   HistoryPage,
   PersonObject,
+  RoundHead,
   ScheduleObject,
   StatisticsReport,
   TaskObject,
@@ -31,12 +32,7 @@ import { AsyncValue, StoreController, indexById } from '../state/index.ts';
 import { personChips } from './person-chips.ts';
 import { assignmentGroups } from './overview-assignments.ts';
 import type { AssignmentHandlers } from './overview-assignments.ts';
-import {
-  filterByPerson,
-  groupBySchedule,
-  recentActivity,
-  upcomingDraws,
-} from './overview-model.ts';
+import { filterByPerson, groupByRound, recentActivity, upcomingDraws } from './overview-model.ts';
 
 /** Übersicht: nächste Auslosung, offene Zuteilungen mit Erledigen und Tauschen, Punkte, Aktivität. */
 export class TwOverviewView extends LitElement {
@@ -137,10 +133,11 @@ export class TwOverviewView extends LitElement {
     const tasks = modelsOf(snapshot, 'tasks');
     const schedules = modelsOf(snapshot, 'schedules');
     const assignments = modelsOf(snapshot, 'assignments');
+    const rounds = modelsOf(snapshot, 'rounds');
     const personById = indexById(persons);
     return html`
       ${this.#nextDraw(upcomingDraws(schedules), tasks)}
-      ${this.#assignments(persons, personById, indexById(tasks), schedules, assignments)}
+      ${this.#assignments(persons, personById, indexById(tasks), schedules, assignments, rounds)}
       ${this.#pointsCard(personById)} ${this.#activityCard(personById, indexById(tasks))}
     `;
   }
@@ -219,6 +216,7 @@ export class TwOverviewView extends LitElement {
     taskById: ReadonlyMap<string, TaskObject>,
     schedules: readonly ScheduleObject[],
     assignments: readonly AssignmentObject[],
+    rounds: readonly RoundHead[],
   ): TemplateResult {
     const visible = filterByPerson(assignments, this._filter);
     return html`
@@ -244,7 +242,7 @@ export class TwOverviewView extends LitElement {
             ? html`<p class="empty">${this.#text('overview.noAssignments')}</p>`
             : assignmentGroups({
                 language: this.language,
-                groups: groupBySchedule(visible, schedules),
+                groups: groupByRound(visible, rounds, schedules),
                 persons,
                 personById,
                 taskById,
@@ -261,6 +259,9 @@ export class TwOverviewView extends LitElement {
     return {
       complete: (id) => {
         this.#act((client) => client.complete(id));
+      },
+      deleteRound: (id) => {
+        this.#act((client) => client.deleteRound(id));
       },
       toggleSwap: (id) => {
         this._swapOpen = this._swapOpen === id ? '' : id;

@@ -155,6 +155,9 @@
     "swap_person_absent": {
       "message": "Die Person ist im Fristfenster abwesend."
     },
+    "round_has_done_assignments": {
+      "message": "Die Auslosung kann nicht gelöscht werden: {done} Aufgaben sind schon erledigt."
+    },
     "no_jokers_left": {
       "message": "Es ist kein Joker mehr übrig."
     },
