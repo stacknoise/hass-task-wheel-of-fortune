@@ -135,3 +135,9 @@ def test_observed_timers_pass_through_cancelling(api: Api) -> None:
     assert f"schedule:{created['id']}" not in api.timers.timers
     api.data.schedules.disarm_all()
     assert not api.timers.timers
+
+
+def test_config_changed_anywhere_is_pushed(api: Api) -> None:
+    api.run("subscribe")
+    api.config.put_person(f.person(id="p3", slug="p3", name="Dritte", absences=()))
+    assert [p["id"] for p in api.pushed[-1]["persons"]["upsert"]] == ["p3"]

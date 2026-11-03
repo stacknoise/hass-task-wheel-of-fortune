@@ -52,8 +52,9 @@ def compose(
 ) -> TaskWheelData:
     """Baut die Dienste; alle teilen Repositories, Events und den Statistik-Dienst.
 
-    Zeitgeber melden nach dem Auslösen an `live`, damit Abonnenten der Panel-API auch
-    Änderungen sehen, die kein Befehl ausgelöst hat (automatische Auslosung, Wartung).
+    Abonnenten der Panel-API (`live`) sehen auch Änderungen, die kein Befehl ausgelöst hat:
+    Änderungen der Konfiguration (egal von wo) und alles, was ein Zeitgeber auslöst
+    (automatische Auslosung, Wartung).
     """
     observed = ObservedTimers(timers)
     statistics = StatisticsService(config, history)
@@ -63,6 +64,7 @@ def compose(
     schedules = ScheduleService(config, history, draws, observed, events)
     live = LiveView(SnapshotBuilder(config, history, draws, swaps, schedules), clock)
     observed.listen(live.publish)
+    config.subscribe(live.publish)
     return TaskWheelData(
         config=config,
         history=history,

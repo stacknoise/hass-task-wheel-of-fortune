@@ -122,15 +122,20 @@ class SnapshotBuilder:
         return {**to_json(schedule), WIRE_NEXT_RUN: upcoming.isoformat() if upcoming else None}
 
 
+def _collection_delta(before: Collection, after: Collection) -> Json | None:
+    """Geänderte und entfernte Objekte einer Sammlung; `None`, wenn alles gleich ist."""
+    upsert = [item for key, item in after.items() if before.get(key) != item]
+    remove = [key for key in before if key not in after]
+    return {WIRE_UPSERT: upsert, WIRE_REMOVE: remove} if upsert or remove else None
+
+
 def diff(old: Snapshot, new: Snapshot) -> Json:
     """Änderungen von `old` nach `new` je Objekt-Kennung; leer, wenn nichts anders ist."""
-    delta: Json = {}
-    for name in COLLECTIONS:
-        before, after = old.collections[name], new.collections[name]
-        upsert = [item for key, item in after.items() if before.get(key) != item]
-        remove = [key for key in before if key not in after]
-        if upsert or remove:
-            delta[name] = {WIRE_UPSERT: upsert, WIRE_REMOVE: remove}
+    deltas = {
+        name: _collection_delta(old.collections[name], new.collections[name])
+        for name in COLLECTIONS
+    }
+    delta: Json = {name: change for name, change in deltas.items() if change is not None}
     if old.settings != new.settings:
         delta[WIRE_SETTINGS] = new.settings
     return delta
