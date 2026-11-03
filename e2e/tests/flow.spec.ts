@@ -4,8 +4,9 @@ import { callWS, signIn } from '../support/panel.ts';
 
 const PANEL = '/task-wheel';
 const TASK_NAME = 'Müll rausbringen';
+const SECOND_TASK_NAME = 'Spülmaschine ausräumen';
 // Nur die offenen Zuteilungen; die Aktivitätsliste nennt erledigte Aufgaben weiter
-const openRows = (page: Page) => page.locator('.assignments .row', { hasText: TASK_NAME });
+const openRows = (page: Page) => page.locator('.assignments li', { hasText: TASK_NAME });
 const READY_MS = 30_000;
 // Budget für das Laden des Panels bis zur ersten Ansicht (Messwert: docs/CODE_DOKU.md §3.2)
 const PANEL_LOAD_BUDGET_MS = 5000;
@@ -40,12 +41,21 @@ test('Auslosung, Erledigen und Tausch im Panel', async ({ page, baseURL }) => {
       frequency: { kind: 'every_round' },
     },
   });
+  // Getauscht wird nur innerhalb einer Auslosung: jede Person braucht eine Zuteilung
+  const second = await callWS<Created>(page, {
+    type: 'task_wheel/task/create',
+    task: {
+      name: SECOND_TASK_NAME,
+      allowed: [anna.id, ben.id],
+      frequency: { kind: 'every_round' },
+    },
+  });
   await callWS(page, {
     type: 'task_wheel/schedule/create',
     schedule: {
       name: 'Wochenrunde',
       trigger: { kind: 'manual' },
-      task_ids: [task.id],
+      task_ids: [task.id, second.id],
     },
   });
 
@@ -53,6 +63,7 @@ test('Auslosung, Erledigen und Tausch im Panel', async ({ page, baseURL }) => {
   await page.goto(`${PANEL}/draw`);
   await page.getByRole('button', { name: 'Runde starten' }).click();
   await page.getByRole('button', { name: 'Auslosung starten' }).click();
+  await page.getByRole('button', { name: 'Nächste Aufgabe' }).click({ timeout: READY_MS });
   await page.getByRole('button', { name: 'Runde abschließen' }).click({ timeout: READY_MS });
   await expect(page.getByText('Runde abgeschlossen')).toBeVisible();
 
@@ -72,11 +83,7 @@ test('Auslosung, Erledigen und Tausch im Panel', async ({ page, baseURL }) => {
   await expect(openRows(page).first()).toContainText(other);
 
   // Erledigen
-  await page
-    .locator('.row', { hasText: 'Müll rausbringen' })
-    .first()
-    .getByRole('button', { name: 'Erledigt' })
-    .click();
+  await openRows(page).first().getByRole('button', { name: 'Erledigt', exact: true }).click();
   await expect(openRows(page)).toHaveCount(0, {
     timeout: READY_MS,
   });
