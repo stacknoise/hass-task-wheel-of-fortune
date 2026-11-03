@@ -43,5 +43,46 @@ export interface HassApi {
   readonly connection: HassConnection;
   readonly language?: string;
   readonly locale?: { readonly language?: string };
-  callWS<T>(message: { readonly type: string }): Promise<T>;
+  callWS<T>(message: { readonly type: string; readonly [field: string]: unknown }): Promise<T>;
+}
+
+/** Ein Segment im Rad: Person und normierte Chance (Summe aller Chancen = 1). */
+export interface WireSegment {
+  readonly person_id: string;
+  readonly weight: number;
+  readonly chance: number;
+}
+
+/** Eine Person, die nicht im Rad ist, und der Grund (Schlüssel `ExclusionReason`). */
+export interface WireExclusion {
+  readonly person_id: string;
+  readonly reason: string;
+}
+
+/** Ergebnis der Ziehung einer Aufgabe; ohne Gewinner ist die Aufgabe nicht verteilbar. */
+export interface TaskDrawWire {
+  readonly task_id: string;
+  readonly winner_id: string | null;
+  readonly chance: number;
+  readonly segments: readonly WireSegment[];
+  readonly exclusions: readonly WireExclusion[];
+}
+
+/** Offene Panel-Runde: bisherige Ergebnisse und die noch zu ziehenden Aufgaben. */
+export interface PanelRoundWire {
+  readonly id: string;
+  readonly schedule_id: string;
+  readonly expires_at: string;
+  readonly results: readonly TaskDrawWire[];
+  readonly pending_task_ids: readonly string[];
+}
+
+export interface SpinReply {
+  readonly result: TaskDrawWire;
+  readonly panel_round: PanelRoundWire;
+}
+
+export interface SpinRestReply {
+  readonly results: readonly TaskDrawWire[];
+  readonly panel_round: PanelRoundWire;
 }
