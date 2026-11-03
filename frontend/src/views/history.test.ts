@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { VIEW_TAGS, WS_HISTORY_LIST, WS_ROUND_DELETE } from '../constants/index.ts';
 import { press } from '../components/press.testing.ts';
-import { HISTORY, fakeHass, mountView, text } from './fixtures.testing.ts';
+import { HISTORY, SNAPSHOT, fakeHass, mountView, text } from './fixtures.testing.ts';
 import { VIEW_LOADERS } from './registry.ts';
 
 const download = vi.hoisted(() => vi.fn());
@@ -91,6 +91,24 @@ describe('Historie', () => {
     expect(name).toBe('task-wheel-history.csv');
     expect(content.split('\r\n')).toHaveLength(1 + 3 + 3);
     expect(content).toContain('"Bad putzen"');
+  });
+
+  it('lädt neu, wenn sich Zuteilungen live ändern (neue Auslosung, Statuswechsel)', async () => {
+    const { hass } = await mount();
+    const loads = () => hass.calls.filter((call) => call === WS_HISTORY_LIST).length;
+    expect(loads()).toBe(1);
+    hass.emit({
+      assignments: {
+        upsert: [{ ...SNAPSHOT.assignments[0], id: 'a1', status: 'done' }],
+        remove: [],
+      },
+    });
+    await vi.waitFor(() => {
+      expect(loads()).toBe(2);
+    });
+    hass.emit({ persons: { upsert: [], remove: [] } });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(loads()).toBe(2);
   });
 
   it('meldet einen fehlgeschlagenen Export', async () => {
