@@ -153,7 +153,7 @@ export const en: Record<keyof typeof de, string> = {
   'error.inconsistent': 'The values do not fit together.',
   'error.limit_reached': 'The upper limit is reached.',
   'error.not_found': 'Not found.',
-  'error.in_use': 'Still in use.',
+  'error.in_use': 'Still in use (schedule, allowed person or open assignment).',
   'error.notify_target_invalid': 'Invalid notification target.',
   'error.too_deep': 'Nested too deeply.',
   'error.unauthorized': 'Administrators only.',

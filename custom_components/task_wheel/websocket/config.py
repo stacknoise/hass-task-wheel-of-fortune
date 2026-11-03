@@ -62,7 +62,7 @@ RESOURCES: Final = (
         Task,
         lambda r, fields: r.data.configuration.create_task(fields),
         lambda r, ident, fields: r.data.configuration.update_task(ident, fields),
-        lambda r, ident: r.data.configuration.delete_task(ident, r.now),
+        lambda r, ident: r.data.configuration.delete_task(ident),
     ),
     Resource(
         WS_SCHEDULE_PREFIX,

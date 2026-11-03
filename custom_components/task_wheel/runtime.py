@@ -88,7 +88,7 @@ def compose(
         schedules=schedules,
         maintenance=MaintenanceService(config, history, assignments, observed, spawn),
         history_service=HistoryService(history),
-        configuration=ConfigService(config, schedules, draws, notifications.check_target),
+        configuration=ConfigService(config, history, schedules, draws, notifications.check_target),
         live=live,
         entity_state=EntityStateService(config, history, schedules),
     )
