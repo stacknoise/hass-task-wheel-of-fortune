@@ -1,14 +1,15 @@
-import { css, html } from 'lit';
+import { html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 
-import { COMPONENT_TAGS, EVENT_CONFIRM } from '../constants/index.ts';
+import { COMPONENT_TAGS } from '../constants/index.ts';
+import './confirm-dialog.ts';
 import { defineOnce } from './define.ts';
 import { LocalizedElement } from './localized.ts';
 import { baseStyles, tokenStyles, viewStyles } from './styles.ts';
 
 /**
- * Aktion mit Rückfrage (Löschen, „Bleibt unerledigt“): erst der Knopf (`label`), dann die Frage mit
- * Bestätigen (`confirm`, sonst „Löschen“) und „Abbrechen“. Erst die Bestätigung löst `tw-confirm` aus.
+ * Aktion mit Rückfrage (Löschen, „Bleibt unerledigt“): erst der Knopf (`label`), dann der Dialog
+ * (`tw-confirm-dialog`). Erst die Bestätigung löst `tw-confirm` aus.
  */
 export class TwConfirmAction extends LocalizedElement {
   static override properties = {
@@ -18,30 +19,11 @@ export class TwConfirmAction extends LocalizedElement {
     confirm: { type: String },
     blocked: { type: String },
     busy: { type: Boolean },
+    primary: { type: Boolean },
     _asking: { state: true },
   };
 
-  static override styles = [
-    tokenStyles,
-    baseStyles,
-    viewStyles,
-    css`
-      :host {
-        display: block;
-      }
-      .ask {
-        margin-top: var(--tw-space-s);
-        padding: var(--tw-space-s);
-        border: 1px solid var(--tw-color-error);
-        border-radius: var(--tw-radius);
-      }
-      .danger {
-        background: var(--tw-color-error);
-        border-color: var(--tw-color-error);
-        color: var(--tw-color-on-primary);
-      }
-    `,
-  ];
+  static override styles = [tokenStyles, baseStyles, viewStyles];
 
   declare label: string;
   declare question: string;
@@ -50,6 +32,8 @@ export class TwConfirmAction extends LocalizedElement {
   /** Grund, warum Löschen gesperrt ist; leer, wenn es erlaubt ist. */
   declare blocked: string;
   declare busy: boolean;
+  /** Hebt Knopf und Bestätigung als Hauptaktion hervor (statt als Löschen). */
+  declare primary: boolean;
   declare _asking: boolean;
 
   constructor() {
@@ -59,52 +43,43 @@ export class TwConfirmAction extends LocalizedElement {
     this.confirm = '';
     this.blocked = '';
     this.busy = false;
+    this.primary = false;
     this._asking = false;
   }
 
   protected override render(): TemplateResult {
-    return this._asking
-      ? html`
-          <div class="ask" role="alertdialog" aria-label=${this.label}>
-            <p>${this.question}</p>
-            <div class="row">
-              <button
-                type="button"
-                class="action danger"
-                ?disabled=${this.busy}
-                @click=${() => {
-                  this._asking = false;
-                  this.dispatchEvent(
-                    new CustomEvent(EVENT_CONFIRM, { bubbles: true, composed: true }),
-                  );
-                }}
-              >
-                ${this.confirm || this.text('form.delete')}
-              </button>
-              <button
-                type="button"
-                class="action"
-                @click=${() => {
-                  this._asking = false;
-                }}
-              >
-                ${this.text('form.cancel')}
-              </button>
-            </div>
-          </div>
-        `
-      : html`<button
-          type="button"
-          class="action"
-          title=${this.blocked}
-          ?disabled=${this.busy || this.blocked !== ''}
-          @click=${() => {
-            this._asking = true;
-          }}
-        >
-          ${this.label}
-        </button>`;
+    return html`
+      <button
+        type="button"
+        class="action ${this.primary ? 'primary' : ''}"
+        title=${this.blocked}
+        ?disabled=${this.busy || this.blocked !== ''}
+        @click=${() => {
+          this._asking = true;
+        }}
+      >
+        ${this.label}
+      </button>
+      ${
+        this._asking
+          ? html`<tw-confirm-dialog
+              language=${this.language}
+              label=${this.label}
+              question=${this.question}
+              confirm=${this.confirm}
+              ?primary=${this.primary}
+              ?busy=${this.busy}
+              @tw-confirm=${this.#close}
+              @tw-cancel=${this.#close}
+            ></tw-confirm-dialog>`
+          : nothing
+      }
+    `;
   }
+
+  readonly #close = (): void => {
+    this._asking = false;
+  };
 }
 
 defineOnce(COMPONENT_TAGS.confirmAction, TwConfirmAction);
