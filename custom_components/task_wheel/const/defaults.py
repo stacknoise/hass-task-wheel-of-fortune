@@ -24,3 +24,6 @@ DEFAULT_INTERVAL_TOLERANCE: Final = 0
 LOAD_FACTOR_FULL: Final = 1.0
 LOAD_FACTOR_HALF: Final = 0.5
 LOAD_FACTOR_PAUSED: Final = 0.0
+
+# Anwesenheit vorschauen (Personen-Ansicht zeigt die nächsten vier Wochen)
+DEFAULT_PREVIEW_WEEKS: Final = 4
