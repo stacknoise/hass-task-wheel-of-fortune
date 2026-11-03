@@ -85,8 +85,11 @@ test('Auslosung, Erledigen und Tausch im Panel', async ({ page, baseURL }) => {
 
   // Erledigen
   await openRows(page).first().getByRole('button', { name: 'Aktionen' }).click();
-  await openRows(page).first().getByRole('menuitem', { name: 'Erledigt' }).click();
-  await page.getByRole('alertdialog').getByRole('button', { name: 'Erledigt' }).click();
+  await openRows(page).first().getByRole('menuitem', { name: 'Erledigt', exact: true }).click();
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Erledigt', exact: true })
+    .click();
   await expect(openRows(page)).toHaveCount(0, {
     timeout: READY_MS,
   });
