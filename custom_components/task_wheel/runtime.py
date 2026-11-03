@@ -5,13 +5,16 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from .application.assignment_service import AssignmentService
+from .application.config_service import ConfigService
 from .application.draw_service import DrawService
 from .application.history_service import HistoryService
+from .application.live_view import LiveView, ObservedTimers
 from .application.maintenance_service import MaintenanceService, Spawn
 from .application.protocols import ConfigRepository, HistoryRepository, RoundEvents, TimerPort
 from .application.schedule_service import ScheduleService
 from .application.statistics_service import StatisticsService
 from .application.swap_service import SwapService
+from .application.views import SnapshotBuilder
 from .domain.draw.engine import secure_random
 from .domain.draw.types import RandomSource
 
@@ -33,6 +36,8 @@ class TaskWheelData:
     schedules: ScheduleService
     maintenance: MaintenanceService
     history_service: HistoryService
+    configuration: ConfigService
+    live: LiveView
 
 
 def compose(
@@ -45,10 +50,19 @@ def compose(
     spawn: Spawn,
     rng: RandomSource | None = None,
 ) -> TaskWheelData:
-    """Baut die Dienste; alle teilen Repositories, Events und den Statistik-Dienst."""
+    """Baut die Dienste; alle teilen Repositories, Events und den Statistik-Dienst.
+
+    Zeitgeber melden nach dem Auslösen an `live`, damit Abonnenten der Panel-API auch
+    Änderungen sehen, die kein Befehl ausgelöst hat (automatische Auslosung, Wartung).
+    """
+    observed = ObservedTimers(timers)
     statistics = StatisticsService(config, history)
     draws = DrawService(config, history, rng or secure_random(), statistics, events=events)
     assignments = AssignmentService(config, history, statistics, events)
+    swaps = SwapService(config, history, statistics, events)
+    schedules = ScheduleService(config, history, draws, observed, events)
+    live = LiveView(SnapshotBuilder(config, history, draws, swaps, schedules), clock)
+    observed.listen(live.publish)
     return TaskWheelData(
         config=config,
         history=history,
@@ -57,8 +71,10 @@ def compose(
         statistics=statistics,
         draws=draws,
         assignments=assignments,
-        swaps=SwapService(config, history, statistics, events),
-        schedules=ScheduleService(config, history, draws, timers, events),
-        maintenance=MaintenanceService(config, history, assignments, timers, spawn),
+        swaps=swaps,
+        schedules=schedules,
+        maintenance=MaintenanceService(config, history, assignments, observed, spawn),
         history_service=HistoryService(history),
+        configuration=ConfigService(config, schedules, draws),
+        live=live,
     )

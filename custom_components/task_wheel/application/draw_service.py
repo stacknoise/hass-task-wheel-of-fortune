@@ -72,7 +72,7 @@ class DrawService:
             DrawRejectedError: Der Zeitplan ist archiviert, oder (automatisch) pausiert.
         """
         draft = self._start(schedule_id, origin, now)
-        self._discard_for(schedule_id)
+        self.discard_for(schedule_id)
         return self._finish(draft.spin_rest(self._engine()), now)
 
     def begin(self, schedule_id: ScheduleId, now: dt.datetime) -> PanelRound:
@@ -85,7 +85,7 @@ class DrawService:
         """
         self._purge(now)
         draft = self._start(schedule_id, RoundOrigin.MANUAL, now)
-        self._discard_for(schedule_id)
+        self.discard_for(schedule_id)
         if len(self._panel_rounds) >= MAX_OPEN_PANEL_ROUNDS:
             raise LimitReachedError(RESOURCE_PANEL_ROUND, MAX_OPEN_PANEL_ROUNDS)
         return self._store(PanelRound(self._new_id(), draft, now + _PANEL_TIMEOUT))
@@ -175,7 +175,7 @@ class DrawService:
         self._panel_rounds[panel_round.id] = panel_round
         return panel_round
 
-    def _discard_for(self, schedule_id: ScheduleId) -> None:
+    def discard_for(self, schedule_id: ScheduleId) -> None:
         """Verwirft offene Panel-Runden des Zeitplans."""
         stale = [
             key for key, item in self._panel_rounds.items() if item.draft.schedule_id == schedule_id
