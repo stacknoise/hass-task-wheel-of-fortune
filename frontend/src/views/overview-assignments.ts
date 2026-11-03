@@ -5,7 +5,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import type { AssignmentObject, PersonObject, TaskObject } from '../api/index.ts';
 
 import { STATUS } from '../constants/index.ts';
-import { formatDateTime, formatPercent } from '../i18n/format.ts';
+import { formatDateTime } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
 import { canSwap, swapTargets } from './overview-model.ts';
@@ -99,38 +99,41 @@ function rowButtons(
   const person = context.personById.get(assignment.person_id);
   const task = context.taskById.get(assignment.task_id);
   return html`
-    <button
-      type="button"
-      class="action"
-      title=${swapHint(task, person, text)}
-      ?disabled=${context.busy || !canSwap(task, person)}
-      aria-expanded=${context.swapOpen === assignment.id ? 'true' : 'false'}
-      @click=${() => {
-        context.handlers.toggleSwap(assignment.id);
-      }}
-    >
-      ${text('overview.swap')}
-    </button>
-    <tw-confirm-action
-      language=${context.language}
-      label=${text('overview.skip')}
-      confirm=${text('overview.skip')}
-      question=${text('overview.skipQuestion')}
-      ?busy=${context.busy}
-      @tw-confirm=${() => {
-        context.handlers.skip(assignment.id);
-      }}
-    ></tw-confirm-action>
-    <button
-      type="button"
-      class="action primary"
-      ?disabled=${context.busy}
-      @click=${() => {
-        context.handlers.complete(assignment.id);
-      }}
-    >
-      ${text('overview.complete')}
-    </button>
+    <div class="actions">
+      <button
+        type="button"
+        class="action"
+        title=${swapHint(task, person, text)}
+        ?disabled=${context.busy || !canSwap(task, person)}
+        aria-expanded=${context.swapOpen === assignment.id ? 'true' : 'false'}
+        @click=${() => {
+          context.handlers.toggleSwap(assignment.id);
+        }}
+      >
+        ${text('overview.swap')}
+      </button>
+      <tw-confirm-action
+        language=${context.language}
+        label=${text('overview.skip')}
+        confirm=${text('overview.skip')}
+        question=${text('overview.skipQuestion')}
+        ?busy=${context.busy}
+        @tw-confirm=${() => {
+          context.handlers.skip(assignment.id);
+        }}
+      ></tw-confirm-action>
+      <tw-confirm-action
+        language=${context.language}
+        label=${text('overview.complete')}
+        confirm=${text('overview.complete')}
+        question=${text('overview.completeQuestion')}
+        primary
+        ?busy=${context.busy}
+        @tw-confirm=${() => {
+          context.handlers.complete(assignment.id);
+        }}
+      ></tw-confirm-action>
+    </div>
   `;
 }
 
@@ -141,7 +144,6 @@ function rowMeta(
 ): string {
   return [
     text('overview.due', { date: formatDateTime(assignment.due_at, context.language) }),
-    text('overview.chance', { chance: formatPercent(assignment.chance, context.language) }),
     text('overview.points', { points: assignment.points }),
   ].join(' · ');
 }
@@ -163,7 +165,7 @@ function assignmentRow(
           color=${person?.color ?? ''}
           title=${personName}
         ></tw-avatar>
-        <div class="grow">
+        <div class="grow info">
           <div>${task?.name ?? text('common.unknownTask')}</div>
           <div class="muted">${personName} · ${rowMeta(assignment, context, text)}</div>
         </div>

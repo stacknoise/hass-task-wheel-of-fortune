@@ -28,6 +28,15 @@ function buttons(view: Element, label: string): HTMLButtonElement[] {
   );
 }
 
+/** Fragt per Popup nach und bestätigt: erst der Knopf der Aktion, dann „Bestätigen“ im Dialog. */
+async function confirmAction(view: HTMLElement, label: string): Promise<void> {
+  const action = view.shadowRoot?.querySelector(`tw-confirm-action[label="${label}"]`) as
+    (HTMLElement & { updateComplete: Promise<boolean> }) | null;
+  action?.shadowRoot?.querySelector('button')?.click();
+  await action?.updateComplete;
+  action?.shadowRoot?.querySelector<HTMLButtonElement>('.ask button')?.click();
+}
+
 describe('Übersicht', () => {
   it('zeigt die nächste Auslosung, Zuteilungen je Zeitplan, Punkte und Aktivität', async () => {
     const { view } = await mount();
@@ -70,7 +79,7 @@ describe('Übersicht', () => {
 
   it('erledigt eine Zuteilung und lädt Punkte und Aktivität neu', async () => {
     const { view, hass } = await mount();
-    buttons(view, 'Erledigt')[0]?.click();
+    await confirmAction(view, 'Erledigt');
     await vi.waitFor(() => {
       expect(hass.messages.find((m) => m.type === WS_ASSIGNMENT_COMPLETE)).toEqual({
         type: WS_ASSIGNMENT_COMPLETE,
@@ -117,7 +126,7 @@ describe('Übersicht', () => {
     await skip.updateComplete;
     expect(skip.shadowRoot?.textContent).toContain('zählt in der Statistik wie verpasst');
     expect(hass.messages.some((m) => m.type === WS_ASSIGNMENT_SKIP)).toBe(false);
-    click('Bleibt unerledigt');
+    skip.shadowRoot?.querySelector<HTMLButtonElement>('.ask button')?.click();
     await vi.waitFor(() => {
       expect(hass.messages.find((m) => m.type === WS_ASSIGNMENT_SKIP)).toEqual({
         type: WS_ASSIGNMENT_SKIP,
@@ -148,7 +157,7 @@ describe('Übersicht', () => {
   it('zeigt einen Fehler, wenn die Aktion scheitert', async () => {
     const { view, hass } = await mount();
     hass.callWS = () => Promise.reject(new Error('nein'));
-    buttons(view, 'Erledigt')[0]?.click();
+    await confirmAction(view, 'Erledigt');
     await vi.waitFor(() => {
       expect(text(view)).toContain('Die Aktion ist fehlgeschlagen.');
     });

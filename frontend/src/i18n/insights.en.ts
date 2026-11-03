@@ -32,7 +32,6 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
     'Delete this draw with {total} assignments? It also disappears from history and statistics. This cannot be undone.',
   'round.deleteBlocked': 'Cannot be deleted: {done} tasks are already done.',
   'overview.due': 'Due {date}',
-  'overview.chance': 'Chance {chance}',
   'overview.points': '{points} points',
   'overview.complete': 'Done',
   'overview.swap': 'Swap',
@@ -42,6 +41,7 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'overview.noJokers': 'No jokers left this month.',
   'overview.swapDisabled': 'This task may not be swapped.',
   'overview.noTargets': 'Nobody else in this draw may take this task.',
+  'overview.completeQuestion': 'Mark this assignment as done?',
   'overview.skip': 'Stays undone',
   'overview.skipQuestion':
     'Mark this assignment as "Stays undone"? It counts like missed in the statistics and cannot be undone.',
