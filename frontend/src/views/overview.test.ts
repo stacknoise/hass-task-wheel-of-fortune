@@ -121,7 +121,6 @@ describe('Übersicht', () => {
 
   it('zeigt einen Fehler, wenn die Aktion scheitert', async () => {
     const { view, hass } = await mount();
-    hass.replies = { ...hass.replies };
     hass.callWS = () => Promise.reject(new Error('nein'));
     buttons(view, 'Erledigt')[0]?.click();
     await vi.waitFor(() => {
@@ -132,10 +131,8 @@ describe('Übersicht', () => {
   it('zeigt leere Zustände und Ladefehler', async () => {
     const hass = fakeHass();
     hass.snapshot = { ...hass.snapshot, assignments: [], schedules: [] };
-    hass.replies = {
-      [WS_HISTORY_LIST]: { entries: [], next_offset: null },
-      [WS_STATISTICS_GET]: Promise.reject(new Error('x')),
-    };
+    hass.replies.set(WS_HISTORY_LIST, { entries: [], next_offset: null });
+    hass.replies.set(WS_STATISTICS_GET, new Error('x'));
     const { view } = await mount(hass);
     await vi.waitFor(() => {
       expect(text(view)).toContain('Keine automatische Auslosung geplant.');

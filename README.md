@@ -68,8 +68,12 @@ Ein Ziel, das mehrere Personen teilen (z. B. ein Familienkanal), bekommt jede Me
 
 Nach dem Einrichten erscheint in der Seitenleiste der Eintrag „Aufgaben-Glücksrad“ (`/task-wheel`). Das Panel hat die
 Tabs Übersicht, Auslosung, Aufgaben, Personen, Zeitpläne, Historie und Statistik, lädt den Stand per `snapshot` und
-bleibt über `subscribe` aktuell. Fertig sind **Übersicht**, **Historie** und **Statistik** (AP-17); die übrigen Ansichten zeigen
-vorerst nur Zähler und werden mit AP-15 und AP-16 ausgebaut.
+bleibt über `subscribe` aktuell. Der Tab **Auslosung** ist fertig: Zeitplan wählen, Runde starten (eine offene Runde
+lässt sich fortsetzen), je Aufgabe das Glücksrad drehen (Segmentgröße = Chance, „Wer ist im Rad?“ mit Gründen),
+den Rest ohne Animation verlosen und die Runde abschließen. Das Ergebnis bestimmt immer das Backend; das Rad dreht
+nur dorthin, bei „reduzierte Bewegung“ im Betriebssystem ohne Animation. Fertig sind außerdem **Übersicht**, **Historie** und **Statistik** (AP-17); Aufgaben, Personen und Zeitpläne zeigen
+vorerst nur Zähler und werden mit AP-15 ausgebaut.
+
 
 - **Übersicht:** nächste Auslosung (mit Blättern durch die Zeitpläne), offene Zuteilungen je Zeitplan mit Filter nach Person,
   Erledigen und Tauschen (nur erlaubte, nicht pausierte Personen, Hinweis auf verbleibende Joker), Punkte im Monat gegen den

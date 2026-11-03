@@ -4,4 +4,7 @@ export { Store } from './store.ts';
 export type { LoadStatus, StoreState } from './store.ts';
 export { AsyncValue } from './async-value.ts';
 export type { AsyncStatus } from './async-value.ts';
-export { indexById } from './lookup.ts';
+export { DrawSession } from './draw-session.ts';
+export type { DrawPhase, DrawState } from './draw-session.ts';
+export { drawableSchedules, indexById, openRoundFor, personsById, tasksById } from './lookup.ts';
+export type { PersonInfo, ScheduleInfo, TaskInfo } from './lookup.ts';

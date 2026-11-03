@@ -30,7 +30,7 @@ export class Store {
     this.#client = client;
   }
 
-  /** Der Zugang zur API für Aktionen und Abfragen der Ansichten. */
+  /** Der Zugang zur API für Befehle (Auslosen, Erledigen …). */
   get client(): ApiClient {
     return this.#client;
   }

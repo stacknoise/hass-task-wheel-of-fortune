@@ -10,6 +10,8 @@ export const COMPONENT_TAGS = {
   chips: 'tw-chips',
   avatar: 'tw-avatar',
   badge: 'tw-badge',
+  wheel: 'tw-wheel',
+  confetti: 'tw-confetti',
 } as const;
 
 export const VIEW_TAGS = {

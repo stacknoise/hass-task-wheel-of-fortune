@@ -40,7 +40,6 @@ export const STATUS_TONES: Readonly<Record<AssignmentStatus, Tone>> = {
 
 export const FILTER_ALL = 'all';
 export const LOAD_PAUSED = 'paused';
-export const PERCENT = 100;
 export const INITIAL_LENGTH = 1;
 export const HALF = 0.5;
 export const PAIR = 2;

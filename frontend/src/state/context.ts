@@ -31,7 +31,7 @@ export class StoreController implements ReactiveController {
     return this.#store?.state;
   }
 
-  /** Der Zugang zur API; vor dem Eintreffen des Stores leer. */
+  /** Der API-Zugang des Stores; vor dem Eintreffen des Stores leer. */
   get client(): ApiClient | undefined {
     return this.#store?.client;
   }

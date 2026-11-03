@@ -5,3 +5,4 @@ export * from './insights.ts';
 export * from './panel.ts';
 export * from './routes.ts';
 export * from './tokens.ts';
+export * from './wheel.ts';

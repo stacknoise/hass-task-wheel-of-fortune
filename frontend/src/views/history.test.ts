@@ -64,7 +64,7 @@ describe('Historie', () => {
 
   it('lädt weitere Seiten nach', async () => {
     const hass = fakeHass();
-    hass.replies[WS_HISTORY_LIST] = { ...HISTORY, next_offset: 2 };
+    hass.replies.set(WS_HISTORY_LIST, { ...HISTORY, next_offset: 2 });
     const { view } = await mount(hass);
     button(view, 'Weitere laden')?.click();
     await vi.waitFor(() => {
@@ -103,7 +103,7 @@ describe('Historie', () => {
 
   it('zeigt leeren Zustand und Ladefehler', async () => {
     const empty = fakeHass();
-    empty.replies[WS_HISTORY_LIST] = { entries: [], next_offset: null };
+    empty.replies.set(WS_HISTORY_LIST, { entries: [], next_offset: null });
     await VIEW_LOADERS.history();
     const view = await mountView(VIEW_TAGS.history, empty);
     await vi.waitFor(() => {

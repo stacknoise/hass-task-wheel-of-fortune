@@ -120,12 +120,11 @@ export const EMPTY_REPORT: StatisticsReport = {
 export function fakeHass(): FakeHass {
   const hass = new FakeHass();
   hass.snapshot = SNAPSHOT;
-  hass.replies = {
-    [WS_HISTORY_LIST]: HISTORY,
-    [WS_STATISTICS_GET]: REPORT,
-    [WS_ASSIGNMENT_COMPLETE]: { id: 'a1' },
-    [WS_ASSIGNMENT_SWAP]: { id: 'a1' },
-  };
+  hass.replies.set(WS_HISTORY_LIST, HISTORY);
+  hass.replies.set(WS_STATISTICS_GET, REPORT);
+  hass.replies.set(WS_ASSIGNMENT_COMPLETE, { id: 'a1' });
+  hass.replies.set(WS_ASSIGNMENT_SWAP, { id: 'a1' });
+
   return hass;
 }
 

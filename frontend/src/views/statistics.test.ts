@@ -61,7 +61,7 @@ describe('Statistik', () => {
 
   it('zeigt leeren Zustand und Ladefehler', async () => {
     const empty = fakeHass();
-    empty.replies[WS_STATISTICS_GET] = EMPTY_REPORT;
+    empty.replies.set(WS_STATISTICS_GET, EMPTY_REPORT);
     const { view } = await mount(empty);
     await vi.waitFor(() => {
       expect(text(view)).toContain('Noch keine Zuteilungen im Zeitraum.');
@@ -79,11 +79,11 @@ describe('Statistik', () => {
 
   it('kommt ohne Auszeichnungen und ohne Quote aus', async () => {
     const hass = fakeHass();
-    hass.replies[WS_STATISTICS_GET] = {
+    hass.replies.set(WS_STATISTICS_GET, {
       ...EMPTY_REPORT,
       kpis: { ...EMPTY_REPORT.kpis, assigned: 1, pending: 1 },
       weeks: [{ week_start: '2026-11-02', done: 0, missed: 0, rate: null }],
-    };
+    });
     const { view } = await mount(hass);
     await vi.waitFor(() => {
       expect(text(view)).toContain('Noch nicht genug Daten.');
