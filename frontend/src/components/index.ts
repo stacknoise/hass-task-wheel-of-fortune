@@ -19,6 +19,7 @@ export { TwActionMenu } from './action-menu.ts';
 export type { ActionItem } from './action-menu.ts';
 export { TwConfirmAction } from './confirm-action.ts';
 export { TwConfirmDialog } from './confirm-dialog.ts';
+export { TwDialog } from './dialog.ts';
 export { TwChips } from './chips.ts';
 export type { ChipItem } from './chips.ts';
 export { TwTabBar } from './tab-bar.ts';

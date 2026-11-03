@@ -21,7 +21,7 @@ export interface ConfigTexts {
 
 /**
  * Gemeinsame Ansicht zum Anlegen, Ändern und Löschen einer Art von Konfigurationsobjekten:
- * Karten links, Formular rechts. Die Unterklassen liefern Karte, Formular und die Umwandlung
+ * Karten, Formular im Dialog (`tw-dialog`), Löschen nach Rückfrage. Die Unterklassen liefern Karte, Formular und die Umwandlung
  * zwischen Objekt, Entwurf und Nachricht; Fehler des Backends zeigt diese Klasse an.
  */
 export abstract class ConfigView<
@@ -47,14 +47,7 @@ export abstract class ConfigView<
         justify-content: flex-end;
         margin-bottom: var(--tw-space-m);
       }
-      .layout {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--tw-space-m);
-        align-items: flex-start;
-      }
       .cards {
-        flex: 999 1 420px;
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: var(--tw-space-m);
@@ -70,23 +63,9 @@ export abstract class ConfigView<
       .card > div {
         margin-top: var(--tw-space-s);
       }
-      .card[aria-pressed='true'] {
-        border-color: var(--tw-color-primary);
-      }
       section.editor {
-        flex: 1 1 320px;
-        max-width: 420px;
         display: grid;
         gap: var(--tw-space-field);
-        padding: var(--tw-space-m);
-        border-radius: var(--tw-radius);
-        border: 1px solid var(--tw-color-divider);
-        background: var(--tw-color-surface);
-      }
-      h2 {
-        margin: 0;
-        font-size: 1.2em;
-        font-weight: 500;
       }
       .buttons {
         display: flex;
@@ -228,7 +207,6 @@ export abstract class ConfigView<
               <button
                 type="button"
                 class="card"
-                aria-pressed=${item.id === this._editId ? 'true' : 'false'}
                 @click=${() => {
                   this.#open(item.id, this.draftOf(item));
                 }}
@@ -238,8 +216,9 @@ export abstract class ConfigView<
             `,
           )}
         </div>
-        ${this._draft ? this.#editor(this._draft, snapshot) : nothing}
       </div>
+      ${this._draft ? this.#editor(this._draft, snapshot) : nothing}
+      ${this._confirm ? this.#confirmDelete() : nothing}
     `;
   }
 
@@ -249,14 +228,17 @@ export abstract class ConfigView<
 
   #editor(draft: Draft, snapshot: Snapshot): TemplateResult {
     const creating = this._editId === undefined;
+    const title = this.text(creating ? this.texts.create : this.texts.edit);
     return html`
-      <section
-        class="editor"
-        aria-label=${this.text(creating ? this.texts.create : this.texts.edit)}
+      <tw-dialog
+        language=${this.language}
+        label=${title}
+        @tw-cancel=${() => {
+          this.#close();
+        }}
       >
-        <h2>${this.text(creating ? this.texts.create : this.texts.edit)}</h2>
-        ${this.form(draft, snapshot)} ${this.#banner()}
-        <div class="buttons">
+        <section class="editor">${this.form(draft, snapshot)} ${this.#banner()}</section>
+        <div class="buttons" slot="actions">
           <button
             type="button"
             class="primary"
@@ -284,15 +266,30 @@ export abstract class ConfigView<
                   class="danger"
                   ?disabled=${this._busy}
                   @click=${() => {
-                    void this.#remove();
+                    this._confirm = true;
                   }}
                 >
-                  ${this.text(this._confirm ? 'form.confirm_delete' : 'form.delete')}
+                  ${this.text('form.delete')}
                 </button>`
           }
         </div>
-      </section>
+      </tw-dialog>
     `;
+  }
+
+  #confirmDelete(): TemplateResult {
+    return html`<tw-confirm-dialog
+      language=${this.language}
+      label=${this.text('form.delete')}
+      question=${this.text('form.confirm_delete')}
+      ?busy=${this._busy}
+      @tw-confirm=${() => {
+        void this.#remove();
+      }}
+      @tw-cancel=${() => {
+        this._confirm = false;
+      }}
+    ></tw-confirm-dialog>`;
   }
 
   #banner(): TemplateResult | typeof nothing {
@@ -333,10 +330,6 @@ export abstract class ConfigView<
   async #remove(): Promise<void> {
     const client = this.store.client;
     if (!client || this._editId === undefined) {
-      return;
-    }
-    if (!this._confirm) {
-      this._confirm = true;
       return;
     }
     const id = this._editId;
