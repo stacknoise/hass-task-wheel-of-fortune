@@ -94,16 +94,10 @@ python3 docs/code-doku/generate.py --check
 
 ### Lokale Testumgebung (Docker)
 
-Zum Ausprobieren dient eine lokale Home-Assistant-Instanz in Docker. Die Integration wird dabei read-only in
-`/config/custom_components/task_wheel` eingebunden, Änderungen am Backend wirken nach einem Neustart des Containers.
-
-```bash
-cd frontend && npm ci && npm run build && cd ..   # Panel-Bundle erzeugen
-docker compose -f dev/docker-compose.yml up -d     # Home Assistant auf http://localhost:8123
-docker compose -f dev/docker-compose.yml restart   # nach Backend-Änderungen
-```
-
-Danach *Einstellungen → Geräte & Dienste → Integration hinzufügen → Aufgaben-Glücksrad*.
+Zum Ausprobieren dient die vorhandene lokale Home-Assistant-Instanz in Docker (`http://localhost:18123`), die auch das
+Projekt *HASS Test Data Creator* nutzt. Die Integration wird dort als zusätzlicher Read-only-Mount
+`custom_components/task_wheel` eingebunden; es wird keine zweite Instanz gestartet. Ablauf und Regeln stehen in
+[dev/README.md](dev/README.md).
 
 ### Continuous Integration
 
