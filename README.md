@@ -96,7 +96,7 @@ Die Tabs *Personen*, *Aufgaben* und *Zeitpläne* legen Objekte an, ändern und l
 die Karten, rechts das Formular; Fehler des Backends erscheinen am betroffenen Feld und als Hinweis über den Knöpfen.
 
 - **Personen:** Farbe im Rad, Belastbarkeit (voll, halb, pausiert), Anwesenheit (einmalig, Wochentage, Wochenrhythmus) mit
-  Vorschau der nächsten vier Wochen und optional eine Benachrichtigungs-Entität (`notify.…`, wird beim Speichern geprüft).
+  Vorschau der nächsten vier Wochen und optional eine Benachrichtigungs-Entität (`notify.…`, mit Suche über die Entitäten und Dienste von Home Assistant, wird beim Speichern geprüft).
 - **Aufgaben:** erlaubte Personen, Häufigkeit (jede Runde, höchstens n× je Zeitraum, festes Intervall mit Zeitstrahl),
   Punkte, Frist und die Zusatzregeln „keine Wiederholung“, „Abwesenheit beachten“, „Tausch erlaubt“.
 - **Zeitpläne:** wiederkehrend, einmalig oder nur manuell, Aufgabenwahl, Optionen und ein Beispiel für `task_wheel.draw`
