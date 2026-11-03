@@ -297,6 +297,21 @@ describe('Zeitpläne', () => {
     });
   });
 
+  it('wählt die Animationen per Mehrfachauswahl und speichert sie', async () => {
+    const { hass, view } = await open('/schedules');
+    await click(view, '.card');
+    const selects = [...(view.shadowRoot?.querySelectorAll('section.editor tw-chip-select') ?? [])];
+    expect(selects).toHaveLength(2);
+    const animations = selects[1] as El;
+    expect((animations as unknown as { options: unknown[] }).options).toHaveLength(5);
+    say(animations, ['drum', 'plinko']);
+    await click(view, 'section.editor .primary');
+    await vi.waitFor(() => {
+      expect(hass.messages.at(-1)?.type).toBe('task_wheel/schedule/update');
+    });
+    expect(hass.messages.at(-1)?.['schedule']).toMatchObject({ animations: ['drum', 'plinko'] });
+  });
+
   it('legt einen neuen Zeitplan an und zeigt Auslöserfehler', async () => {
     const { hass, view } = await open('/schedules');
     await addNew(view);

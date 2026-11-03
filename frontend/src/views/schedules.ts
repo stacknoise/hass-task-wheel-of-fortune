@@ -5,9 +5,17 @@ import { tasksOf } from '../api/index.ts';
 import type { ScheduleWire, Snapshot } from '../api/index.ts';
 import { describeTrigger, onChange } from '../components/index.ts';
 import type { ChipOption } from '../components/index.ts';
+import type { AnimationKind } from '../constants/index.ts';
+import type { TextKey } from '../i18n/index.ts';
 import '../components/index.ts';
-import { EVENT_DRAWN_NAME, SERVICE_DRAW, VIEW_TAGS } from '../constants/index.ts';
-import { TRIGGER_BUILDERS } from '../state/index.ts';
+import {
+  ANIMATION_KINDS,
+  DEFAULT_ANIMATIONS,
+  EVENT_DRAWN_NAME,
+  SERVICE_DRAW,
+  VIEW_TAGS,
+} from '../constants/index.ts';
+import { TRIGGER_BUILDERS, animationsOf } from '../state/index.ts';
 import type { TriggerWire } from '../state/index.ts';
 import { ConfigView } from './config-view.ts';
 import type { ConfigTexts } from './config-view.ts';
@@ -21,6 +29,7 @@ interface ScheduleDraft {
   readonly notify: boolean;
   readonly skip_absent: boolean;
   readonly archived: boolean;
+  readonly animations: readonly AnimationKind[];
   readonly slug: string;
 }
 
@@ -59,6 +68,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
       notify: true,
       skip_absent: true,
       archived: false,
+      animations: DEFAULT_ANIMATIONS,
       slug: '',
     };
   }
@@ -73,6 +83,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
       notify: schedule.notify,
       skip_absent: schedule.skip_absent,
       archived: schedule.archived,
+      animations: animationsOf(schedule.animations),
     };
   }
 
@@ -85,6 +96,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
       notify: draft.notify,
       skip_absent: draft.skip_absent,
       archived: draft.archived && !draft.enabled,
+      animations: draft.animations,
     };
   }
 
@@ -133,7 +145,27 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
         ${this.toggle('schedules.notify', 'notify', draft.notify)}
         ${this.toggle('schedules.skip_absent', 'skip_absent', draft.skip_absent)}
       </div>
-      ${draft.slug ? this.#example(draft.slug) : nothing}
+      ${this.#animations(draft.animations)} ${draft.slug ? this.#example(draft.slug) : nothing}
+    `;
+  }
+
+  /** Mehrfachauswahl der Animationen; bei mehreren wird bei jeder Auslosung zufällig eine genommen. */
+  #animations(selected: readonly AnimationKind[]): TemplateResult {
+    const options: readonly ChipOption[] = ANIMATION_KINDS.map((kind) => ({
+      id: kind,
+      label: this.text(`animation.${kind}` as TextKey),
+    }));
+    return html`
+      <tw-chip-select
+        .label=${this.text('schedules.animations')}
+        .options=${options}
+        .selected=${selected}
+        .error=${this.fieldError('animations')}
+        @tw-change=${onChange<AnimationKind[]>((animations) => {
+          this.patch({ animations });
+        })}
+      ></tw-chip-select>
+      <span class="muted">${this.text('schedules.animations.hint')}</span>
     `;
   }
 

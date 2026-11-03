@@ -1,5 +1,7 @@
 import type { PanelRoundWire, Snapshot, WireObject } from '../api/index.ts';
 import { EMPTY_TEXT, FALLBACK_COLOR } from '../constants/index.ts';
+import type { AnimationKind } from '../constants/index.ts';
+import { animationsOf } from './animation.ts';
 
 export interface PersonInfo {
   readonly id: string;
@@ -19,6 +21,8 @@ export interface ScheduleInfo {
   readonly id: string;
   readonly name: string;
   readonly archived: boolean;
+  /** Erlaubte Animationen; bei jeder Auslosung wird zufällig eine gewählt. */
+  readonly animations: readonly AnimationKind[];
 }
 
 function text(item: WireObject, field: string, fallback = EMPTY_TEXT): string {
@@ -72,6 +76,7 @@ export function drawableSchedules(snapshot: Snapshot): readonly ScheduleInfo[] {
       id: item.id,
       name: text(item, 'name', item.id),
       archived: item['archived'] === true,
+      animations: animationsOf(item['animations']),
     }))
     .filter((schedule) => !schedule.archived);
 }
