@@ -113,6 +113,7 @@ class ExclusionReason(StrEnum):
     """Grund, warum eine Person nicht im Rad einer Aufgabe ist (Anzeige „Wer ist im Rad?“)."""
 
     PAUSED = "paused"
+    LOAD = "load_too_low"
     ABSENT = "absent"
     REPEAT = "no_repeat"
     TAKEN = "taken"

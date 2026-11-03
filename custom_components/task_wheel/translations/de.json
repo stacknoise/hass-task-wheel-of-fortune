@@ -155,6 +155,9 @@
     "swap_person_paused": {
       "message": "Die Person pausiert."
     },
+    "swap_person_load_too_low": {
+      "message": "Die Belastbarkeit der Person reicht für diese Aufgabe nicht."
+    },
     "swap_person_absent": {
       "message": "Die Person ist im Fristfenster abwesend."
     },

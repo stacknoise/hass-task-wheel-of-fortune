@@ -190,7 +190,7 @@ erDiagram
 |---|---|
 | `Person` | `id`, `name`, `slug`, `color`, `load: Load` (`full`=1,0 · `half`=0,5 · `paused`=0), `absences: tuple[AbsenceConfig, ...]`, `notify_target: str \| None` |
 | `AbsenceConfig` | `kind` + Felder je Art: `once(start, end)`, `weekly_days(weekdays)`, `week_rhythm(present_weeks, cycle_weeks, change_weekday, anchor)` |
-| `Task` | `id`, `name`, `points`, `due_days`, `allowed: frozenset[PersonId]` (leer = alle Personen), `frequency: FrequencyConfig`, `no_repeat`, `respect_absence`, `swap_allowed` |
+| `Task` | `id`, `name`, `points`, `due_days`, `allowed: frozenset[PersonId]` (leer = alle Personen), `frequency: FrequencyConfig`, `no_repeat`, `respect_absence`, `swap_allowed`, `min_load: Load` (Mindest-Belastbarkeit, Standard `paused` = egal; `half` = mindestens halbe, `full` = nur volle Last) |
 | `FrequencyConfig` | `every_round` · `max_per_period(count, period)` · `interval(days, tolerance)` |
 | `Schedule` | `id`, `name`, `slug`, `trigger: TriggerConfig`, `task_ids: tuple[TaskId, ...]`, `enabled`, `notify`, `skip_absent`, `archived`, `animations: tuple[AnimationKind, ...]` (1 bis 5 verschiedene Arten, Standard `wheel`) (archiviert ⇒ nicht aktiv, nie auslösbar) |
 | `TriggerConfig` | `recurring(weekdays, time, every_n_weeks \| monthly)` · `once(at, after: keep_manual \| archive \| delete)` · `manual(remind_after_days)` |
@@ -252,10 +252,11 @@ Kandidaten einer Aufgabe = erlaubte Personen, aus denen nacheinander entfernt wi
 Objekt mit `reason`, die Gründe erscheinen im Panel unter „Wer ist im Rad?“):
 
 1. **Belastung**: `load == paused`
-2. **Anwesenheit** (wenn `respect_absence`): nicht an mindestens einem Tag im Fristfenster `[jetzt, jetzt + due_days]` anwesend
-3. **Keine Wiederholung** (wenn `no_repeat`): hatte die Aufgabe in der letzten Zuteilung, sofern noch andere Kandidaten übrig sind (nur Vorliebe: wer sonst unvergeben bliebe, bekommt die Aufgabe trotzdem; vorher sperren harte Filter und eine Zuordnung stellt sicher, dass so viele Aufgaben wie möglich verteilt werden)
-4. **Aufgabe in dieser Runde** (immer): Wer in derselben Runde schon eine Aufgabe gezogen hat, bekommt keine zweite und ist für die weiteren Aufgaben nicht mehr im Rad (`taken`). Gibt es mehr Aufgaben als Personen, bleiben die überzähligen unverteilt
-5. **Ohne Kandidaten** wird die Aufgabe als „nicht verteilbar“ protokolliert, nicht erzwungen
+2. **Mindest-Belastbarkeit** (wenn `min_load` nicht `paused`): `load.factor < min_load.factor` entfernt die Person (`load_too_low`); gibt es niemanden mit ausreichender Belastbarkeit, bleibt die Aufgabe unvergeben
+3. **Anwesenheit** (wenn `respect_absence`): nicht an mindestens einem Tag im Fristfenster `[jetzt, jetzt + due_days]` anwesend
+4. **Keine Wiederholung** (wenn `no_repeat`): hatte die Aufgabe in der letzten Zuteilung, sofern noch andere Kandidaten übrig sind (nur Vorliebe: wer sonst unvergeben bliebe, bekommt die Aufgabe trotzdem; vorher sperren harte Filter und eine Zuordnung stellt sicher, dass so viele Aufgaben wie möglich verteilt werden)
+5. **Aufgabe in dieser Runde** (immer): Wer in derselben Runde schon eine Aufgabe gezogen hat, bekommt keine zweite und ist für die weiteren Aufgaben nicht mehr im Rad (`taken`). Gibt es mehr Aufgaben als Personen, bleiben die überzähligen unverteilt
+6. **Ohne Kandidaten** wird die Aufgabe als „nicht verteilbar“ protokolliert, nicht erzwungen
 
 Die Häufigkeitsregel wirkt **vor** dem Kandidatenfilter auf Aufgabenebene:
 
@@ -291,7 +292,7 @@ Aufgaben an dieselbe Person verteilt. Aufwand pro Runde: `O(Aufgaben × Personen
 | offen → getauscht | `swap` mit Joker | neue Person übernimmt, Punkte gehen an sie, Joker −1 |
 
 Tausch ist nur innerhalb derselben Auslosung möglich (die neue Person hat in der Runde selbst eine Zuteilung, sonst `swap_person_not_in_round`) und nur, wenn die Aufgabe `swap_allowed` hat, die neue Person die Aufgabe laut Regel bekommen
-dürfte (erlaubt, nicht pausiert, anwesend) und die abgebende Person im laufenden Monat noch Joker hat.
+dürfte (erlaubt, nicht pausiert, mit ausreichender Belastbarkeit, anwesend) und die abgebende Person im laufenden Monat noch Joker hat.
 Ist eine Aufgabe in mehreren Zeitplänen, kann sie mehrfach ausgelost werden (auch an dieselbe Person); jede Zuteilung kennt ihren Zeitplan und wird einzeln erledigt. Die Häufigkeitsregeln zählen Zuteilungen je Aufgabe über alle Zeitpläne.
 Statusübergänge sind eine Tabelle `dict[(Status, Aktion), Status]` – keine Verzweigungsketten.
 

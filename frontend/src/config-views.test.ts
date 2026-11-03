@@ -31,6 +31,7 @@ const SNAPSHOT: Snapshot = {
       no_repeat: false,
       respect_absence: true,
       swap_allowed: true,
+      min_load: 'paused',
     },
   ],
   schedules: [
@@ -292,6 +293,7 @@ describe('Aufgaben', () => {
       no_repeat: false,
       respect_absence: false,
       swap_allowed: false,
+      min_load: 'paused',
     });
   });
 

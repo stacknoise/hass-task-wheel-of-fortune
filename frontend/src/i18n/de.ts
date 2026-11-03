@@ -79,6 +79,10 @@ export const de = {
   'tasks.no_repeat': 'Keine Wiederholung hintereinander',
   'tasks.respect_absence': 'Abwesenheit beachten',
   'tasks.swap_allowed': 'Tausch erlaubt',
+  'tasks.min_load': 'Mindest-Belastbarkeit',
+  'tasks.min_load.paused': 'Egal',
+  'tasks.min_load.half': 'Mindestens halbe Last',
+  'tasks.min_load.full': 'Nur volle Last',
   'tasks.points_short': 'Pkt.',
   'tasks.days_short': 'Tage',
   'frequency.every_round': 'Jede Runde',
@@ -178,6 +182,7 @@ export const de = {
   'draw.who.hint':
     'Größe = Chance. Wer im letzten Monat weniger Punkte gesammelt hat, bekommt ein größeres Stück.',
   'draw.reason.paused': 'Pausiert',
+  'draw.reason.load_too_low': 'Belastbarkeit zu gering',
   'draw.reason.absent': 'Abwesend',
   'draw.reason.no_repeat': 'Hatte die Aufgabe zuletzt',
   'draw.reason.taken': 'Hat in dieser Runde schon eine Aufgabe',

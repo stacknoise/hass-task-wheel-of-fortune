@@ -52,6 +52,13 @@ def test_valid_swap_passes() -> None:
         ),
         (
             {
+                "task": f.task(min_load=Load.FULL),
+                "receiver": f.person(id="p2", absences=(), load=Load.HALF),
+            },
+            keys.ERR_SWAP_LOAD,
+        ),
+        (
+            {
                 "receiver": f.person(
                     id="p2",
                     absences=(OnceAbsence(start=f.TODAY, end=f.TODAY + 30 * DAY),),

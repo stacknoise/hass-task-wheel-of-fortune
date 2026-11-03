@@ -65,6 +65,9 @@ export const LOADS = ['full', 'half', 'paused'] as const;
 export type Load = (typeof LOADS)[number];
 
 export const DEFAULT_LOAD: Load = 'full';
+/** Mindest-Belastbarkeit einer Aufgabe, aufsteigend; `paused` heißt „egal“. */
+export const MIN_LOADS = ['paused', 'half', 'full'] as const satisfies readonly Load[];
+export const DEFAULT_MIN_LOAD: Load = 'paused';
 export const DEFAULT_TIME = '18:00';
 export const DEFAULT_TASK_POINTS = 1;
 export const DEFAULT_TASK_DUE_DAYS = 7;

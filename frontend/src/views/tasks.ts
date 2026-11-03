@@ -7,11 +7,14 @@ import { describeFrequency, onChange } from '../components/index.ts';
 import type { ChipOption } from '../components/index.ts';
 import '../components/index.ts';
 import {
+  DEFAULT_MIN_LOAD,
   DEFAULT_TASK_DUE_DAYS,
   DEFAULT_TASK_POINTS,
   FORM_LIMITS,
+  MIN_LOADS,
   VIEW_TAGS,
 } from '../constants/index.ts';
+import type { Load } from '../constants/index.ts';
 import { FREQUENCY_BUILDERS } from '../state/index.ts';
 import type { FrequencyWire } from '../state/index.ts';
 import { ConfigView } from './config-view.ts';
@@ -27,6 +30,7 @@ interface TaskDraft {
   readonly no_repeat: boolean;
   readonly respect_absence: boolean;
   readonly swap_allowed: boolean;
+  readonly min_load: Load;
 }
 
 const TEXTS: ConfigTexts = { add: 'tasks.add', create: 'tasks.new', edit: 'tasks.edit' };
@@ -47,6 +51,7 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
       no_repeat: false,
       respect_absence: true,
       swap_allowed: true,
+      min_load: DEFAULT_MIN_LOAD,
     };
   }
 
@@ -60,6 +65,7 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
       no_repeat: task.no_repeat,
       respect_absence: task.respect_absence,
       swap_allowed: task.swap_allowed,
+      min_load: task.min_load,
     };
   }
 
@@ -122,7 +128,23 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
           this.patch({ due_days });
         })}
       ></tw-stepper>
-      ${this.#rules(draft)}
+      ${this.#minLoad(draft.min_load)} ${this.#rules(draft)}
+    `;
+  }
+
+  #minLoad(value: Load): TemplateResult {
+    return html`
+      <tw-select
+        .label=${this.text('tasks.min_load')}
+        .options=${MIN_LOADS.map((load) => ({
+          id: load,
+          label: this.text(`tasks.min_load.${load}`),
+        }))}
+        .value=${value}
+        @tw-change=${onChange<Load>((min_load) => {
+          this.patch({ min_load });
+        })}
+      ></tw-select>
     `;
   }
 
