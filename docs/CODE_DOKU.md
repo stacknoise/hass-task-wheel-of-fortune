@@ -82,6 +82,7 @@ steht „–“.
 
 | Modul | Schicht | Verantwortung | Nutzt | LOC | CC | MI | Ca | Ce | I | Test |
 |---|---|---|---|---|---|---|---|---|---|---|
+| 2026-11-03 | 0.0.1 | AP-17 | `frontend/src/views/statistics.ts` | geändert: Abstände zwischen allen Boxen der Statistik einheitlich über `--tw-space-field` (Host als Grid mit `gap`, Karten ohne eigenen Außenabstand, Kennzahlen, Paar und Auszeichnungen mit gleichem `gap`); doppelte `.pair`-Regel zusammengeführt. | keine Änderung an Metriken und Abhängigkeiten |
 | 2026-11-03 | – | – | `README.md` | geändert: Abschnitt „Lokale Testumgebung (Docker)“ entfernt; `dev/README.md` bleibt bestehen. Kein Code betroffen | – |
 | `const/keys.py` | Const | Speicher- und API-Schlüssel | – | – | – | – | – | – | – | – |
 | `const/limits.py` | Const | Grenzwerte | – | – | – | – | – | – | – | – |
