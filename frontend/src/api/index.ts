@@ -7,6 +7,7 @@ export type {
   HassApi,
   HassConnection,
   PanelRoundWire,
+  PreviewReply,
   Settings,
   Snapshot,
   SpinReply,

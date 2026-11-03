@@ -14,7 +14,7 @@ from custom_components.task_wheel.domain.draw.weighting import (
     FairnessWeighting,
     UniformWeighting,
 )
-from custom_components.task_wheel.domain.enums import Load
+from custom_components.task_wheel.domain.enums import ExclusionReason, Load
 from custom_components.task_wheel.domain.models import WeeklyDaysAbsence
 
 from ..factories import task
@@ -74,13 +74,15 @@ def test_capacity_uses_load_and_presence():
 
 
 def test_points_assigned_in_round_count_immediately():
-    ctx = make_context([make_person("a"), make_person("b")])
-    tasks = [task(id=f"t{i}", allowed=frozenset({"a", "b"}), points=10) for i in range(2)]
+    ctx = make_context([make_person("a"), make_person("b"), make_person("c")], points={"c": 50})
+    tasks = [task(id=f"t{i}", allowed=frozenset({"a", "b", "c"}), points=10) for i in range(3)]
     engine = DrawEngine(FairnessWeighting(), FixedRandom(0.0))
-    first, second = engine.draw_round(tasks, ctx)
+    first, second, third = engine.draw_round(tasks, ctx)
     assert first.winner_id == "a"
+    # der Gewinner der ersten Aufgabe ist nicht mehr im Rad; c hat die meisten Punkte
     chances = {s.person_id: s.chance for s in second.segments}
-    assert chances["a"] < chances["b"]
+    assert set(chances) == {"b", "c"} and chances["c"] < chances["b"]
+    assert third.winner_id == "c"
 
 
 def test_no_repeat_uses_winner_of_earlier_task_in_round():
@@ -131,3 +133,21 @@ def test_round_runtime_is_measured_and_small():
     per_round_ms = (time.perf_counter() - start) / runs * 1000
     print(f"Laufzeit pro Runde: {per_round_ms:.2f} ms")  # noqa: T201
     assert per_round_ms < 50
+
+
+def test_preview_shows_segments_and_exclusions_without_a_winner():
+    ctx = make_context([make_person("a"), make_person("b")], round_holders=frozenset({"a"}))
+    preview = uniform(FixedRandom(0.0)).preview_task(task(allowed=frozenset({"a", "b"})), ctx)
+    assert preview.winner_id is None
+    assert [s.person_id for s in preview.segments] == ["b"]
+    assert [(e.person_id, e.reason) for e in preview.exclusions] == [("a", ExclusionReason.TAKEN)]
+
+
+def test_draw_round_gives_nobody_a_second_task():
+    ctx = make_context([make_person("a"), make_person("b")])
+    same = [
+        task(id="t1", allowed=frozenset({"a", "b"})),
+        task(id="t2", allowed=frozenset({"a", "b"})),
+    ]
+    first, second = uniform(FixedRandom(0.0)).draw_round(same, ctx)
+    assert first.winner_id != second.winner_id

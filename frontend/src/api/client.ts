@@ -14,6 +14,7 @@ import {
   WS_DRAW_BEGIN,
   WS_DRAW_CANCEL,
   WS_DRAW_COMMIT,
+  WS_DRAW_PREVIEW,
   WS_DRAW_SPIN,
   WS_DRAW_SPIN_REST,
   WS_PREFIX,
@@ -28,6 +29,7 @@ import type {
   Delta,
   HassApi,
   PanelRoundWire,
+  PreviewReply,
   Snapshot,
   SpinReply,
   SpinRestReply,
@@ -117,6 +119,11 @@ export class ApiClient {
   /** Beginnt eine Panel-Runde für den Zeitplan; eine frühere desselben Plans entfällt. */
   beginDraw(scheduleId: string): Promise<PanelRoundWire> {
     return this.#call(WS_DRAW_BEGIN, FIELD_SCHEDULE_ID, scheduleId);
+  }
+
+  /** Das Rad der nächsten Aufgabe (Segmente, Ausschlüsse) ohne Ziehung. */
+  previewDraw(panelRoundId: string): Promise<PreviewReply> {
+    return this.#call(WS_DRAW_PREVIEW, FIELD_PANEL_ROUND_ID, panelRoundId);
   }
 
   /** Zieht die nächste Aufgabe; das Ergebnis bestimmt das Backend. */

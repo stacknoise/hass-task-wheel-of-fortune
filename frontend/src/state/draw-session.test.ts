@@ -64,6 +64,29 @@ describe('DrawSession', () => {
     expect(listener).toHaveBeenCalled();
   });
 
+  it('lädt das Rad der nächsten Aufgabe schon vor dem Drehen', async () => {
+    hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
+    hass.replies.set('task_wheel/draw/preview', { result: draw('t1', null) });
+    hass.replies.set('task_wheel/draw/spin', {
+      result: draw('t1', 'p1'),
+      panel_round: round([], []),
+    });
+    await session.begin('s1');
+    expect(session.state.preview?.task_id).toBe('t1');
+    await session.spin();
+    session.landed();
+    hass.replies.set('task_wheel/draw/preview', { result: draw('t2', null) });
+    await session.next();
+    expect(session.state.preview?.task_id).toBe('t2');
+  });
+
+  it('kommt ohne Vorschau aus, wenn sie fehlschlägt', async () => {
+    hass.replies.set('task_wheel/draw/begin', round([], ['t1']));
+    hass.replies.set('task_wheel/draw/preview', new Error('x'));
+    await session.begin('s1');
+    expect(session.state).toMatchObject({ phase: 'ready', preview: undefined });
+  });
+
   it('zieht den Rest ohne Animation und schließt die Runde ab', async () => {
     hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
     hass.replies.set('task_wheel/draw/spin_rest', {
@@ -125,7 +148,7 @@ describe('DrawSession', () => {
     session.resume(round([], ['t2']));
     expect(session.state.taskIds).toEqual(['t1']);
     await session.begin('s1');
-    expect(hass.calls).toEqual([]);
+    expect(hass.calls).toEqual(['task_wheel/draw/preview']);
   });
 
   it('hört auf, Zuhörer zu benachrichtigen, wenn sie sich abmelden', () => {
