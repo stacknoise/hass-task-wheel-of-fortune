@@ -11,6 +11,13 @@ const READY_MS = 30_000;
 // Budget für das Laden des Panels bis zur ersten Ansicht (Messwert: docs/CODE_DOKU.md §3.2)
 const PANEL_LOAD_BUDGET_MS = 5000;
 
+// Bei einem Fehler steht der Zustand der Seite im Protokoll (der Artefakt-Download ist nicht immer erreichbar)
+test.afterEach(async ({ page }, info) => {
+  if (info.status !== info.expectedStatus) {
+    console.log(await page.locator('html').ariaSnapshot());
+  }
+});
+
 interface Created {
   readonly id: string;
 }
