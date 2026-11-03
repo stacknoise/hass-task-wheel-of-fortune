@@ -8,6 +8,17 @@ updates:
     ignore:
       # von pytest-homeassistant-custom-component fest gepinnt, wird mit diesem Paket mitgezogen
       - dependency-name: pytest-cov
+      # müssen genau den Versionen entsprechen, die die installierte Home-Assistant-Version in ihren
+      # Manifesten festlegt (e2e/requirements.txt); sie werden zusammen mit pytest-homeassistant-custom-component angehoben
+      - dependency-name: hassil
+      - dependency-name: home-assistant-intents
+      - dependency-name: mutagen
+      - dependency-name: pyturbojpeg
+      - dependency-name: pymicro-vad
+      - dependency-name: go2rtc-client
+      - dependency-name: ha-ffmpeg
+      - dependency-name: av
+      - dependency-name: pyspeex-noise
     groups:
       python:
         patterns: ["*"]

@@ -1,4 +1,6 @@
 # Zusätzlich zu requirements-dev.txt für den Start von Home Assistant im E2E-Test (Importe der Basiskomponenten)
+# Versionen = Vorgaben der Manifeste der installierten Home-Assistant-Version (homeassistant/package_constraints.txt);
+# bei einem Update von pytest-homeassistant-custom-component dort nachsehen. Dependabot ignoriert sie bewusst.
 hassil==3.5.0
 home-assistant-intents==2026.1.28
 mutagen==1.47.0
