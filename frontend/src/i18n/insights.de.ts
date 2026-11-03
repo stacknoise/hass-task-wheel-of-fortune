@@ -30,9 +30,9 @@ export const insightsDe = {
     'Diese Auslosung mit {total} Zuteilungen löschen? Sie verschwindet auch aus Historie und Statistik. Das lässt sich nicht rückgängig machen.',
   'round.deleteBlocked': 'Nicht löschbar: {done} Aufgaben sind schon erledigt.',
   'overview.due': 'Frist {date}',
-  'overview.chance': 'Chance {chance}',
   'overview.points': '{points} Punkte',
   'overview.complete': 'Erledigt',
+  'overview.actions': 'Aktionen',
   'overview.swap': 'Tauschen',
   'overview.swapWith': 'Tauschen mit',
   'overview.cancel': 'Abbrechen',
@@ -40,6 +40,7 @@ export const insightsDe = {
   'overview.noJokers': 'Kein Joker mehr in diesem Monat.',
   'overview.swapDisabled': 'Diese Aufgabe darf nicht getauscht werden.',
   'overview.noTargets': 'Niemand aus dieser Auslosung darf diese Aufgabe übernehmen.',
+  'overview.completeQuestion': 'Diese Zuteilung als erledigt markieren?',
   'overview.skip': 'Bleibt unerledigt',
   'overview.skipQuestion':
     'Diese Zuteilung als „Bleibt unerledigt“ markieren? Sie zählt in der Statistik wie verpasst und lässt sich nicht zurücknehmen.',
