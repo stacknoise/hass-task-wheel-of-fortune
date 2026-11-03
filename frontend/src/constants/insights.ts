@@ -6,6 +6,7 @@ export const WS_HISTORY_LIST = `${WS_PREFIX}history/list`;
 export const WS_STATISTICS_GET = `${WS_PREFIX}statistics/get`;
 export const WS_ASSIGNMENT_COMPLETE = `${WS_PREFIX}assignment/complete`;
 export const WS_ASSIGNMENT_SWAP = `${WS_PREFIX}assignment/swap`;
+export const WS_ASSIGNMENT_SKIP = `${WS_PREFIX}assignment/skip`;
 
 export const FIELD_PERSON_ID = 'person_id';
 export const FIELD_OFFSET = 'offset';
@@ -21,6 +22,7 @@ export const STATUS = {
   late: 'late',
   swapped: 'swapped',
   missed: 'missed',
+  skipped: 'skipped',
 } as const;
 export type AssignmentStatus = (typeof STATUS)[keyof typeof STATUS];
 
@@ -36,6 +38,7 @@ export const STATUS_TONES: Readonly<Record<AssignmentStatus, Tone>> = {
   late: 'warning',
   swapped: 'neutral',
   missed: 'error',
+  skipped: 'warning',
 };
 
 export const FILTER_ALL = 'all';

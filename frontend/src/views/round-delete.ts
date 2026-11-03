@@ -15,12 +15,12 @@ export interface RoundDeleteOptions {
 /** „Auslosung löschen“ mit Rückfrage; gesperrt, sobald eine Aufgabe erledigt ist. */
 export function roundDelete(options: RoundDeleteOptions): TemplateResult {
   const { language, total, done } = options;
-  return html`<tw-confirm-delete
+  return html`<tw-confirm-action
     language=${language}
     label=${translate('round.delete', language)}
     question=${translate('round.deleteQuestion', language, { total })}
     blocked=${done > 0 ? translate('round.deleteBlocked', language, { done }) : ''}
     ?busy=${options.busy}
     @tw-confirm=${options.onConfirm}
-  ></tw-confirm-delete>`;
+  ></tw-confirm-action>`;
 }

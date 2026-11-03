@@ -6,6 +6,7 @@ from ..application.views import panel_round_view
 from ..application.wire import to_json, to_wire
 from ..const.events import (
     WS_ASSIGNMENT_COMPLETE,
+    WS_ASSIGNMENT_SKIP,
     WS_ASSIGNMENT_SWAP,
     WS_DRAW_BEGIN,
     WS_DRAW_CANCEL,
@@ -39,6 +40,12 @@ def _complete(request: Request) -> Reply:
     """Erledigt die Zuteilung."""
     done = request.data.assignments.complete(request.params[WS_FIELD_ASSIGNMENT_ID], request.now)
     return Reply(to_json(done))
+
+
+def _skip(request: Request) -> Reply:
+    """Markiert die Zuteilung als „Bleibt unerledigt“."""
+    skipped = request.data.assignments.skip(request.params[WS_FIELD_ASSIGNMENT_ID])
+    return Reply(to_json(skipped))
 
 
 def _swap(request: Request) -> Reply:
@@ -100,6 +107,7 @@ def _cancel(request: Request) -> Reply:
 
 COMMANDS: Final = (
     Command(WS_ASSIGNMENT_COMPLETE, _ASSIGNMENT, _complete, mutates=True),
+    Command(WS_ASSIGNMENT_SKIP, _ASSIGNMENT, _skip, mutates=True),
     Command(WS_ASSIGNMENT_SWAP, _SWAP, _swap, mutates=True),
     Command(WS_ROUND_DELETE, _ROUND, _delete_round, access=Access.ADMIN, mutates=True),
     Command(WS_DRAW_BEGIN, _SCHEDULE, _begin, mutates=True),

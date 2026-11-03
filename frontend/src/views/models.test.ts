@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { AssignmentObject, RoundHead, ScheduleObject, WeekRate } from '../api/index.ts';
 import { buildCsv, csvCell } from './csv.ts';
-import { groupByRound, recentActivity, upcomingDraws } from './overview-model.ts';
+import { groupByRound, swapTargets, recentActivity, upcomingDraws } from './overview-model.ts';
 import { barRows, chartPoints, chartSegments } from './statistics-model.ts';
 
 function schedule(
@@ -139,5 +139,20 @@ describe('chartPoints und chartSegments', () => {
   it('setzt eine einzelne Woche in die Mitte', () => {
     const [point] = chartPoints([week(1)]);
     expect(point?.x).toBe(216);
+  });
+});
+
+describe('swapTargets', () => {
+  const persons = [
+    { id: 'p1', load: 'full' },
+    { id: 'p2', load: 'full' },
+    { id: 'p3', load: 'full' },
+    { id: 'p4', load: 'paused' },
+  ] as never[];
+  const task = { allowed: ['p1', 'p2', 'p3', 'p4'] } as never;
+
+  it('bietet nur andere, erlaubte, nicht pausierte Personen derselben Auslosung an', () => {
+    const targets = swapTargets({ person_id: 'p1' } as never, task, persons, ['p1', 'p2', 'p4']);
+    expect(targets.map((person) => person.id)).toEqual(['p2']);
   });
 });

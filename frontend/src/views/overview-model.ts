@@ -57,16 +57,24 @@ export function groupByRound(
     .filter((group) => group.assignments.length > 0);
 }
 
-/** Personen, auf die getauscht werden darf: erlaubt für die Aufgabe, nicht die jetzige, nicht pausiert. */
+/**
+ * Personen, auf die getauscht werden darf: in derselben Auslosung, erlaubt für die Aufgabe, nicht
+ * die jetzige, nicht pausiert.
+ */
 export function swapTargets(
   assignment: AssignmentObject,
   task: TaskObject | undefined,
   persons: readonly PersonObject[],
+  roundPersonIds: readonly string[],
 ): readonly PersonObject[] {
   const allowed = new Set(task?.allowed ?? []);
+  const inRound = new Set(roundPersonIds);
   return persons.filter(
     (person) =>
-      allowed.has(person.id) && person.id !== assignment.person_id && person.load !== LOAD_PAUSED,
+      inRound.has(person.id) &&
+      allowed.has(person.id) &&
+      person.id !== assignment.person_id &&
+      person.load !== LOAD_PAUSED,
   );
 }
 

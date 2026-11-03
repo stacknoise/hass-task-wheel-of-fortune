@@ -29,6 +29,7 @@ def _context(**overrides: object) -> SwapContext:
         "receiver": f.person(id="p2", slug="ben", name="Ben", absences=(), load=Load.FULL),
         "jokers_left": 1,
         "now": f.NOW,
+        "round_persons": frozenset({"p1", "p2"}),
     }
     return SwapContext(**{**values, **overrides})
 
@@ -42,6 +43,7 @@ def test_valid_swap_passes() -> None:
     [
         ({"task": f.task(swap_allowed=False)}, keys.ERR_SWAP_DISABLED),
         ({"receiver": f.person(id="p1", absences=())}, keys.ERR_SWAP_SAME_PERSON),
+        ({"round_persons": frozenset({"p1"})}, keys.ERR_SWAP_NOT_IN_ROUND),
         ({"jokers_left": 0}, keys.ERR_NO_JOKERS),
         ({"task": f.task(allowed=frozenset({"p1"}))}, keys.ERR_SWAP_NOT_ALLOWED),
         (

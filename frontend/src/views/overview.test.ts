@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   VIEW_TAGS,
   WS_ASSIGNMENT_COMPLETE,
+  WS_ASSIGNMENT_SKIP,
   WS_ASSIGNMENT_SWAP,
   WS_HISTORY_LIST,
   WS_ROUND_DELETE,
@@ -101,6 +102,30 @@ describe('Übersicht', () => {
     });
   });
 
+  it('markiert eine Zuteilung erst nach der Rückfrage als „Bleibt unerledigt“', async () => {
+    const { view, hass } = await mount();
+    const skip = view.shadowRoot?.querySelector(
+      'tw-confirm-action[label="Bleibt unerledigt"]',
+    ) as HTMLElement & {
+      updateComplete: Promise<boolean>;
+    };
+    const click = (label: string) =>
+      [...(skip.shadowRoot?.querySelectorAll('button') ?? [])]
+        .find((b) => b.textContent.includes(label))
+        ?.click();
+    click('Bleibt unerledigt');
+    await skip.updateComplete;
+    expect(skip.shadowRoot?.textContent).toContain('zählt in der Statistik wie verpasst');
+    expect(hass.messages.some((m) => m.type === WS_ASSIGNMENT_SKIP)).toBe(false);
+    click('Bleibt unerledigt');
+    await vi.waitFor(() => {
+      expect(hass.messages.find((m) => m.type === WS_ASSIGNMENT_SKIP)).toEqual({
+        type: WS_ASSIGNMENT_SKIP,
+        assignment_id: 'a1',
+      });
+    });
+  });
+
   it('sperrt das Tauschen ohne Joker oder wenn die Aufgabe es nicht erlaubt', async () => {
     const { view } = await mount();
     const swap = buttons(view, 'Tauschen');
@@ -140,7 +165,8 @@ describe('Übersicht', () => {
 
   it('löscht eine Auslosung erst nach der Rückfrage', async () => {
     const { view, hass } = await mount();
-    const [blocked, remove] = view.shadowRoot?.querySelectorAll('tw-confirm-delete') ?? [];
+    const [blocked, remove] =
+      view.shadowRoot?.querySelectorAll('tw-confirm-action[label="Auslosung löschen"]') ?? [];
     const blockedButton = blocked?.shadowRoot?.querySelector('button');
     expect(blockedButton?.disabled).toBe(true);
     expect(blockedButton?.title).toBe('Nicht löschbar: 1 Aufgaben sind schon erledigt.');

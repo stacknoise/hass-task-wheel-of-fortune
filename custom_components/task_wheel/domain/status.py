@@ -22,6 +22,8 @@ TRANSITIONS: Final[Mapping[tuple[AssignmentStatus, AssignmentAction], Assignment
             (_S.OPEN, _A.COMPLETE_LATE): _S.LATE,
             (_S.OPEN, _A.MISS): _S.MISSED,
             (_S.OPEN, _A.SWAP): _S.SWAPPED,
+            (_S.OPEN, _A.SKIP): _S.SKIPPED,
+            (_S.SWAPPED, _A.SKIP): _S.SKIPPED,
             (_S.SWAPPED, _A.COMPLETE_ON_TIME): _S.ON_TIME,
             (_S.SWAPPED, _A.COMPLETE_LATE): _S.LATE,
             (_S.SWAPPED, _A.MISS): _S.MISSED,
@@ -41,6 +43,7 @@ _POINT_FACTORS: Final[Mapping[AssignmentStatus, Callable[[Settings], float]]] = 
         _S.ON_TIME: lambda _settings: 1.0,
         _S.LATE: lambda settings: settings.late_points_factor,
         _S.MISSED: lambda settings: settings.missed_points_factor,
+        _S.SKIPPED: lambda settings: settings.missed_points_factor,
     }
 )
 
@@ -76,6 +79,11 @@ def complete(assignment: Assignment, now: dt.datetime) -> Assignment:
 def miss(assignment: Assignment) -> Assignment:
     """Markiert die Zuteilung als verpasst."""
     return replace(assignment, status=next_status(assignment.status, _A.MISS))
+
+
+def skip(assignment: Assignment) -> Assignment:
+    """Markiert die Zuteilung als „Bleibt unerledigt“ (zählt wie verpasst)."""
+    return replace(assignment, status=next_status(assignment.status, _A.SKIP))
 
 
 def swap(assignment: Assignment, to_person_id: PersonId, now: dt.datetime) -> Assignment:

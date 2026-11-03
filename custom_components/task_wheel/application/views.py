@@ -15,6 +15,7 @@ from ..const.keys import (
     WIRE_ORIGIN,
     WIRE_PANEL_ROUNDS,
     WIRE_PENDING,
+    WIRE_PERSON_IDS,
     WIRE_PERSONS,
     WIRE_REMOVE,
     WIRE_RESULTS,
@@ -88,6 +89,7 @@ def round_head(round_: Round) -> Json:
         WIRE_ORIGIN: round_.origin.value,
         WIRE_STARTED_AT: round_.started_at.isoformat(),
         WIRE_TOTAL: len(round_.assignments),
+        WIRE_PERSON_IDS: sorted({item.person_id for item in round_.assignments}),
         WIRE_DONE: sum(item.status in DONE_STATUSES for item in round_.assignments),
     }
 

@@ -31,6 +31,9 @@ class Recorder(NoEvents):
     def assignment_missed(self, assignment) -> None:
         self.seen.append("missed")
 
+    def assignment_skipped(self, assignment) -> None:
+        self.seen.append("skipped")
+
     def round_deleted(self, round_) -> None:
         self.seen.append("deleted")
 
@@ -53,6 +56,7 @@ def _all(events: FanOutRoundEvents) -> None:
     events.assignment_completed(assignment)
     events.assignment_swapped(assignment)
     events.assignment_missed(assignment)
+    events.assignment_skipped(assignment)
     events.round_deleted(round_)
     events.animation_requested(round_, "media_player.tv")
 
@@ -66,6 +70,7 @@ def test_every_sink_receives_every_message() -> None:
         "completed",
         "swapped",
         "missed",
+        "skipped",
         "deleted",
         "animate:media_player.tv",
     ]

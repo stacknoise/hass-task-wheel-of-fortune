@@ -15,6 +15,7 @@ import type { AssignmentGroup } from './overview-model.ts';
 export interface AssignmentHandlers {
   readonly deleteRound: (roundId: string) => void;
   readonly complete: (assignmentId: string) => void;
+  readonly skip: (assignmentId: string) => void;
   readonly toggleSwap: (assignmentId: string) => void;
   readonly swap: (assignmentId: string, personId: string) => void;
 }
@@ -49,10 +50,11 @@ function swapHint(
 function swapChoice(
   assignment: AssignmentObject,
   context: AssignmentsContext,
+  roundPersonIds: readonly string[],
   text: Translate,
 ): TemplateResult {
   const task = context.taskById.get(assignment.task_id);
-  const targets = swapTargets(assignment, task, context.persons);
+  const targets = swapTargets(assignment, task, context.persons, roundPersonIds);
   return html`
     <div class="row swap" role="group" aria-label=${text('overview.swapWith')}>
       <span class="muted">${text('overview.swapWith')}</span>
@@ -109,6 +111,16 @@ function rowButtons(
     >
       ${text('overview.swap')}
     </button>
+    <tw-confirm-action
+      language=${context.language}
+      label=${text('overview.skip')}
+      confirm=${text('overview.skip')}
+      question=${text('overview.skipQuestion')}
+      ?busy=${context.busy}
+      @tw-confirm=${() => {
+        context.handlers.skip(assignment.id);
+      }}
+    ></tw-confirm-action>
     <button
       type="button"
       class="action primary"
@@ -137,6 +149,7 @@ function rowMeta(
 function assignmentRow(
   assignment: AssignmentObject,
   context: AssignmentsContext,
+  roundPersonIds: readonly string[],
   text: Translate,
 ): TemplateResult {
   const person = context.personById.get(assignment.person_id);
@@ -161,7 +174,7 @@ function assignmentRow(
         }
         ${rowButtons(assignment, context, text)}
       </div>
-      ${context.swapOpen === assignment.id ? swapChoice(assignment, context, text) : nothing}
+      ${context.swapOpen === assignment.id ? swapChoice(assignment, context, roundPersonIds, text) : nothing}
     </li>
   `;
 }
@@ -213,7 +226,7 @@ export function assignmentGroups(context: AssignmentsContext): TemplateResult {
           ${repeat(
             group.assignments,
             (assignment) => assignment.id,
-            (assignment) => assignmentRow(assignment, context, text),
+            (assignment) => assignmentRow(assignment, context, group.round?.person_ids ?? [], text),
           )}
         </ul>
       </section>
