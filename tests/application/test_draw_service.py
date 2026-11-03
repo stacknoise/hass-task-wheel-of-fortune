@@ -17,6 +17,7 @@ from custom_components.task_wheel.domain.errors import (
     NotFoundError,
 )
 from custom_components.task_wheel.domain.models import MaxPerPeriod, WeeklyDaysAbsence
+from custom_components.task_wheel.domain.statistics import aggregate
 
 from ..domain import factories as f
 from .world import DAY, World
@@ -36,6 +37,13 @@ def test_automatic_round_is_drawn_stored_and_reported():
         ("t2", "p2", AssignmentStatus.OPEN),
     ]
     assert round_.assignments[0].due_at == NOW + 7 * DAY
+
+
+def test_new_round_is_added_to_the_monthly_aggregates():
+    world = World(0.1, 0.9)
+    round_ = world.draws.draw("s1", AUTO, NOW)
+    recomputed = aggregate.recompute([round_])
+    assert world.history.aggregates == recomputed and recomputed
 
 
 def test_unknown_schedule_is_not_found():

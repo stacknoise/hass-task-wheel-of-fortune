@@ -1,10 +1,11 @@
 """Protokolle der Anwendungsschicht: Persistenz (KONZEPT §3.2), Zeitgeber, Ereignisse."""
 
 import datetime as dt
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import Protocol
 
 from ..domain.models import Assignment, Person, Round, Schedule, Settings, Task
+from ..domain.statistics.aggregate import AssignmentChange
 from ..domain.types import AssignmentId, PersonId, RoundId, ScheduleId, TaskId
 
 type FireCallback = Callable[[dt.datetime], None]
@@ -116,6 +117,10 @@ class HistoryRepository(Protocol):
         """Jüngste Zuteilung einer Aufgabe (nach Rundenbeginn) über den Index."""
         ...
 
+    def rounds_since(self, since: dt.datetime) -> Iterator[Round]:
+        """Runden, die ab `since` begonnen haben, die neueste zuerst."""
+        ...
+
     def assignments_since(self, since: dt.datetime) -> tuple[Assignment, ...]:
         """Zuteilungen aus Runden, die ab `since` begonnen haben."""
         ...
@@ -161,3 +166,15 @@ class NoEvents:
 
     def reminder_due(self, schedule: Schedule, days_since: int) -> None:
         """Tut nichts."""
+
+
+class AssignmentRecorder(Protocol):
+    """Nimmt Änderungen an Zuteilungen entgegen (hält die Monatsaggregate aktuell)."""
+
+    def record(self, round_: Round, changes: Iterable[AssignmentChange]) -> None:
+        """Schreibt die Änderungen der Zuteilungen einer Runde fort."""
+        ...
+
+    def record_round(self, round_: Round) -> None:
+        """Nimmt alle Zuteilungen einer neuen Runde auf."""
+        ...

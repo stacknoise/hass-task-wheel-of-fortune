@@ -4,7 +4,7 @@ Verteilt Haushaltsaufgaben fair und mit etwas Spaß: Ein Glücksrad lost aus, we
 richten sich danach, wer zuletzt wie viel erledigt hat, wer da ist und wer wie belastbar ist.
 
 > **Status:** Entwicklung, Version 0.0.1. Das Projektgerüst steht (Integration lässt sich hinzufügen und
-> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03) sowie Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07) sowie Runden und Zeitpläne (AP-08) sind umgesetzt, die Funktionen folgen mit den Arbeitspaketen. Es gibt noch keine Veröffentlichung
+> entfernen, CI ist eingerichtet), Konstanten und Domänenmodell (AP-02), Häufigkeits- und Anwesenheitsregeln (AP-04/05), Persistenz über Repositories (AP-03), Gewichtung und Ziehung (AP-06), Zuteilungen und Tausch (AP-07), Statistik und Historie (AP-13) sowie Runden und Zeitpläne (AP-08) sind umgesetzt, die Funktionen folgen mit den Arbeitspaketen. Es gibt noch keine Veröffentlichung
 > über HACS.
 
 ## Funktionen (geplant)

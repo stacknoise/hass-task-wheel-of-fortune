@@ -5,6 +5,7 @@ from itertools import count
 
 from custom_components.task_wheel.application.draw_service import DrawService
 from custom_components.task_wheel.application.schedule_service import ScheduleService
+from custom_components.task_wheel.application.statistics_service import StatisticsService
 from custom_components.task_wheel.domain.models import EveryRound, ManualTrigger, Round, Schedule
 from custom_components.task_wheel.infrastructure.repository.config_store import ConfigStore
 from custom_components.task_wheel.infrastructure.repository.history_store import HistoryStore
@@ -70,8 +71,9 @@ class World:
             self.config,
             self.history,
             FixedRandom(*(randoms or (0.1,))),
-            self.events,
-            lambda: f"id{next(ids)}",
+            StatisticsService(self.config, self.history),
+            events=self.events,
+            id_factory=lambda: f"id{next(ids)}",
         )
         self.schedules = ScheduleService(
             self.config, self.history, self.draws, self.timers, self.events

@@ -94,10 +94,14 @@ def is_missable(assignment: Assignment, settings: Settings, now: dt.datetime) ->
     )
 
 
+def points_factor(status: AssignmentStatus, settings: Settings) -> float:
+    """Faktor auf die Aufgabenpunkte im Status (offen und getauscht zählen noch nicht)."""
+    return _POINT_FACTORS.get(status, _no_points)(settings)
+
+
 def awarded_points(assignment: Assignment, settings: Settings) -> int:
     """Punkte, die der Person der Zuteilung im aktuellen Status gutgeschrieben werden."""
-    factor = _POINT_FACTORS.get(assignment.status, _no_points)(settings)
-    return round(assignment.points * factor)
+    return round(assignment.points * points_factor(assignment.status, settings))
 
 
 def counted_points(assignment: Assignment, settings: Settings) -> int:

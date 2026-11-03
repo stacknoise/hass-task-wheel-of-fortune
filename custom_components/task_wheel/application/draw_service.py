@@ -16,7 +16,14 @@ from ..domain.models import Round, Schedule
 from ..domain.types import ScheduleId
 from .draw_inputs import build_context, due_tasks, recent_assignments
 from .ids import new_id
-from .protocols import ConfigRepository, HistoryRepository, IdFactory, NoEvents, RoundEvents
+from .protocols import (
+    AssignmentRecorder,
+    ConfigRepository,
+    HistoryRepository,
+    IdFactory,
+    NoEvents,
+    RoundEvents,
+)
 
 RESOURCE_SCHEDULE = "schedule"
 RESOURCE_PANEL_ROUND = "panel_round"
@@ -40,13 +47,16 @@ class DrawService:
         config: ConfigRepository,
         history: HistoryRepository,
         rng: RandomSource,
+        recorder: AssignmentRecorder,
+        *,
         events: RoundEvents | None = None,
         id_factory: IdFactory = new_id,
     ) -> None:
-        """Hält Repositories, Zufallsquelle (injiziert), Ereignisempfänger und Kennungsquelle."""
+        """Hält Repositories, Zufallsquelle, Statistik, Ereignisempfänger und Kennungsquelle."""
         self._config = config
         self._history = history
         self._rng = rng
+        self._recorder = recorder
         self._events = events or NoEvents()
         self._new_id = id_factory
         self._panel_rounds: dict[str, PanelRound] = {}
@@ -156,6 +166,7 @@ class DrawService:
         """Macht aus dem Stand die Runde, speichert sie und meldet sie."""
         round_ = draft.to_round(self._new_id(), self._new_id, now)
         self._history.put_round(round_)
+        self._recorder.record_round(round_)
         self._events.round_drawn(round_)
         return round_
 

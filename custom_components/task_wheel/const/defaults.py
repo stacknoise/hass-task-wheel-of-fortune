@@ -42,3 +42,9 @@ PANEL_ROUND_TIMEOUT_MINUTES: Final = 15
 
 # Erinnerungen für Zeitpläne „nur manuell“ werden täglich zu dieser vollen Stunde geprüft
 REMINDER_HOUR: Final = 9
+
+# Statistik und Historie
+DEFAULT_STATISTICS_MONTHS: Final = 1
+DEFAULT_STATISTICS_WEEKS: Final = 8
+DEFAULT_HISTORY_PAGE_SIZE: Final = 50
+MONTH_KEY_FORMAT: Final = "%Y-%m"
