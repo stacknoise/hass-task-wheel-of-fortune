@@ -7,6 +7,7 @@ import type {
   TaskObject,
 } from '../api/index.ts';
 import { FILTER_ALL, LOAD_PAUSED } from '../constants/index.ts';
+import { allowsPerson } from '../state/index.ts';
 
 export interface AssignmentGroup {
   /** Die Auslosung; leer bei Zuteilungen, deren Runde nicht mehr bekannt ist. */
@@ -66,7 +67,9 @@ export function swapTargets(
   const allowed = new Set(task?.allowed ?? []);
   return persons.filter(
     (person) =>
-      allowed.has(person.id) && person.id !== assignment.person_id && person.load !== LOAD_PAUSED,
+      allowsPerson(allowed, person.id) &&
+      person.id !== assignment.person_id &&
+      person.load !== LOAD_PAUSED,
   );
 }
 

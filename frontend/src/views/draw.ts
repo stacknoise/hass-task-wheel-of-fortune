@@ -14,7 +14,9 @@ import {
   DrawSession,
   StoreController,
   drawableSchedules,
+  allowsPerson,
   openRoundFor,
+  participantsOf,
   personsById,
   tasksById,
 } from '../state/index.ts';
@@ -96,12 +98,18 @@ export class TwDrawView extends LitElement {
     const snapshot = this.#store.state?.snapshot;
     const taskId = state.taskIds[state.results.length];
     const task = snapshot && taskId ? tasksById(snapshot).get(taskId) : undefined;
+    if (!snapshot) {
+      return;
+    }
     const key = `${state.roundId ?? EMPTY_TEXT}:${String(state.results.length)}`;
     if (state.phase !== 'ready' || !task || key === this.#autoSpun) {
       return;
     }
     const taken = new Set(state.results.map((result) => result.winner_id));
-    if ([...task.allowed].filter((id) => !taken.has(id)).length <= 1) {
+    const open = [...personsById(snapshot).keys()].filter(
+      (id) => allowsPerson(task.allowed, id) && !taken.has(id),
+    );
+    if (open.length <= 1) {
       this.#autoSpun = key;
       void this.#session?.spin();
     }
@@ -114,8 +122,8 @@ export class TwDrawView extends LitElement {
       return nothing;
     }
     const state = session.state;
-    const persons = personsById(snapshot);
     const tasks = tasksById(snapshot);
+    const persons = participantsOf(personsById(snapshot), tasks, state.taskIds);
     return html`
       <div class="layout">
         ${this.#side(state, tasks, persons)} ${this.#stage(state, tasks, persons)}
@@ -414,7 +422,7 @@ export class TwDrawView extends LitElement {
       if (chance !== undefined) {
         return { person, inWheel: true, note: percentText(chance) };
       }
-      const allowed = task?.allowed.has(person.id) ?? false;
+      const allowed = task ? allowsPerson(task.allowed, person.id) : false;
       const reason = allowed ? reasons.get(person.id) : NOT_ALLOWED;
       return {
         person,

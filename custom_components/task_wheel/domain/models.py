@@ -252,11 +252,14 @@ class Person(Model):
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class Task(Model):
-    """Aufgabe mit Aufwand, Frist, erlaubten Personen und Regeln."""
+    """Aufgabe mit Aufwand, Frist, erlaubten Personen und Regeln.
+
+    Ohne erlaubte Personen (leere Menge) gilt die Aufgabe für alle.
+    """
 
     id: TaskId = spec(to_str)
     name: str = spec(to_str)
-    allowed: frozenset[PersonId] = spec(frozenset_of(to_str))
+    allowed: frozenset[PersonId] = spec(frozenset_of(to_str), default=frozenset())
     frequency: FrequencyConfig = spec(decode_frequency, default=DEFAULT_FREQUENCY)
     points: int = spec(to_int, default=defaults.DEFAULT_TASK_POINTS)
     due_days: int = spec(to_int, default=defaults.DEFAULT_TASK_DUE_DAYS)
@@ -270,9 +273,13 @@ class Task(Model):
         ensure_name("name", self.name)
         ensure_range("points", self.points, limits.POINTS_MIN, limits.POINTS_MAX)
         ensure_range("due_days", self.due_days, limits.DUE_DAYS_MIN, limits.DUE_DAYS_MAX)
-        ensure_size("allowed", self.allowed, 1, limits.MAX_PERSONS)
+        ensure_size("allowed", self.allowed, 0, limits.MAX_PERSONS)
         for person_id in self.allowed:
             ensure_id("allowed", person_id)
+
+    def allows(self, person_id: PersonId) -> bool:
+        """Ob die Person die Aufgabe bekommen darf (ohne erlaubte Personen: jede)."""
+        return not self.allowed or person_id in self.allowed
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
