@@ -173,10 +173,13 @@ export const en: Record<keyof typeof de, string> = {
   'draw.reason.paused': 'Paused',
   'draw.reason.absent': 'Absent',
   'draw.reason.no_repeat': 'Had the task last time',
+  'draw.reason.taken': 'Already has a task in this round',
   'draw.reason.not_allowed': 'Not allowed',
   'draw.chance': 'Chance',
   'draw.takes': 'takes over',
   'draw.nobody': 'Nobody available for',
+  'draw.nobody.hint':
+    'The task stays unassigned because nobody is eligible. Each person gets only one task per round.',
   'draw.next': 'Next task',
   'draw.finish': 'Finish round',
   'draw.done.title': 'Round finished',

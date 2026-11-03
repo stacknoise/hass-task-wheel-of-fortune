@@ -111,7 +111,7 @@ describe('Auslosung', () => {
       panel_round: round([], []),
     });
     await click(view, '.result .button');
-    await click(view, '.hub');
+    // Für „Müll“ bleibt nur Anna übrig: die Ziehung läuft ohne Klick auf „Drehen“.
     await vi.waitFor(() => {
       expect(text(view)).toContain('Niemand verfügbar für Müll');
       expect(text(view)).toContain('Nicht erlaubt');
@@ -153,21 +153,29 @@ describe('Auslosung', () => {
     expect(text(view)).toContain('Anna');
   });
 
-  it('setzt eine offene Runde fort und zeigt Fehler des Backends', async () => {
+  it('setzt eine offene Runde fort und zieht die letzte Aufgabe ohne Drehen', async () => {
     const hass = hassWith([round([result('t1', 'p1')], ['t2'])]);
+    hass.replies.set('task_wheel/draw/spin', {
+      result: result('t2', null),
+      panel_round: round([], []),
+    });
     const { view } = await mount(hass);
     await click(view, '.actions .button:not(.primary)');
     await vi.waitFor(() => {
-      expect(text(view)).toContain('1 / 2 verlost');
+      expect(text(view)).toContain('Niemand verfügbar für Müll');
     });
     expect(text(view)).toContain('Anna');
+    expect(hass.calls.filter((call) => call === 'task_wheel/draw/spin')).toHaveLength(1);
+  });
 
-    hass.replies.set('task_wheel/draw/spin', Object.assign(new Error('x'), { code: 'not_found' }));
-    await click(view, '.hub');
+  it('zeigt Fehler des Backends mit ihrem Code', async () => {
+    const hass = hassWith();
+    hass.replies.set('task_wheel/draw/begin', Object.assign(new Error('x'), { code: 'not_found' }));
+    const { view } = await mount(hass);
+    await click(view, '.button.primary');
     await vi.waitFor(() => {
       expect(view().querySelector('[role="alert"]')?.textContent).toContain('not_found');
     });
-    await click(view, '.button.primary');
   });
 
   it('bietet ohne Zeitplan keinen Start an', async () => {

@@ -93,6 +93,7 @@ def test_deleted_tasks_are_skipped():
 def test_open_assignments_count_as_load_for_the_next_round():
     world = World(0.1)
     world.config.set_settings(f.settings(weighting=WeightingKind.FAIRNESS))
+    world.config.remove_task("t2")
     first = world.draws.draw("s1", AUTO, NOW)
     assert {a.person_id for a in first.assignments} == {"p1"}
     second = world.draws.draw("s1", AUTO, NOW + DAY)
@@ -187,3 +188,17 @@ def test_number_of_open_panel_rounds_is_limited():
         world.draws.begin("s1", NOW)
     assert len(world.draws.open_rounds(NOW)) == MAX_OPEN_PANEL_ROUNDS
     assert world.draws.open_rounds(NOW + dt.timedelta(hours=1)) == ()
+
+
+def test_a_person_with_a_task_is_not_on_the_wheel_for_the_next_task_of_the_round():
+    world = World(0.1)
+    first, second = world.draws.draw("s1", AUTO, NOW).assignments
+    assert (first.person_id, second.person_id) == ("p1", "p2")
+    assert second.chance == 1.0
+
+
+def test_surplus_tasks_stay_unassigned_instead_of_giving_a_person_a_second_one():
+    world = World(0.1)
+    world.config.remove_person("p2")
+    round_ = world.draws.draw("s1", AUTO, NOW)
+    assert [a.person_id for a in round_.assignments] == ["p1"]
