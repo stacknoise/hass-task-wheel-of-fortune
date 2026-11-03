@@ -1,4 +1,7 @@
+import { insightsDe } from './insights.de.ts';
+
 export const de = {
+  ...insightsDe,
   'panel.title': 'Aufgaben-Glücksrad',
   'panel.loading': 'Daten werden geladen …',
   'panel.error': 'Die Daten konnten nicht geladen werden.',

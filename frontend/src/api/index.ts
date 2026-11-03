@@ -16,3 +16,20 @@ export type {
   WireObject,
   WireSegment,
 } from './types.ts';
+export { modelsOf } from './models.ts';
+export type {
+  AssignmentObject,
+  Highlights,
+  HistoryPage,
+  HistoryQuery,
+  Kpis,
+  Matrix,
+  PersonObject,
+  Reliable,
+  RoundObject,
+  ScheduleObject,
+  Standing,
+  StatisticsReport,
+  TaskObject,
+  WeekRate,
+} from './models.ts';

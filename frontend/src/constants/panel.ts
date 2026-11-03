@@ -7,6 +7,9 @@ export const DEFAULT_LANGUAGE = 'en';
 export const COMPONENT_TAGS = {
   tabBar: 'tw-tab-bar',
   stat: 'tw-stat',
+  chips: 'tw-chips',
+  avatar: 'tw-avatar',
+  badge: 'tw-badge',
   wheel: 'tw-wheel',
   confetti: 'tw-confetti',
 } as const;

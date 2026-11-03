@@ -36,7 +36,10 @@ function texts(item: WireObject, field: string): readonly string[] {
   return Array.isArray(value) ? value.filter((entry) => typeof entry === 'string') : [];
 }
 
-function indexById<T extends { readonly id: string }>(items: readonly T[]): ReadonlyMap<string, T> {
+/** Objekte nach Kennung, um Verweise (Person, Aufgabe, Zeitplan) aufzulösen. */
+export function indexById<T extends { readonly id: string }>(
+  items: readonly T[],
+): ReadonlyMap<string, T> {
   return new Map(items.map((item) => [item.id, item]));
 }
 

@@ -1,6 +1,8 @@
 import type { de } from './de.ts';
+import { insightsEn } from './insights.en.ts';
 
 export const en: Record<keyof typeof de, string> = {
+  ...insightsEn,
   'panel.title': 'Task Wheel of Fortune',
   'panel.loading': 'Loading data …',
   'panel.error': 'The data could not be loaded.',
