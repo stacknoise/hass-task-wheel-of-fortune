@@ -60,19 +60,57 @@ a{color:#0262a0}a:hover{color:#01497a}
       </section>
 
       <section style="grid-column: span 2; background: #ffffff; border-radius: 12px; border: 1px solid #e3e6ea; padding: 8px 0;">
-        <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 12px 24px;">
-          <h2 style="margin: 0; font-size: 18px; font-weight: 500;">Aktuelle Zuteilungen · KW 45</h2>
+        <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; padding: 12px 24px 4px;">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 500;">Aktuelle Zuteilungen</h2>
           <span style="font-size: 13px; color: #5a616b;">{{doneCount}} von {{totalCount}} erledigt</span>
         </div>
-        <sc-for list="{{assignments}}" as="a" hint-placeholder-count="6">
-          <div style="display: flex; align-items: center; gap: 16px; padding: 10px 24px; border-top: 1px solid #eef0f3;">
-            <div style="width: 40px; height: 40px; border-radius: 50%; background: {{a.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex: none;">{{a.initial}}</div>
-            <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
-              <span style="font-size: 15px; font-weight: 500; text-decoration: {{a.strike}};">{{a.task}}</span>
-              <span style="font-size: 13px; color: #5a616b;">{{a.person}} · {{a.due}}</span>
-            </div>
-            <button type="button" onClick="{{a.toggle}}" aria-pressed="{{a.done}}" style="min-height: 36px; min-width: 112px; padding: 0 14px; border-radius: 18px; border: 1px solid {{a.btnBorder}}; background: {{a.btnBg}}; color: {{a.btnFg}}; font: 500 13px Roboto, sans-serif; cursor: pointer;">{{a.btnLabel}}</button>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 24px 12px;">
+          <sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+            <button type="button" onClick="{{f.pick}}" aria-pressed="{{f.on}}" style="min-height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid {{f.border}}; background: {{f.bg}}; color: {{f.fg}}; font: 500 13px Roboto, sans-serif; cursor: pointer;">{{f.label}}</button>
+          </sc-for>
+        </div>
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 24px; background: #f6f8fa; border-top: 1px solid #eef0f3;">
+            <span style="width: 28px; height: 28px; border-radius: 8px; background: {{g.iconBg}}; color: {{g.iconFg}}; display: inline-flex; align-items: center; justify-content: center; flex: none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{g.icon}}"></path></svg>
+            </span>
+            <span style="font-size: 14px; font-weight: 500;">{{g.name}}</span>
+            <span style="font-size: 12px; color: #5a616b; flex: 1 1 auto;">{{g.meta}}</span>
+            <span style="font-size: 12px; color: #5a616b;">{{g.progress}}</span>
           </div>
+          <sc-for list="{{g.rows}}" as="a" hint-placeholder-count="3">
+            <div style="border-top: 1px solid #eef0f3;">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 10px 24px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: {{a.color}}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex: none;">{{a.initial}}</div>
+                <div style="flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                  <span style="font-size: 15px; font-weight: 500; text-decoration: {{a.strike}};">{{a.task}}</span>
+                  <span style="font-size: 13px; color: #5a616b;">{{a.person}} · {{a.due}}</span>
+                  <sc-if value="{{a.swapped}}" hint-placeholder-val="{{ false }}">
+                    <span style="align-self: flex-start; font-size: 12px; font-weight: 500; color: #5b1f99; background: #f1e7fb; border-radius: 10px; padding: 2px 8px; margin-top: 2px;">{{a.swapNote}}</span>
+                  </sc-if>
+                </div>
+                <button type="button" onClick="{{a.openSwap}}" aria-expanded="{{a.swapOpen}}" disabled="{{a.done}}" style="min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid #c4c9d0; background: #ffffff; color: {{a.swapFg}}; font: 500 13px Roboto, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"></path></svg>
+                  Tauschen
+                </button>
+                <button type="button" onClick="{{a.toggle}}" aria-pressed="{{a.done}}" style="min-height: 36px; min-width: 104px; padding: 0 14px; border-radius: 18px; border: 1px solid {{a.btnBorder}}; background: {{a.btnBg}}; color: {{a.btnFg}}; font: 500 13px Roboto, sans-serif; cursor: pointer;">{{a.btnLabel}}</button>
+              </div>
+              <sc-if value="{{a.swapOpen}}" hint-placeholder-val="{{ false }}">
+                <div style="margin: 0 24px 12px 80px; padding: 12px 14px; border-radius: 10px; background: #f6f2fc; display: flex; flex-direction: column; gap: 10px;">
+                  <span style="font-size: 13px;">Mit wem soll <strong>{{a.person}}</strong> „{{a.task}}" tauschen? Es werden nur Personen angezeigt, die diese Aufgabe laut Regel bekommen dürfen.</span>
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <sc-for list="{{a.candidates}}" as="c" hint-placeholder-count="3">
+                      <button type="button" onClick="{{c.pick}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 14px 0 4px; border-radius: 19px; border: 1px solid #c4c9d0; background: #ffffff; color: #1f2328; font: 500 13px Roboto, sans-serif; cursor: pointer;">
+                        <span style="width: 30px; height: 30px; border-radius: 50%; background: {{c.color}}; color: #ffffff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">{{c.initial}}</span>{{c.name}}
+                      </button>
+                    </sc-for>
+                    <button type="button" onClick="{{a.closeSwap}}" style="min-height: 38px; padding: 0 14px; border-radius: 19px; border: none; background: transparent; color: #0262a0; font: 500 13px Roboto, sans-serif; cursor: pointer;">Abbrechen</button>
+                  </div>
+                  <span style="font-size: 12px; color: #5a616b;">{{a.blockedNote}} Ein Tausch kostet {{a.person}} 1 Joker (noch {{a.jokers}} diesen Monat), die Punkte gehen an die neue Person.</span>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
         </sc-for>
       </section>
 
@@ -104,7 +142,7 @@ a{color:#0262a0}a:hover{color:#01497a}
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { done: { 1: true, 4: true } };
+    this.state = { done: { 1: true, 4: true }, filter: 'all', swapOpen: null, swaps: { 2: { from: 'B', to: 'C' } } };
   }
   renderVals() {
     var ICONS = {
@@ -132,29 +170,59 @@ class Component extends DCLogic {
       return { label: t[0], href: t[1], fg: on ? '#0262a0' : '#5a616b', line: on ? '#0262a0' : 'transparent' };
     });
     var self = this;
-    var raw = [
-      [1, 'Müll rausbringen', 'Ben', '#1a5fd0', 'fällig Di, 3. Nov'],
-      [2, 'Bad putzen', 'Clara', '#137333', 'fällig Sa, 7. Nov'],
-      [3, 'Staubsaugen Wohnzimmer', 'Emma', '#b0136f', 'fällig Do, 5. Nov'],
-      [4, 'Spülmaschine ausräumen', 'Anna', '#c05600', 'täglich bis So'],
-      [5, 'Rasen mähen', 'David', '#7b2cbf', 'fällig Sa, 7. Nov'],
-      [6, 'Katzenklo reinigen', 'Anna', '#c05600', 'fällig Mi, 4. Nov']
+    var s = this.state;
+    var P = { A: ['Anna', '#c05600', 1], B: ['Ben', '#1a5fd0', 0], C: ['Clara', '#137333', 1], D: ['David', '#7b2cbf', 1], E: ['Emma', '#b0136f', 1] };
+    var ABSENT = { D: true };
+    var G = [
+      { id: 'week', name: 'Wochenplan', meta: 'ausgelost Mo, 2. Nov · 07:00 · gilt bis So, 8. Nov', icon: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2', iconBg: '#e6eef7', iconFg: '#01497a', rows: [
+        [1, 'Müll rausbringen', 'B', 'fällig Di, 3. Nov', 'ABCDE'],
+        [2, 'Bad putzen', 'B', 'fällig Sa, 7. Nov', 'ABCD'],
+        [3, 'Staubsaugen Wohnzimmer', 'E', 'fällig Do, 5. Nov', 'ABCE'],
+        [5, 'Rasen mähen', 'D', 'fällig Sa, 7. Nov', 'BCD'],
+        [6, 'Katzenklo reinigen', 'A', 'fällig Mi, 4. Nov', 'ABCE']] },
+      { id: 'daily', name: 'Täglich morgens', meta: 'nur heute · ausgelost Di, 3. Nov · 06:30', icon: 'M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8z', iconBg: '#fdf0dc', iconFg: '#7a4a00', rows: [
+        [4, 'Spülmaschine ausräumen', 'A', 'heute bis 20:00', 'ABCDE']] },
+      { id: 'manual', name: 'Manuell', meta: 'Sa, 31. Okt · 11:03 · von Anna mit Glücksrad', icon: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 3v18M3 12h18', iconBg: '#f1e7fb', iconFg: '#5b1f99', rows: [
+        [7, 'Garage aufräumen', 'B', 'fällig So, 8. Nov', 'BD']] }
     ];
-    var doneCount = 0;
-    var assignments = raw.map(function (r) {
-      var d = !!self.state.done[r[0]];
-      if (d) doneCount++;
-      return {
-        task: r[1], person: r[2], color: r[3], initial: r[2].charAt(0), due: r[4], done: d,
-        strike: d ? 'line-through' : 'none',
-        btnLabel: d ? 'Erledigt' : 'Abhaken',
-        btnBg: d ? '#e3f1e6' : '#ffffff', btnFg: d ? '#0f5c28' : '#0262a0', btnBorder: d ? '#b7dbc0' : '#c4c9d0',
-        toggle: function () { var n = Object.assign({}, self.state.done); n[r[0]] = !n[r[0]]; self.setState({ done: n }); }
-      };
+    var filters = [['all', 'Alle']].concat(G.map(function (g) { return [g.id, g.name]; })).map(function (f) {
+      var on = s.filter === f[0];
+      return { label: f[1], on: on, bg: on ? '#dcecf8' : '#ffffff', border: on ? '#0262a0' : '#c4c9d0', fg: on ? '#01497a' : '#1f2328', pick: function () { self.setState({ filter: f[0] }); } };
+    });
+    var doneCount = 0, totalCount = 0;
+    var groups = G.filter(function (g) { return s.filter === 'all' || s.filter === g.id; }).map(function (g) {
+      var gDone = 0;
+      var rows = g.rows.map(function (r) {
+        var id = r[0], sw = s.swaps[id], who = sw ? sw.to : r[2];
+        var d = !!s.done[id];
+        if (d) { doneCount++; gDone++; }
+        totalCount++;
+        var open = s.swapOpen === id;
+        var candidates = r[4].split('').filter(function (k) { return k !== who && !ABSENT[k]; }).map(function (k) {
+          return { name: P[k][0], color: P[k][1], initial: P[k][0].charAt(0), pick: function () {
+            var n = Object.assign({}, self.state.swaps); n[id] = { from: (self.state.swaps[id] || {}).from || r[2], to: k };
+            self.setState({ swaps: n, swapOpen: null });
+          } };
+        });
+        var blocked = r[4].split('').filter(function (k) { return ABSENT[k] && k !== who; }).map(function (k) { return P[k][0] + ' ist abwesend.'; }).join(' ');
+        return {
+          task: r[1], person: P[who][0], color: P[who][1], initial: P[who][0].charAt(0), due: r[3], done: d,
+          swapped: !!sw, swapNote: sw ? 'Getauscht: ursprünglich ' + P[sw.from][0] + ' (Joker eingesetzt)' : '',
+          swapOpen: open, candidates: candidates, blockedNote: blocked, jokers: P[who][2],
+          swapFg: d ? '#8a929c' : '#0262a0',
+          openSwap: function () { self.setState({ swapOpen: open ? null : id }); },
+          closeSwap: function () { self.setState({ swapOpen: null }); },
+          strike: d ? 'line-through' : 'none',
+          btnLabel: d ? 'Erledigt' : 'Abhaken',
+          btnBg: d ? '#e3f1e6' : '#ffffff', btnFg: d ? '#0f5c28' : '#0262a0', btnBorder: d ? '#b7dbc0' : '#c4c9d0',
+          toggle: function () { var n = Object.assign({}, self.state.done); n[id] = !n[id]; self.setState({ done: n, swapOpen: null }); }
+        };
+      });
+      return Object.assign({}, g, { rows: rows, progress: gDone + '/' + rows.length + ' erledigt' });
     });
     var pts = [['Anna', 42, '#c05600'], ['Ben', 38, '#1a5fd0'], ['Clara', 45, '#137333'], ['David', 31, '#7b2cbf'], ['Emma', 24, '#b0136f']];
     var points = pts.map(function (p) { return { name: p[0], value: p[1], color: p[2], pct: Math.round(p[1] / 45 * 100) }; });
-    return { haNav: haNav, tabs: tabs, assignments: assignments, doneCount: doneCount, totalCount: raw.length, points: points };
+    return { haNav: haNav, tabs: tabs, filters: filters, groups: groups, doneCount: doneCount, totalCount: totalCount, points: points };
   }
 }
 </script>
