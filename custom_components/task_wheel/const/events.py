@@ -1,1 +1,33 @@
-"""Platzhalter für Schicht 0 (`events`); wird in AP-02 gefüllt."""
+"""Event-, Dienst- und Befehlsnamen (KONZEPT §6)."""
+
+from typing import Final
+
+from .defaults import DOMAIN
+
+# Events
+EVENT_DRAWN: Final = f"{DOMAIN}_drawn"
+EVENT_COMPLETED: Final = f"{DOMAIN}_completed"
+EVENT_SWAPPED: Final = f"{DOMAIN}_swapped"
+EVENT_MISSED: Final = f"{DOMAIN}_missed"
+EVENT_REMINDER: Final = f"{DOMAIN}_reminder"
+
+# Dienste
+SERVICE_DRAW: Final = "draw"
+SERVICE_COMPLETE: Final = "complete"
+SERVICE_SWAP: Final = "swap"
+SERVICE_SET_ABSENCE: Final = "set_absence"
+
+# WebSocket-Befehle (Präfix `task_wheel/`)
+WS_PREFIX: Final = f"{DOMAIN}/"
+WS_SNAPSHOT: Final = f"{WS_PREFIX}snapshot"
+WS_SUBSCRIBE: Final = f"{WS_PREFIX}subscribe"
+WS_HISTORY_LIST: Final = f"{WS_PREFIX}history/list"
+WS_STATISTICS_GET: Final = f"{WS_PREFIX}statistics/get"
+WS_ASSIGNMENT_COMPLETE: Final = f"{WS_PREFIX}assignment/complete"
+WS_ASSIGNMENT_SWAP: Final = f"{WS_PREFIX}assignment/swap"
+WS_DRAW_BEGIN: Final = f"{WS_PREFIX}draw/begin"
+WS_DRAW_SPIN: Final = f"{WS_PREFIX}draw/spin"
+WS_DRAW_SPIN_REST: Final = f"{WS_PREFIX}draw/spin_rest"
+WS_DRAW_COMMIT: Final = f"{WS_PREFIX}draw/commit"
+WS_DRAW_CANCEL: Final = f"{WS_PREFIX}draw/cancel"
+WS_SETTINGS_UPDATE: Final = f"{WS_PREFIX}settings/update"
