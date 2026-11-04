@@ -86,15 +86,13 @@ export function candidateLines(task: DecisionTask, language: string, text: Text)
   return [...winnersFirst, ...excluded];
 }
 
-/** Satz zu einem Tausch oder Austausch. */
+/** Satz zu einem Tausch zweier Personen oder zum Austausch einer Aufgabe durch einen Admin. */
 export function exchangeText(exchange: DecisionExchange, text: Text): string {
   const params = {
-    person: exchange.person_name,
+    person: exchange.person_name ?? '',
     task: exchange.task_name,
     otherTask: exchange.other_task_name,
     otherPerson: exchange.other_person_name ?? '',
   };
-  return exchange.other_person_name === null
-    ? text('log.exchange', params)
-    : text('log.swap', params);
+  return text(exchange.person_name === null ? 'log.exchange' : 'log.swap', params);
 }

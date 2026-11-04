@@ -87,6 +87,23 @@ class DecisionService:
             round_id=first.round_id,
         )
 
+    def record_replacement(
+        self, schedule_id: str, task_id: TaskId, new_task_id: TaskId, now: dt.datetime
+    ) -> None:
+        """Hält fest, dass ein Admin vor dem Start eine Aufgabe der Runde austauschte."""
+        self.record_exchange(
+            DecisionKind.EXCHANGE,
+            schedule_id,
+            Exchange(
+                task_id=task_id,
+                task_name=self._task_name(task_id),
+                other_task_id=new_task_id,
+                other_task_name=self._task_name(new_task_id),
+                before_start=True,
+            ),
+            now,
+        )
+
     def record_exchange(
         self,
         kind: DecisionKind,

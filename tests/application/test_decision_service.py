@@ -4,7 +4,7 @@ import pytest
 
 from custom_components.task_wheel.application.statistics_service import StatisticsService
 from custom_components.task_wheel.application.swap_service import SwapService
-from custom_components.task_wheel.domain.decisions import DecisionFilter, Exchange
+from custom_components.task_wheel.domain.decisions import DecisionFilter
 from custom_components.task_wheel.domain.enums import (
     DecisionKind,
     ExclusionReason,
@@ -99,26 +99,14 @@ def test_swap_is_logged_with_both_people_and_tasks():
     assert log[1].round_id == round_.id
 
 
-def test_exchange_before_start_carries_the_note():
+def test_admin_replacement_is_logged_before_start_without_persons():
     world = World()
-    world.decisions.record_exchange(
-        DecisionKind.EXCHANGE,
-        "s1",
-        Exchange(
-            person_id="p1",
-            person_name="Anna",
-            task_id="t1",
-            task_name="A",
-            other_task_id="t2",
-            other_task_name="B",
-            before_start=True,
-        ),
-        NOW,
-    )
+    world.decisions.record_replacement("s1", "t1", "t2", NOW)
     record = _only(world)
-    assert record.exchange.before_start is True and record.tasks == ()
-    assert record.involves_person("p1") and record.involves_task("t2")
-    assert not record.involves_person("p2")
+    assert record.kind is DecisionKind.EXCHANGE and record.tasks == ()
+    assert record.exchange.before_start is True
+    assert (record.exchange.task_name, record.exchange.other_task_name) == ("A", "B")
+    assert record.involves_task("t2") and not record.involves_person("p1")
 
 
 def test_page_filters_and_pages_newest_first():

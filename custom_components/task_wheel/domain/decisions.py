@@ -91,36 +91,29 @@ class Exchange(Model):
 
     Beim Tausch zweier Personen (`other_person_id` gesetzt) gibt `person_id` die Aufgabe
     `task_id` ab und bekommt `other_task_id`. Beim Austausch durch einen Administrator wird die
-    Aufgabe `task_id` der Person `person_id` durch `other_task_id` ersetzt; `before_start`
+    Aufgabe `task_id` der Runde durch `other_task_id` ersetzt (ohne Personen); `before_start`
     vermerkt, dass das vor dem Start der Auslosung geschah.
     """
 
-    person_id: PersonId = spec(to_str)
-    person_name: str = spec(to_str)
     task_id: TaskId = spec(to_str)
     task_name: str = spec(to_str)
     other_task_id: TaskId = spec(to_str)
     other_task_name: str = spec(to_str)
+    person_id: PersonId | None = spec(optional(to_str), default=None)
+    person_name: str | None = spec(optional(to_str), default=None)
     other_person_id: PersonId | None = spec(optional(to_str), default=None)
     other_person_name: str | None = spec(optional(to_str), default=None)
     before_start: bool = spec(to_bool, default=False)
 
     def __post_init__(self) -> None:
         """Prüft die Kennungen."""
-        for name in ("person_id", "task_id", "other_task_id"):
+        for name in ("task_id", "other_task_id"):
             ensure_id(name, getattr(self, name))
 
     @property
     def person_ids(self) -> tuple[PersonId, ...]:
         """Alle beteiligten Personen."""
-        return (
-            (self.person_id,)
-            if self.other_person_id is None
-            else (
-                self.person_id,
-                self.other_person_id,
-            )
-        )
+        return tuple(pid for pid in (self.person_id, self.other_person_id) if pid is not None)
 
     @property
     def task_ids(self) -> tuple[TaskId, ...]:

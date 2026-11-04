@@ -86,8 +86,8 @@ export interface DecisionTask {
 
 /** Tausch zweier Personen oder Austausch einer Aufgabe; `before_start` markiert den Admin-Austausch vor dem Start. */
 export interface DecisionExchange {
-  readonly person_id: string;
-  readonly person_name: string;
+  readonly person_id: string | null;
+  readonly person_name: string | null;
   readonly task_id: string;
   readonly task_name: string;
   readonly other_task_id: string;

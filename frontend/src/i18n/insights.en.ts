@@ -135,7 +135,7 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'log.kind.swap': 'Swap',
   'log.kind.exchange': 'Admin exchange',
   'log.swap': '{person} swapped “{task}” for “{otherTask}” from {otherPerson}.',
-  'log.exchange': 'An admin exchanged “{task}” of {person} for “{otherTask}”.',
+  'log.exchange': 'An admin exchanged “{task}” for “{otherTask}” in the round.',
   'log.beforeStart': 'before the start',
   'log.afterStart': 'after the draw',
 };

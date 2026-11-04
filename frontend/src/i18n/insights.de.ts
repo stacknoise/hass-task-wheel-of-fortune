@@ -134,7 +134,7 @@ export const insightsDe = {
   'log.kind.swap': 'Tausch',
   'log.kind.exchange': 'Admin-Austausch',
   'log.swap': '{person} tauschte „{task}“ gegen „{otherTask}“ von {otherPerson}.',
-  'log.exchange': 'Ein Admin tauschte „{task}“ von {person} gegen „{otherTask}“.',
+  'log.exchange': 'Ein Admin tauschte „{task}“ gegen „{otherTask}“ in der Runde.',
   'log.beforeStart': 'vor dem Start',
   'log.afterStart': 'nach der Auslosung',
 } as const;

@@ -186,9 +186,20 @@ class DecisionRecorder(Protocol):
         """Hält einen Tausch zweier Personen fest (`first` gehört jetzt der Zielperson)."""
         ...
 
+    def record_replacement(
+        self, schedule_id: str, task_id: TaskId, new_task_id: TaskId, now: dt.datetime
+    ) -> None:
+        """Hält fest, dass ein Admin vor dem Start eine Aufgabe der Runde austauschte."""
+        ...
+
 
 class NoDecisions:
     """Standard ohne Log (Tests)."""
+
+    def record_replacement(
+        self, schedule_id: str, task_id: TaskId, new_task_id: TaskId, now: dt.datetime
+    ) -> None:
+        """Tut nichts."""
 
     def record_draw(self, draft: RoundDraft, round_: Round) -> None:
         """Tut nichts."""

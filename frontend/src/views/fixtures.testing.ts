@@ -172,8 +172,8 @@ export const DECISIONS: DecisionPage = {
       origin: null,
       tasks: [],
       exchange: {
-        person_id: 'p1',
-        person_name: 'Anna',
+        person_id: null,
+        person_name: null,
         task_id: 't1',
         task_name: 'Bad putzen',
         other_task_id: 't3',
