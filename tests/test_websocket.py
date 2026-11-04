@@ -86,7 +86,14 @@ async def test_non_admin_can_draw_in_panel(
 ) -> None:
     await _setup(hass)
     client = await hass_ws_client(hass, hass_read_only_access_token)
-    begun = await _call(client, "task_wheel/draw/begin", schedule_id="s1")
+    begun = await _call(
+        client,
+        "task_wheel/draw/begin",
+        schedule_id="s1",
+        starts_at=f.NOW.isoformat(),
+        duration=3,
+        duration_unit="day",
+    )
     rid = begun["result"]["id"]
     spun = await _call(client, "task_wheel/draw/spin_rest", panel_round_id=rid)
     assert spun["success"] is True

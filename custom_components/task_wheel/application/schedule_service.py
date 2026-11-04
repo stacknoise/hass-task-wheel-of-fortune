@@ -7,14 +7,14 @@ from typing import Final
 from ..const.defaults import REMINDER_HOUR
 from ..domain.enums import RoundOrigin
 from ..domain.errors import TaskWheelError
-from ..domain.models import OnceTrigger, Schedule
-from ..domain.triggers.factory import TriggerFactory
+from ..domain.models import OnceTrigger, Round, Schedule
 from ..domain.triggers.lifecycle import after_fired
 from ..domain.triggers.reminder import reminder_age
 from ..domain.types import ScheduleId
 from .daily import next_daily
 from .draw_service import DrawService
 from .protocols import ConfigRepository, HistoryRepository, NoEvents, RoundEvents, TimerPort
+from .runs import next_regular_run
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,9 +47,7 @@ class ScheduleService:
 
     def next_run(self, schedule: Schedule, after: dt.datetime) -> dt.datetime | None:
         """Nächste automatische Auslosung nach `after`; `None` bei pausiert, archiviert, manuell."""
-        if not schedule.enabled or schedule.archived:
-            return None
-        return TriggerFactory.create(schedule.trigger).next_fire(after)
+        return next_regular_run(self._history, schedule, after)
 
     def arm(self, schedule_id: ScheduleId, now: dt.datetime) -> dt.datetime | None:
         """Setzt den Zeitgeber dieses Zeitplans neu (nur dieser) und liefert den Zeitpunkt.
@@ -89,6 +87,16 @@ class ScheduleService:
         """Legt den Zeitplan an oder ersetzt ihn und setzt seinen Zeitgeber neu."""
         self._config.put_schedule(schedule)
         self.arm(schedule.id, now)
+
+    def round_committed(self, round_: Round, now: dt.datetime) -> None:
+        """Nach einer manuellen Auslosung: ersetzten Lauf übergehen und den Zeitgeber neu setzen.
+
+        Ein einmaliger Zeitplan, dessen Termin die Auslosung vorgezogen hat, gilt als erledigt.
+        """
+        schedule = self._config.schedules.get(round_.schedule_id)
+        if schedule is not None and round_.replaces is not None:
+            self._finish_once(schedule)
+        self.arm(round_.schedule_id, now)
 
     def delete(self, schedule_id: ScheduleId) -> None:
         """Entfernt den Zeitplan und meldet seinen Zeitgeber ab."""

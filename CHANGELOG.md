@@ -5,12 +5,15 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- **Geändert:** Die Frist kommt vom Zeitplan statt von der Aufgabe: Dauer in Stunden, Tagen, Wochen oder Monaten und Beginn (sofort, nach einem Versatz, am Folgetag oder am nächsten Wochentag zu einer Uhrzeit). Das Feld „Frist in Tagen“ der Aufgabe entfällt (keine Migration, die App ist unveröffentlicht)
+- **Geändert:** Machbarkeit: Eine Person ist Kandidat, wenn sie irgendwann im Fristfenster (von „gilt ab“ bis zur Frist) anwesend ist, nicht mehr nur am Tag der Auslosung; dazu gelten erlaubte Personen und Belastbarkeit wie bisher. Die Prüfung steht als wiederverwendbare Funktion bereit
+- **Geändert:** Manuelles Auslösen fragt „gilt ab“ und Frist ab (Pflicht); bei eingeplanten Zeitplänen muss bestätigt werden, dass die Auslosung den nächsten regulären Lauf vorzieht (er entfällt)
 - **Neu:** Entscheidungslog als Tab nach der Statistik, für alle sichtbar: Je Auslosung und Aufgabe steht, wer im Rad war (mit Chance), wer warum nicht (abwesend, nicht erlaubt, Belastbarkeit, schon versorgt …) und wer gezogen wurde; Tausch und Admin-Austausch stehen mit Vermerk darin. Die Aufbewahrung (Standard 7 Tage) stellt man in den Optionen der Integration ein, eine tägliche Bereinigung löscht ältere Einträge.
 - **Geändert:** Bei Zeitplänen ohne Animation zeigt das Panel Administratoren vor dem Ziehen eine kurze Vorbereitung mit „Austauschen“ je Aufgabe; erst „Aufgaben direkt verteilen“ lost. Andere Benutzer bekommen wie bisher sofort das Ergebnis
 - **Neu:** Der Admin kann in der vorbereiteten Auslosung (Panel) vor dem Start eine Aufgabe der Runde gegen eine andere Aufgabe desselben Zeitplans tauschen. Zur Wahl stehen nur Aufgaben, die nicht in der Runde sind; Aufgaben, die mit den heute anwesenden Personen nicht machbar sind (niemand erlaubt, anwesend und belastbar genug), sind nicht wählbar. Mit dem ersten Dreh ist der Tausch gesperrt. Neue Befehle `draw/replacements` und `draw/replace_task` (nur Administratoren); das ist etwas anderes als der Tausch zwischen Personen
 - **Geändert:** Die Statistik „Verlosungen je Aufgabe: Soll und Ist“ wird je Zeitplan berechnet und gruppiert: Es zählen nur die Auslosungen des jeweiligen Zeitplans, eine Aufgabe in mehreren Zeitplänen erscheint in jedem davon. Die Box scrollt, die Zeitpläne lassen sich auf- und zuklappen
 - **Geändert:** Aufgaben, die täglich anfallen (Häufigkeit „höchstens n× in 1 Tag“), sind in jeder Auslosung dabei; bei mehr Aufgaben als mitmachenden Personen füllt der Zufall nur die übrigen Plätze. Gibt es mehr tägliche Aufgaben als Personen, wird unter den täglichen zufällig gewählt
-- Behoben: Wer am Tag der Auslosung abwesend ist, nimmt nicht mehr an ihr teil. Bisher genügte ein anwesender Tag zwischen Auslosung und Frist, sodass z. B. eine Person, die heute (Mittwoch) fehlt, aber morgen wieder da ist, trotzdem im Rad stand; das galt auch für wiederkehrende Abwesenheiten. Die Zahl der Aufgaben je Runde richtet sich nach den heute anwesenden Personen
+- Behoben: Wer im ganzen Fristfenster abwesend ist, nimmt nicht an der Auslosung teil (auch bei wiederkehrenden Abwesenheiten); die Zahl der Aufgaben je Runde richtet sich nach den Personen, die im Fenster anwesend sind
 
 ## [0.5.0] – 2026-11-04
 

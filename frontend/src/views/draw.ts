@@ -39,6 +39,7 @@ import type { AreaNames, DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '.
 import { roomTags } from './room.ts';
 import { drawSummary, stageNotice } from './draw-summary.ts';
 import { ReplaceFlow } from './draw-replace.ts';
+import { drawFailure, drawWindowDialog } from './draw-window.ts';
 import { drawStyles } from './draw-styles.ts';
 import { personRows } from './draw-rows.ts';
 import { defineOnce } from '../components/define.ts';
@@ -52,12 +53,15 @@ export class TwDrawView extends LitElement {
   static override properties = {
     language: { type: String },
     _scheduleId: { state: true },
+    _starting: { state: true },
   };
 
   static override styles = drawStyles;
 
   declare language: string;
   declare _scheduleId: string;
+  /** Die Zeitplan-Kennung, für die der Dialog „ab wann, bis wann“ offen ist. */
+  declare _starting: string;
 
   readonly #store = new StoreController(this);
   /** Räume des laufenden Renders. */
@@ -82,6 +86,7 @@ export class TwDrawView extends LitElement {
     super();
     this.language = EMPTY_TEXT;
     this._scheduleId = EMPTY_TEXT;
+    this._starting = EMPTY_TEXT;
   }
 
   /**
@@ -231,7 +236,7 @@ export class TwDrawView extends LitElement {
             ? this.#start(scheduleId, open)
             : this.#round(state, nameOf(schedules, state.scheduleId), tasks, persons)
         }
-        ${state.phase === DRAW_PHASE.error ? this.#failure(state) : nothing}
+        ${state.phase === DRAW_PHASE.error ? drawFailure(this.#text('draw.error'), this.#text('draw.error.code'), state.errorCode) : nothing}
       </section>
     `;
   }
@@ -241,63 +246,72 @@ export class TwDrawView extends LitElement {
   }
 
   #start(scheduleId: string, open: unknown): TemplateResult {
-    const session = this.#session;
     return html`
       <div class="actions">
         <button
           class="button primary"
           ?disabled=${!scheduleId}
           @click=${() => {
-            const kind = this.#pick(scheduleId);
-            this.#kind = kind ?? this.#kind;
-            void session?.begin(
-              scheduleId,
-              kind !== undefined,
-              this.#store.client?.isAdmin() === true,
-            );
+            this._starting = scheduleId;
           }}
         >
           ${this.#text('draw.start')}
         </button>
-        ${
-          open
-            ? html`<button
-                class="button"
-                @click=${() => {
-                  const snapshot = this.#store.state?.snapshot;
-                  const round = snapshot && openRoundFor(snapshot, scheduleId);
-                  if (round) {
-                    const kind = this.#pick(scheduleId);
-                    this.#kind = kind ?? this.#kind;
-                    session?.resume(round);
-                    if (kind === undefined) {
-                      void session?.drawRest();
-                    }
-                  }
-                }}
-              >
-                ${this.#text('draw.resume')}
-              </button>`
-            : nothing
-        }
+        ${open ? this.#resumeButton(scheduleId) : nothing}
       </div>
       <p class="muted">${this.#text('draw.choose')}</p>
+      ${this._starting === scheduleId ? this.#windowDialog(scheduleId) : nothing}
     `;
   }
 
-  /** Wählt zufällig eine der Animationen, die der Zeitplan erlaubt; ohne Auswahl keine. */
-  #pick(scheduleId: string): AnimationKind | undefined {
-    const snapshot = this.#store.state?.snapshot;
-    const schedule = snapshot
-      ? drawableSchedules(snapshot).find((candidate) => candidate.id === scheduleId)
-      : undefined;
-    return pickAnimation(schedule?.animations ?? DEFAULT_ANIMATIONS);
+  #resumeButton(scheduleId: string): TemplateResult {
+    const resume = () => {
+      const snapshot = this.#store.state?.snapshot;
+      const round = snapshot && openRoundFor(snapshot, scheduleId);
+      if (round) {
+        const kind = this.#pick(scheduleId);
+        this.#session?.resume(round);
+        if (kind === undefined) {
+          void this.#session?.drawRest();
+        }
+      }
+    };
+    return html`<button class="button" @click=${resume}>${this.#text('draw.resume')}</button>`;
   }
 
-  #failure(state: DrawState): TemplateResult {
-    return html`<p class="error" role="alert">
-      ${this.#text('draw.error')} (${this.#text('draw.error.code')}: ${state.errorCode})
-    </p>`;
+  #windowDialog(scheduleId: string): TemplateResult {
+    return drawWindowDialog({
+      language: this.language,
+      schedule: this.#schedule(scheduleId),
+      now: this.#store.state?.snapshot?.now ?? EMPTY_TEXT,
+      onConfirm: (request) => {
+        const kind = this.#pick(scheduleId);
+        this._starting = EMPTY_TEXT;
+        void this.#session?.begin(
+          scheduleId,
+          request,
+          kind !== undefined,
+          this.#store.client?.isAdmin() === true,
+        );
+      },
+      onCancel: () => {
+        this._starting = EMPTY_TEXT;
+      },
+    });
+  }
+
+  /** Wählt zufällig eine der Animationen, die der Zeitplan erlaubt (ohne Auswahl keine), und merkt sie. */
+  #pick(scheduleId: string): AnimationKind | undefined {
+    const kind = pickAnimation(this.#schedule(scheduleId)?.animations ?? DEFAULT_ANIMATIONS);
+    this.#kind = kind ?? this.#kind;
+    return kind;
+  }
+
+  #schedule(scheduleId: string): ScheduleInfo | undefined {
+    const snapshot = this.#store.state?.snapshot;
+    return snapshot
+      ? drawableSchedules(snapshot).find((item) => item.id === scheduleId)
+      : undefined;
   }
 
   #round(
@@ -365,10 +379,7 @@ export class TwDrawView extends LitElement {
       <li class="task ${this.#isCurrent(state, index, shown) ? 'current' : ''}">
         <span>
           ${task?.name ?? EMPTY_TEXT}<br />
-          <span class="muted"
-            >${task?.points ?? 0} ${this.#text('draw.points')} · ${task?.dueDays ?? 0}
-            ${this.#text('draw.due')}</span
-          >
+          <span class="muted">${task?.points ?? 0} ${this.#text('draw.points')}</span>
           ${this.#room(task)}
         </span>
         <span class="status">${this.#taskStatus(state, persons, index, shown)}</span>

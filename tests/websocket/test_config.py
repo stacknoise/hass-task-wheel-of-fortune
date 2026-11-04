@@ -14,7 +14,7 @@ from custom_components.task_wheel.domain.errors import (
 )
 
 from ..domain import factories as f
-from .harness import Api
+from .harness import BEGIN, Api
 
 RECURRING = {"kind": "recurring", "weekdays": [0, 3], "time": "18:30:00"}
 
@@ -223,7 +223,7 @@ def test_delete_schedule_cancels_timer_and_panel_round(api: Api) -> None:
         "schedule/create", schedule={"name": "Plan", "trigger": RECURRING, "task_ids": ["t1"]}
     )
     sid = created["id"]
-    rid = api.result("draw/begin", schedule_id=sid)["id"]
+    rid = api.result("draw/begin", schedule_id=sid, **BEGIN, replace_next=True)["id"]
     api.run("schedule/delete", schedule_id=sid)
     assert f"schedule:{sid}" not in api.timers.timers
     assert sid not in api.config.schedules

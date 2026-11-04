@@ -1,9 +1,9 @@
-import type { FrequencyKind, TriggerKind } from '../constants/index.ts';
+import type { DeadlineUnit, FrequencyKind, TriggerKind } from '../constants/index.ts';
 import { formatDateTime } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
-import type { FrequencyWire, TriggerWire } from '../state/index.ts';
+import type { DeadlineWire, FrequencyWire, TriggerWire } from '../state/index.ts';
 import { timeInput } from '../state/index.ts';
-import { toIds, weekdayOptions } from './options.ts';
+import { WEEKDAY_TEXT, toIds, weekdayOptions } from './options.ts';
 
 type FrequencySummaries = {
   readonly [K in FrequencyKind]: (
@@ -69,4 +69,23 @@ export function describeTrigger(trigger: TriggerWire, language: string): string 
     trigger,
     language,
   );
+}
+
+const SINGULAR = 1;
+
+/** Anzahl mit Einheit in der richtigen Zahl (`1 Stunde`, `4 Stunden`). */
+export function describeAmount(count: number, unit: DeadlineUnit, language: string): string {
+  const form = count === SINGULAR ? 'one' : 'other';
+  return translate(`deadline.count.${unit}.${form}`, language, { count });
+}
+
+/** Kurztext einer Frist für Karten (`ab Folgetag 10:00, 4 Stunden`). */
+export function describeDeadline(deadline: DeadlineWire, language: string): string {
+  const params = {
+    duration: describeAmount(deadline.duration, deadline.duration_unit, language),
+    offset: describeAmount(deadline.offset, deadline.offset_unit, language),
+    time: timeInput(deadline.time),
+    weekday: translate(WEEKDAY_TEXT[deadline.weekday as keyof typeof WEEKDAY_TEXT], language),
+  };
+  return translate(`deadline.summary.${deadline.start}`, language, params);
 }

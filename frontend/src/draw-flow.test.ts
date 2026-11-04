@@ -16,7 +16,6 @@ const TASKS = [
     id: 't1',
     name: 'Bad putzen',
     points: 3,
-    due_days: 2,
     allowed: ['p1', 'p2', 'p3'],
     frequency: { kind: 'every_round' },
   },
@@ -24,7 +23,6 @@ const TASKS = [
     id: 't2',
     name: 'Müll',
     points: 1,
-    due_days: 1,
     allowed: ['p1'],
     frequency: { kind: 'every_round' },
   },
@@ -86,6 +84,20 @@ async function click(view: () => ParentNode, selector: string): Promise<void> {
   view().querySelector<HTMLButtonElement>(selector)?.click();
 }
 
+/** Öffnet die Frage nach Gilt-ab und Frist und bestätigt sie. */
+async function start(view: () => ParentNode, selector = '.button.primary'): Promise<void> {
+  await click(view, selector);
+  await vi.waitFor(() => {
+    expect(
+      view().querySelector('tw-draw-start-dialog')?.shadowRoot?.querySelector('.primary'),
+    ).not.toBeNull();
+  });
+  view()
+    .querySelector('tw-draw-start-dialog')
+    ?.shadowRoot?.querySelector<HTMLButtonElement>('.primary')
+    ?.click();
+}
+
 const text = (view: () => ParentNode): string => (view().textContent ?? '').replace(/\s+/gu, ' ');
 
 afterEach(() => {
@@ -108,7 +120,7 @@ describe('Auslosung', () => {
     const { panel, view } = await mount(hass);
     expect(text(view)).toContain('Wochenplan');
 
-    await click(view, '.button.primary');
+    await start(view);
     await vi.waitFor(() => {
       expect(text(view)).toContain('0 / 2 verlost');
     });
@@ -187,7 +199,7 @@ describe('Auslosung', () => {
     });
     hass.replies.set('task_wheel/draw/replace_task', { panel_round: round([], ['t3', 't2']) });
     const { view } = await mount(hass);
-    await click(view, '.button.primary');
+    await start(view);
     await click(view, '.task .button');
     const dialog = (): ParentNode => view().querySelector('tw-dialog') as unknown as ParentNode;
     await vi.waitFor(() => {
@@ -217,7 +229,7 @@ describe('Auslosung', () => {
     hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
     hass.replies.set('task_wheel/draw/preview', { result: result('t1', null) });
     const { view } = await mount(hass);
-    await click(view, '.button.primary');
+    await start(view);
     await vi.waitFor(() => {
       expect(text(view)).toContain('0 / 2 verlost');
     });
@@ -232,7 +244,7 @@ describe('Auslosung', () => {
       panel_round: round([], []),
     });
     const { view } = await mount(hass);
-    await click(view, '.button.primary');
+    await start(view);
     await click(view, '.actions .button:not(:last-child)');
     await vi.waitFor(() => {
       expect(text(view)).toContain('Alle Aufgaben sind verteilt');
@@ -248,7 +260,7 @@ describe('Auslosung', () => {
       panel_round: round([], []),
     });
     const { view } = await mount(hass);
-    await click(view, '.button.primary');
+    await start(view);
     await vi.waitFor(() => {
       expect(text(view)).toContain('Die Runde steht bereit');
     });
@@ -270,7 +282,7 @@ describe('Auslosung', () => {
       panel_round: round([], []),
     });
     const { view } = await mount(hass);
-    await click(view, '.button.primary');
+    await start(view);
     await vi.waitFor(() => {
       expect(text(view)).toContain('Alle Aufgaben sind verteilt');
     });
@@ -298,7 +310,7 @@ describe('Auslosung', () => {
     const hass = hassWith();
     hass.replies.set('task_wheel/draw/begin', Object.assign(new Error('x'), { code: 'not_found' }));
     const { view } = await mount(hass);
-    await click(view, '.button.primary');
+    await start(view);
     await vi.waitFor(() => {
       expect(view().querySelector('[role="alert"]')?.textContent).toContain('not_found');
     });
@@ -320,7 +332,7 @@ describe('Auslosung', () => {
       result: { ...result('t1', null), segments: result('t1', 'p1').segments },
     });
     const { view } = await mount(hass);
-    await click(view, '.button.primary');
+    await start(view);
     await vi.waitFor(() => {
       const stage = view().querySelector('tw-stage');
       expect(stage?.shadowRoot?.querySelector('tw-drum')).not.toBeNull();
@@ -333,7 +345,7 @@ describe('Auslosung', () => {
     const hass = hassWith();
     hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
     const { panel, view } = await mount(hass);
-    await click(view, '.button.primary');
+    await start(view);
     await vi.waitFor(() => {
       expect(text(view)).toContain('0 / 2 verlost');
     });

@@ -8,7 +8,6 @@ import type { ChipOption } from '../components/index.ts';
 import '../components/index.ts';
 import {
   DEFAULT_MIN_LOAD,
-  DEFAULT_TASK_DUE_DAYS,
   DEFAULT_TASK_POINTS,
   FORM_LIMITS,
   MIN_LOADS,
@@ -27,7 +26,7 @@ type TaskDraft = Omit<TaskWire, 'id'>;
 
 const TEXTS: ConfigTexts = { add: 'tasks.add', create: 'tasks.new', edit: 'tasks.edit' };
 
-/** Aufgaben: erlaubte Personen, Häufigkeit mit Zeitstrahl, Punkte, Frist und Zusatzregeln. */
+/** Aufgaben: erlaubte Personen, Häufigkeit mit Zeitstrahl, Punkte und Zusatzregeln (die Frist gibt der Zeitplan vor). */
 export class TasksView extends ConfigView<TaskWire, TaskDraft> {
   protected readonly resource = 'task';
   protected readonly collection = 'tasks';
@@ -39,7 +38,6 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
       allowed: personsOf(snapshot).map((person) => person.id),
       frequency: FREQUENCY_BUILDERS.every_round(),
       points: DEFAULT_TASK_POINTS,
-      due_days: DEFAULT_TASK_DUE_DAYS,
       no_repeat: false,
       respect_absence: true,
       swap_allowed: true,
@@ -54,7 +52,6 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
       allowed: task.allowed,
       frequency: task.frequency,
       points: task.points,
-      due_days: task.due_days,
       no_repeat: task.no_repeat,
       respect_absence: task.respect_absence,
       swap_allowed: task.swap_allowed,
@@ -70,10 +67,7 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
   protected card(task: TaskWire): TemplateResult {
     return html`
       <strong>${task.name}</strong>
-      <div class="muted">
-        ${task.points} ${this.text('tasks.points_short')} · ${task.due_days}
-        ${this.text('tasks.days_short')}
-      </div>
+      <div class="muted">${task.points} ${this.text('tasks.points_short')}</div>
       <div class="muted">${describeFrequency(task.frequency, this.language)}</div>
       ${this.#room(task.area_ids)}
     `;
@@ -105,26 +99,15 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
           this.patch({ frequency });
         })}
       ></tw-frequency-editor>
-      <div class="pair">
-        <tw-stepper
-          .label=${this.text('tasks.points')}
-          .value=${draft.points}
-          .min=${FORM_LIMITS.points.min}
-          .max=${FORM_LIMITS.points.max}
-          @tw-change=${onChange<number>((points) => {
-            this.patch({ points });
-          })}
-        ></tw-stepper>
-        <tw-stepper
-          .label=${this.text('tasks.due_days')}
-          .value=${draft.due_days}
-          .min=${FORM_LIMITS.dueDays.min}
-          .max=${FORM_LIMITS.dueDays.max}
-          @tw-change=${onChange<number>((due_days) => {
-            this.patch({ due_days });
-          })}
-        ></tw-stepper>
-      </div>
+      <tw-stepper
+        .label=${this.text('tasks.points')}
+        .value=${draft.points}
+        .min=${FORM_LIMITS.points.min}
+        .max=${FORM_LIMITS.points.max}
+        @tw-change=${onChange<number>((points) => {
+          this.patch({ points });
+        })}
+      ></tw-stepper>
       ${this.#areaSelect(draft.area_ids)} ${this.#minLoad(draft.min_load)} ${this.#rules(draft)}
     `;
   }

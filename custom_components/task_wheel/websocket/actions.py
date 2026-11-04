@@ -2,6 +2,8 @@
 
 from typing import Final
 
+import voluptuous as vol
+
 from ..application.views import panel_round_view
 from ..application.wire import to_json, to_wire
 from ..const.events import (
@@ -24,20 +26,36 @@ from ..const.keys import (
     WIRE_RESULT,
     WIRE_RESULTS,
     WS_FIELD_ASSIGNMENT_ID,
+    WS_FIELD_DURATION,
+    WS_FIELD_DURATION_UNIT,
     WS_FIELD_NEW_TASK_ID,
     WS_FIELD_PANEL_ROUND_ID,
+    WS_FIELD_REPLACE_NEXT,
     WS_FIELD_ROUND_ID,
     WS_FIELD_SCHEDULE_ID,
+    WS_FIELD_STARTS_AT,
     WS_FIELD_TASK_ID,
     WS_FIELD_TO_PERSON_ID,
 )
+from ..domain.deadline import DeadlineWindow
+from ..domain.enums import DeadlineUnit
+from ..domain.serialization import to_datetime
 from .command import Access, Command, Reply, Request
-from .schemas import ID, required_fields
+from .schemas import ID, INTEGER, ISO_TEXT, optional_fields, required_fields
 
 _ASSIGNMENT: Final = required_fields((WS_FIELD_ASSIGNMENT_ID, ID))
 _SWAP: Final = required_fields((WS_FIELD_ASSIGNMENT_ID, ID), (WS_FIELD_TO_PERSON_ID, ID))
 _SCHEDULE: Final = required_fields((WS_FIELD_SCHEDULE_ID, ID))
 _ROUND: Final = required_fields((WS_FIELD_ROUND_ID, ID))
+_BEGIN: Final = {
+    **_SCHEDULE,
+    **required_fields(
+        (WS_FIELD_STARTS_AT, ISO_TEXT),
+        (WS_FIELD_DURATION, INTEGER),
+        (WS_FIELD_DURATION_UNIT, vol.In([unit.value for unit in DeadlineUnit])),
+    ),
+    **optional_fields((WS_FIELD_REPLACE_NEXT, bool)),
+}
 _PANEL_ROUND: Final = required_fields((WS_FIELD_PANEL_ROUND_ID, ID))
 _REPLACE_TASK: Final = required_fields(
     (WS_FIELD_PANEL_ROUND_ID, ID), (WS_FIELD_TASK_ID, ID), (WS_FIELD_NEW_TASK_ID, ID)
@@ -78,9 +96,18 @@ def _view(request: Request) -> dict[str, object]:
 
 
 def _begin(request: Request) -> Reply:
-    """Beginnt eine Panel-Runde für den Zeitplan."""
+    """Beginnt eine Panel-Runde für den Zeitplan (Gilt-ab und Frist sind Pflicht)."""
+    params = request.params
+    starts_at = to_datetime(params[WS_FIELD_STARTS_AT]).astimezone(request.now.tzinfo)
+    window = DeadlineWindow.after(
+        starts_at, params[WS_FIELD_DURATION], DeadlineUnit(params[WS_FIELD_DURATION_UNIT])
+    )
     panel_round = request.data.draws.begin(
-        request.params[WS_FIELD_SCHEDULE_ID], request.now, is_admin=request.is_admin
+        params[WS_FIELD_SCHEDULE_ID],
+        request.now,
+        window,
+        replace_next=params.get(WS_FIELD_REPLACE_NEXT, False),
+        is_admin=request.is_admin,
     )
     return Reply(panel_round_view(panel_round))
 
@@ -124,6 +151,7 @@ def _spin_rest(request: Request) -> Reply:
 def _commit(request: Request) -> Reply:
     """Schließt die Panel-Runde ab und speichert sie."""
     round_ = request.data.draws.commit(request.params[WS_FIELD_PANEL_ROUND_ID], request.now)
+    request.data.schedules.round_committed(round_, request.now)
     return Reply(to_json(round_))
 
 
@@ -140,7 +168,7 @@ COMMANDS: Final = (
     Command(WS_ASSIGNMENT_SKIP, _ASSIGNMENT, _skip, mutates=True),
     Command(WS_ASSIGNMENT_SWAP, _SWAP, _swap, mutates=True),
     Command(WS_ROUND_DELETE, _ROUND, _delete_round, access=Access.ADMIN, mutates=True),
-    Command(WS_DRAW_BEGIN, _SCHEDULE, _begin, mutates=True),
+    Command(WS_DRAW_BEGIN, _BEGIN, _begin, mutates=True),
     Command(WS_DRAW_PREVIEW, _PANEL_ROUND, _preview),
     Command(WS_DRAW_REPLACEMENTS, _PANEL_ROUND, _replacements, access=Access.ADMIN),
     Command(WS_DRAW_REPLACE_TASK, _REPLACE_TASK, _replace_task, access=Access.ADMIN, mutates=True),

@@ -13,7 +13,6 @@ const TASK: TaskInfo = {
   id: 't',
   name: 'Bad',
   points: 1,
-  dueDays: 1,
   allowed: new Set<string>(),
   areaIds: [],
 };

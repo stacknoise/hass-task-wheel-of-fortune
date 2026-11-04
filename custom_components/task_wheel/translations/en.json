@@ -199,6 +199,9 @@
     "round_incomplete": {
       "message": "The round has not been fully drawn yet."
     },
+    "draw_replace_unconfirmed": {
+      "message": "Bringing the next regular run forward must be confirmed."
+    },
     "draw_too_soon": {
       "message": "Please wait at least {seconds} seconds between two draws of the same schedule."
     },

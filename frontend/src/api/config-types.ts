@@ -4,6 +4,8 @@ import type {
   AbsenceKind,
   AfterOnce,
   AnimationKind,
+  DeadlineStart,
+  DeadlineUnit,
   FrequencyKind,
   Load,
   Period,
@@ -98,7 +100,6 @@ export interface TaskWire {
   readonly allowed: readonly string[];
   readonly frequency: FrequencyWire;
   readonly points: number;
-  readonly due_days: number;
   readonly no_repeat: boolean;
   readonly respect_absence: boolean;
   readonly swap_allowed: boolean;
@@ -107,12 +108,24 @@ export interface TaskWire {
   readonly area_ids: readonly string[];
 }
 
+/** Frist eines Zeitplans: Beginn (sofort, Versatz, Folgetag, Wochentag) und Dauer. */
+export interface DeadlineWire {
+  readonly start: DeadlineStart;
+  readonly offset: number;
+  readonly offset_unit: DeadlineUnit;
+  readonly time: string;
+  readonly weekday: number;
+  readonly duration: number;
+  readonly duration_unit: DeadlineUnit;
+}
+
 export interface ScheduleWire {
   readonly id: string;
   readonly name: string;
   readonly slug: string;
   readonly trigger: TriggerWire;
   readonly task_ids: readonly string[];
+  readonly deadline: DeadlineWire;
   readonly enabled: boolean;
   readonly notify: boolean;
   readonly skip_absent: boolean;

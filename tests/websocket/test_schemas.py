@@ -11,7 +11,7 @@ from custom_components.task_wheel.const.limits import (
 )
 from custom_components.task_wheel.websocket.registry import COMMANDS
 
-from .harness import Api
+from .harness import BEGIN, Api
 
 LONG = "x" * (WS_STRING_MAX_LENGTH + 1)
 
@@ -35,7 +35,11 @@ def api() -> Api:
         ("assignment/complete", {"assignment_id": ""}),
         ("assignment/swap", {"assignment_id": "a1"}),
         ("assignment/skip", {}),
-        ("draw/begin", {"schedule_id": "s1", "extra": "x"}),
+        ("draw/begin", {"schedule_id": "s1", "extra": "x", **BEGIN}),
+        ("draw/begin", {"schedule_id": "s1"}),
+        ("draw/begin", {**BEGIN, "schedule_id": "s1", "duration": "3"}),
+        ("draw/begin", {**BEGIN, "schedule_id": "s1", "duration_unit": "year"}),
+        ("draw/begin", {**BEGIN, "schedule_id": "s1", "replace_next": "yes"}),
         ("round/delete", {}),
         ("round/delete", {"round_id": ""}),
         ("person/create", {}),

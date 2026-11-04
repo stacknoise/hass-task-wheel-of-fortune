@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { FakeHass } from './api/fake-hass.testing.ts';
 import type { Snapshot } from './api/index.ts';
+import { DEADLINE_DEFAULT } from './state/index.ts';
 import { ANIMATION_KINDS, EVENT_CHANGE, PANEL_ELEMENT_NAME } from './constants/index.ts';
 import type { TaskWheelPanel } from './task-wheel-panel.ts';
 import './task-wheel-panel.ts';
@@ -27,7 +28,6 @@ const SNAPSHOT: Snapshot = {
       allowed: ['p1'],
       frequency: { kind: 'every_round' },
       points: 2,
-      due_days: 7,
       no_repeat: false,
       respect_absence: true,
       swap_allowed: true,
@@ -42,6 +42,7 @@ const SNAPSHOT: Snapshot = {
       slug: 'woche',
       trigger: { kind: 'manual', remind_after_days: null },
       task_ids: ['t1'],
+      deadline: DEADLINE_DEFAULT,
       enabled: false,
       notify: true,
       skip_absent: true,
@@ -285,9 +286,7 @@ describe('Aufgaben', () => {
     say(q(editor, 'tw-field'), 'Bad putzen');
     say(q(editor, 'tw-chip-select'), ['p1']);
     say(q(editor, 'tw-frequency-editor'), { kind: 'interval', days: 7, tolerance: 1 });
-    const [points, due] = [...editor.querySelectorAll('tw-stepper')];
-    say(points as El, 5);
-    say(due as El, 3);
+    say(q(editor, 'tw-stepper'), 5);
     for (const toggle of editor.querySelectorAll('tw-toggle')) {
       say(toggle, false);
     }
@@ -306,7 +305,6 @@ describe('Aufgaben', () => {
       allowed: ['p1'],
       frequency: { kind: 'interval', days: 7, tolerance: 1 },
       points: 5,
-      due_days: 3,
       no_repeat: false,
       respect_absence: false,
       swap_allowed: false,
@@ -348,6 +346,35 @@ describe('Zeitpläne', () => {
       task_ids: [],
       trigger: { kind: 'manual', remind_after_days: 3 },
     });
+  });
+
+  it('zeigt die Frist nur bei eingeplanten Zeitplänen und speichert sie', async () => {
+    const { hass, view } = await open('/schedules');
+    await click(view, '.card');
+    expect(view.shadowRoot?.querySelector('tw-deadline-editor')).toBeNull();
+    const recurring = {
+      kind: 'recurring',
+      weekdays: [1],
+      time: '16:00',
+      every_n_weeks: 1,
+      monthly: false,
+      anchor: null,
+    };
+    say(q(view.shadowRoot, 'tw-trigger-editor'), recurring);
+    await view.updateComplete;
+    const deadline = {
+      ...DEADLINE_DEFAULT,
+      start: 'next_day',
+      time: '10:00',
+      duration: 4,
+      duration_unit: 'hour',
+    };
+    say(q(view.shadowRoot, 'tw-deadline-editor'), deadline);
+    await click(view, '.buttons .primary');
+    await vi.waitFor(() => {
+      expect(hass.messages.at(-1)?.type).toBe('task_wheel/schedule/update');
+    });
+    expect(hass.messages.at(-1)?.['schedule']).toMatchObject({ deadline });
   });
 
   it('wählt die Animationen per Mehrfachauswahl und speichert sie', async () => {

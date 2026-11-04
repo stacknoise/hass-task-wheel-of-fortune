@@ -7,6 +7,7 @@ import pytest
 
 from custom_components.task_wheel.const import defaults, limits
 from custom_components.task_wheel.const.keys import KEY_KIND
+from custom_components.task_wheel.domain.deadline import Deadline
 from custom_components.task_wheel.domain.enums import AnimationKind, AssignmentStatus, Load, Period
 from custom_components.task_wheel.domain.errors import (
     TaskWheelError,
@@ -162,7 +163,12 @@ def test_load_factors():
         (lambda: f.person(notify_target=""), "notify_target"),
         (lambda: f.person(absences=(OnceAbsence(start=f.TODAY, end=f.TODAY),) * 21), "absences"),
         (lambda: f.task(points=0), "points"),
-        (lambda: f.task(due_days=366), "due_days"),
+        (lambda: f.schedule(deadline=Deadline(duration=366)), "duration"),
+        (lambda: f.schedule(deadline=Deadline(duration=0)), "duration"),
+        (lambda: f.schedule(deadline=Deadline(offset=-1)), "offset"),
+        (lambda: f.schedule(deadline=Deadline(weekday=7)), "weekday"),
+        (lambda: f.assignment(starts_at=f.NOW + dt.timedelta(days=8)), "starts_at"),
+        (lambda: f.assignment(starts_at=dt.datetime(2026, 1, 1)), "starts_at"),
         (lambda: f.task(allowed=frozenset({""})), "allowed"),
         (lambda: f.task(area_ids=("",)), "area_ids"),
         (lambda: f.task(area_ids=("x" * (limits.AREA_ID_MAX_LENGTH + 1),)), "area_ids"),

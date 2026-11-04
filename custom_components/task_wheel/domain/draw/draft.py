@@ -32,6 +32,7 @@ class RoundDraft:
     context: DrawContext
     tasks: tuple[Task, ...]
     results: tuple[TaskDraw, ...] = ()
+    replaces: dt.datetime | None = None
     # Ändern sich innerhalb einer Runde nicht und werden deshalb nur einmal berechnet:
     # Kapazität je Person und (als gemeinsamer Zwischenspeicher) die möglichen Personen je Aufgabe
     capacity: Mapping[PersonId, float] = field(default_factory=dict, compare=False, repr=False)
@@ -131,6 +132,7 @@ class RoundDraft:
             origin=self.origin,
             started_at=self.started_at,
             finished_at=finished_at,
+            replaces=self.replaces,
             assignments=assignments,
         )
 
@@ -148,8 +150,7 @@ class RoundDraft:
         person_id: PersonId,
         result: TaskDraw,
     ) -> Assignment:
-        """Zuteilung mit Frist in Kalendertagen der Zeitzone der Runde (sommerzeitfest)."""
-        due_day = self.started_at.date() + dt.timedelta(days=task.due_days)
+        """Zuteilung mit dem Zeitraum der Runde (gilt ab, Frist)."""
         return Assignment(
             id=assignment_id,
             round_id=round_id,
@@ -158,7 +159,8 @@ class RoundDraft:
             person_id=person_id,
             chance=result.chance,
             points=task.points,
-            due_at=dt.datetime.combine(due_day, self.started_at.timetz()),
+            due_at=self.context.window.end,
+            starts_at=self.context.window.start,
         )
 
     def _advance(self, task: Task, result: TaskDraw) -> DrawContext:

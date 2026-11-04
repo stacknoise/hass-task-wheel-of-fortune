@@ -14,7 +14,7 @@ import {
 const SNAPSHOT: Snapshot = {
   ...EMPTY_SNAPSHOT,
   persons: [{ id: 'p1', name: 'Anna', color: '#c05600' }, { id: 'p2' }],
-  tasks: [{ id: 't1', name: 'Bad', points: 3, due_days: 2, allowed: ['p1', 7] }, { id: 't2' }],
+  tasks: [{ id: 't1', name: 'Bad', points: 3, allowed: ['p1', 7] }, { id: 't2' }],
   schedules: [
     { id: 's1', name: 'Woche', archived: false },
     { id: 's2', name: 'Alt', archived: true },
@@ -45,9 +45,9 @@ describe('lookup', () => {
 
   it('liest Aufgaben und ignoriert fremde Werte in der Liste der erlaubten Personen', () => {
     const tasks = tasksById(SNAPSHOT);
-    expect(tasks.get('t1')).toMatchObject({ name: 'Bad', points: 3, dueDays: 2 });
+    expect(tasks.get('t1')).toMatchObject({ name: 'Bad', points: 3 });
     expect([...(tasks.get('t1')?.allowed ?? [])]).toEqual(['p1']);
-    expect(tasks.get('t2')).toMatchObject({ points: 0, dueDays: 0 });
+    expect(tasks.get('t2')).toMatchObject({ points: 0 });
   });
 
   it('bietet nur nicht archivierte Zeitpläne an', () => {

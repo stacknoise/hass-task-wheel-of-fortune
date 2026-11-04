@@ -17,6 +17,7 @@ export type {
   Snapshot,
   SpinReply,
   SpinRestReply,
+  DrawWindowRequest,
   TaskDrawWire,
   WireExclusion,
   NotifyTarget,
@@ -25,6 +26,7 @@ export type {
 } from './types.ts';
 export type {
   AbsenceWire,
+  DeadlineWire,
   FrequencyWire,
   PersonWire,
   ScheduleWire,

@@ -80,9 +80,9 @@ and restart Home Assistant.
 ## Quick start
 
 1. **People:** add everyone who takes part. Choose a color for the wheel and a load capacity (full, half or paused), and enter absences if there are any.
-2. **Tasks:** add your chores with the people who may do them, points for the effort, an optional deadline and how often they come up (every round, "at most 2× per month", a fixed interval, …).
-3. **Schedule:** create a schedule, for example "every Saturday at 10:00", choose its tasks and animations.
-4. **Draw:** open the *Draw* tab, press start and watch. Or let the schedule draw by itself and tell everyone with a push message.
+2. **Tasks:** add your chores with the people who may do them, points for the effort and how often they come up (every round, "at most 2× per month", a fixed interval, …).
+3. **Schedule:** create a schedule, for example "every Saturday at 10:00", choose its tasks and animations, and set the **deadline**: how long the tasks stay valid and from when (right away, after an offset, the next day or on a weekday at a time). Only people who are present at some point in that period can get a task.
+4. **Draw:** open the *Draw* tab, press start, say from when the tasks apply and how long people have, and watch. (For a scheduled plan you confirm that this draw replaces its next regular run.) Or let the schedule draw by itself and tell everyone with a push message.
 5. **Done?** Tick chores off in the *Overview* (or in the to-do list of the person). The statistics keep score and the next draw becomes fairer.
 
 ## Use it in Home Assistant

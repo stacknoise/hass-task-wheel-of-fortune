@@ -4,6 +4,7 @@ import datetime as dt
 from collections.abc import Iterable, Mapping, Sequence
 
 from custom_components.task_wheel.domain.availability.calendar import PersonAvailability
+from custom_components.task_wheel.domain.deadline import DeadlineWindow
 from custom_components.task_wheel.domain.draw.draft import RoundDraft
 from custom_components.task_wheel.domain.draw.engine import DrawEngine
 from custom_components.task_wheel.domain.draw.matching import _match
@@ -41,6 +42,7 @@ def make_context(
     last_holders: Mapping[str, str] | None = None,
     round_holders: frozenset[str] = frozenset(),
     now: dt.datetime = NOW,
+    window: DeadlineWindow | None = None,
 ) -> DrawContext:
     people = {p.id: p for p in persons}
     return DrawContext(
@@ -50,6 +52,7 @@ def make_context(
         points=points or {},
         last_holders=last_holders or {},
         fairness_window_days=WINDOW,
+        window=window or DeadlineWindow(now, now + dt.timedelta(days=7)),
         round_holders=round_holders,
     )
 

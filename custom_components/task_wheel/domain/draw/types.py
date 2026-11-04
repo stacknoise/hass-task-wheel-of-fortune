@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from ..availability.calendar import PersonAvailability
+from ..deadline import DeadlineWindow
 from ..enums import ExclusionReason
 from ..models import Person
 from ..types import PersonId, TaskId
@@ -25,7 +26,7 @@ class DrawContext:
 
     `points` sind die Punkte je Person im Fairness-Fenster; `last_holders` nennt je Aufgabe die
     Person der letzten Zuteilung; `round_holders` sind die Personen, die in dieser Runde schon
-    eine Aufgabe gezogen haben.
+    eine Aufgabe gezogen haben; `window` ist der Zeitraum, in dem die Aufgaben der Runde gelten.
     """
 
     now: dt.datetime
@@ -34,6 +35,7 @@ class DrawContext:
     points: Mapping[PersonId, float]
     last_holders: Mapping[TaskId, PersonId]
     fairness_window_days: int
+    window: DeadlineWindow
     round_holders: frozenset[PersonId] = frozenset()
 
 

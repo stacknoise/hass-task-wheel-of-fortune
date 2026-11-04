@@ -3,7 +3,7 @@ import type { TemplateResult } from 'lit';
 
 import { tasksOf } from '../api/index.ts';
 import type { ScheduleWire, Snapshot } from '../api/index.ts';
-import { describeTrigger, onChange } from '../components/index.ts';
+import { describeDeadline, describeTrigger, onChange } from '../components/index.ts';
 import type { ChipOption } from '../components/index.ts';
 import type { AnimationKind } from '../constants/index.ts';
 import type { TextKey } from '../i18n/index.ts';
@@ -15,8 +15,8 @@ import {
   SERVICE_DRAW,
   VIEW_TAGS,
 } from '../constants/index.ts';
-import { TRIGGER_BUILDERS, animationsOf } from '../state/index.ts';
-import type { TriggerWire } from '../state/index.ts';
+import { DEADLINE_DEFAULT, TRIGGER_BUILDERS, animationsOf } from '../state/index.ts';
+import type { DeadlineWire, TriggerWire } from '../state/index.ts';
 import { ConfigView } from './config-view.ts';
 import type { ConfigTexts } from './config-view.ts';
 import { defineOnce } from '../components/define.ts';
@@ -25,6 +25,7 @@ interface ScheduleDraft {
   readonly name: string;
   readonly trigger: TriggerWire;
   readonly task_ids: readonly string[];
+  readonly deadline: DeadlineWire;
   readonly enabled: boolean;
   readonly notify: boolean;
   readonly skip_absent: boolean;
@@ -64,6 +65,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
       name: '',
       trigger: TRIGGER_BUILDERS.manual(snapshot.now),
       task_ids: [],
+      deadline: DEADLINE_DEFAULT,
       enabled: true,
       notify: true,
       skip_absent: true,
@@ -79,6 +81,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
       slug: schedule.slug,
       trigger: schedule.trigger,
       task_ids: schedule.task_ids,
+      deadline: schedule.deadline,
       enabled: schedule.enabled,
       notify: schedule.notify,
       skip_absent: schedule.skip_absent,
@@ -92,6 +95,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
       name: draft.name,
       trigger: draft.trigger,
       task_ids: draft.task_ids,
+      deadline: draft.deadline,
       enabled: draft.enabled,
       notify: draft.notify,
       skip_absent: draft.skip_absent,
@@ -109,6 +113,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
     return html`
       <strong>${schedule.name}</strong>
       <div class="muted">${describeTrigger(schedule.trigger, this.language)}</div>
+      <div class="muted">${describeDeadline(schedule.deadline, this.language)}</div>
       <div class="muted">${schedule.task_ids.length} ${this.text('tab.tasks')} ${state}</div>
     `;
   }
@@ -131,6 +136,17 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
         })}
       ></tw-trigger-editor>
       ${this.fieldError('trigger') ? html`<div class="banner">${this.fieldError('trigger')}</div>` : nothing}
+      ${
+        draft.trigger.kind === 'manual'
+          ? html`<span class="muted">${this.text('deadline.manual_hint')}</span>`
+          : html`<tw-deadline-editor
+              .language=${this.language}
+              .value=${draft.deadline}
+              @tw-change=${onChange<DeadlineWire>((deadline) => {
+                this.patch({ deadline });
+              })}
+            ></tw-deadline-editor>`
+      }
       <tw-chip-select
         .label=${this.text('schedules.tasks')}
         .options=${tasks}

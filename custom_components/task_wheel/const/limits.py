@@ -50,11 +50,17 @@ REMIND_AFTER_DAYS_MAX: Final = 365
 # So weit schaut ein wiederkehrender Auslöser höchstens voraus (längster Rhythmus plus eine Woche)
 TRIGGER_LOOKAHEAD_DAYS: Final = EVERY_N_WEEKS_MAX * WEEKDAY_COUNT + WEEKDAY_COUNT
 
+# Frist am Zeitplan: Dauer und Versatz in ihrer Einheit; das ganze Fenster (Versatz, Wartezeit bis
+# zur Uhrzeit, Dauer) bleibt höchstens `DEADLINE_MAX_DAYS` Tage lang
+DEADLINE_DURATION_MIN: Final = 1
+DEADLINE_OFFSET_MIN: Final = 0
+DEADLINE_AMOUNT_MAX: Final = 10000
+DEADLINE_MAX_DAYS: Final = 365
+DAYS_PER_MONTH_MAX: Final = 31
+
 # Aufgaben und Häufigkeit
 POINTS_MIN: Final = 1
 POINTS_MAX: Final = 100
-DUE_DAYS_MIN: Final = 1
-DUE_DAYS_MAX: Final = 365
 PERIOD_COUNT_MIN: Final = 1
 PERIOD_COUNT_MAX: Final = 50
 PERIOD_EVERY_MIN: Final = 1
@@ -91,7 +97,7 @@ GRACE_HOURS_MAX: Final = 168
 HOURS_PER_DAY: Final = 24
 OPEN_ASSIGNMENT_SAFETY_DAYS: Final = 1
 OPEN_ASSIGNMENT_MAX_AGE_DAYS: Final = (
-    DUE_DAYS_MAX + GRACE_HOURS_MAX // HOURS_PER_DAY + OPEN_ASSIGNMENT_SAFETY_DAYS
+    DEADLINE_MAX_DAYS + GRACE_HOURS_MAX // HOURS_PER_DAY + OPEN_ASSIGNMENT_SAFETY_DAYS
 )
 
 # Verlauf, der für Häufigkeitsregeln und Fairness-Fenster einer Runde herangezogen wird
@@ -113,7 +119,7 @@ RECENT_HISTORY: Final = dt.timedelta(days=RECENT_HISTORY_DAYS)
 # Anwesenheit
 PREVIEW_WEEKS_MIN: Final = 1
 PREVIEW_WEEKS_MAX: Final = 12
-AVAILABILITY_WINDOW_MAX_DAYS: Final = DUE_DAYS_MAX + 1
+AVAILABILITY_WINDOW_MAX_DAYS: Final = DEADLINE_MAX_DAYS + 1
 
 # Statistik und Historie (KONZEPT §6)
 MONTHS_PER_YEAR: Final = 12

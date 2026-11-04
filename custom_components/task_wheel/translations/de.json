@@ -199,6 +199,9 @@
     "round_incomplete": {
       "message": "Die Runde ist noch nicht vollständig gezogen."
     },
+    "draw_replace_unconfirmed": {
+      "message": "Das Vorziehen des nächsten regulären Laufs muss bestätigt werden."
+    },
     "draw_too_soon": {
       "message": "Zwischen zwei Auslosungen desselben Zeitplans müssen mindestens {seconds} Sekunden liegen."
     },
