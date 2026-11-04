@@ -44,13 +44,34 @@ describe('Statistik', () => {
       '2 / 3',
       '3 / 3',
       '1 / 3',
+      '0 / 3',
     ]);
-    expect(cells.map((cell) => cell.getAttribute('data-state'))).toEqual(['under', 'met', 'under']);
+    expect(cells.map((cell) => cell.getAttribute('data-state'))).toEqual([
+      'under',
+      'met',
+      'under',
+      'under',
+    ]);
     expect(text(view)).toContain('max. 3× in 2 Monaten');
     const first = view.shadowRoot?.querySelector('tr:has(td.goal-cell) td');
     expect(first?.textContent).toContain('Bad putzen');
     const room = first?.querySelector('tw-room') as (HTMLElement & { name: string }) | null;
     expect(room?.name).toBe('Unbekannter Raum');
+  });
+
+  it('gruppiert Soll und Ist je Zeitplan in klappbaren Gruppen in einer Scrollbox', async () => {
+    const { view } = await mount();
+    await vi.waitFor(() => {
+      expect(view.shadowRoot?.querySelector('.goal-scroll')).not.toBeNull();
+    });
+    const groups = [
+      ...(view.shadowRoot?.querySelectorAll('.goal-scroll details.goal-group') ?? []),
+    ];
+    expect(groups.map((group) => group.querySelector('summary')?.textContent.trim())).toEqual([
+      'Wochenplan',
+      'Monatsplan',
+    ]);
+    expect(groups.map((group) => group.querySelectorAll('td.goal-cell').length)).toEqual([3, 1]);
   });
 
   it('zeigt in der Matrix leer, wo eine Person die Aufgabe nicht darf', async () => {

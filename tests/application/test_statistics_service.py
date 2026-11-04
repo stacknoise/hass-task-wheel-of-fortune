@@ -239,8 +239,10 @@ def test_report_holds_target_against_drawn_per_task():
     world = World()
     rule = MaxPerPeriod(count=2, period=Period.WEEK)
     world.config.put_task(f.task(id="t1", allowed=frozenset(PEOPLE), frequency=rule))
+    world.config.put_schedule(f.schedule(id="s1", task_ids=("t1",)))
     report = world.statistics.report(f.NOW)
     (goal,) = (g for g in report.goals if g.task_id == "t1")
-    assert (goal.target, goal.windows[0].assigned) == (2, 0)
+    assert (goal.schedule_id, goal.target, goal.windows[0].assigned) == ("s1", 2, 0)
     wire = to_json(report)["goals"]
+    assert wire[0]["schedule_id"] == "s1"
     assert wire[0]["windows"][0]["start"] == "2026-11-02"

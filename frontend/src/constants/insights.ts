@@ -58,6 +58,9 @@ export const ATTRIBUTE_BUSY = 'aria-busy';
 /** Deckkraft veralteter Zahlen, während neue geladen werden. */
 export const BUSY_OPACITY = 0.6;
 
+/** Höchsthöhe der Scrollbox für Soll und Ist (je Zeitplan aufklappbar), in Zeilenhöhen (em). */
+export const GOALS_SCROLL_MAX_HEIGHT = '28em';
+
 export const STATISTICS_WEEKS = 8;
 export const STATISTICS_RANGES = [
   { id: 'month', months: 1 },
