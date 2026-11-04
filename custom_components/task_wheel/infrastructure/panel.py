@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Final
 from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
 
-from ..const.defaults import INTEGRATION_NAME
+from ..const.defaults import GERMAN_LANGUAGE_PREFIX, INTEGRATION_NAME, INTEGRATION_NAME_DE
 from ..const.panel import (
     PANEL_DATA_KEY,
     PANEL_DIST_DIRECTORY,
@@ -42,6 +42,11 @@ async def async_register_static(hass: HomeAssistant, directory: Path = DIST_DIRE
     hass.data[PANEL_DATA_KEY] = f"{PANEL_STATIC_URL}/{bundle}"
 
 
+def sidebar_title(language: str) -> str:
+    """Titel der Seitenleiste je Systemsprache (Home Assistant übersetzt ihn nicht)."""
+    return INTEGRATION_NAME_DE if language.startswith(GERMAN_LANGUAGE_PREFIX) else INTEGRATION_NAME
+
+
 async def async_register_panel(hass: HomeAssistant, *, require_admin: bool) -> None:
     """Zeigt das Panel in der Seitenleiste; ohne Bundle geschieht nichts."""
     module_url = hass.data.get(PANEL_DATA_KEY)
@@ -52,7 +57,7 @@ async def async_register_panel(hass: HomeAssistant, *, require_admin: bool) -> N
         webcomponent_name=PANEL_ELEMENT_NAME,
         frontend_url_path=PANEL_URL_PATH,
         module_url=module_url,
-        sidebar_title=INTEGRATION_NAME,
+        sidebar_title=sidebar_title(hass.config.language),
         sidebar_icon=PANEL_ICON,
         require_admin=require_admin,
     )
