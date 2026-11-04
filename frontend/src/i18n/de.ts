@@ -222,6 +222,8 @@ export const de = {
   'error.draw_cancel_admin_only':
     'Nach dem ersten Ergebnis dürfen nur Administratoren die Auslosung abbrechen.',
   'error.ambiguous_reference': 'Mehrere Einträge passen, bitte die ID verwenden.',
+  'error.draw_nothing_due':
+    'Keine Aufgabe fällig: Alle haben ihre Höchstzahl im Zeitraum erreicht oder niemand ist verfügbar.',
   'error.draw_too_soon': 'Es gibt schon eine neuere Auslosung, bitte kurz warten.',
   'error.in_use': 'Wird noch verwendet (Zeitplan, erlaubte Person oder offene Zuteilung).',
   'error.notify_target_invalid': 'Ungültiges Benachrichtigungsziel.',

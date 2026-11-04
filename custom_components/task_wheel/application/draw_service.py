@@ -8,6 +8,7 @@ from ..const.keys import (
     ERR_CANCEL_ADMIN_ONLY,
     ERR_DRAW_STARTED,
     ERR_DRAW_TOO_SOON,
+    ERR_NOTHING_DUE,
     ERR_REPLACE_UNCONFIRMED,
     ERR_REPLACEMENT_INFEASIBLE,
     ERR_REPLACEMENT_INVALID,
@@ -102,8 +103,9 @@ class DrawService:
 
         Raises:
             NotFoundError: Den Zeitplan gibt es nicht.
-            DrawRejectedError: Der Zeitplan ist archiviert, (automatisch) pausiert, oder die letzte
-                Auslosung von Hand liegt noch keine `DRAW_MIN_INTERVAL` zurück.
+            DrawRejectedError: Der Zeitplan ist archiviert, (automatisch) pausiert, nichts ist
+                fällig (alle Aufgaben am Maximum ihrer Häufigkeit oder niemand verfügbar), oder die
+                letzte Auslosung von Hand liegt noch keine `DRAW_MIN_INTERVAL` zurück.
         """
         draft = self._start(schedule_id, origin, now, window)
         self.discard_for(schedule_id)
@@ -128,9 +130,9 @@ class DrawService:
 
         Raises:
             NotFoundError: Den Zeitplan gibt es nicht.
-            DrawRejectedError: Der Zeitplan ist archiviert, der vorgezogene reguläre Lauf ist nicht
-                bestätigt, oder eine schon gezogene Panel-Runde würde ersetzt und der Benutzer ist
-                kein Administrator.
+            DrawRejectedError: Der Zeitplan ist archiviert, nichts ist fällig, der vorgezogene
+                reguläre Lauf ist nicht bestätigt, oder eine schon gezogene Panel-Runde würde
+                ersetzt und der Benutzer ist kein Administrator.
             LimitReachedError: Es sind schon zu viele Panel-Runden offen.
         """
         self._purge(now)
@@ -301,6 +303,8 @@ class DrawService:
         tasks = limit_to_participants(
             due_tasks(self._config, schedule, recent, now), context, self._rng
         )
+        if not tasks:
+            raise DrawRejectedError(ERR_NOTHING_DUE)
         return RoundDraft(schedule_id, origin, now, context, tasks)
 
     def _finish(self, draft: RoundDraft, now: dt.datetime) -> Round:

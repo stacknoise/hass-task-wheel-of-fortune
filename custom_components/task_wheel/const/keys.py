@@ -107,6 +107,7 @@ ERR_REPLACE_UNCONFIRMED: Final = "draw_replace_unconfirmed"
 ERR_DRAW_STARTED: Final = "draw_already_started"
 ERR_REPLACEMENT_INVALID: Final = "draw_replacement_invalid"
 ERR_REPLACEMENT_INFEASIBLE: Final = "draw_replacement_infeasible"
+ERR_NOTHING_DUE: Final = "draw_nothing_due"
 
 # Fehlerschlüssel der Dienste
 ERR_NOT_LOADED: Final = "not_loaded"

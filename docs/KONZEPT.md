@@ -277,6 +277,8 @@ Die Häufigkeitsregel wirkt **vor** dem Kandidatenfilter auf Aufgabenebene:
 | `max_per_period(n, period, every)` | Anzahl Zuteilungen in den letzten `every` Kalendertagen/-wochen/-monaten (laufende Periode eingeschlossen) `< n`; `every` ist standardmäßig 1 |
 | `interval(d, tol)` | Tage seit letzter Zuteilung `≥ d − tol` |
 
+Es zählt die **Zuteilung** (verlost), nicht das Erledigen. Ist danach keine Aufgabe fällig (alle am Maximum ihrer Häufigkeit) oder kann niemand mitmachen, entsteht keine leere Runde: Die Auslosung wird mit `draw_nothing_due` abgelehnt. Die automatische Auslosung überspringt den Lauf mit einem Info-Eintrag im Log (ein einmaliger Plan bleibt offen, der nächste Lauf ist normal gesetzt), das Panel zeigt den Hinweis.
+
 ### 5.3 Fairness-Gewichtung
 
 Ziel: Wer im Fairness-Fenster (Standard 30 Tage) weniger Punkte im Verhältnis zu seinem fairen Anteil hatte,

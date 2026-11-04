@@ -1,6 +1,7 @@
 """ScheduleService: Zeitreise durch alle Zeitplanarten mit simulierten Zeitgebern."""
 
 import datetime as dt
+import logging
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -11,8 +12,13 @@ from custom_components.task_wheel.application.schedule_service import (
 )
 from custom_components.task_wheel.const import limits
 from custom_components.task_wheel.domain.deadline import DeadlineWindow
-from custom_components.task_wheel.domain.enums import AfterOnce, RoundOrigin
-from custom_components.task_wheel.domain.models import ManualTrigger, OnceTrigger, Recurring
+from custom_components.task_wheel.domain.enums import AfterOnce, Period, RoundOrigin
+from custom_components.task_wheel.domain.models import (
+    ManualTrigger,
+    MaxPerPeriod,
+    OnceTrigger,
+    Recurring,
+)
 
 from ..domain import factories as f
 from .world import DAY, World
@@ -136,6 +142,22 @@ def test_failed_automatic_draw_is_logged_and_the_next_timer_is_still_set(caplog)
     world.timers.fire(KEY)
     assert world.history.rounds == {} and KEY not in world.timers.timers
     assert "fehlgeschlagen" in caplog.text
+
+
+def test_automatic_draw_with_nothing_due_is_skipped_quietly(caplog):
+    world = World()
+    world.put_schedule(trigger=weekly(MON))
+    for task_id in ("t1", "t2"):
+        world.config.put_task(
+            f.task(id=task_id, frequency=MaxPerPeriod(count=1, period=Period.DAY))
+        )
+    caplog.set_level(logging.INFO)
+    planned = world.schedules.arm("s1", START)
+    world.draws.draw("s1", RoundOrigin.AUTO, planned)
+    _, callback = world.timers.timers[KEY]
+    callback(planned)
+    assert "übersprungen" in caplog.text and "fehlgeschlagen" not in caplog.text
+    assert len(world.history.rounds) == 1 and KEY in world.timers.timers
 
 
 def test_next_run_is_none_unless_the_schedule_is_active_and_automatic():

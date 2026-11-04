@@ -5,6 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- **Geändert:** Ist bei einer Auslosung keine Aufgabe fällig (alle haben ihr Maximum aus „höchstens n× in x Tagen/Wochen/Monaten“ erreicht, gezählt wird verlost, nicht erledigt) oder kann niemand mitmachen, entsteht keine leere Runde mehr: Das Panel und der Dienst zeigen „Keine Aufgabe fällig“, die automatische Auslosung überspringt den Lauf mit einem Log-Eintrag (ein einmaliger Plan bleibt offen)
 - **Geändert:** Die Frist kommt vom Zeitplan statt von der Aufgabe: Dauer in Stunden, Tagen, Wochen oder Monaten und Beginn (sofort, nach einem Versatz, am Folgetag oder am nächsten Wochentag zu einer Uhrzeit). Das Feld „Frist in Tagen“ der Aufgabe entfällt (keine Migration, die App ist unveröffentlicht)
 - **Geändert:** Machbarkeit: Eine Person ist Kandidat, wenn sie irgendwann im Fristfenster (von „gilt ab“ bis zur Frist) anwesend ist, nicht mehr nur am Tag der Auslosung; dazu gelten erlaubte Personen und Belastbarkeit wie bisher. Die Prüfung steht als wiederverwendbare Funktion bereit
 - **Geändert:** Manuelles Auslösen fragt „gilt ab“ und Frist ab (Pflicht); bei eingeplanten Zeitplänen muss bestätigt werden, dass die Auslosung den nächsten regulären Lauf vorzieht (er entfällt)
