@@ -3,7 +3,7 @@ import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 
-import type { ApiClient, DrawWindowRequest, TaskDrawWire } from '../api/index.ts';
+import type { ApiClient, TaskDrawWire } from '../api/index.ts';
 import '../components/index.ts';
 import type { TwStage, WheelSegment } from '../components/index.ts';
 import {
@@ -39,6 +39,7 @@ import type { AreaNames, DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '.
 import { roomTags } from './room.ts';
 import { drawSummary } from './draw-summary.ts';
 import { ReplaceFlow } from './draw-replace.ts';
+import { drawFailure, drawWindowDialog } from './draw-window.ts';
 import { drawStyles } from './draw-styles.ts';
 import { personRows } from './draw-rows.ts';
 import { defineOnce } from '../components/define.ts';
@@ -229,7 +230,7 @@ export class TwDrawView extends LitElement {
             ? this.#start(scheduleId, open)
             : this.#round(state, nameOf(schedules, state.scheduleId), tasks, persons)
         }
-        ${state.phase === DRAW_PHASE.error ? this.#failure(state) : nothing}
+        ${state.phase === DRAW_PHASE.error ? drawFailure(this.#text('draw.error'), this.#text('draw.error.code'), state.errorCode) : nothing}
       </section>
     `;
   }
@@ -278,47 +279,34 @@ export class TwDrawView extends LitElement {
     `;
   }
 
-  /** Fragt Gilt-ab und Frist ab (Pflicht) und beginnt danach die Runde. */
   #windowDialog(scheduleId: string): TemplateResult {
     const snapshot = this.#store.state?.snapshot;
-    const schedule = snapshot
-      ? drawableSchedules(snapshot).find((candidate) => candidate.id === scheduleId)
-      : undefined;
-    return html`<tw-draw-start-dialog
-      language=${this.language}
-      scheduleName=${schedule?.name ?? EMPTY_TEXT}
-      nextRun=${schedule?.nextRun ?? EMPTY_TEXT}
-      now=${snapshot?.now ?? EMPTY_TEXT}
-      @tw-confirm=${(event: Event) => {
-        event.stopPropagation();
+    return drawWindowDialog({
+      language: this.language,
+      schedule: this.#schedule(scheduleId),
+      now: snapshot?.now ?? EMPTY_TEXT,
+      onConfirm: (request) => {
         const kind = this.#pick(scheduleId);
         this.#kind = kind ?? this.#kind;
         this._starting = EMPTY_TEXT;
-        void this.#session?.begin(
-          scheduleId,
-          (event as CustomEvent<DrawWindowRequest>).detail,
-          kind !== undefined,
-        );
-      }}
-      @tw-cancel=${() => {
+        void this.#session?.begin(scheduleId, request, kind !== undefined);
+      },
+      onCancel: () => {
         this._starting = EMPTY_TEXT;
-      }}
-    ></tw-draw-start-dialog>`;
+      },
+    });
   }
 
   /** Wählt zufällig eine der Animationen, die der Zeitplan erlaubt; ohne Auswahl keine. */
   #pick(scheduleId: string): AnimationKind | undefined {
-    const snapshot = this.#store.state?.snapshot;
-    const schedule = snapshot
-      ? drawableSchedules(snapshot).find((candidate) => candidate.id === scheduleId)
-      : undefined;
-    return pickAnimation(schedule?.animations ?? DEFAULT_ANIMATIONS);
+    return pickAnimation(this.#schedule(scheduleId)?.animations ?? DEFAULT_ANIMATIONS);
   }
 
-  #failure(state: DrawState): TemplateResult {
-    return html`<p class="error" role="alert">
-      ${this.#text('draw.error')} (${this.#text('draw.error.code')}: ${state.errorCode})
-    </p>`;
+  #schedule(scheduleId: string): ScheduleInfo | undefined {
+    const snapshot = this.#store.state?.snapshot;
+    return snapshot
+      ? drawableSchedules(snapshot).find((item) => item.id === scheduleId)
+      : undefined;
   }
 
   #round(
