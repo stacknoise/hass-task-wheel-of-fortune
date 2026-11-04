@@ -34,8 +34,15 @@ class RecurringStrategy:
         if day.weekday() not in config.weekdays:
             return False
         if config.monthly:
-            return day.day <= WEEKDAY_COUNT
+            return self._is_first_selected_day(day)
         return self._week_index(day) % config.every_n_weeks == 0
+
+    def _is_first_selected_day(self, day: dt.date) -> bool:
+        """Ist `day` der erste gewählte Wochentag des Monats (ein Termin je Monat)."""
+        earlier = (day.replace(day=n) for n in range(1, min(day.day, WEEKDAY_COUNT + 1)))
+        return day.day <= WEEKDAY_COUNT and all(
+            d.weekday() not in self._config.weekdays for d in earlier
+        )
 
     def _week_index(self, day: dt.date) -> int:
         """Wochen seit der Ankerwoche (ohne Anker: 0)."""
