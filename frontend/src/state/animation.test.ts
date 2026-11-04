@@ -11,7 +11,7 @@ describe('Animationswahl', () => {
 
   it('übernimmt gültige Arten und fällt sonst auf das Glücksrad zurück', () => {
     expect(animationsOf(['slot', 'x', 'plinko'])).toEqual(['slot', 'plinko']);
-    expect(animationsOf([])).toEqual(['wheel']);
+    expect(animationsOf([])).toEqual([]);
     expect(animationsOf(undefined)).toEqual(['wheel']);
   });
 
@@ -20,7 +20,7 @@ describe('Animationswahl', () => {
     expect(pickAnimation(allowed, () => 0)).toBe('drum');
     expect(pickAnimation(allowed, () => 0.3)).toBe('slot');
     expect(pickAnimation(allowed, () => 0.99)).toBe('spotlight');
-    expect(pickAnimation([], () => 0.5)).toBe('wheel');
+    expect(pickAnimation([], () => 0.5)).toBeUndefined();
   });
 
   it('nimmt die einzige Art ohne Zufall', () => {

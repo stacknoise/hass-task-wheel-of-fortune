@@ -6,10 +6,12 @@ export function isAnimationKind(value: unknown): value is AnimationKind {
   return ANIMATION_KINDS.some((kind) => kind === value);
 }
 
-/** Die gültigen Arten aus der Antwort des Backends; ohne gültige gilt der Standard. */
+/**
+ * Die gültigen Arten aus der Antwort des Backends. Eine leere Liste heißt „keine Animation“;
+ * fehlt das Feld (älterer Zeitplan), gilt der Standard.
+ */
 export function animationsOf(value: unknown): readonly AnimationKind[] {
-  const kinds = Array.isArray(value) ? value.filter(isAnimationKind) : [];
-  return kinds.length > 0 ? kinds : DEFAULT_ANIMATIONS;
+  return Array.isArray(value) ? value.filter(isAnimationKind) : DEFAULT_ANIMATIONS;
 }
 
 /**
@@ -19,7 +21,6 @@ export function animationsOf(value: unknown): readonly AnimationKind[] {
 export function pickAnimation(
   allowed: readonly AnimationKind[],
   random: () => number = Math.random,
-): AnimationKind {
-  const pool = allowed.length > 0 ? allowed : DEFAULT_ANIMATIONS;
-  return pool[Math.floor(random() * pool.length)] ?? DEFAULT_ANIMATIONS[0] ?? 'wheel';
+): AnimationKind | undefined {
+  return allowed[Math.floor(random() * allowed.length)];
 }

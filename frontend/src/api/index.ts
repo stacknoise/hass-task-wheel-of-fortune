@@ -4,6 +4,7 @@ export type {
   CollectionDelta,
   Collections,
   Delta,
+  AreaOption,
   HassApi,
   HassConnection,
   PanelRoundWire,

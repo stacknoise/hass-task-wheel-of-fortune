@@ -32,6 +32,7 @@ const SNAPSHOT: Snapshot = {
       respect_absence: true,
       swap_allowed: true,
       min_load: 'paused',
+      area_id: null,
     },
   ],
   schedules: [
@@ -280,6 +281,13 @@ describe('Aufgaben', () => {
     for (const toggle of editor.querySelectorAll('tw-toggle')) {
       say(toggle, false);
     }
+    const area = q(editor, 'tw-select');
+    expect((area['options'] as readonly { id: string }[]).map((option) => option.id)).toEqual([
+      '',
+      'bad',
+      'kueche',
+    ]);
+    say(area, 'bad');
     await click(view, '.buttons .primary');
     await vi.waitFor(() => {
       expect(hass.messages.at(-1)?.type).toBe('task_wheel/task/create');
@@ -294,6 +302,7 @@ describe('Aufgaben', () => {
       respect_absence: false,
       swap_allowed: false,
       min_load: 'paused',
+      area_id: 'bad',
     });
   });
 

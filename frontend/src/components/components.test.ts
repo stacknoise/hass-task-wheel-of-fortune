@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { EVENT_CHIP_SELECT } from '../constants/index.ts';
-import type { TwAvatar, TwBadge, TwChips } from './index.ts';
+import type { TwAvatar, TwBadge, TwChips, TwRoom } from './index.ts';
 import './index.ts';
 
 async function mount<T extends HTMLElement & { updateComplete: Promise<boolean> }>(
@@ -33,6 +33,17 @@ describe('tw-badge', () => {
     const badge = await mount<TwBadge>('tw-badge', { tone: 'success' });
     expect(badge.getAttribute('tone')).toBe('success');
     expect(badge.shadowRoot?.querySelector('slot')).not.toBeNull();
+  });
+});
+
+describe('tw-room', () => {
+  it('zeigt den Raum', async () => {
+    const room = await mount<TwRoom>('tw-room', { name: 'Küche' });
+    expect(room.shadowRoot?.textContent).toContain('Küche');
+  });
+  it('zeigt ohne Namen nichts', async () => {
+    const room = await mount<TwRoom>('tw-room', {});
+    expect(room.shadowRoot?.textContent).not.toContain('⌂');
   });
 });
 

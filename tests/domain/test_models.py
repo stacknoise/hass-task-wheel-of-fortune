@@ -141,10 +141,11 @@ def test_load_factors():
         (lambda: f.task(points=0), "points"),
         (lambda: f.task(due_days=366), "due_days"),
         (lambda: f.task(allowed=frozenset({""})), "allowed"),
+        (lambda: f.task(area_id=""), "area_id"),
+        (lambda: f.task(area_id="x" * (limits.AREA_ID_MAX_LENGTH + 1)), "area_id"),
         (lambda: f.schedule(task_ids=()), "task_ids"),
         (lambda: f.schedule(task_ids=("t1", "t1")), "task_ids"),
         (lambda: f.schedule(slug=""), "slug"),
-        (lambda: f.schedule(animations=()), "animations"),
         (lambda: f.schedule(animations=(AnimationKind.DRUM, AnimationKind.DRUM)), "animations"),
         (lambda: Swap(from_person_id="p1", to_person_id="p1", at=f.NOW), "to_person_id"),
         (lambda: Swap(from_person_id="p1", to_person_id="p2", at=dt.datetime(2026, 1, 1)), "at"),
@@ -187,6 +188,11 @@ def test_schedule_animations_default_to_wheel_and_roundtrip():
     chosen = f.schedule(animations=(AnimationKind.SLOT, AnimationKind.PLINKO))
     assert Schedule.from_dict(chosen.to_dict()) == chosen
     assert chosen.to_dict()["animations"] == ["slot", "plinko"]
+
+
+def test_schedule_allows_no_animation():
+    plain = f.schedule(animations=())
+    assert Schedule.from_dict(plain.to_dict()).animations == ()
 
 
 def test_schedule_rejects_unknown_animation():
@@ -276,3 +282,10 @@ def test_kind_must_match_class():
     with pytest.raises(UnknownKindError):
         EveryRound.from_dict({KEY_KIND: "interval"})
     assert EveryRound.from_dict({}) == EveryRound()
+
+
+def test_task_area_is_optional_and_roundtrips():
+    legacy = {k: v for k, v in f.task().to_dict().items() if k != "area_id"}
+    assert Task.from_dict(legacy).area_id is None
+    placed = f.task(area_id="kueche")
+    assert Task.from_dict(placed.to_dict()).area_id == "kueche"

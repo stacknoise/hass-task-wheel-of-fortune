@@ -26,6 +26,7 @@ export const EMPTY_SNAPSHOT: Snapshot = {
       respect_absence: true,
       swap_allowed: true,
       min_load: 'paused',
+      area_id: null,
     },
   ],
   schedules: [],
@@ -45,6 +46,7 @@ export class FakeHass implements HassApi {
     'notify.kueche': {},
     'light.flur': { attributes: { friendly_name: 'Flur' } },
   };
+  readonly areas = { kueche: { name: 'Küche' }, bad: { name: 'Bad' } };
   readonly services = { notify: { send_message: {}, mobile_app_ben: {}, kueche: {} } };
   /** Die vollständigen Nachrichten (mit Feldern), in der Reihenfolge der Aufrufe. */
   readonly messages: { type: string; [field: string]: unknown }[] = [];

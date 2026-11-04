@@ -18,7 +18,8 @@ import type { StatisticsRangeId } from '../constants/index.ts';
 import { formatNumber, formatPercent } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
-import { AsyncValue, StoreController, indexById } from '../state/index.ts';
+import { AsyncValue, StoreController, areaNames, indexById } from '../state/index.ts';
+import { roomTag } from './room.ts';
 import { pointBars, weeklyChart } from './statistics-charts.ts';
 import { barRows, matrixRows } from './statistics-model.ts';
 import { defineOnce } from '../components/define.ts';
@@ -270,6 +271,7 @@ export class TwStatisticsView extends LitElement {
     tasks: readonly TaskObject[],
     persons: readonly PersonObject[],
   ): TemplateResult {
+    const areas = areaNames(this.#store.client?.areas() ?? []);
     return html`<section class="card">
       <h2>${this.#text('statistics.matrix')}</h2>
       <p class="muted">${this.#text('statistics.matrixHint')}</p>
@@ -287,7 +289,10 @@ export class TwStatisticsView extends LitElement {
               (row) => row.taskId,
               (row) =>
                 html`<tr>
-                  <td>${row.name ?? this.#text('common.unknownTask')}</td>
+                  <td>
+                    ${row.name ?? this.#text('common.unknownTask')}
+                    ${roomTag(areas, row.areaId, this.#text('common.unknownArea'))}
+                  </td>
                   ${row.cells.map(
                     (cell) =>
                       html`<td class="cell" data-level=${cell.level} style="--level: ${cell.level}">

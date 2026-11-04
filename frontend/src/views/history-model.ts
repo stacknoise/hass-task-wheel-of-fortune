@@ -8,11 +8,14 @@ import type {
 import { DONE_STATUSES, PERCENT } from '../constants/index.ts';
 import { formatDateTime } from '../i18n/format.ts';
 import type { TextKey } from '../i18n/index.ts';
+import { roomOf } from '../state/areas.ts';
+import type { AreaNames } from '../state/areas.ts';
 
 export interface HistoryLookups {
   readonly persons: ReadonlyMap<string, PersonObject>;
   readonly tasks: ReadonlyMap<string, TaskObject>;
   readonly schedules: ReadonlyMap<string, ScheduleObject>;
+  readonly areas: AreaNames;
 }
 
 type Translate = (key: TextKey) => string;
@@ -29,6 +32,7 @@ const HEADER_KEYS: readonly TextKey[] = [
   'history.origin',
   'history.startedAt',
   'history.task',
+  'history.area',
   'history.person',
   'history.chance',
   'history.points',
@@ -62,6 +66,11 @@ export function csvRows(
       originText(round.origin, text),
       formatDateTime(round.started_at, language),
       lookups.tasks.get(assignment.task_id)?.name ?? text('common.unknownTask'),
+      roomOf(
+        lookups.areas,
+        lookups.tasks.get(assignment.task_id)?.area_id,
+        text('common.unknownArea'),
+      ),
       lookups.persons.get(assignment.person_id)?.name ?? text('common.unknownPerson'),
       String(Math.round(assignment.chance * PERCENT)),
       String(assignment.points),

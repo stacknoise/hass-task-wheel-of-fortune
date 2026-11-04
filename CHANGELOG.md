@@ -5,6 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Aufgaben lassen sich einem Home-Assistant-Raum (Bereich) zuweisen; der Raum erscheint auf der Aufgabenkarte, in Übersicht, Auslosung, Historie (auch im CSV) und Statistik
 - Titel auf Deutsch und Englisch: Seitenleiste und Panel-Überschrift heißen bei deutscher Systemsprache „Aufgaben-Glücksrad“, sonst „Task Wheel of Fortune“; HACS und Integrationsname bleiben englisch
 - Panel für Tablet und Smartphone optimiert, vor allem die Auslosung (Bühne oben, kompaktes Layout, Menü-Knopf, Touch-Größen)
 - README erklärt Fairness und fairen Anteil (Belastbarkeit, Anwesenheitstage, Punktefaktoren) mit Beispielen

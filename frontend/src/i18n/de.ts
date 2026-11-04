@@ -83,6 +83,8 @@ export const de = {
   'tasks.min_load.paused': 'Egal',
   'tasks.min_load.half': 'Mindestens halbe Last',
   'tasks.min_load.full': 'Nur volle Last',
+  'tasks.area': 'Raum',
+  'tasks.area.none': 'Kein Raum',
   'tasks.points_short': 'Pkt.',
   'tasks.days_short': 'Tage',
   'frequency.every_round': 'Jede Runde',
@@ -111,7 +113,7 @@ export const de = {
   'schedules.skip_absent': 'Abwesende überspringen',
   'schedules.animations': 'Animationen der Auslosung',
   'schedules.animations.hint':
-    'Bei mehreren Varianten wird bei jeder Auslosung zufällig eine gewählt.',
+    'Bei mehreren Varianten wird bei jeder Auslosung zufällig eine gewählt. Ohne Auswahl wird sofort ausgelost und die Aufgabenliste gezeigt.',
   'animation.wheel': 'Glücksrad',
   'animation.drum': 'Lostrommel',
   'animation.slot': 'Slot-Machine',
