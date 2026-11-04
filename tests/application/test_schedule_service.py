@@ -9,6 +9,7 @@ from custom_components.task_wheel.application.schedule_service import (
     TIMER_REMINDERS,
     timer_key,
 )
+from custom_components.task_wheel.const import limits
 from custom_components.task_wheel.domain.enums import AfterOnce, RoundOrigin
 from custom_components.task_wheel.domain.models import ManualTrigger, OnceTrigger, Recurring
 
@@ -185,3 +186,44 @@ def test_manual_draw_resets_the_reminder_clock():
     assert world.events.reminders == []
     world.schedules.check_reminders(START + 13 * DAY)
     assert [days for _, days in world.events.reminders] == [7]
+
+
+def test_failed_draw_leaves_a_once_schedule_untouched(monkeypatch: pytest.MonkeyPatch) -> None:
+    world = World()
+    when = dt.datetime(2026, 12, 19, 10, tzinfo=BERLIN)
+    world.put_schedule(trigger=OnceTrigger(at=when, after=AfterOnce.DELETE))
+    world.schedules.arm("s1", START)
+    monkeypatch.setattr(limits, "MAX_STORED_ROUNDS", 0)
+    world.timers.fire(KEY)
+    assert not world.history.rounds
+    assert world.config.schedules["s1"].trigger == OnceTrigger(at=when, after=AfterOnce.DELETE)
+
+
+def test_unexpected_error_still_arms_the_next_slot(monkeypatch: pytest.MonkeyPatch) -> None:
+    world = World()
+    world.put_schedule(trigger=weekly(MON))
+    planned = world.schedules.arm("s1", START)
+
+    def boom(*_args: object) -> None:
+        raise KeyError
+
+    monkeypatch.setattr(world.draws, "draw", boom)
+    with pytest.raises(KeyError):
+        world.timers.fire(KEY)
+    assert world.timers.timers[KEY][0] == planned + 7 * DAY
+
+
+def test_reminder_check_arms_the_next_check_even_if_reporting_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    world = World()
+    world.put_schedule(trigger=ManualTrigger(remind_after_days=7))
+    world.draws.draw("s1", RoundOrigin.MANUAL, START)
+
+    def boom(*_args: object) -> None:
+        raise KeyError
+
+    monkeypatch.setattr(world.events, "reminder_due", boom)
+    with pytest.raises(KeyError):
+        world.schedules.check_reminders(START + 7 * DAY)
+    assert TIMER_REMINDERS in world.timers.timers

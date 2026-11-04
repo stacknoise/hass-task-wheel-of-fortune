@@ -162,6 +162,21 @@ async def test_maintenance_marks_missed_purges_and_rearms() -> None:
     assert (at.hour, at > f.NOW) == (MAINTENANCE_HOUR, True)
 
 
+def test_maintenance_arms_the_next_run_even_if_marking_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    world = EventWorld()
+    service, timers, _spawned = _maintenance(world)
+
+    def boom(*_args: object) -> None:
+        raise KeyError
+
+    monkeypatch.setattr(world.assignments, "mark_missed", boom)
+    with pytest.raises(KeyError):
+        service.run(f.NOW)
+    assert TIMER_MAINTENANCE in timers.timers
+
+
 async def test_maintenance_keeps_old_rounds_with_open_assignments() -> None:
     world = EventWorld()
     started = f.NOW - 800 * DAY

@@ -97,12 +97,12 @@ class ScheduleService:
             self._timers.schedule(TIMER_REMINDERS, at, self.check_reminders)
 
     def check_reminders(self, now: dt.datetime) -> None:
-        """Meldet alle fälligen Erinnerungen und plant die nächste Prüfung."""
+        """Plant die nächste Prüfung (zuerst, damit ein Fehler sie nicht verliert) und meldet."""
+        self.arm_reminders(now)
         for schedule in self._config.schedules.values():
             age = reminder_age(schedule, self._last_drawn(schedule.id), now)
             if age is not None:
                 self._events.reminder_due(schedule, age)
-        self.arm_reminders(now)
 
     def _last_drawn(self, schedule_id: ScheduleId) -> dt.datetime | None:
         """Beginn der jüngsten Runde des Zeitplans (jeder Herkunft)."""
@@ -112,19 +112,26 @@ class ScheduleService:
         return max(starts, default=None)
 
     def _on_fire(self, schedule_id: ScheduleId, planned: dt.datetime, fired: dt.datetime) -> None:
-        """Zeitgeber ausgelöst: auslosen, einmalige Pläne abschließen, nächsten Zeitgeber setzen."""
+        """Zeitgeber ausgelöst: auslosen, einmalige Pläne abschließen, immer neu setzen."""
         now = max(fired, planned)
         schedule = self._config.schedules.get(schedule_id)
         if schedule is None:
             return
         try:
-            self._draws.draw(schedule_id, RoundOrigin.AUTO, now)
+            self._draw_and_finish(schedule, now)
+        finally:
+            self.arm(schedule_id, now)
+
+    def _draw_and_finish(self, schedule: Schedule, now: dt.datetime) -> None:
+        """Löst aus; nur nach einer gelungenen Auslosung gilt ein einmaliger Plan als erledigt."""
+        try:
+            self._draws.draw(schedule.id, RoundOrigin.AUTO, now)
         except TaskWheelError:
             _LOGGER.warning(
                 "Automatische Auslosung fehlgeschlagen: %s", schedule.slug, exc_info=True
             )
+            return
         self._finish_once(schedule)
-        self.arm(schedule_id, now)
 
     def _finish_once(self, schedule: Schedule) -> None:
         """Wendet an, was nach einem einmaligen Zeitplan gilt (behalten, archivieren, löschen)."""

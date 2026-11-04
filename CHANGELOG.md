@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Behoben: Ein einmaliger Zeitplan wird nicht mehr archiviert oder gelöscht, wenn seine Auslosung fehlgeschlagen ist
+- Behoben: Zeitplan-, Erinnerungs- und Wartungs-Zeitgeber werden auch nach einem unerwarteten Fehler im Rückruf neu gesetzt
 - Die Aufbewahrung des Verlaufs beträgt mindestens 373 Tage (Standard 373): Häufigkeitsregeln, Fairness-Fenster und offene Zuteilungen brauchen diesen Verlauf. Zu kurze gespeicherte Werte werden beim Start angehoben; Runden mit offenen Zuteilungen werden nie aufgeräumt
 - Behoben: Eine Zuteilung mit längster Frist plus Kulanzzeit wurde bei Sommerzeit-Wechsel nie als verpasst markiert
 
