@@ -5,6 +5,10 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [0.2.0] – 2026-11-04
 
+- Hinzufügen und Bearbeiten von Personen, Aufgaben und Zeitplänen öffnen in Popups (auf dem Smartphone Vollbild); Zahlenfelder (+/−) stehen paarweise nebeneinander, die Abwesenheiten scrollen ab zwei Einträgen
+- Aufgaben haben eine Mindest-Belastbarkeit (egal, halb, voll); wer darunter liegt, kommt für die Aufgabe nicht ins Rad und kann sie auch nicht per Tausch übernehmen
+- 16 Personenfarben (nach Farbton sortiert, zwei Reihen à 8) statt 8
+- Hat ein Zeitplan keine Animation gewählt, wird die Runde sofort ausgelost und die Aufgabenliste erscheint direkt
 - Der Name ist überall englisch: „Task Wheel of Fortune“ in HACS und in der Integrationsliste (Version 0.1.1 wurde nicht veröffentlicht, ihre Änderungen sind hier enthalten)
 - Drei neue Auslosungs-Animationen: Rubbellose (selbst rubbeln oder per Münze, beim Gewinnerlos ist die Runde fertig), Eilmeldung (Zeitung mit Gerüchten und Stempel) und Oscar-Verleihung („Und die Aufgabe geht an …“)
 - Die neuen Animationen zeigen keine Gewinnchancen; Oscar-Kuvert (der Zettel ragt nicht mehr heraus) und Zentrierung von Eilmeldung und Rubbellosen nachgebessert

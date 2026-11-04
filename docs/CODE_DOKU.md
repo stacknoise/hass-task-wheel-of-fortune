@@ -1,6 +1,6 @@
-# Code-Dokumentation: Aufgaben-Glücksrad
+# Code-Dokumentation: Task Wheel of Fortune
 
-Stand: 2026-11-03 · Code-Version: 0.0.1 (bis AP-18) · Vorlage: Code-Dokus „Detailed Energy Card“ und
+Stand: 2026-11-04 · Code-Version: 0.2.0 · Vorlage: Code-Dokus „Detailed Energy Card“ und
 „HASS Test Data Creator“
 
 Dieses Dokument erfasst den Code mit seinen **Metriken** und **Abhängigkeiten** und protokolliert **jede
@@ -77,8 +77,9 @@ flowchart TD
 
 ## 3. Modulübersicht
 
-Geplante Module (Zielbild aus KONZEPT.md §3.3). Metriken werden ab AP-01 vom Generator eingetragen; bis dahin
-steht „–“.
+Module (Zielbild aus KONZEPT.md §3.3, Stand 0.2.0). Die Metriken je Modul, Typ und Methode stehen nicht in dieser
+Tabelle (dort „–“), sondern in der generierten Explorer-Seite (siehe oben); sie werden bei jeder Codeänderung neu
+erzeugt und als Artefakt veröffentlicht.
 
 | Modul | Schicht | Verantwortung | Nutzt | LOC | CC | MI | Ca | Ce | I | Test |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -143,8 +144,8 @@ steht „–“.
 | `frontend/src/i18n/` | Panel | Texte de/en (`insights.*` für Übersicht, Historie, Statistik), Platzhalter, Formatierung (`format.ts`) | – | – | – | – | – | – | – | – |
 | `frontend/src/api/` | Panel | WebSocket-Client, typisierte Sicht auf Objekte und Antworten (`models.ts`) | constants | – | – | – | – | – | – | – |
 | `frontend/src/state/` | Panel | Store, Kontext, `AsyncValue` (asynchron geladener Wert einer Ansicht; auch die Anwesenheitsvorschau der Personen-Ansicht), `indexById`; keine Fachregeln (die liegen im Backend) | api | – | – | – | – | – | – | – |
-| `frontend/src/components/` | Panel | `tw-tab-bar`, `tw-stat`, `tw-chips`, `tw-avatar`, `tw-badge`, gemeinsame Stile; `tw-wheel` folgt in AP-16 | constants, i18n | – | – | – | – | – | – | – |
-| `frontend/src/views/` | Panel | 7 Views; fertig: Übersicht (`overview*.ts`), Historie (`history*.ts`, `csv.ts`, `download.ts`), Statistik (`statistics*.ts`); Modelle (reine Funktionen) getrennt von den Elementen | state, components | – | – | – | – | – | – | – |
+| `frontend/src/components/` | Panel | `tw-tab-bar`, `tw-stat`, `tw-chips`, `tw-avatar`, `tw-badge`, gemeinsame Stile; Auslosungs-Animationen als `StageElement`-Strategien (`tw-wheel`, Lostrommel, Slot-Machine, Plinko, Scheinwerfer, Rubbellose, Eilmeldung, Oscar) mit `tw-stage` als Fabrik, `tw-dialog` (Popups für Hinzufügen/Bearbeiten/Bestätigen), `tw-room`, Formularbausteine | constants, i18n | – | – | – | – | – | – | – |
+| `frontend/src/views/` | Panel | 7 Views, alle fertig: Übersicht (`overview*.ts`), Historie (`history*.ts`, `csv.ts`, `download.ts`), Statistik (`statistics*.ts`); Modelle (reine Funktionen) getrennt von den Elementen | state, components | – | – | – | – | – | – | – |
 | `e2e/` | Test | Playwright-End-to-End-Test gegen eine echte HA-Instanz (Einrichtung über Onboarding und Config Flow, Auslosung → Tausch → Erledigen, Ladezeit des Panels) | – | – | – | – | – | – | – | – |
 | `tests/performance/` | Test | Lasttest an den Obergrenzen mit Zeitbudgets | websocket-Harness, Factories | – | – | – | – | – | – | – |
 
@@ -178,9 +179,9 @@ Verhalten auffällt.
 | Historie, größte Seite (200 Einträge) | < 250 ms | ca. 24 ms |
 | Anwesenheitsvorschau (20 Regeln, 12 Wochen) | < 50 ms | ca. 0,3 ms |
 | Panel laden bis zur ersten Ansicht (Chromium, lokale HA-Instanz, `e2e/`) | < 5 s | ca. 1,2 s |
-| Bundle gzip | ≤ 120 kB | 47,8 kB (`npm run bundle-budget`) |
+| Bundle gzip | ≤ 120 kB | 66,9 kB (`npm run bundle-budget`, Stand 0.2.0; AP-18: 47,8 kB) |
 
-Testabdeckung nach AP-18: Python 98,9 % (1115 Tests), Frontend 97,2 % Anweisungen (133 Tests); End-to-End-Test mit
+Testabdeckung: Python 98,9 % (1115 Tests, Stand AP-18, seitdem nicht neu gemessen, die CI prüft die Schwellwerte), Frontend 97,9 % Anweisungen (288 Tests, Stand 0.2.0); End-to-End-Test mit
 Playwright (`e2e/`, CI-Job `e2e`): Auslosung, Tausch und Erledigen gegen eine echte Home-Assistant-Instanz.
 
 ---|---|---|
@@ -263,6 +264,7 @@ Module, Art der Änderung, Auswirkung auf Metriken und Abhängigkeiten. CI prüf
 | 2026-11-04 | 0.0.1 | – | `domain/models.py`, `const/limits.py`, `frontend/src/{api/{client,types,models,config-types,index,fake-hass.testing},state/{areas,lookup,index},components/{room,index},views/{room,tasks,overview,overview-assignments,draw,draw-summary,history,history-model,statistics,statistics-model},constants/panel,i18n/*,task-wheel-panel}.ts`, Tests, `README.md`, `docs/KONZEPT.md`, `docs/CODE_DOKU.md` | neu: Raum je Aufgabe (`Task.area_id`, optional, Länge geprüft über `AREA_ID_MAX_LENGTH`; keine Migration, Standard leer); Panel liest die Bereiche aus `hass.areas` (`ApiClient.areas`, `useHass` hält das `hass`-Objekt aktuell), `roomOf`/`areaNames` lösen Kennungen auf (gelöschter Bereich = „Unbekannter Raum“); neue Komponente `tw-room` und Hilfsfunktion `roomTag`; Auswahl „Raum“ im Aufgaben-Popup; Raum in Aufgabenkarte, Übersicht (Zuteilungen, Aktivität), Auslosung (Liste, Bühne, Ergebnis, Abschluss), Historie (Tabelle, CSV-Spalte) und Statistik (Matrix); `drawSummary` aus `draw.ts` nach `draw-summary.ts` ausgelagert (Modulgrenze 500 LOC) | Python +3 Tests; Frontend +5 Tests, `draw.ts` LOC −; neue Abhängigkeiten `views` → `state/areas`, `views/room`, `components/room` |
 | 2026-11-04 | 0.0.1 | Personenfarben | `frontend/src/constants/forms.ts`, `docs/CODE_DOKU.md` | geändert: `PERSON_COLORS` von 8 auf 16 Farben erweitert (Rosa, Indigo, Violett, Smaragd, Oliv, Braun, Gold, Weinrot); mittlere Sättigung, damit sie im Glücksrad sowie im hellen und dunklen Theme lesbar bleiben; keine neue Logik, Auswahl bricht bereits um | Keine Metrikänderung, keine neue Abhängigkeit |
 | 2026-11-04 | 0.0.1 | Personenfarben (Anordnung) | `frontend/src/constants/forms.ts`, `frontend/src/views/persons.ts`, `docs/CODE_DOKU.md` | geändert (UI-Rückmeldung): `PERSON_COLORS` nach Farbton sortiert (Verlauf Rot → Weinrot, Grau zuletzt); Farbauswahl als Raster mit `PERSON_COLOR_COLUMNS` = 8 Spalten, also zwei volle Reihen statt 13+3; Felder wachsen nie über 32 px und bleiben quadratisch (`aspect-ratio`). Neue Konstante `DEFAULT_PERSON_COLOR` ersetzt `PERSON_COLORS[0]` als Standardfarbe | Keine neue Abhängigkeit |
+| 2026-11-04 | 0.2.0 | Dokumentationsabgleich | `README.md`, `CHANGELOG.md`, `docs/{KONZEPT,ARBEITSPAKETE,CODE_DOKU}.md` | geändert: Dokumente auf Stand 0.2.0 gebracht (Animationen ohne Chance-Anzeige, acht Animationsarten, Titel je Sprache, Nachträge #60–#75, Kopf und Modulübersicht der Code-Doku, Messwerte Bundle 66,9 kB und 288 Frontend-Tests); kein Code | keine |
 
 Vorlage für neue Einträge:
 

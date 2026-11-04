@@ -1,6 +1,6 @@
-# Arbeitspakete: Aufgaben-Glücksrad
+# Arbeitspakete: Task Wheel of Fortune
 
-Stand: 2026-11-03 · Grundlage: [KONZEPT.md](KONZEPT.md)
+Stand: 2026-11-04 (AP-00 bis AP-19 umgesetzt, Nachträge unten) · Grundlage: [KONZEPT.md](KONZEPT.md)
 
 Größen: **S** ≈ bis 1 Tag · **M** ≈ 2–3 Tage · **L** ≈ 4–5 Tage (Richtwerte für eine Person).
 Jedes Paket gilt erst als fertig, wenn die **gemeinsame Definition of Done** erfüllt ist.
@@ -233,3 +233,22 @@ Parallelisierbar: AP-04/05 nach AP-02; AP-11/12/13 nach AP-09; AP-15/16/17 nach 
 - Brands-Eintrag (Symbol) vorbereiten
 
 **Fertig, wenn:** Installation als benutzerdefiniertes HACS-Repository in einer frischen HA-Instanz erfolgreich.
+
+---
+
+## Nachträge nach AP-19 (Version 0.2.0)
+
+Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. Details je Änderung stehen im Änderungsprotokoll in [CODE_DOKU.md](CODE_DOKU.md) §4.
+
+| PR | Inhalt |
+|---|---|
+| #60, #66, #70 | Hinzufügen und Bearbeiten in Popups; Zahlenfelder (+/−) paarweise nebeneinander; Abwesenheiten-Scrollbereich mit höchstens zwei sichtbaren Einträgen |
+| #61 | Mindest-Belastbarkeit je Aufgabe (egal, halb, voll) |
+| #62 | Panel für Tablet und Smartphone optimiert, vor allem die Auslosung |
+| #65 | Titel je Sprache („Aufgaben-Glücksrad“ / „Task Wheel of Fortune“), HACS englisch |
+| #67 | Zeitplan ohne gewählte Animation: Runde sofort auslosen, danach Aufgabenliste |
+| #68, #71 | 16 Personenfarben, nach Farbton sortiert in zwei Reihen à 8 |
+| #69 | Aufgaben einem Home-Assistant-Raum zuweisen |
+| #72, #73, #75 | Animationen Rubbellose, Eilmeldung, Oscar-Verleihung (ohne Chance-Anzeige) samt Nachbesserungen |
+| #63, #64 | README: Fairness erklärt, komplett auf Englisch |
+| #74 | Version 0.2.0 |
