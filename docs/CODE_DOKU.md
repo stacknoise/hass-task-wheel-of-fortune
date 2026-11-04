@@ -205,6 +205,7 @@ Module, Art der Änderung, Auswirkung auf Metriken und Abhängigkeiten. CI prüf
 
 | Datum | Version | AP | Module | Änderung | Metriken / Abhängigkeiten |
 |---|---|---|---|---|---|
+| 2026-11-04 | 0.4.1 | BE-10 (Teil) | application/views | Literal "schedule_id" in panel_round_view durch WS_FIELD_SCHEDULE_ID ersetzt | übrige Literale offen |
 | 2026-11-04 | 0.4.1 | BE-15 | application/schedule_service | arm_all holt beim Start einmalige Termine nach, die in der Ausfallzeit lagen und noch keine Runde haben (danach gilt after wie sonst) | Erinnerung mit 'zuletzt erinnert am' nicht umgesetzt |
 | 2026-11-04 | 0.4.1 | BE-28 | application/round_updates, application/assignment_service | Neues store_assignments: je Runde ein Speichern und ein Fortschreiben der Aggregate; mark_missed nutzt es | Verpasst-Lauf: 1 Speichern je Runde statt je Zuteilung |
 | 2026-11-04 | 0.4.1 | BE-08 | domain/serialization, infrastructure/repository/history_store | Feldnamen je Datenklasse einmal ermittelt; HistoryStore kodiert beim Speichern nur geänderte Runden neu (Zwischenspeicher je Runde) | Speichern O(geänderte Runden) |

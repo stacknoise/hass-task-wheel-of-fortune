@@ -74,7 +74,7 @@ def panel_round_view(panel_round: PanelRound) -> Json:
     draft = panel_round.draft
     return {
         KEY_ID: panel_round.id,
-        "schedule_id": draft.schedule_id,
+        WS_FIELD_SCHEDULE_ID: draft.schedule_id,
         WIRE_EXPIRES_AT: panel_round.expires_at.isoformat(),
         WIRE_RESULTS: to_wire(draft.results),
         WIRE_PENDING: [task.id for task in draft.pending],
