@@ -256,6 +256,7 @@ Module, Art der Änderung, Auswirkung auf Metriken und Abhängigkeiten. CI prüf
 | 2026-11-03 | 0.0.1 | – | `README.md`, `CHANGELOG.md`, `docs/CODE_DOKU.md` | geändert: README-Abschnitt „Fairness und fairer Anteil“ mit Formeln und Beispielen (Anwesenheitstage, Belastbarkeit, Punktefaktoren, Gewichtung beim Auslosen, Fairness-Index); kein Code | keine |
 | 2026-11-03 | 0.0.1 | – | `README.md`, `CHANGELOG.md`, `docs/CODE_DOKU.md` | geändert: README komplett auf Englisch übersetzt, Abschnitt „Installation via HACS“ steht ganz oben; kein Code | keine |
 | 2026-11-04 | 0.0.1 | Personenfarben | `frontend/src/constants/forms.ts`, `docs/CODE_DOKU.md` | geändert: `PERSON_COLORS` von 8 auf 16 Farben erweitert (Rosa, Indigo, Violett, Smaragd, Oliv, Braun, Gold, Weinrot); mittlere Sättigung, damit sie im Glücksrad sowie im hellen und dunklen Theme lesbar bleiben; keine neue Logik, Auswahl bricht bereits um | Keine Metrikänderung, keine neue Abhängigkeit |
+| 2026-11-04 | 0.0.1 | Personenfarben (Anordnung) | `frontend/src/constants/forms.ts`, `frontend/src/views/persons.ts`, `docs/CODE_DOKU.md` | geändert (UI-Rückmeldung): `PERSON_COLORS` nach Farbton sortiert (Verlauf Rot → Weinrot, Grau zuletzt); Farbauswahl als Raster mit `PERSON_COLOR_COLUMNS` = 8 Spalten, also zwei volle Reihen statt 13+3; Felder wachsen nie über 32 px und bleiben quadratisch (`aspect-ratio`). Neue Konstante `DEFAULT_PERSON_COLOR` ersetzt `PERSON_COLORS[0]` als Standardfarbe | Keine neue Abhängigkeit |
 
 Vorlage für neue Einträge:
 

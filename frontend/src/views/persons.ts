@@ -1,4 +1,4 @@
-import { css, html } from 'lit';
+import { css, html, unsafeCSS } from 'lit';
 import type { TemplateResult } from 'lit';
 
 import { tasksOf } from '../api/index.ts';
@@ -10,6 +10,8 @@ import {
   FORM_LIMITS,
   LOADS,
   NOTIFY_PREFIX,
+  DEFAULT_PERSON_COLOR,
+  PERSON_COLOR_COLUMNS,
   PERSON_COLORS,
   VIEW_TAGS,
 } from '../constants/index.ts';
@@ -50,13 +52,13 @@ export class PersonsView extends ConfigView<PersonWire, PersonDraft> {
         margin-left: var(--tw-space-s);
       }
       .swatches {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(${unsafeCSS(PERSON_COLOR_COLUMNS)}, minmax(0, 32px));
         gap: var(--tw-space-s);
       }
       .swatch {
-        width: 32px;
-        height: 32px;
+        width: 100%;
+        aspect-ratio: 1;
         border-radius: 50%;
         border: 2px solid transparent;
         cursor: pointer;
@@ -88,7 +90,7 @@ export class PersonsView extends ConfigView<PersonWire, PersonDraft> {
   protected blank(): PersonDraft {
     return {
       name: '',
-      color: PERSON_COLORS[0],
+      color: DEFAULT_PERSON_COLOR,
       load: DEFAULT_LOAD,
       absences: [],
       notifyTarget: '',
