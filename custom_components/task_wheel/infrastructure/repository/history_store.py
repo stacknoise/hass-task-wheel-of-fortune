@@ -1,6 +1,7 @@
 """`HistoryStore`: Runden, Zuteilungen und Monatsaggregate samt Indizes im Speicher."""
 
 import datetime as dt
+import logging
 from collections.abc import Iterator, Mapping
 from types import MappingProxyType
 
@@ -18,6 +19,8 @@ from ...domain.models import Assignment, Round
 from ...domain.serialization import as_mapping, model_of, tuple_of
 from ...domain.types import AssignmentId, PersonId, RoundId, TaskId
 from .storage import StoreLike, models_by_id, read_root, read_section
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def _decode_aggregates(value: object) -> dict[str, object]:
@@ -74,7 +77,7 @@ class HistoryStore:
         """Legt eine Runde an oder ersetzt sie samt Zuteilungen und führt die Indizes nach."""
         previous = self._rounds.get(round_.id)
         if previous is None and len(self._rounds) >= limits.MAX_STORED_ROUNDS:
-            raise LimitReachedError(RESOURCE_ROUND, limits.MAX_STORED_ROUNDS)
+            self._evict_oldest_closed()
         if previous is not None:
             self._unindex(previous)
         needs_sort = self._breaks_order(round_, previous)
@@ -149,6 +152,19 @@ class HistoryStore:
         if expired:
             self._changed()
         return len(expired)
+
+    def _evict_oldest_closed(self) -> None:
+        """Macht Platz: die älteste Runde ohne offene Zuteilungen entfällt (Aggregate bleiben).
+
+        Raises:
+            LimitReachedError: Alle gespeicherten Runden haben noch offene Zuteilungen.
+        """
+        oldest = next((r for r in self._rounds.values() if not _has_pending(r)), None)
+        if oldest is None:
+            raise LimitReachedError(RESOURCE_ROUND, limits.MAX_STORED_ROUNDS)
+        _LOGGER.warning("Obergrenze für Runden erreicht, älteste abgeschlossene Runde entfällt")
+        self._unindex(oldest)
+        del self._rounds[oldest.id]
 
     def _breaks_order(self, round_: Round, previous: Round | None) -> bool:
         """Prüft, ob das Einfügen die Sortierung nach Rundenbeginn stören würde."""

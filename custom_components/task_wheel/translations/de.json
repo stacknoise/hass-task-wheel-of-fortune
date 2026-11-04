@@ -176,6 +176,9 @@
     "round_incomplete": {
       "message": "Die Runde ist noch nicht vollständig gezogen."
     },
+    "draw_too_soon": {
+      "message": "Zwischen zwei Auslosungen desselben Zeitplans müssen mindestens {seconds} Sekunden liegen."
+    },
     "round_complete": {
       "message": "Die Runde ist bereits vollständig gezogen."
     },

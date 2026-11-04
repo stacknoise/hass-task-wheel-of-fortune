@@ -49,6 +49,7 @@ def test_swap_to_unknown_person(api: Api) -> None:
 
 
 def test_panel_round_runs_step_by_step(api: Api) -> None:
+    api.advance(minutes=1)
     begun = api.result("draw/begin", schedule_id="s1")
     rid = begun["id"]
     assert begun["pending_task_ids"] == ["t1", "t2"]

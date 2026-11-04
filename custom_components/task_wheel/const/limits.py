@@ -13,6 +13,9 @@ MAX_ABSENCES_PER_PERSON: Final = 20
 MAX_TASKS_PER_SCHEDULE: Final = MAX_TASKS
 MAX_ASSIGNMENTS_PER_ROUND: Final = MAX_TASKS
 MAX_STORED_ROUNDS: Final = 20000
+# Mindestabstand zwischen zwei von Hand oder per Dienst ausgelösten Runden desselben Zeitplans
+# (Schutz davor, den Verlauf zu fluten); automatische Auslosungen sind nicht betroffen
+DRAW_MIN_INTERVAL_SECONDS: Final = 30
 
 # Zeichenketten
 NAME_MIN_LENGTH: Final = 1
@@ -97,6 +100,7 @@ RETENTION_MIN: Final = max(RECENT_HISTORY_DAYS, OPEN_ASSIGNMENT_MAX_AGE_DAYS)
 # Zeitspannen
 ONE_DAY: Final = dt.timedelta(days=1)
 ONE_WEEK: Final = dt.timedelta(days=WEEKDAY_COUNT)
+DRAW_MIN_INTERVAL: Final = dt.timedelta(seconds=DRAW_MIN_INTERVAL_SECONDS)
 OPEN_ASSIGNMENT_MAX_AGE: Final = dt.timedelta(days=OPEN_ASSIGNMENT_MAX_AGE_DAYS)
 RECENT_HISTORY: Final = dt.timedelta(days=RECENT_HISTORY_DAYS)
 

@@ -176,6 +176,9 @@
     "round_incomplete": {
       "message": "The round has not been fully drawn yet."
     },
+    "draw_too_soon": {
+      "message": "Please wait at least {seconds} seconds between two draws of the same schedule."
+    },
     "round_complete": {
       "message": "The round has already been fully drawn."
     },

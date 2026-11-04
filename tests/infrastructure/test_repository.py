@@ -235,10 +235,26 @@ async def test_history_empty_load_and_corrupt() -> None:
 def test_history_round_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(limits, "MAX_STORED_ROUNDS", 1)
     repo = HistoryStore(MemoryStore())
-    repo.put_round(_round("r1", f.NOW))  # type: ignore[arg-type]
-    repo.put_round(_round("r1", f.NOW))  # type: ignore[arg-type]
+    open_item = f.assignment(id="a1", round_id="r1")
+    repo.put_round(_round("r1", f.NOW, open_item))  # type: ignore[arg-type]
+    repo.put_round(_round("r1", f.NOW, open_item))  # type: ignore[arg-type]
     with pytest.raises(LimitReachedError):
         repo.put_round(_round("r2", f.NOW))  # type: ignore[arg-type]
+
+
+def test_history_round_limit_evicts_the_oldest_closed_round(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.setattr(limits, "MAX_STORED_ROUNDS", 2)
+    repo = HistoryStore(MemoryStore())
+    open_item = f.assignment(id="a1", round_id="r1")
+    closed = f.assignment(id="a2", round_id="r2", status=AssignmentStatus.MISSED)
+    repo.put_round(_round("r1", f.NOW - 2 * DAY, open_item))  # type: ignore[arg-type]
+    repo.put_round(_round("r2", f.NOW - DAY, closed))  # type: ignore[arg-type]
+    repo.put_round(_round("r3", f.NOW))  # type: ignore[arg-type]
+    assert list(repo.rounds) == ["r1", "r3"]
+    assert repo.get_assignment("a2") is None
+    assert "Obergrenze für Runden" in caplog.text
 
 
 async def test_history_too_many_rounds_on_load(monkeypatch: pytest.MonkeyPatch) -> None:

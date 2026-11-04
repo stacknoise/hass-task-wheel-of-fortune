@@ -420,7 +420,7 @@ setzen das durch.
 | XSS im Panel | Lit-Templates escapen; keine HTML-Zeichenketten aus Daten; Farben werden gegen `^#[0-9a-f]{6}$` validiert |
 | CSV-Injection | Entschärfen beim Export |
 | Benachrichtigungsdienst als Hebel | Ziel nur aus vorhandenen `notify`-Entitäten/-Diensten wählbar, Prüfung beim Speichern und beim Senden |
-| Ressourcenverbrauch | Obergrenzen für Personen, Aufgaben, Zeitpläne, offene Panel-Runden; Historie wird nach Aufbewahrungsfrist gekürzt |
+| Ressourcenverbrauch | Obergrenzen für Personen, Aufgaben, Zeitpläne, offene Panel-Runden; Historie wird nach Aufbewahrungsfrist gekürzt (Runden mit offenen Zuteilungen bleiben); von Hand oder per Dienst ausgelöste Runden desselben Zeitplans brauchen 30 Sekunden Abstand (`DRAW_MIN_INTERVAL_SECONDS`), bei Erreichen von `MAX_STORED_ROUNDS` entfällt die älteste abgeschlossene Runde (Aggregate bleiben) |
 | Abhängigkeiten | Keine Python-Laufzeitabhängigkeiten außer HA; npm-Abhängigkeiten gepinnt, `npm audit` in CI, Dependabot |
 
 ### 8.1 Ergebnis des Security-Reviews (AP-18)

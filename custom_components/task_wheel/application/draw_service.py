@@ -5,12 +5,16 @@ from dataclasses import dataclass, replace
 
 from ..const.defaults import PANEL_ROUND_TIMEOUT_MINUTES
 from ..const.keys import (
+    ERR_DRAW_TOO_SOON,
     ERR_SCHEDULE_ARCHIVED,
     ERR_SCHEDULE_DISABLED,
+    PH_SECONDS,
     RESOURCE_PANEL_ROUND,
+    RESOURCE_PERSON,
     RESOURCE_SCHEDULE,
+    RESOURCE_TASK,
 )
-from ..const.limits import MAX_OPEN_PANEL_ROUNDS
+from ..const.limits import DRAW_MIN_INTERVAL, DRAW_MIN_INTERVAL_SECONDS, MAX_OPEN_PANEL_ROUNDS
 from ..domain.draw.draft import RoundDraft
 from ..domain.draw.engine import DrawEngine
 from ..domain.draw.types import RandomSource, TaskDraw
@@ -72,7 +76,8 @@ class DrawService:
 
         Raises:
             NotFoundError: Den Zeitplan gibt es nicht.
-            DrawRejectedError: Der Zeitplan ist archiviert, oder (automatisch) pausiert.
+            DrawRejectedError: Der Zeitplan ist archiviert, (automatisch) pausiert, oder die letzte
+                Auslosung von Hand liegt noch keine `DRAW_MIN_INTERVAL` zurück.
         """
         draft = self._start(schedule_id, origin, now)
         self.discard_for(schedule_id)
@@ -128,11 +133,17 @@ class DrawService:
         """Schließt die vollständig gezogene Panel-Runde ab und speichert sie.
 
         Raises:
-            NotFoundError: Die Panel-Runde gibt es nicht (mehr).
-            DrawRejectedError: Es sind noch nicht alle Aufgaben gezogen (die Runde bleibt offen).
+            NotFoundError: Die Panel-Runde gibt es nicht (mehr), oder eine gezogene Person, Aufgabe
+                oder der Zeitplan wurde inzwischen gelöscht (die Panel-Runde entfällt dann).
+            DrawRejectedError: Es sind noch nicht alle Aufgaben gezogen oder der Mindestabstand zur
+                letzten Auslosung ist noch nicht erreicht (die Runde bleibt offen).
         """
         panel_round = self.get(panel_round_id, now)
-        round_ = self._finish(panel_round.draft, now)
+        try:
+            round_ = self._finish(panel_round.draft, now)
+        except NotFoundError:
+            del self._panel_rounds[panel_round_id]
+            raise
         del self._panel_rounds[panel_round_id]
         return round_
 
@@ -174,10 +185,32 @@ class DrawService:
     def _finish(self, draft: RoundDraft, now: dt.datetime) -> Round:
         """Macht aus dem Stand die Runde, speichert sie und meldet sie."""
         round_ = draft.to_round(self._new_id(), self._new_id, now)
+        self._ensure_known(round_)
+        self._ensure_not_flooded(draft, now)
         self._history.put_round(round_)
         self._recorder.record_round(round_)
         self._events.round_drawn(round_)
         return round_
+
+    def _ensure_known(self, round_: Round) -> None:
+        """Zeitplan, Personen und Aufgaben der Runde gibt es noch (sie wurden nicht gelöscht)."""
+        known = (
+            (RESOURCE_SCHEDULE, self._config.schedules, (round_.schedule_id,)),
+            (RESOURCE_PERSON, self._config.persons, (a.person_id for a in round_.assignments)),
+            (RESOURCE_TASK, self._config.tasks, (a.task_id for a in round_.assignments)),
+        )
+        for resource, items, ids in known:
+            for item_id in ids:
+                if item_id not in items:
+                    raise NotFoundError(resource, item_id)
+
+    def _ensure_not_flooded(self, draft: RoundDraft, now: dt.datetime) -> None:
+        """Von Hand oder per Dienst ausgelöste Runden eines Zeitplans haben einen Mindestabstand."""
+        if draft.origin is RoundOrigin.AUTO:
+            return
+        recent = self._history.rounds_since(now - DRAW_MIN_INTERVAL)
+        if any(_is_manual_for(r, draft.schedule_id) for r in recent):
+            raise DrawRejectedError(ERR_DRAW_TOO_SOON, {PH_SECONDS: DRAW_MIN_INTERVAL_SECONDS})
 
     def _store(self, panel_round: PanelRound) -> PanelRound:
         """Merkt sich die Panel-Runde."""
@@ -197,3 +230,8 @@ class DrawService:
         expired = [key for key, item in self._panel_rounds.items() if item.expires_at <= now]
         for key in expired:
             del self._panel_rounds[key]
+
+
+def _is_manual_for(round_: Round, schedule_id: ScheduleId) -> bool:
+    """Ob die Runde zum Zeitplan gehört und nicht automatisch ausgelost wurde."""
+    return round_.schedule_id == schedule_id and round_.origin is not RoundOrigin.AUTO

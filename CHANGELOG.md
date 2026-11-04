@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Eine Auslosung im Panel schlägt fehl (und entfällt), wenn die gezogene Person, Aufgabe oder der Zeitplan inzwischen gelöscht wurde, statt unsichtbare Zuteilungen zu erzeugen
+- Von Hand oder per Dienst ausgelöste Runden desselben Zeitplans brauchen 30 Sekunden Abstand; ist die Obergrenze gespeicherter Runden erreicht, entfällt die älteste abgeschlossene Runde statt alle weiteren Auslosungen zu blockieren
 - Intern: doppelte Konstanten und doppelter Code zusammengeführt (Ressourcennamen, Statusmengen, Zeitspannen, Wochenanfang, offene Zuteilungen im Snapshot)
 - Behoben: Ein einmaliger Zeitplan wird nicht mehr archiviert oder gelöscht, wenn seine Auslosung fehlgeschlagen ist
 - Behoben: Zeitplan-, Erinnerungs- und Wartungs-Zeitgeber werden auch nach einem unerwarteten Fehler im Rückruf neu gesetzt

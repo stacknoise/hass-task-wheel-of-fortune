@@ -98,6 +98,7 @@ ERR_SCHEDULE_DISABLED: Final = "schedule_disabled"
 ERR_SCHEDULE_ARCHIVED: Final = "schedule_archived"
 ERR_ROUND_INCOMPLETE: Final = "round_incomplete"
 ERR_ROUND_COMPLETE: Final = "round_complete"
+ERR_DRAW_TOO_SOON: Final = "draw_too_soon"
 
 # Fehlerschlüssel der Dienste
 ERR_NOT_LOADED: Final = "not_loaded"
@@ -162,6 +163,9 @@ RESOURCE_ASSIGNMENT: Final = "assignment"
 RESOURCE_ROUND: Final = "round"
 RESOURCE_PANEL_ROUND: Final = "panel_round"
 RESOURCE_SUBSCRIPTION: Final = "subscription"
+
+# Platzhalter in Fehlermeldungen
+PH_SECONDS: Final = "seconds"
 
 # Fehlerschlüssel der Benachrichtigung
 ERR_NOTIFY_TARGET: Final = "notify_target_invalid"
