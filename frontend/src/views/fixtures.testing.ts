@@ -20,7 +20,14 @@ export const SNAPSHOT: Snapshot = {
     { id: 'p3', name: 'Cara', color: '#137333', load: 'paused', jokers_left: 1 },
   ],
   tasks: [
-    { id: 't1', name: 'Bad putzen', allowed: ['p1', 'p2', 'p3'], points: 5, swap_allowed: true },
+    {
+      id: 't1',
+      name: 'Bad putzen',
+      allowed: ['p1', 'p2', 'p3'],
+      points: 5,
+      swap_allowed: true,
+      area_ids: ['gone'],
+    },
     { id: 't2', name: 'Müll', allowed: ['p1'], points: 2, swap_allowed: false },
   ],
   schedules: [

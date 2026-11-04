@@ -47,6 +47,10 @@ describe('Statistik', () => {
     ]);
     expect(cells.map((cell) => cell.getAttribute('data-state'))).toEqual(['under', 'met', 'under']);
     expect(text(view)).toContain('max. 3× in 2 Monaten');
+    const first = view.shadowRoot?.querySelector('tr:has(td.goal-cell) td');
+    expect(first?.textContent).toContain('Bad putzen');
+    const room = first?.querySelector('tw-room') as (HTMLElement & { name: string }) | null;
+    expect(room?.name).toBe('Unbekannter Raum');
   });
 
   it('zeigt in der Matrix leer, wo eine Person die Aufgabe nicht darf', async () => {

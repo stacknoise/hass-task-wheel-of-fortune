@@ -3,7 +3,13 @@ import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 
 import { modelsOf } from '../api/index.ts';
-import type { GoalWindow, PersonObject, StatisticsReport, TaskObject } from '../api/index.ts';
+import type {
+  GoalWindow,
+  PersonObject,
+  StatisticsReport,
+  TaskGoal,
+  TaskObject,
+} from '../api/index.ts';
 import { baseStyles, tokenStyles, viewStyles } from '../components/index.ts';
 import type { ChipItem } from '../components/index.ts';
 import '../components/index.ts';
@@ -19,6 +25,7 @@ import { formatNumber, formatPercent, formatShortDate } from '../i18n/format.ts'
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
 import { AsyncValue, StoreController, areaNames, indexById } from '../state/index.ts';
+import type { AreaNames, FrequencyWire } from '../state/index.ts';
 import { describeFrequency } from '../components/summaries.ts';
 import { roomTags } from './room.ts';
 import { pointBars, weeklyChart } from './statistics-charts.ts';
@@ -256,6 +263,7 @@ export class TwStatisticsView extends LitElement {
   /** Eigene Box: Soll gegen tatsächlich verloste Anzahl je Aufgabe im Fenster ihrer Regel. */
   #goalsCard(report: StatisticsReport, tasks: readonly TaskObject[]): TemplateResult {
     const taskById = indexById(tasks);
+    const areas = areaNames(this.#store.client?.areas() ?? []);
     const windows = Math.max(...report.goals.map((goal) => goal.windows.length));
     return html`<section class="card">
       <h2>${this.#text('statistics.goals')}</h2>
@@ -279,27 +287,29 @@ export class TwStatisticsView extends LitElement {
             ${repeat(
               report.goals,
               (goal) => goal.task_id,
-              (goal) =>
-                html`<tr>
-                  <td>${taskById.get(goal.task_id)?.name ?? this.#text('common.unknownTask')}</td>
-                  <td>
-                    ${describeFrequency(
-                      {
-                        kind: 'max_per_period',
-                        count: goal.target,
-                        period: goal.period,
-                        every: goal.every,
-                      },
-                      this.language,
-                    )}
-                  </td>
-                  ${goal.windows.map((window) => this.#goalCell(goal.target, window))}
-                </tr>`,
+              (goal) => this.#goalRow(goal, taskById.get(goal.task_id), areas),
             )}
           </tbody>
         </table>
       </div>
     </section>`;
+  }
+
+  #goalRow(goal: TaskGoal, task: TaskObject | undefined, areas: AreaNames): TemplateResult {
+    const rule: FrequencyWire = {
+      kind: 'max_per_period',
+      count: goal.target,
+      period: goal.period,
+      every: goal.every,
+    };
+    return html`<tr>
+      <td>
+        ${task?.name ?? this.#text('common.unknownTask')}
+        ${roomTags(areas, task?.area_ids, this.#text('common.unknownArea'))}
+      </td>
+      <td>${describeFrequency(rule, this.language)}</td>
+      ${goal.windows.map((window) => this.#goalCell(goal.target, window))}
+    </tr>`;
   }
 
   #goalCell(target: number, window: GoalWindow): TemplateResult {
