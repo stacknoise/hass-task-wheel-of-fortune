@@ -6,6 +6,7 @@ import {
   DEFAULT_EVERY_N_WEEKS,
   DEFAULT_INTERVAL_DAYS,
   DEFAULT_PERIOD_COUNT,
+  DEFAULT_PERIOD_EVERY,
   DEFAULT_RECURRING_WEEKDAYS,
   DEFAULT_RHYTHM_CHANGE_DAY,
   DEFAULT_RHYTHM_CYCLE,
@@ -32,7 +33,12 @@ export const ABSENCE_BUILDERS: Readonly<Record<AbsenceKind, (today: string) => A
 
 export const FREQUENCY_BUILDERS: Readonly<Record<FrequencyKind, () => FrequencyWire>> = {
   every_round: () => ({ kind: 'every_round' }),
-  max_per_period: () => ({ kind: 'max_per_period', count: DEFAULT_PERIOD_COUNT, period: 'week' }),
+  max_per_period: () => ({
+    kind: 'max_per_period',
+    count: DEFAULT_PERIOD_COUNT,
+    period: 'week',
+    every: DEFAULT_PERIOD_EVERY,
+  }),
   interval: () => ({ kind: 'interval', days: DEFAULT_INTERVAL_DAYS, tolerance: 0 }),
 };
 

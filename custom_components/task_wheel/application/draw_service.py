@@ -14,7 +14,7 @@ from ..domain.enums import RoundOrigin
 from ..domain.errors import DrawRejectedError, LimitReachedError, NotFoundError
 from ..domain.models import Round, Schedule
 from ..domain.types import ScheduleId
-from .draw_inputs import build_context, due_tasks, recent_assignments
+from .draw_inputs import build_context, due_tasks, limit_to_participants, recent_assignments
 from .ids import new_id
 from .protocols import (
     AssignmentRecorder,
@@ -162,8 +162,10 @@ class DrawService:
         """Liest Konfiguration und Verlauf einmal und bildet den Ausgangsstand der Runde."""
         schedule = self._schedule(schedule_id, origin)
         recent = recent_assignments(self._history, now)
-        tasks = due_tasks(self._config, schedule, recent, now)
         context = build_context(self._config, self._history, recent, now)
+        tasks = limit_to_participants(
+            due_tasks(self._config, schedule, recent, now), context, self._rng
+        )
         return RoundDraft(schedule_id, origin, now, context, tasks)
 
     def _finish(self, draft: RoundDraft, now: dt.datetime) -> Round:

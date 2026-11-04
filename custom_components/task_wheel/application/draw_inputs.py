@@ -6,7 +6,8 @@ from dataclasses import replace
 
 from ..const.limits import RECENT_HISTORY_DAYS
 from ..domain.availability.calendar import PersonAvailability
-from ..domain.draw.types import DrawContext
+from ..domain.draw.types import DrawContext, RandomSource
+from ..domain.enums import Load
 from ..domain.models import Assignment, Schedule, Settings, Task
 from ..domain.rules.factory import FrequencyRuleFactory
 from ..domain.status import counted_points
@@ -63,6 +64,41 @@ def due_tasks(
     if schedule.skip_absent:
         return tuple(due)
     return tuple(replace(task, respect_absence=False) for task in due)
+
+
+def _seats(tasks: tuple[Task, ...], context: DrawContext) -> int:
+    """Personen, die in dieser Runde eine Aufgabe übernehmen können (nicht pausiert, anwesend)."""
+    start = context.now.date()
+    end = start + max(task.due_days for task in tasks) * _DAY
+    ignores_absence = not all(task.respect_absence for task in tasks)
+    return sum(
+        1
+        for pid, person in context.persons.items()
+        if person.load is not Load.PAUSED
+        and (ignores_absence or context.availability[pid].present_in_window(start, end))
+    )
+
+
+def _random_pick(tasks: tuple[Task, ...], rng: RandomSource, count: int) -> tuple[Task, ...]:
+    """`count` zufällig gewählte Aufgaben (gleiche Chance), in der Reihenfolge des Zeitplans."""
+    keys = [rng.random() for _ in tasks]
+    ranked = sorted(range(len(tasks)), key=keys.__getitem__)
+    return tuple(tasks[i] for i in sorted(ranked[:count]))
+
+
+def limit_to_participants(
+    tasks: tuple[Task, ...], context: DrawContext, rng: RandomSource
+) -> tuple[Task, ...]:
+    """Beschränkt die Runde auf so viele Aufgaben, wie Personen mitmachen können.
+
+    Jede Person bekommt je Runde höchstens eine Aufgabe; weitere Aufgaben wären nur "nicht
+    verteilbar". Gibt es mehr Aufgaben als Plätze, wird zufällig gewählt (nicht vorhersehbar);
+    die Reihenfolge der Auswahl bleibt die des Zeitplans.
+    """
+    if not tasks:
+        return tasks
+    seats = _seats(tasks, context)
+    return tasks if seats >= len(tasks) else _random_pick(tasks, rng, seats)
 
 
 def build_context(

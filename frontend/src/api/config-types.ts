@@ -39,6 +39,7 @@ export interface MaxPerPeriodWire {
   readonly kind: Extract<FrequencyKind, 'max_per_period'>;
   readonly count: number;
   readonly period: Period;
+  readonly every: number;
 }
 
 export interface IntervalWire {

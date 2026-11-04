@@ -53,6 +53,7 @@ export const FORM_LIMITS = {
   points: { min: 1, max: 100 },
   dueDays: { min: 1, max: 365 },
   periodCount: { min: 1, max: 50 },
+  periodEvery: { min: 1, max: 12 },
   intervalDays: { min: 1, max: 365 },
   rhythmCycle: { min: 1, max: 8 },
   everyNWeeks: { min: 1, max: 52 },
@@ -86,6 +87,7 @@ export const DEFAULT_TASK_POINTS = 1;
 export const DEFAULT_TASK_DUE_DAYS = 7;
 export const DEFAULT_INTERVAL_DAYS = 7;
 export const DEFAULT_PERIOD_COUNT = 1;
+export const DEFAULT_PERIOD_EVERY = 1;
 export const DEFAULT_RHYTHM_CYCLE = 2;
 export const DEFAULT_RHYTHM_CHANGE_DAY: Weekday = 4;
 export const DEFAULT_ABSENT_WEEKDAYS: readonly Weekday[] = [5, 6];

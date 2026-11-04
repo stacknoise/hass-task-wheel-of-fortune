@@ -30,6 +30,7 @@ from custom_components.task_wheel.domain.models import (
     Task,
     WeeklyDaysAbsence,
     WeekRhythmAbsence,
+    decode_frequency,
     decode_trigger,
 )
 
@@ -110,6 +111,8 @@ def test_load_factors():
             "change_weekday",
         ),
         (lambda: MaxPerPeriod(count=0, period=Period.DAY), "count"),
+        (lambda: MaxPerPeriod(count=1, period=Period.DAY, every=0), "every"),
+        (lambda: MaxPerPeriod(count=1, period=Period.DAY, every=13), "every"),
         (lambda: Interval(days=0), "days"),
         (lambda: Interval(days=3, tolerance=3), "tolerance"),
         (lambda: Recurring(weekdays=frozenset(), time=dt.time(8)), "weekdays"),
@@ -298,3 +301,9 @@ def test_task_areas_are_optional_and_roundtrip():
 def test_task_areas_drop_duplicates_and_keep_order():
     data = {**f.task().to_dict(), "area_ids": ["bad", "kueche", "bad"]}
     assert Task.from_dict(data).area_ids == ("bad", "kueche")
+
+
+def test_max_per_period_without_every_decodes_with_default():
+    """Gespeicherte Aufgaben aus Version 0.2.0 haben kein `every` und gelten je einer Periode."""
+    decoded = decode_frequency({"kind": "max_per_period", "count": 2, "period": "week"})
+    assert decoded == MaxPerPeriod(count=2, period=Period.WEEK, every=1)

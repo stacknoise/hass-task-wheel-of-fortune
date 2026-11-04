@@ -190,15 +190,15 @@ describe('Editoren', () => {
     });
     const seen = changes(editor);
     say(part(editor, 'tw-select'), 'max_per_period');
-    expect(seen.at(-1)).toEqual({ kind: 'max_per_period', count: 1, period: 'week' });
+    expect(seen.at(-1)).toEqual({ kind: 'max_per_period', count: 1, period: 'week', every: 1 });
 
     editor.value = seen.at(-1);
     await editor.updateComplete;
     say(part(editor, 'tw-stepper'), 3);
     say(part(editor, 'tw-segmented'), 'month');
     expect(seen.slice(-2)).toEqual([
-      { kind: 'max_per_period', count: 3, period: 'week' },
-      { kind: 'max_per_period', count: 1, period: 'month' },
+      { kind: 'max_per_period', count: 3, period: 'week', every: 1 },
+      { kind: 'max_per_period', count: 1, period: 'month', every: 1 },
     ]);
 
     editor.value = { kind: 'interval', days: 7, tolerance: 3 };
@@ -270,9 +270,12 @@ describe('Editoren', () => {
 
   it('Kurztexte für Karten', () => {
     expect(describeFrequency({ kind: 'every_round' }, 'de')).toBe('jede Runde');
-    expect(describeFrequency({ kind: 'max_per_period', count: 2, period: 'week' }, 'de')).toBe(
-      'max. 2× je Woche',
-    );
+    expect(
+      describeFrequency({ kind: 'max_per_period', count: 2, period: 'week', every: 1 }, 'de'),
+    ).toBe('max. 2× je Woche');
+    expect(
+      describeFrequency({ kind: 'max_per_period', count: 5, period: 'month', every: 2 }, 'de'),
+    ).toBe('max. 5× in 2 Monaten');
     expect(describeFrequency({ kind: 'interval', days: 7, tolerance: 1 }, 'en')).toBe(
       'every 7 days ± 1',
     );

@@ -125,15 +125,17 @@ class EveryRound(KindModel):
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class MaxPerPeriod(KindModel):
-    """Höchstens `count` Zuteilungen je Tag, Woche oder Monat."""
+    """Höchstens `count` Zuteilungen je `every` Tage, Wochen oder Monate (gleitendes Fenster)."""
 
     kind: ClassVar[FrequencyKind] = FrequencyKind.MAX_PER_PERIOD
     count: int = spec(to_int)
     period: Period = spec(enum_of(Period))
+    every: int = spec(to_int, default=defaults.DEFAULT_PERIOD_EVERY)
 
     def __post_init__(self) -> None:
-        """Prüft die Anzahl."""
+        """Prüft Anzahl und Länge des Zeitraums."""
         ensure_range("count", self.count, limits.PERIOD_COUNT_MIN, limits.PERIOD_COUNT_MAX)
+        ensure_range("every", self.every, limits.PERIOD_EVERY_MIN, limits.PERIOD_EVERY_MAX)
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)

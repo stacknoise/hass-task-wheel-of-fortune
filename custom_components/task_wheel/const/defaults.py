@@ -22,6 +22,7 @@ DEFAULT_TASK_POINTS: Final = 1
 DEFAULT_TASK_DUE_DAYS: Final = 7
 DEFAULT_EVERY_N_WEEKS: Final = 1
 DEFAULT_INTERVAL_TOLERANCE: Final = 0
+DEFAULT_PERIOD_EVERY: Final = 1
 
 # Belastbarkeit einer Person als Faktor der Kapazität
 LOAD_FACTOR_FULL: Final = 1.0
