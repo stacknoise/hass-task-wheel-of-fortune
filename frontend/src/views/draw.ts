@@ -360,7 +360,7 @@ export class TwDrawView extends LitElement {
           <span class="eyebrow">${this.#text('draw.step')} ${step} / ${state.taskIds.length}</span>
           <span class="title">${task?.name ?? EMPTY_TEXT}</span>
         </div>
-        ${this.#wheelBox(state, persons)} ${this.#people(state, task, persons)}
+        ${this.#wheelBox(state, task, persons)} ${this.#people(state, task, persons)}
         ${state.phase === 'revealed' ? this.#result(state, task, persons) : nothing}
       </section>
     `;
@@ -390,7 +390,11 @@ export class TwDrawView extends LitElement {
     return this.#wheelCache.segments;
   }
 
-  #wheelBox(state: DrawState, persons: ReadonlyMap<string, PersonInfo>): TemplateResult {
+  #wheelBox(
+    state: DrawState,
+    task: TaskInfo | undefined,
+    persons: ReadonlyMap<string, PersonInfo>,
+  ): TemplateResult {
     const segments = this.#wheelSegments(state.current ?? state.preview, persons);
     return html`
       <div class="wheel-box ${START_PLACEMENT[this.#kind]}">
@@ -399,6 +403,9 @@ export class TwDrawView extends LitElement {
           .kind=${this.#kind}
           .segments=${segments}
           .label=${this.#text(`animation.${this.#kind}` as TextKey)}
+          .taskName=${task?.name ?? EMPTY_TEXT}
+          .language=${this.language}
+          @tw-stage-start=${() => void this.#session?.spin()}
         ></tw-stage>
         <button
           class="hub ${START_PLACEMENT[this.#kind]}"

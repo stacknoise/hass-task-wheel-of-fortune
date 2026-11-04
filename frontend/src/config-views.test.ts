@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { FakeHass } from './api/fake-hass.testing.ts';
 import type { Snapshot } from './api/index.ts';
-import { EVENT_CHANGE, PANEL_ELEMENT_NAME } from './constants/index.ts';
+import { ANIMATION_KINDS, EVENT_CHANGE, PANEL_ELEMENT_NAME } from './constants/index.ts';
 import type { TaskWheelPanel } from './task-wheel-panel.ts';
 import './task-wheel-panel.ts';
 
@@ -338,7 +338,9 @@ describe('Zeitpläne', () => {
     const selects = [...(view.shadowRoot?.querySelectorAll('section.editor tw-chip-select') ?? [])];
     expect(selects).toHaveLength(2);
     const animations = selects[1] as El;
-    expect((animations as unknown as { options: unknown[] }).options).toHaveLength(5);
+    expect((animations as unknown as { options: unknown[] }).options).toHaveLength(
+      ANIMATION_KINDS.length,
+    );
     say(animations, ['drum', 'plinko']);
     await click(view, '.buttons .primary');
     await vi.waitFor(() => {

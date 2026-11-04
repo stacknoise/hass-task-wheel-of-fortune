@@ -128,3 +128,6 @@ class AnimationKind(StrEnum):
     SLOT = "slot"
     PLINKO = "plinko"
     SPOTLIGHT = "spotlight"
+    SCRATCH = "scratch"
+    NEWS = "news"
+    OSCAR = "oscar"
