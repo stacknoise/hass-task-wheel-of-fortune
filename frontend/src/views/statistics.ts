@@ -256,6 +256,7 @@ export class TwStatisticsView extends LitElement {
   /** Eigene Box: Soll gegen tatsächlich verloste Anzahl je Aufgabe im Fenster ihrer Regel. */
   #goalsCard(report: StatisticsReport, tasks: readonly TaskObject[]): TemplateResult {
     const taskById = indexById(tasks);
+    const areas = areaNames(this.#store.client?.areas() ?? []);
     const windows = Math.max(...report.goals.map((goal) => goal.windows.length));
     return html`<section class="card">
       <h2>${this.#text('statistics.goals')}</h2>
@@ -281,7 +282,14 @@ export class TwStatisticsView extends LitElement {
               (goal) => goal.task_id,
               (goal) =>
                 html`<tr>
-                  <td>${taskById.get(goal.task_id)?.name ?? this.#text('common.unknownTask')}</td>
+                  <td>
+                    ${taskById.get(goal.task_id)?.name ?? this.#text('common.unknownTask')}
+                    ${roomTags(
+                      areas,
+                      taskById.get(goal.task_id)?.area_ids,
+                      this.#text('common.unknownArea'),
+                    )}
+                  </td>
                   <td>
                     ${describeFrequency(
                       {

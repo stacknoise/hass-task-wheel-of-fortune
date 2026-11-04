@@ -1,10 +1,12 @@
 import { LitElement, css, html } from 'lit';
-import type { TemplateResult } from 'lit';
+import type { PropertyValues, TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 
 import { COMPONENT_TAGS, EVENT_TAB_SELECT } from '../constants/index.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import { defineOnce } from './define.ts';
+
+const HALF = 2;
 
 export interface TabItem {
   readonly id: string;
@@ -63,12 +65,20 @@ export class TwTabBar extends LitElement {
     this.label = '';
   }
 
-  /** Auf schmalen Geräten scrollt die Leiste; der gewählte Tab soll dabei sichtbar bleiben. */
-  protected override updated(): void {
+  /**
+   * Auf schmalen Geräten scrollt die Leiste; der gewählte Tab soll dabei sichtbar bleiben.
+   * Nur die Leiste selbst wird verschoben (nicht die Seite) und nur, wenn sich der aktive Tab ändert:
+   * `scrollIntoView` würde bei jedem Neuzeichnen die ganze Seite wieder nach oben holen.
+   */
+  protected override updated(changed: PropertyValues): void {
+    if (!changed.has('active') && !changed.has('tabs')) {
+      return;
+    }
+    const nav = this.renderRoot.querySelector('nav');
     const active = this.renderRoot.querySelector<HTMLElement>('a[aria-current="page"]');
-    // jsdom (Tests) kennt scrollIntoView nicht.
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    active?.scrollIntoView?.({ block: 'nearest', inline: 'center' });
+    if (nav && active) {
+      nav.scrollLeft = active.offsetLeft - (nav.clientWidth - active.offsetWidth) / HALF;
+    }
   }
 
   protected override render(): TemplateResult {
