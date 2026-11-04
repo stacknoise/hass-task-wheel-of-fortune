@@ -18,8 +18,8 @@ import { baseStyles, tokenStyles } from './styles.ts';
 import './week-preview.ts';
 import { defineOnce } from './define.ts';
 
-/** Höchsthöhe der Regelliste; darüber scrollt sie, damit das Popup kompakt bleibt. */
-const RULES_MAX_HEIGHT = '40vh';
+/** Höchsthöhe der Regelliste (zwei einmalige Einträge ohne Scrollbalken); darüber scrollt sie, damit das Popup kompakt bleibt. */
+const RULES_MAX_HEIGHT = '340px';
 
 type Renderer = (absence: never, index: number) => TemplateResult;
 
