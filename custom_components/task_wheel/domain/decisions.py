@@ -6,10 +6,9 @@ lesbar, wenn Personen, Aufgaben oder Zeitpläne später umbenannt oder gelöscht
 
 import datetime as dt
 from dataclasses import dataclass
-from typing import Final
 
 from ..const import limits
-from ..const.keys import ERR_INCONSISTENT, ERR_ORDER
+from ..const.keys import ERR_INCONSISTENT
 from .enums import DecisionKind, RoundOrigin
 from .serialization import (
     Model,
@@ -24,10 +23,14 @@ from .serialization import (
     tuple_of,
 )
 from .types import PersonId, RoundId, ScheduleId, TaskId
-from .validation import ensure, ensure_aware, ensure_id, ensure_range, ensure_size
-
-_FIELD_SINCE: Final = "since"
-_FIELD_UNTIL: Final = "until"
+from .validation import (
+    ensure,
+    ensure_aware,
+    ensure_id,
+    ensure_range,
+    ensure_size,
+    ensure_time_range,
+)
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -175,12 +178,7 @@ class DecisionFilter:
 
     def __post_init__(self) -> None:
         """Prüft Zeitzonen und Reihenfolge des Zeitraums."""
-        if self.since is not None:
-            ensure_aware(_FIELD_SINCE, self.since)
-        if self.until is not None:
-            ensure_aware(_FIELD_UNTIL, self.until)
-        if self.since is not None and self.until is not None:
-            ensure(self.since < self.until, _FIELD_UNTIL, ERR_ORDER)
+        ensure_time_range(self.since, self.until)
 
     def matches(self, record: DecisionRecord) -> bool:
         """Alle gesetzten Felder passen auf den Eintrag."""
