@@ -3,7 +3,7 @@
 Distributes household chores fairly and with a bit of fun: a wheel of fortune draws who takes what. The odds
 depend on who has done how much recently, who is around, and how much load each person can take.
 
-> **Status:** version 0.3.1. All features below are implemented. Installation is done through HACS
+> **Status:** version 0.4.0. All features below are implemented. Installation is done through HACS
 > as a custom repository (see below). Feedback is welcome as an [issue](https://github.com/stacknoise/hass-task-wheel-of-fortune/issues).
 
 ## Installation via HACS
@@ -120,9 +120,9 @@ Without points in the window, everyone's chance is their fair share; people with
 
 1. Raise `version` in `custom_components/task_wheel/manifest.json`, add an entry to `CHANGELOG.md` and to the
    change log of `docs/CODE_DOKU.md`, via pull request to `main`
-2. Set the tag: `git tag v0.3.1 && git push origin v0.3.1`, or enter the tag on GitHub under *Actions → Release → Run workflow* (the workflow creates it at the state of `main`)
+2. Set the tag: `git tag v0.4.0 && git push origin v0.4.0`, or enter the tag on GitHub under *Actions → Release → Run workflow* (the workflow creates it at the state of `main`)
 3. The `Release` workflow checks that the tag and the manifest version match, builds the panel and attaches
-   `task_wheel.zip` to the new GitHub release (see `hacs.json`: `zip_release`). Tags with a suffix (`v0.3.1-beta.1`)
+   `task_wheel.zip` to the new GitHub release (see `hacs.json`: `zip_release`). Tags with a suffix (`v0.4.0-beta.1`)
    are published as a pre-release.
 
 ## Services and events
