@@ -17,6 +17,7 @@ export const en: Record<keyof typeof de, string> = {
   'tab.schedules': 'Schedules',
   'tab.history': 'History',
   'tab.statistics': 'Statistics',
+  'tab.decisions': 'Decision log',
   'form.save': 'Save',
   'form.cancel': 'Cancel',
   'form.delete': 'Delete',

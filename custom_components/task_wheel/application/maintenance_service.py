@@ -1,4 +1,4 @@
-"""Täglicher Wartungslauf: Verpasstes markieren, alte Runden löschen (KONZEPT §5.4, §8)."""
+"""Täglicher Wartungslauf: Verpasstes markieren, alte Runden und Logeinträge löschen (§5.4, §8)."""
 
 import datetime as dt
 import logging
@@ -8,6 +8,7 @@ from typing import Any, Final
 from ..const.defaults import MAINTENANCE_HOUR
 from .assignment_service import AssignmentService
 from .daily import next_daily
+from .decision_service import DecisionService
 from .protocols import ConfigRepository, HistoryRepository, TimerPort
 
 _LOGGER = logging.getLogger(__name__)
@@ -27,13 +28,16 @@ class MaintenanceService:
         assignments: AssignmentService,
         timers: TimerPort,
         spawn: Spawn,
+        *,
+        decisions: DecisionService | None = None,
     ) -> None:
-        """Hält Repositories, Zuteilungsdienst, Zeitgeber und die Quelle für Hintergrundaufgaben."""
+        """Hält Repositories, Zuteilungsdienst, Zeitgeber, Hintergrundquelle und das Log."""
         self._config = config
         self._history = history
         self._assignments = assignments
         self._timers = timers
         self._spawn = spawn
+        self._decisions = decisions
 
     def start(self, now: dt.datetime) -> None:
         """Holt den Lauf einmal nach (z. B. nach einem Neustart) und plant den nächsten."""
@@ -45,6 +49,8 @@ class MaintenanceService:
         if at is not None:
             self._timers.schedule(TIMER_MAINTENANCE, at, self.run)
         self._assignments.mark_missed(now)
+        if self._decisions is not None:
+            self._decisions.purge(now)
         self._spawn(self._purge(now))
 
     async def _purge(self, now: dt.datetime) -> None:

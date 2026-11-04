@@ -13,6 +13,8 @@ MAX_ABSENCES_PER_PERSON: Final = 20
 MAX_TASKS_PER_SCHEDULE: Final = MAX_TASKS
 MAX_ASSIGNMENTS_PER_ROUND: Final = MAX_TASKS
 MAX_STORED_ROUNDS: Final = 20000
+# Einträge des Entscheidungslogs (je Auslosung, Tausch oder Austausch einer); der älteste entfällt
+MAX_STORED_DECISIONS: Final = 5000
 # Mindestabstand zwischen zwei von Hand oder per Dienst ausgelösten Runden desselben Zeitplans
 # (Schutz davor, den Verlauf zu fluten); automatische Auslosungen sind nicht betroffen
 DRAW_MIN_INTERVAL_SECONDS: Final = 30
@@ -74,6 +76,9 @@ JOKERS_MAX: Final = 31
 FAIRNESS_WINDOW_MIN: Final = 1
 FAIRNESS_WINDOW_MAX: Final = 365
 RETENTION_MAX: Final = 3650
+# Aufbewahrung des Entscheidungslogs (Tage)
+DECISION_RETENTION_MIN: Final = 1
+DECISION_RETENTION_MAX: Final = 365
 LATE_FACTOR_MIN: Final = 0.0
 LATE_FACTOR_MAX: Final = 1.0
 MISSED_FACTOR_MIN: Final = -1.0
@@ -120,6 +125,7 @@ RELIABILITY_MIN_CLOSED: Final = 3
 HISTORY_PAGE_SIZE_MIN: Final = 1
 HISTORY_PAGE_SIZE_MAX: Final = 200
 HISTORY_OFFSET_MAX: Final = MAX_STORED_ROUNDS
+DECISION_OFFSET_MAX: Final = MAX_STORED_DECISIONS
 
 # WebSocket-API (KONZEPT §6.4, §8): Grenzen für Nachrichten des Panels
 WS_STRING_MAX_LENGTH: Final = max(NOTIFY_TARGET_MAX_LENGTH, AREA_ID_MAX_LENGTH, NAME_MAX_LENGTH)

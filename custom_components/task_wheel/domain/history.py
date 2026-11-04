@@ -3,14 +3,10 @@
 import datetime as dt
 from dataclasses import dataclass
 
-from ..const.keys import ERR_ORDER
 from .enums import AssignmentStatus
 from .models import Assignment, Round
 from .types import PersonId, ScheduleId, TaskId
-from .validation import ensure, ensure_aware
-
-_FIELD_SINCE = "since"
-_FIELD_UNTIL = "until"
+from .validation import ensure_time_range
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -30,12 +26,7 @@ class HistoryFilter:
 
     def __post_init__(self) -> None:
         """Prüft Zeitzonen und Reihenfolge des Zeitraums."""
-        if self.since is not None:
-            ensure_aware(_FIELD_SINCE, self.since)
-        if self.until is not None:
-            ensure_aware(_FIELD_UNTIL, self.until)
-        if self.since is not None and self.until is not None:
-            ensure(self.since < self.until, _FIELD_UNTIL, ERR_ORDER)
+        ensure_time_range(self.since, self.until)
 
     def matches_round(self, round_: Round) -> bool:
         """Zeitplan und Zeitraum der Runde passen."""

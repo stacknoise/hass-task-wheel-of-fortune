@@ -66,6 +66,7 @@ describe('task-wheel-panel', () => {
       'Zeitpläne',
       'Historie',
       'Statistik',
+      'Entscheidungslog',
     ]);
   });
 

@@ -1,12 +1,13 @@
 import { ContextProvider } from '@lit/context';
 
 import { ApiClient } from '../api/index.ts';
-import type { HistoryPage, StatisticsReport, Snapshot } from '../api/index.ts';
+import type { DecisionPage, HistoryPage, StatisticsReport, Snapshot } from '../api/index.ts';
 import { FakeHass } from '../api/fake-hass.testing.ts';
 import {
   WS_ASSIGNMENT_COMPLETE,
   WS_ASSIGNMENT_SKIP,
   WS_ASSIGNMENT_SWAP,
+  WS_DECISIONS_LIST,
   WS_HISTORY_LIST,
   WS_ROUND_DELETE,
   WS_STATISTICS_GET,
@@ -123,6 +124,69 @@ export const HISTORY: HistoryPage = {
   next_offset: null,
 } as unknown as HistoryPage;
 
+export const DECISIONS: DecisionPage = {
+  entries: [
+    {
+      id: 'd1',
+      kind: 'draw',
+      at: '2026-11-03T16:00:00+00:00',
+      schedule_id: 's1',
+      schedule_name: 'Wochenplan',
+      round_id: 'r1',
+      origin: 'auto',
+      exchange: null,
+      tasks: [
+        {
+          task_id: 't1',
+          task_name: 'Bad putzen',
+          winner_id: 'p1',
+          wheel: [
+            { person_id: 'p1', person_name: 'Anna', chance: 0.4 },
+            { person_id: 'p2', person_name: 'Ben', chance: 0.6 },
+          ],
+          excluded: [{ person_id: 'p3', person_name: 'Cara', reason: 'absent' }],
+        },
+        {
+          task_id: 't2',
+          task_name: 'Müll',
+          winner_id: 'p2',
+          wheel: [{ person_id: 'p2', person_name: 'Ben', chance: 1 }],
+          excluded: [{ person_id: 'p1', person_name: 'Anna', reason: 'taken' }],
+        },
+        {
+          task_id: 't3',
+          task_name: 'Garage fegen',
+          winner_id: null,
+          wheel: [],
+          excluded: [{ person_id: 'p3', person_name: 'Cara', reason: 'zukunft' }],
+        },
+      ],
+    },
+    {
+      id: 'd2',
+      kind: 'exchange',
+      at: '2026-11-03T15:58:00+00:00',
+      schedule_id: 's1',
+      schedule_name: 'Wochenplan',
+      round_id: null,
+      origin: null,
+      tasks: [],
+      exchange: {
+        person_id: null,
+        person_name: null,
+        task_id: 't1',
+        task_name: 'Bad putzen',
+        other_task_id: 't3',
+        other_task_name: 'Garage fegen',
+        other_person_id: null,
+        other_person_name: null,
+        before_start: true,
+      },
+    },
+  ],
+  next_offset: 20,
+};
+
 export const REPORT: StatisticsReport = {
   months: ['2026-11'],
   kpis: { assigned: 10, on_time: 5, late: 1, missed: 2, pending: 2, completion_rate: 0.75 },
@@ -181,6 +245,7 @@ export function fakeHass(): FakeHass {
   const hass = new FakeHass();
   hass.snapshot = SNAPSHOT;
   hass.replies.set(WS_HISTORY_LIST, HISTORY);
+  hass.replies.set(WS_DECISIONS_LIST, DECISIONS);
   hass.replies.set(WS_STATISTICS_GET, REPORT);
   hass.replies.set(WS_ASSIGNMENT_COMPLETE, { id: 'a1' });
   hass.replies.set(WS_ASSIGNMENT_SWAP, { id: 'a1' });

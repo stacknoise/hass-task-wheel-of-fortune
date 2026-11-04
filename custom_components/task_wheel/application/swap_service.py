@@ -12,7 +12,9 @@ from ..domain.types import AssignmentId, PersonId
 from .protocols import (
     AssignmentRecorder,
     ConfigRepository,
+    DecisionRecorder,
     HistoryRepository,
+    NoDecisions,
     NoEvents,
     RoundEvents,
 )
@@ -28,12 +30,14 @@ class SwapService:
         history: HistoryRepository,
         recorder: AssignmentRecorder,
         events: RoundEvents | None = None,
+        decisions: DecisionRecorder | None = None,
     ) -> None:
-        """Hält die Repositories, den Empfänger der Statusänderungen (Statistik) und die Events."""
+        """Hält Repositories, Empfänger der Statusänderungen (Statistik), Events und Log."""
         self._config = config
         self._history = history
         self._recorder = recorder
         self._events = events or NoEvents()
+        self._decisions = decisions or NoDecisions()
 
     def _side(self, assignment: Assignment) -> SwapSide:
         """Zuteilung mit Aufgabe und Person, oder `NotFoundError`."""
@@ -77,6 +81,7 @@ class SwapService:
                 status.swap(other, assignment.person_id, now),
             ),
         )
+        self._decisions.record_swap(swapped, swapped_other, now)
         self._events.assignment_swapped(swapped)
         self._events.assignment_swapped(swapped_other)
         return swapped

@@ -98,6 +98,8 @@ HISTORY_MIGRATIONS: Final[Migrations] = MappingProxyType(
         (1, 3): ((1, 4), _unchanged),
     }
 )
+# Das Entscheidungslog entstand mit Version 1.4 und kennt keine älteren Stände
+DECISION_MIGRATIONS: Final[Migrations] = MappingProxyType({})
 
 
 def migrate(

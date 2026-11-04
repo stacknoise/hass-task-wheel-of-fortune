@@ -92,7 +92,7 @@ in a grid; adding and editing open a popup (full screen on a smartphone, close w
 ## Panel API (WebSocket)
 
 The panel talks to the backend through WebSocket commands with the prefix `task_wheel/`: `snapshot`, `subscribe`
-(first the full state, then only changes per object), `history/list`, `statistics/get`, `availability/preview` (presence preview),
+(first the full state, then only changes per object), `history/list`, `decisions/list` (decision log: which persons were in the wheel, which were excluded and why; visible to every signed-in user), `statistics/get`, `availability/preview` (presence preview),
 `assignment/complete`, `assignment/swap`, `assignment/skip`, `draw/begin|preview|spin|spin_rest|commit|cancel` for every signed-in
 user, and `round/delete`, `person/*`, `task/*`, `schedule/*` and `settings/update` for administrators only. All inputs
 are validated against strict schemas (no unknown fields, limited lengths). If "Panel for administrators only" is set in the settings,
