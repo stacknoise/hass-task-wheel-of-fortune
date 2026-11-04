@@ -5,8 +5,11 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+## [0.3.1] – 2026-11-04
+
 - „Verlosungen je Aufgabe: Soll und Ist“ zeigt die Räume der Aufgaben
 - Behoben: Das Panel (vor allem die lange Statistik) sprang beim Scrollen immer wieder an den Seitenanfang; die Tab-Leiste hat die Seite bei jedem Neuzeichnen zu sich zurückgeholt. Sie verschiebt jetzt nur noch sich selbst und nur beim Tabwechsel
+
 ## [0.3.0] – 2026-11-04
 
 - Statistik: eigene Box „Verlosungen je Aufgabe: Soll und Ist“; für Aufgaben mit „höchstens n× in x Zeiträumen“ zeigt sie, wie oft die Aufgabe im laufenden und in den drei vorherigen Fenstern verlost wurde (z. B. 2 / 3 in den letzten 2 Monaten), sodass der Admin die Häufigkeit nachprüfen kann
