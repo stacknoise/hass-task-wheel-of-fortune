@@ -37,7 +37,7 @@ import {
 } from '../state/index.ts';
 import type { AreaNames, DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
 import { roomTags } from './room.ts';
-import { drawSummary } from './draw-summary.ts';
+import { drawSummary, stageNotice } from './draw-summary.ts';
 import { ReplaceFlow } from './draw-replace.ts';
 import { drawStyles } from './draw-styles.ts';
 import { personRows } from './draw-rows.ts';
@@ -384,15 +384,9 @@ export class TwDrawView extends LitElement {
     tasks: ReadonlyMap<string, TaskInfo>,
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
-    if (isIdle(state)) {
-      return html`<section class="stage idle">
-        <p class="heading">${this.#text('draw.choose')}</p>
-      </section>`;
-    }
-    if (state.direct && state.phase === DRAW_PHASE.ready) {
-      return html`<section class="stage prepare">
-        <p class="heading">${this.#text('draw.prepare')}</p>
-      </section>`;
+    const notice = stageNotice(state, (key) => this.#text(key));
+    if (notice) {
+      return notice;
     }
     if (state.phase === DRAW_PHASE.done) {
       return html`<section class="stage">

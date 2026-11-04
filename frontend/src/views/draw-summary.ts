@@ -2,8 +2,9 @@ import { html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 
 import '../components/index.ts';
-import { EMPTY_TEXT } from '../constants/index.ts';
+import { DRAW_PHASE, EMPTY_TEXT } from '../constants/index.ts';
 import type { TextKey } from '../i18n/index.ts';
+import { isIdle } from '../state/index.ts';
 import type { DrawState, PersonInfo, TaskInfo } from '../state/index.ts';
 
 export interface DrawSummaryContext {
@@ -47,4 +48,19 @@ export function drawSummary(context: DrawSummaryContext): TemplateResult {
       </div>
     </div>
   `;
+}
+
+/** Bühne ohne Rad: Wahl des Zeitplans oder (ohne Animation) die Vorbereitung der Runde. */
+export function stageNotice(
+  state: DrawState,
+  text: (key: TextKey) => string,
+): TemplateResult | undefined {
+  if (isIdle(state)) {
+    return html`<section class="stage idle">
+      <p class="heading">${text('draw.choose')}</p>
+    </section>`;
+  }
+  return state.direct && state.phase === DRAW_PHASE.ready
+    ? html`<section class="stage prepare"><p class="heading">${text('draw.prepare')}</p></section>`
+    : undefined;
 }
