@@ -165,6 +165,11 @@ class MaxPerPeriod(KindModel):
         ensure_range("count", self.count, limits.PERIOD_COUNT_MIN, limits.PERIOD_COUNT_MAX)
         ensure_range("every", self.every, limits.PERIOD_EVERY_MIN, limits.PERIOD_EVERY_MAX)
 
+    @property
+    def is_daily(self) -> bool:
+        """Die Aufgabe fällt täglich an (je Kalendertag, nicht über mehrere Tage gerechnet)."""
+        return self.period is Period.DAY and self.every == limits.DAILY_EVERY
+
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class Interval(KindModel):
@@ -300,6 +305,11 @@ class Task(Model):
     swap_allowed: bool = spec(to_bool, default=True)
     min_load: Load = spec(enum_of(Load), default=Load.PAUSED)
     area_ids: tuple[str, ...] = spec(unique_tuple_of(to_str), default=())
+
+    @property
+    def is_daily(self) -> bool:
+        """Die Aufgabe fällt täglich an und ist deshalb in jeder Runde dabei."""
+        return isinstance(self.frequency, MaxPerPeriod) and self.frequency.is_daily
 
     def __post_init__(self) -> None:
         """Prüft Kennung, Namen, Punkte, Frist, erlaubte Personen und Räume."""

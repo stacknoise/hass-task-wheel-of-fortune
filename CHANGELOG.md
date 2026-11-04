@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- **Geändert:** Aufgaben, die täglich anfallen (Häufigkeit „höchstens n× in 1 Tag“), sind in jeder Auslosung dabei; bei mehr Aufgaben als mitmachenden Personen füllt der Zufall nur die übrigen Plätze. Gibt es mehr tägliche Aufgaben als Personen, wird unter den täglichen zufällig gewählt
+
 ## [0.5.0] – 2026-11-04
 
 - **Geändert:** Der Tausch ist ein echter Tausch Aufgabe gegen Aufgabe innerhalb einer Auslosung: Ana (Bad) und Ben (Küche) haben danach Küche und Bad, jede Person behält genau eine Aufgabe (bisher bekam Ben Anas Aufgabe zusätzlich). Das Panel zeigt je Zielperson auch deren Aufgabe („Ben (Küche)“); ohne offene Gegenaufgabe lehnt der Dienst mit `swap_person_has_no_open_assignment` ab. Die Regeln (Aufgabe tauschbar, erlaubt, nicht pausiert, Belastbarkeit, Anwesenheit) gelten für beide Richtungen, beide Zuteilungen werden gemeinsam gespeichert und lösen je ein Event `task_wheel_swapped` aus; jede Person bekommt eine Benachrichtigung

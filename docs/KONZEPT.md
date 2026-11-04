@@ -245,7 +245,7 @@ sequenceDiagram
   DS->>HA: Event task_wheel_drawn, Entitäten aktualisieren, Benachrichtigen
 ```
 
-Vor der Ziehung werden die fälligen Aufgaben auf so viele begrenzt, wie Personen mitmachen können (nicht pausiert und, sofern die Aufgaben Abwesenheit beachten, im Fristfenster anwesend; `limit_to_participants` in `application/draw_inputs.py`). Gibt es mehr fällige Aufgaben als solche Personen, wählt die injizierte Zufallsquelle gleichverteilt aus (nicht vorhersehbar); die Reihenfolge der gewählten Aufgaben bleibt die des Zeitplans. Nicht gewählte Aufgaben kommen in dieser Runde gar nicht vor.
+Vor der Ziehung werden die fälligen Aufgaben auf so viele begrenzt, wie Personen mitmachen können (nicht pausiert und, sofern die Aufgaben Abwesenheit beachten, im Fristfenster anwesend; `limit_to_participants` in `application/draw_inputs.py`). Gibt es mehr fällige Aufgaben als solche Personen, sind täglich anfallende Aufgaben (`Task.is_daily`: höchstens n× in 1 Tag) immer dabei und die injizierte Zufallsquelle füllt die übrigen Plätze gleichverteilt (nicht vorhersehbar); gibt es mehr tägliche Aufgaben als Plätze, wählt sie unter den täglichen; die Reihenfolge der gewählten Aufgaben bleibt die des Zeitplans. Nicht gewählte Aufgaben kommen in dieser Runde gar nicht vor.
 
 Beim manuellen Ablauf im Panel wird die Runde schrittweise gezogen (`draw/begin`, `draw/spin`, `draw/spin_rest`,
 `draw/commit`, `draw/cancel`; vorab zeigt `draw/preview` Rad und Kandidaten einer Aufgabe). Das **Ergebnis bestimmt immer das Backend**; das Frontend erhält Gewinner und

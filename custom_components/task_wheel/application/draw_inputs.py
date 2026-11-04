@@ -77,10 +77,13 @@ def _seats(tasks: tuple[Task, ...], context: DrawContext) -> int:
     )
 
 
-def _random_pick(tasks: tuple[Task, ...], rng: RandomSource, count: int) -> tuple[Task, ...]:
-    """`count` zufällig gewählte Aufgaben (gleiche Chance), in der Reihenfolge des Zeitplans."""
+def _pick(tasks: tuple[Task, ...], rng: RandomSource, count: int) -> tuple[Task, ...]:
+    """`count` Aufgaben: tägliche zuerst, innerhalb der Gruppen zufällig (gleiche Chance).
+
+    Die Reihenfolge der Auswahl bleibt die des Zeitplans.
+    """
     keys = [rng.random() for _ in tasks]
-    ranked = sorted(range(len(tasks)), key=keys.__getitem__)
+    ranked = sorted(range(len(tasks)), key=lambda i: (not tasks[i].is_daily, keys[i]))
     return tuple(tasks[i] for i in sorted(ranked[:count]))
 
 
@@ -90,13 +93,14 @@ def limit_to_participants(
     """Beschränkt die Runde auf so viele Aufgaben, wie Personen mitmachen können.
 
     Jede Person bekommt je Runde höchstens eine Aufgabe; weitere Aufgaben wären nur "nicht
-    verteilbar". Gibt es mehr Aufgaben als Plätze, wird zufällig gewählt (nicht vorhersehbar);
-    die Reihenfolge der Auswahl bleibt die des Zeitplans.
+    verteilbar". Täglich anfallende Aufgaben sind immer dabei, der Rest der Plätze wird zufällig
+    gefüllt (nicht vorhersehbar). Gibt es mehr tägliche Aufgaben als Plätze, wird unter ihnen
+    zufällig gewählt. Die Reihenfolge der Auswahl bleibt die des Zeitplans.
     """
     if not tasks:
         return tasks
     seats = _seats(tasks, context)
-    return tasks if seats >= len(tasks) else _random_pick(tasks, rng, seats)
+    return tasks if seats >= len(tasks) else _pick(tasks, rng, seats)
 
 
 def build_context(
