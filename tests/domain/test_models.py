@@ -146,7 +146,6 @@ def test_load_factors():
         (lambda: f.schedule(task_ids=()), "task_ids"),
         (lambda: f.schedule(task_ids=("t1", "t1")), "task_ids"),
         (lambda: f.schedule(slug=""), "slug"),
-        (lambda: f.schedule(animations=()), "animations"),
         (lambda: f.schedule(animations=(AnimationKind.DRUM, AnimationKind.DRUM)), "animations"),
         (lambda: Swap(from_person_id="p1", to_person_id="p1", at=f.NOW), "to_person_id"),
         (lambda: Swap(from_person_id="p1", to_person_id="p2", at=dt.datetime(2026, 1, 1)), "at"),
@@ -189,6 +188,11 @@ def test_schedule_animations_default_to_wheel_and_roundtrip():
     chosen = f.schedule(animations=(AnimationKind.SLOT, AnimationKind.PLINKO))
     assert Schedule.from_dict(chosen.to_dict()) == chosen
     assert chosen.to_dict()["animations"] == ["slot", "plinko"]
+
+
+def test_schedule_allows_no_animation():
+    plain = f.schedule(animations=())
+    assert Schedule.from_dict(plain.to_dict()).animations == ()
 
 
 def test_schedule_rejects_unknown_animation():

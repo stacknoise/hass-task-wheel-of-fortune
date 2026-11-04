@@ -34,7 +34,7 @@ to `config/custom_components/task_wheel` (the repository itself does not contain
 - **Tasks** with allowed people, points (effort), deadline and frequency: every round,
   at most n× per day/week/month, or a fixed interval with tolerance; optionally assigned to a Home Assistant area (room), shown in the overview, draw, history and statistics
 - **Schedules**: recurring, one-off or manual only
-- **Draws** automatically or in the panel with an animation: wheel of fortune, lottery drum, slot machine, Plinko or spotlight; the size (segment, ball, row, slot, tile) equals the chance. For each schedule you choose the allowed variants with a multi-select; if there are several, one is picked at random for every draw
+- **Draws** automatically or in the panel with an animation: wheel of fortune, lottery drum, slot machine, Plinko or spotlight; the size (segment, ball, row, slot, tile) equals the chance. For each schedule you choose the allowed variants with a multi-select; if there are several, one is picked at random for every draw; with none selected, "Start round" draws everything at once and shows the task list right away
 - **Fairness**: whoever has had fewer points relative to their fair share gets a bigger slice
 - **Swapping with a joker**, only with people from the same draw who are allowed to get the task
 - **"Stays undone"**: deliberately not doing an assignment; counts like missed in points and statistics
