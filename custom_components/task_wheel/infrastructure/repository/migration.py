@@ -5,9 +5,12 @@ from types import MappingProxyType
 from typing import Final
 
 from ...const.keys import (
+    KEY_AREA_ID,
+    KEY_AREA_IDS,
     KEY_ASSIGNMENTS,
     KEY_ROUNDS,
     KEY_SCHEDULE_ID,
+    KEY_TASKS,
     STORE_MINOR_VERSION,
     STORE_VERSION,
 )
@@ -47,9 +50,32 @@ def _with_schedule(round_: object) -> object:
     }
 
 
+def _task_areas(data: dict[str, object]) -> dict[str, object]:
+    """1.2 -> 1.3: der eine Raum einer Aufgabe (`area_id`) wird zur Liste `area_ids`."""
+    tasks = data.get(KEY_TASKS)
+    if not isinstance(tasks, list):
+        return data
+    return {**data, KEY_TASKS: [_with_area_list(item) for item in tasks]}
+
+
+def _with_area_list(task: object) -> object:
+    """Aufgabe mit `area_ids` statt `area_id`; Unlesbares bleibt für das Laden stehen."""
+    if not isinstance(task, dict):
+        return task
+    legacy = task.get(KEY_AREA_ID)
+    rest = {key: value for key, value in task.items() if key != KEY_AREA_ID}
+    if KEY_AREA_IDS in rest:
+        return rest
+    return {**rest, KEY_AREA_IDS: [legacy] if isinstance(legacy, str) and legacy else []}
+
+
 # `von-Version -> (nach-Version, Funktion)`; bei Schemaänderungen hier ergänzen.
-CONFIG_MIGRATIONS: Final[Migrations] = MappingProxyType({(1, 1): ((1, 2), _unchanged)})
-HISTORY_MIGRATIONS: Final[Migrations] = MappingProxyType({(1, 1): ((1, 2), _assignment_schedule)})
+CONFIG_MIGRATIONS: Final[Migrations] = MappingProxyType(
+    {(1, 1): ((1, 2), _unchanged), (1, 2): ((1, 3), _task_areas)}
+)
+HISTORY_MIGRATIONS: Final[Migrations] = MappingProxyType(
+    {(1, 1): ((1, 2), _assignment_schedule), (1, 2): ((1, 3), _unchanged)}
+)
 
 
 def migrate(

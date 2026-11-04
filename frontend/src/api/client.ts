@@ -31,7 +31,9 @@ import {
   WS_SNAPSHOT,
   WS_STATISTICS_GET,
   WS_SUBSCRIBE,
+  DEFAULT_LANGUAGE,
 } from '../constants/index.ts';
+import { compareText } from './collate.ts';
 import type { ConfigResource } from '../constants/index.ts';
 import type { AbsenceWire } from './config-types.ts';
 import type { HistoryPage, HistoryQuery, StatisticsReport } from './models.ts';
@@ -65,9 +67,15 @@ export class ApiClient {
 
   /** Räume aus Home Assistant (Bereiche), nach Name sortiert; ohne Namen gilt die Kennung. */
   areas(): readonly AreaOption[] {
+    const compare = compareText(this.language());
     return Object.entries(this.#hass.areas ?? {})
       .map(([id, area]) => ({ id, label: typeof area.name === 'string' ? area.name : id }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+      .sort((a, b) => compare(a.label, b.label));
+  }
+
+  /** Sprache des Panels (Gebietsschema von Home Assistant, sonst Englisch). */
+  language(): string {
+    return this.#hass.locale?.language ?? this.#hass.language ?? DEFAULT_LANGUAGE;
   }
 
   /** Benachrichtigungsziele aus Home Assistant: `notify`-Entitäten und -Dienste, sortiert. */

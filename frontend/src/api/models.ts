@@ -15,8 +15,8 @@ export interface TaskObject extends WireObject {
   readonly allowed: readonly string[];
   readonly points: number;
   readonly swap_allowed: boolean;
-  /** Kennung des Home-Assistant-Bereichs (Raum) der Aufgabe, falls gesetzt. */
-  readonly area_id?: string | null;
+  /** Kennungen der Home-Assistant-Bereiche (Räume) der Aufgabe. */
+  readonly area_ids?: readonly string[];
 }
 
 export interface ScheduleObject extends WireObject {

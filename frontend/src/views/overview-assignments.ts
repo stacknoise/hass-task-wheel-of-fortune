@@ -10,7 +10,7 @@ import { formatDateTime } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
 import type { AreaNames } from '../state/index.ts';
-import { roomTag } from './room.ts';
+import { roomTags } from './room.ts';
 import { canSwap, swapTargets } from './overview-model.ts';
 import { roundDelete } from './round-delete.ts';
 import type { AssignmentGroup } from './overview-model.ts';
@@ -179,7 +179,7 @@ function assignmentRow(
         <div class="grow info">
           <div>
             ${task?.name ?? text('common.unknownTask')}
-            ${roomTag(context.areas, task?.area_id, text('common.unknownArea'))}
+            ${roomTags(context.areas, task?.area_ids, text('common.unknownArea'))}
           </div>
           <div class="muted">${personName} · ${rowMeta(assignment, context, text)}</div>
         </div>

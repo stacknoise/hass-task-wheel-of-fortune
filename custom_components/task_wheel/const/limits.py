@@ -21,6 +21,8 @@ ID_MAX_LENGTH: Final = 64
 NOTIFY_TARGET_MAX_LENGTH: Final = 255
 # Kennung eines Home-Assistant-Bereichs (Raum)
 AREA_ID_MAX_LENGTH: Final = 255
+# Räume (Bereiche), die einer Aufgabe zugewiesen sein können
+MAX_AREAS_PER_TASK: Final = 20
 # Referenz aus einem Dienst: Kennung, Kurzname oder Name
 REF_MIN_LENGTH: Final = 1
 REF_MAX_LENGTH: Final = max(ID_MAX_LENGTH, SLUG_MAX_LENGTH, NAME_MAX_LENGTH)

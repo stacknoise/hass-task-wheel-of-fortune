@@ -109,6 +109,11 @@ def frozenset_of[T](item: Decoder[T]) -> Decoder[frozenset[T]]:
     return lambda value: frozenset(item(entry) for entry in _sequence(value))
 
 
+def unique_tuple_of[T](item: Decoder[T]) -> Decoder[tuple[T, ...]]:
+    """Dekodiert eine Liste zu einem Tupel ohne Doppelte (Reihenfolge der Erstnennung)."""
+    return lambda value: tuple(dict.fromkeys(item(entry) for entry in _sequence(value)))
+
+
 def optional[T](item: Decoder[T]) -> Decoder[T | None]:
     """Erlaubt `None` zusätzlich zum Wert."""
     return lambda value: None if value is None else item(value)

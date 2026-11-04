@@ -24,7 +24,7 @@ describe('Store', () => {
     store.listen(listener);
     await store.start();
     listener.mockClear();
-    hass.emit({ persons: { upsert: [{ id: 'p3' }], remove: ['p1'] } });
+    hass.emit({ persons: { upsert: [{ id: 'p3', name: 'Zed' }], remove: ['p1'] } });
     expect(store.state.snapshot?.persons.map((item) => item.id)).toEqual(['p2', 'p3']);
     expect(listener).toHaveBeenCalledOnce();
   });

@@ -39,4 +39,11 @@ export const WS_ACTION_UPDATE = 'update';
 export const WS_ACTION_DELETE = 'delete';
 
 export const KEY_ID = 'id';
+export const KEY_NAME = 'name';
+
+/** Sammlungen, die das Panel alphabetisch nach Namen zeigt. */
+export const SORTED_COLLECTIONS = ['persons', 'tasks', 'schedules'] as const;
+
+/** Namen vergleichen: Groß-/Kleinschreibung und Akzente zählen nicht, Zahlen nach ihrem Wert. */
+export const COLLATION_OPTIONS: Intl.CollatorOptions = { sensitivity: 'base', numeric: true };
 export const EVENT_CONNECTION_READY = 'ready';

@@ -26,7 +26,7 @@ export const EMPTY_SNAPSHOT: Snapshot = {
       respect_absence: true,
       swap_allowed: true,
       min_load: 'paused',
-      area_id: null,
+      area_ids: [],
     },
   ],
   schedules: [],

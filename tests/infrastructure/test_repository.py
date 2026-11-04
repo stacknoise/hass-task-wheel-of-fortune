@@ -316,3 +316,24 @@ async def test_migrated_history_loads() -> None:
 
 def test_config_migration_keeps_the_data() -> None:
     assert migrate(STORE_CONFIG, {"x": 1}, (1, 1), CONFIG_MIGRATIONS) == {"x": 1}
+
+
+def test_config_migration_turns_the_single_room_into_a_list() -> None:
+    old = {
+        "tasks": [
+            {"id": "t1", "area_id": "kueche"},
+            {"id": "t2", "area_id": None},
+            {"id": "t3"},
+            {"id": "t4", "area_id": "", "area_ids": ["bad"]},
+            "kaputt",
+        ]
+    }
+    new = migrate(STORE_CONFIG, old, (1, 2), CONFIG_MIGRATIONS)
+    assert new["tasks"] == [
+        {"id": "t1", "area_ids": ["kueche"]},
+        {"id": "t2", "area_ids": []},
+        {"id": "t3", "area_ids": []},
+        {"id": "t4", "area_ids": ["bad"]},
+        "kaputt",
+    ]
+    assert migrate(STORE_CONFIG, {"tasks": "x"}, (1, 2), CONFIG_MIGRATIONS) == {"tasks": "x"}
