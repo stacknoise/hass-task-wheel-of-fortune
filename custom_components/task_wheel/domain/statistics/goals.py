@@ -1,87 +1,98 @@
-"""Erreichungsgrad der Zeitpläne: Soll aus „höchstens n-mal in x Zeiträumen“ gegen das Erledigte."""
+"""Soll-Ist je Aufgabe: wie oft wurde sie im Fenster ihrer Regel „n-mal in x Zeiträumen“ verlost."""
 
 import datetime as dt
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
-from ..models import Assignment, MaxPerPeriod, Schedule, Task
-from ..rules.periods import count_since, window_start
+from ...const.defaults import DEFAULT_GOAL_WINDOWS
+from ..enums import Period
+from ..models import Assignment, MaxPerPeriod, Task
+from ..rules.periods import local_date, shift_periods, window_start
 from ..status import DONE_STATUSES
-from ..types import ScheduleId, TaskId
+from ..types import TaskId
 
 type Placed = tuple[Assignment, dt.datetime]
+_DAY = dt.timedelta(days=1)
+
+
+@dataclass(slots=True, frozen=True)
+class GoalWindow:
+    """Ein Fenster aus `every` Perioden von `start` bis `end` (einschließlich) mit den Zahlen."""
+
+    start: dt.date
+    end: dt.date
+    assigned: int
+    done: int
 
 
 @dataclass(slots=True, frozen=True)
 class TaskGoal:
-    """Soll und Stand einer Aufgabe im aktuellen Fenster ihrer Häufigkeitsregel."""
+    """Soll und Stand einer Aufgabe: das laufende Fenster zuerst, dann frühere (neueste zuerst)."""
 
     task_id: TaskId
     target: int
-    assigned: int
-    done: int
-
-    @property
-    def reached(self) -> int:
-        """Erledigte Zuteilungen, höchstens so viele wie das Soll."""
-        return min(self.done, self.target)
+    period: Period
+    every: int
+    windows: tuple[GoalWindow, ...]
 
 
-@dataclass(slots=True, frozen=True)
-class ScheduleGoal:
-    """Erreichungsgrad eines Zeitplans über seine Aufgaben mit Soll."""
-
-    schedule_id: ScheduleId
-    tasks: tuple[TaskGoal, ...]
-
-    @property
-    def target(self) -> int:
-        """Summe der Soll-Werte."""
-        return sum(goal.target for goal in self.tasks)
-
-    @property
-    def reached(self) -> int:
-        """Summe der erreichten (erledigten, gedeckelten) Zuteilungen."""
-        return sum(goal.reached for goal in self.tasks)
-
-    @property
-    def rate(self) -> float:
-        """Erreichungsgrad 0 bis 1 (ein Zeitplan in der Liste hat immer ein Soll)."""
-        return self.reached / self.target
+def _window(
+    start: dt.date, end: dt.date, placed: Iterable[tuple[dt.date, bool]], today: dt.date
+) -> GoalWindow:
+    """Zählt Zuteilungen (Tag, erledigt) in `[start, end]`, höchstens bis heute."""
+    last = min(end, today)
+    inside = [done for day, done in placed if start <= day <= last]
+    return GoalWindow(start, end, len(inside), sum(inside))
 
 
-def task_goal(task: Task, placed: Iterable[Placed], now: dt.datetime) -> TaskGoal | None:
-    """Stand der Aufgabe im Fenster ihrer Regel; ohne „höchstens n-mal …“ gibt es kein Soll."""
+def task_goal(
+    task: Task, placed: Iterable[Placed], now: dt.datetime, windows: int = DEFAULT_GOAL_WINDOWS
+) -> TaskGoal | None:
+    """Soll-Ist der Aufgabe; ohne „höchstens n-mal …“ gibt es kein Soll.
+
+    Die Fenster schließen lückenlos aneinander an (je `every` Perioden): das erste endet mit der
+    laufenden Periode, die übrigen sind abgeschlossene frühere Fenster.
+    """
     rule = task.frequency
     if not isinstance(rule, MaxPerPeriod):
         return None
-    start = window_start(rule.period, rule.every, now)
-    mine = [(item, started) for item, started in placed if item.task_id == task.id]
-    done = [started for item, started in mine if item.status in DONE_STATUSES]
-    return TaskGoal(
-        task.id,
-        rule.count,
-        count_since(start, (started for _item, started in mine), now),
-        count_since(start, done, now),
-    )
+    mine = [
+        (local_date(started, now), item.status in DONE_STATUSES)
+        for item, started in placed
+        if item.task_id == task.id
+    ]
+    first = window_start(rule.period, rule.every, now)
+    result: list[GoalWindow] = []
+    for back in range(windows):
+        start = shift_periods(rule.period, first, -back * rule.every)
+        end = shift_periods(rule.period, start, rule.every) - _DAY
+        result.append(_window(start, end, mine, now.date()))
+    return TaskGoal(task.id, rule.count, rule.period, rule.every, tuple(result))
+
+
+def goals_start(
+    tasks: Iterable[Task], now: dt.datetime, windows: int = DEFAULT_GOAL_WINDOWS
+) -> dt.date:
+    """Frühester Tag der Fenster aller Aufgaben mit Soll (so weit muss der Verlauf reichen)."""
+    starts = [
+        shift_periods(
+            task.frequency.period,
+            window_start(task.frequency.period, task.frequency.every, now),
+            -(windows - 1) * task.frequency.every,
+        )
+        for task in tasks
+        if isinstance(task.frequency, MaxPerPeriod)
+    ]
+    return min(starts, default=now.date())
 
 
 def build_goals(
-    schedules: Iterable[Schedule],
     tasks: Mapping[TaskId, Task],
     placed: Iterable[Placed],
     now: dt.datetime,
-) -> tuple[ScheduleGoal, ...]:
-    """Erreichungsgrad je aktivem Zeitplan mit mindestens einer Aufgabe mit Soll."""
+    windows: int = DEFAULT_GOAL_WINDOWS,
+) -> tuple[TaskGoal, ...]:
+    """Soll-Ist aller Aufgaben mit „höchstens n-mal in x Zeiträumen“."""
     placed = tuple(placed)
-    goals: list[ScheduleGoal] = []
-    for schedule in schedules:
-        if schedule.archived:
-            continue
-        found = (tasks.get(task_id) for task_id in schedule.task_ids)
-        per_task = tuple(
-            goal for task in found if task and (goal := task_goal(task, placed, now)) is not None
-        )
-        if per_task:
-            goals.append(ScheduleGoal(schedule.id, per_task))
-    return tuple(goals)
+    found = (task_goal(task, placed, now, windows) for task in tasks.values())
+    return tuple(goal for goal in found if goal is not None)

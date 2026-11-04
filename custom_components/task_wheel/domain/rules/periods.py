@@ -36,13 +36,20 @@ def period_start(period: Period, now: datetime) -> date:
     return _PERIOD_STARTS[period](now.date())
 
 
+def shift_periods(period: Period, start: date, count: int) -> date:
+    """Beginn der Periode, die `count` Perioden nach (oder bei negativem `count` vor) `start` liegt.
+
+    `start` muss ein Periodenbeginn sein (Tag, Montag oder Monatserster).
+    """
+    if period is Period.MONTH:
+        months = start.year * MONTHS_PER_YEAR + start.month - 1 + count
+        return date(months // MONTHS_PER_YEAR, months % MONTHS_PER_YEAR + 1, 1)
+    return date.fromordinal(start.toordinal() + count * _PERIOD_DAYS[period])
+
+
 def window_start(period: Period, every: int, now: datetime) -> date:
     """Erster Kalendertag des Fensters aus `every` Perioden, das mit der laufenden endet."""
-    current = period_start(period, now)
-    if period is Period.MONTH:
-        months = current.year * MONTHS_PER_YEAR + current.month - 1 - (every - 1)
-        return date(months // MONTHS_PER_YEAR, months % MONTHS_PER_YEAR + 1, 1)
-    return date.fromordinal(current.toordinal() - (every - 1) * _PERIOD_DAYS[period])
+    return shift_periods(period, period_start(period, now), -(every - 1))
 
 
 def count_since(start: date, assigned: Iterable[datetime], now: datetime) -> int:

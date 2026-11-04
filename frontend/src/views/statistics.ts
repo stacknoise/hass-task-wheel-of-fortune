@@ -3,23 +3,23 @@ import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 
 import { modelsOf } from '../api/index.ts';
-import type { PersonObject, ScheduleObject, StatisticsReport, TaskObject } from '../api/index.ts';
+import type { GoalWindow, PersonObject, StatisticsReport, TaskObject } from '../api/index.ts';
 import { baseStyles, tokenStyles, viewStyles } from '../components/index.ts';
 import type { ChipItem } from '../components/index.ts';
 import '../components/index.ts';
 import {
   DEFAULT_RANGE,
   EVENT_CHIP_SELECT,
-  PERCENT,
   STATISTICS_RANGES,
   STATISTICS_WEEKS,
   VIEW_TAGS,
 } from '../constants/index.ts';
 import type { StatisticsRangeId } from '../constants/index.ts';
-import { formatNumber, formatPercent } from '../i18n/format.ts';
+import { formatNumber, formatPercent, formatShortDate } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
 import { AsyncValue, StoreController, areaNames, indexById } from '../state/index.ts';
+import { describeFrequency } from '../components/summaries.ts';
 import { roomTags } from './room.ts';
 import { pointBars, weeklyChart } from './statistics-charts.ts';
 import { barRows, matrixRows } from './statistics-model.ts';
@@ -66,16 +66,14 @@ export class TwStatisticsView extends LitElement {
       .pair > .card {
         flex: 1 1 340px;
       }
-      .bar-row,
-      .goal-row {
+      .bar-row {
         display: grid;
         grid-template-columns: 80px minmax(0, 1fr) 48px;
         align-items: center;
         gap: var(--tw-space-s);
         margin-bottom: var(--tw-space-s);
       }
-      .bar-row strong,
-      .goal-row strong {
+      .bar-row strong {
         text-align: right;
       }
       .track {
@@ -118,12 +116,15 @@ export class TwStatisticsView extends LitElement {
         stroke: var(--tw-color-primary);
         stroke-width: 2;
       }
-      .goal {
-        margin-bottom: var(--tw-space-field);
+      td.goal-cell {
+        min-width: 110px;
       }
-      .goal-tasks {
-        margin: var(--tw-space-s) 0 0;
-        padding-left: 1.2em;
+      td.goal-cell[data-state='met'] strong {
+        color: var(--tw-color-primary);
+      }
+      td.goal-cell[data-state='under'] strong,
+      td.goal-cell[data-state='over'] strong {
+        color: var(--tw-color-error);
       }
       td.cell {
         text-align: center;
@@ -182,11 +183,7 @@ export class TwStatisticsView extends LitElement {
           label=${this.#text('statistics.range')}
         ></tw-chips>
       </div>
-      ${this.#body(
-        modelsOf(snapshot, 'persons'),
-        modelsOf(snapshot, 'tasks'),
-        modelsOf(snapshot, 'schedules'),
-      )}
+      ${this.#body(modelsOf(snapshot, 'persons'), modelsOf(snapshot, 'tasks'))}
     `;
   }
 
@@ -194,11 +191,7 @@ export class TwStatisticsView extends LitElement {
     return translate(key, this.language, params);
   }
 
-  #body(
-    persons: readonly PersonObject[],
-    tasks: readonly TaskObject[],
-    schedules: readonly ScheduleObject[],
-  ): TemplateResult {
+  #body(persons: readonly PersonObject[], tasks: readonly TaskObject[]): TemplateResult {
     const { status, value: report } = this.#report;
     if (status === 'error') {
       return html`<p class="error" role="alert">${this.#text('common.loadError')}</p>`;
@@ -209,7 +202,7 @@ export class TwStatisticsView extends LitElement {
     if (report.kpis.assigned === 0) {
       return report.goals.length === 0
         ? html`<p class="empty">${this.#text('statistics.empty')}</p>`
-        : this.#goalsCard(report, schedules, tasks);
+        : this.#goalsCard(report, tasks);
     }
     const personById = indexById(persons);
     return html`
@@ -225,7 +218,7 @@ export class TwStatisticsView extends LitElement {
             </div>`,
         )}
       </div>
-      ${this.#goalsCard(report, schedules, tasks)}
+      ${this.#goalsCard(report, tasks)}
       <div class="pair">${this.#pointsCard(report, personById)} ${this.#weeklyCard(report)}</div>
       ${this.#matrixCard(report, tasks, persons)} ${this.#highlights(report, personById)}
     `;
@@ -260,56 +253,63 @@ export class TwStatisticsView extends LitElement {
     ];
   }
 
-  /** Eigene Box: Erreichungsgrad je Zeitplan (erledigt gegen Soll im aktuellen Fenster). */
-  #goalsCard(
-    report: StatisticsReport,
-    schedules: readonly ScheduleObject[],
-    tasks: readonly TaskObject[],
-  ): TemplateResult {
-    const scheduleById = indexById(schedules);
+  /** Eigene Box: Soll gegen tatsächlich verloste Anzahl je Aufgabe im Fenster ihrer Regel. */
+  #goalsCard(report: StatisticsReport, tasks: readonly TaskObject[]): TemplateResult {
     const taskById = indexById(tasks);
+    const windows = Math.max(...report.goals.map((goal) => goal.windows.length));
     return html`<section class="card">
       <h2>${this.#text('statistics.goals')}</h2>
       <p class="muted">${this.#text('statistics.goalsHint')}</p>
-      ${repeat(
-        report.goals,
-        (goal) => goal.schedule_id,
-        (goal) =>
-          html`<div class="goal">
-            <div class="goal-row">
-              <span
-                >${scheduleById.get(goal.schedule_id)?.name ?? this.#text('common.unknownSchedule')}</span
-              >
-              <div
-                class="track"
-                role="progressbar"
-                aria-valuemin="0"
-                aria-valuemax="100"
-                aria-valuenow=${Math.round(goal.rate * PERCENT)}
-              >
-                <div class="fill" style="width: ${goal.rate * PERCENT}%"></div>
-              </div>
-              <strong>${formatPercent(goal.rate, this.language)}</strong>
-            </div>
-            <div class="muted">
-              ${this.#text('statistics.goalReached', { reached: goal.reached, target: goal.target })}
-            </div>
-            <ul class="muted goal-tasks">
-              ${goal.tasks.map(
-                (entry) =>
-                  html`<li>
-                    ${taskById.get(entry.task_id)?.name ?? this.#text('common.unknownTask')}:
-                    ${this.#text('statistics.goalTask', {
-                      done: entry.done,
-                      assigned: entry.assigned,
-                      target: entry.target,
-                    })}
-                  </li>`,
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>${this.#text('statistics.task')}</th>
+              <th>${this.#text('statistics.goalRule')}</th>
+              ${Array.from(
+                { length: windows },
+                (_, index) =>
+                  html`<th>
+                    ${this.#text(index === 0 ? 'statistics.goalCurrent' : 'statistics.goalPast')}
+                  </th>`,
               )}
-            </ul>
-          </div>`,
-      )}
+            </tr>
+          </thead>
+          <tbody>
+            ${repeat(
+              report.goals,
+              (goal) => goal.task_id,
+              (goal) =>
+                html`<tr>
+                  <td>${taskById.get(goal.task_id)?.name ?? this.#text('common.unknownTask')}</td>
+                  <td>
+                    ${describeFrequency(
+                      {
+                        kind: 'max_per_period',
+                        count: goal.target,
+                        period: goal.period,
+                        every: goal.every,
+                      },
+                      this.language,
+                    )}
+                  </td>
+                  ${goal.windows.map((window) => this.#goalCell(goal.target, window))}
+                </tr>`,
+            )}
+          </tbody>
+        </table>
+      </div>
     </section>`;
+  }
+
+  #goalCell(target: number, window: GoalWindow): TemplateResult {
+    const state = window.assigned === target ? 'met' : window.assigned > target ? 'over' : 'under';
+    const range = `${formatShortDate(window.start, this.language)} – ${formatShortDate(window.end, this.language)}`;
+    return html`<td class="goal-cell" data-state=${state}>
+      <strong>${window.assigned} / ${target}</strong>
+      <div class="muted">${range}</div>
+      <div class="muted">${this.#text('statistics.goalDone', { done: window.done })}</div>
+    </td>`;
   }
 
   #pointsCard(
