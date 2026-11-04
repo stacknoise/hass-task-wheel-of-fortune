@@ -202,6 +202,9 @@
     "draw_replace_unconfirmed": {
       "message": "Bringing the next regular run forward must be confirmed."
     },
+    "draw_nothing_due": {
+      "message": "No task is due: all tasks of the schedule have reached their maximum in the period, or nobody is available."
+    },
     "draw_too_soon": {
       "message": "Please wait at least {seconds} seconds between two draws of the same schedule."
     },

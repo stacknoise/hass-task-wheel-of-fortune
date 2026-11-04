@@ -14,6 +14,7 @@ from custom_components.task_wheel.domain.enums import (
     AssignmentStatus,
     DeadlineStart,
     DeadlineUnit,
+    Load,
     Period,
     RoundOrigin,
     WeightingKind,
@@ -105,6 +106,43 @@ def test_frequency_rule_removes_tasks_that_are_not_due():
     assert [a.task_id for a in third.assignments] == ["t1", "t2"]
 
 
+def _exhaust_all_tasks(world: World) -> None:
+    """Beide Aufgaben am Tagesmaximum: nach einer Auslosung ist heute nichts mehr fällig."""
+    daily = MaxPerPeriod(count=1, period=Period.DAY)
+    for task_id in ("t1", "t2"):
+        world.config.put_task(f.task(id=task_id, allowed=frozenset({"p1", "p2"}), frequency=daily))
+    world.draws.draw("s1", AUTO, NOW)
+
+
+def test_nothing_due_rejects_the_draw_and_stores_no_empty_round():
+    world = World(0.1, 0.9)
+    _exhaust_all_tasks(world)
+    stored = dict(world.history.rounds)
+    for origin in (AUTO, MANUAL):
+        with pytest.raises(DrawRejectedError, match="draw_nothing_due"):
+            world.draws.draw("s1", origin, NOW + HOUR_DELTA)
+    with pytest.raises(DrawRejectedError, match="draw_nothing_due"):
+        begin(world, "s1", NOW + HOUR_DELTA)
+    assert world.history.rounds == stored and len(world.events.drawn) == 1
+    assert world.draws.open_rounds(NOW + HOUR_DELTA) == ()
+
+
+def test_nothing_due_keeps_an_open_panel_round_and_ends_with_the_next_day():
+    world = World(0.1, 0.9)
+    _exhaust_all_tasks(world)
+    with pytest.raises(DrawRejectedError, match="draw_nothing_due"):
+        begin(world, "s1", NOW + HOUR_DELTA)
+    assert len(world.draws.draw("s1", AUTO, NOW + DAY).assignments) == 2
+
+
+def test_nobody_available_counts_as_nothing_due():
+    world = World()
+    for pid in ("p1", "p2"):
+        world.config.put_person(f.person(id=pid, load=Load.PAUSED))
+    with pytest.raises(DrawRejectedError, match="draw_nothing_due"):
+        world.draws.draw("s1", AUTO, NOW)
+
+
 def test_deleted_tasks_are_skipped():
     world = World()
     world.config.remove_task("t2")
@@ -128,7 +166,8 @@ def test_absence_is_ignored_when_the_schedule_does_not_skip_absent():
     world = World(0.1)
     for ident in ("p1", "p2"):
         world.config.put_person(f.person(id=ident, slug=ident, name=ident, absences=(always,)))
-    assert world.draws.draw("s1", AUTO, NOW).assignments == ()
+    with pytest.raises(DrawRejectedError, match="draw_nothing_due"):
+        world.draws.draw("s1", AUTO, NOW)
     world.put_schedule(skip_absent=False)
     assert len(world.draws.draw("s1", AUTO, NOW + DAY).assignments) == 2
 

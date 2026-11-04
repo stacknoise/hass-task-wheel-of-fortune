@@ -5,6 +5,7 @@ import logging
 from typing import Final
 
 from ..const.defaults import REMINDER_HOUR
+from ..const.keys import ERR_NOTHING_DUE
 from ..domain.enums import RoundOrigin
 from ..domain.errors import TaskWheelError
 from ..domain.models import OnceTrigger, Round, Schedule
@@ -147,7 +148,10 @@ class ScheduleService:
         """Löst aus; nur nach einer gelungenen Auslosung gilt ein einmaliger Plan als erledigt."""
         try:
             self._draws.draw(schedule.id, RoundOrigin.AUTO, now)
-        except TaskWheelError:
+        except TaskWheelError as err:
+            if err.key == ERR_NOTHING_DUE:
+                _LOGGER.info("Auslosung übersprungen, nichts fällig: %s", schedule.slug)
+                return
             _LOGGER.warning(
                 "Automatische Auslosung fehlgeschlagen: %s", schedule.slug, exc_info=True
             )
