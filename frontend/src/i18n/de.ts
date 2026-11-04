@@ -111,7 +111,7 @@ export const de = {
   'schedules.skip_absent': 'Abwesende überspringen',
   'schedules.animations': 'Animationen der Auslosung',
   'schedules.animations.hint':
-    'Bei mehreren Varianten wird bei jeder Auslosung zufällig eine gewählt.',
+    'Bei mehreren Varianten wird bei jeder Auslosung zufällig eine gewählt. Ohne Auswahl wird sofort ausgelost und die Aufgabenliste gezeigt.',
   'animation.wheel': 'Glücksrad',
   'animation.drum': 'Lostrommel',
   'animation.slot': 'Slot-Machine',

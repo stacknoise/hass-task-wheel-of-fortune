@@ -111,7 +111,8 @@ export const en: Record<keyof typeof de, string> = {
   'schedules.notify': 'Send notification',
   'schedules.skip_absent': 'Skip absent persons',
   'schedules.animations': 'Draw animations',
-  'schedules.animations.hint': 'With several variants, one is picked at random for every draw.',
+  'schedules.animations.hint':
+    'With several variants, one is picked at random for every draw. With none selected, the draw happens at once and the task list is shown.',
   'animation.wheel': 'Wheel of fortune',
   'animation.drum': 'Lottery drum',
   'animation.slot': 'Slot machine',

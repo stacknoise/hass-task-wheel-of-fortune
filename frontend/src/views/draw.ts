@@ -215,8 +215,9 @@ export class TwDrawView extends LitElement {
           class="button primary"
           ?disabled=${!scheduleId}
           @click=${() => {
-            this.#kind = this.#pick(scheduleId);
-            void session?.begin(scheduleId);
+            const kind = this.#pick(scheduleId);
+            this.#kind = kind ?? this.#kind;
+            void session?.begin(scheduleId, kind !== undefined);
           }}
         >
           ${this.#text('draw.start')}
@@ -229,8 +230,12 @@ export class TwDrawView extends LitElement {
                   const snapshot = this.#store.state?.snapshot;
                   const round = snapshot && openRoundFor(snapshot, scheduleId);
                   if (round) {
-                    this.#kind = this.#pick(scheduleId);
+                    const kind = this.#pick(scheduleId);
+                    this.#kind = kind ?? this.#kind;
                     session?.resume(round);
+                    if (kind === undefined) {
+                      void session?.drawRest();
+                    }
                   }
                 }}
               >
@@ -243,8 +248,8 @@ export class TwDrawView extends LitElement {
     `;
   }
 
-  /** Wählt zufällig eine der Animationen, die der Zeitplan erlaubt. */
-  #pick(scheduleId: string): AnimationKind {
+  /** Wählt zufällig eine der Animationen, die der Zeitplan erlaubt; ohne Auswahl keine. */
+  #pick(scheduleId: string): AnimationKind | undefined {
     const snapshot = this.#store.state?.snapshot;
     const schedule = snapshot
       ? drawableSchedules(snapshot).find((candidate) => candidate.id === scheduleId)
