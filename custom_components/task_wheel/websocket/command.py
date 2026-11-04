@@ -55,6 +55,7 @@ class Command:
     handler: Handler
     access: Access = Access.USER
     mutates: bool = False
+    subscribes: bool = False
 
     def schema(self) -> vol.Schema:
         """Vollständiges Schema der Nachricht; unbekannte Felder sind nicht erlaubt."""

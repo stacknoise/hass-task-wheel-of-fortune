@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Je Panel-Verbindung gibt es höchstens zwei Live-Abonnements (ein neues ersetzt das älteste)
+- Dienste lehnen einen mehrdeutigen Aufgabennamen ab (`ambiguous_reference`) statt still die erste Aufgabe zu nehmen; Fehler eines Benachrichtigungsdienstes werden protokolliert und stören die übrigen Ziele nicht
 - „Panel nur für Administratoren“ gilt jetzt auch für die Dienste, den Button „Auslosen“ und das Abhaken in der To-do-Liste; beim Aktivieren werden bestehende Panel-Verbindungen abgemeldet, und die Seitenleiste folgt der Einstellung sofort
 - Behoben: Das Panel wird beim erneuten Einrichten nach einem abgebrochenen Setup nicht mehr doppelt registriert
 - Beschädigter oder zu neuer Speicher zeigt beim Einrichten eine verständliche Fehlermeldung statt „Fehler beim Einrichten“

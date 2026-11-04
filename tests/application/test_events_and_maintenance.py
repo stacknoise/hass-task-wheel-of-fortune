@@ -26,7 +26,7 @@ from custom_components.task_wheel.const.keys import (
     ATTR_TASK_NAME,
 )
 from custom_components.task_wheel.domain.enums import AssignmentStatus, RoundOrigin
-from custom_components.task_wheel.domain.errors import NotFoundError
+from custom_components.task_wheel.domain.errors import AmbiguousReferenceError, NotFoundError
 from custom_components.task_wheel.domain.models import Recurring
 from custom_components.task_wheel.runtime import compose
 
@@ -129,6 +129,15 @@ def test_find_by_ref_matches_any_key_or_raises() -> None:
     assert find_by_ref(people, "p1", "person", keys).slug == "anna"
     with pytest.raises(NotFoundError):
         find_by_ref(people, "zoe", "person", keys)
+
+
+def test_find_by_ref_rejects_an_ambiguous_reference() -> None:
+    tasks = [f.task(id="t1", name="Müll"), f.task(id="t2", name="Müll"), f.task(id="t3")]
+    keys = lambda t: (t.id, t.name)  # noqa: E731
+    with pytest.raises(AmbiguousReferenceError) as err:
+        find_by_ref(tasks, "Müll", "task", keys)
+    assert err.value.key == "ambiguous_reference"
+    assert find_by_ref(tasks, "t2", "task", keys).id == "t2"
 
 
 def _maintenance(world: EventWorld):

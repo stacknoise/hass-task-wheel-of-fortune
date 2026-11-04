@@ -140,6 +140,9 @@
     "not_found": {
       "message": "{resource} „{id}“ wurde nicht gefunden."
     },
+    "ambiguous_reference": {
+      "message": "{resource} „{id}“ ist nicht eindeutig: Es passen mehrere. Bitte die Kennung verwenden."
+    },
     "limit_reached": {
       "message": "Die Obergrenze für {resource} ({limit}) ist erreicht."
     },

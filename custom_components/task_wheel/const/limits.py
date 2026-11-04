@@ -128,3 +128,5 @@ WS_MAX_DEPTH: Final = 4
 WS_ISO_MAX_LENGTH: Final = 40
 WS_MESSAGE_ID_MIN: Final = 1
 MAX_SUBSCRIPTIONS: Final = 50
+# Je Verbindung: ein weiteres Abonnement ersetzt das älteste
+MAX_SUBSCRIPTIONS_PER_CONNECTION: Final = 2

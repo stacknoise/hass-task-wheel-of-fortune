@@ -78,6 +78,7 @@ ERR_NAIVE_DATETIME: Final = "naive_datetime"
 ERR_INCONSISTENT: Final = "inconsistent"
 ERR_LIMIT_REACHED: Final = "limit_reached"
 ERR_NOT_FOUND: Final = "not_found"
+ERR_AMBIGUOUS: Final = "ambiguous_reference"
 ERR_STORAGE_CORRUPT: Final = "storage_corrupt"
 ERR_STORAGE_VERSION: Final = "storage_version_unsupported"
 

@@ -5,6 +5,7 @@ from types import MappingProxyType
 from typing import Final
 
 from ..const.keys import (
+    ERR_AMBIGUOUS,
     ERR_IN_USE,
     ERR_INVALID_TRANSITION,
     ERR_LIMIT_REACHED,
@@ -72,6 +73,14 @@ class NotFoundError(TaskWheelError):
     def __init__(self, resource: str, item_id: str) -> None:
         """Merkt sich Ressource und Kennung als Platzhalter."""
         super().__init__(ERR_NOT_FOUND, {"resource": resource, "id": item_id})
+
+
+class AmbiguousReferenceError(TaskWheelError):
+    """Eine Referenz (z. B. ein Aufgabenname) trifft mehrere Elemente."""
+
+    def __init__(self, resource: str, ref: str) -> None:
+        """Merkt sich Ressource und Referenz als Platzhalter."""
+        super().__init__(ERR_AMBIGUOUS, {"resource": resource, "id": ref})
 
 
 class InUseError(TaskWheelError):

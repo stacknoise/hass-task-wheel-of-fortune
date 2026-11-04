@@ -129,7 +129,7 @@ def _availability_preview(request: Request) -> Reply:
 
 COMMANDS: Final = (
     Command(WS_SNAPSHOT, {}, _snapshot),
-    Command(WS_SUBSCRIBE, {}, _subscribe),
+    Command(WS_SUBSCRIBE, {}, _subscribe, subscribes=True),
     Command(WS_HISTORY_LIST, _HISTORY_FIELDS, _history_list),
     Command(WS_STATISTICS_GET, _STATISTICS_FIELDS, _statistics_get),
     Command(WS_AVAILABILITY_PREVIEW, _PREVIEW_FIELDS, _availability_preview),
