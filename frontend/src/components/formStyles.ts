@@ -1,5 +1,8 @@
-import { css } from 'lit';
+import { css, unsafeCSS } from 'lit';
 import type { CSSResult } from 'lit';
+
+/** Mindestbreite eines Feldes in einer Zeile mit mehreren Feldern; darunter bricht die Zeile um. */
+const PAIR_MIN_WIDTH = '150px';
 
 /** Gemeinsame Gestaltung der Formularbausteine: Beschriftung, Fehlertext, Bedienelemente. */
 export const formStyles: CSSResult = css`
@@ -25,6 +28,11 @@ export const formStyles: CSSResult = css`
   select:focus-visible {
     outline: 2px solid var(--tw-color-primary);
     outline-offset: 2px;
+  }
+  .pair {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(${unsafeCSS(PAIR_MIN_WIDTH)}, 1fr));
+    gap: var(--tw-space-field);
   }
   .control {
     min-height: 40px;

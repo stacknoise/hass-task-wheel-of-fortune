@@ -116,24 +116,26 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
           this.patch({ frequency });
         })}
       ></tw-frequency-editor>
-      <tw-stepper
-        .label=${this.text('tasks.points')}
-        .value=${draft.points}
-        .min=${FORM_LIMITS.points.min}
-        .max=${FORM_LIMITS.points.max}
-        @tw-change=${onChange<number>((points) => {
-          this.patch({ points });
-        })}
-      ></tw-stepper>
-      <tw-stepper
-        .label=${this.text('tasks.due_days')}
-        .value=${draft.due_days}
-        .min=${FORM_LIMITS.dueDays.min}
-        .max=${FORM_LIMITS.dueDays.max}
-        @tw-change=${onChange<number>((due_days) => {
-          this.patch({ due_days });
-        })}
-      ></tw-stepper>
+      <div class="pair">
+        <tw-stepper
+          .label=${this.text('tasks.points')}
+          .value=${draft.points}
+          .min=${FORM_LIMITS.points.min}
+          .max=${FORM_LIMITS.points.max}
+          @tw-change=${onChange<number>((points) => {
+            this.patch({ points });
+          })}
+        ></tw-stepper>
+        <tw-stepper
+          .label=${this.text('tasks.due_days')}
+          .value=${draft.due_days}
+          .min=${FORM_LIMITS.dueDays.min}
+          .max=${FORM_LIMITS.dueDays.max}
+          @tw-change=${onChange<number>((due_days) => {
+            this.patch({ due_days });
+          })}
+        ></tw-stepper>
+      </div>
       ${this.#areaSelect(draft.area_id)} ${this.#minLoad(draft.min_load)} ${this.#rules(draft)}
     `;
   }

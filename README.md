@@ -20,7 +20,7 @@ instance has to be set once). Manually:
    type *Integration* → *Add*
 2. Search for "Task Wheel of Fortune" in HACS, *Download* it (pick the latest version) and restart Home Assistant
 3. *Settings → Devices & services → Add integration → Task Wheel of Fortune*
-4. **Task Wheel of Fortune** appears in the sidebar; create people, tasks and schedules there
+4. **Task Wheel of Fortune** (shown as "Aufgaben-Glücksrad" if Home Assistant is set to German) appears in the sidebar; create people, tasks and schedules there
 
 HACS reports updates like for any other integration. Without HACS: extract the folder `custom_components/task_wheel` from
 the file `task_wheel.zip` of the respective [release](https://github.com/stacknoise/hass-task-wheel-of-fortune/releases)

@@ -32,6 +32,14 @@ export const PERSON_COLORS = [
   '#f08c00',
   '#0c8599',
   '#5c7080',
+  '#d6336c',
+  '#4263eb',
+  '#7048e8',
+  '#099268',
+  '#74a30b',
+  '#9c6644',
+  '#b08900',
+  '#a61e4d',
 ] as const;
 
 export const FORM_LIMITS = {
