@@ -70,6 +70,38 @@ def test_max_per_period(config, assigned, now, due):
 @pytest.mark.parametrize(
     ("config", "assigned", "now", "due"),
     [
+        # 1x in 2 Wochen: laufende plus vorherige Woche zählen
+        (MaxPerPeriod(count=1, period=Period.WEEK, every=2), [at(2026, 10, 26)], at(2026, 11, 8), False),
+        (MaxPerPeriod(count=1, period=Period.WEEK, every=2), [at(2026, 10, 26)], at(2026, 11, 9), True),
+        (MaxPerPeriod(count=1, period=Period.WEEK, every=2), [at(2026, 10, 25)], at(2026, 11, 8), True),
+        # 5x in 2 Monaten, über den Jahreswechsel
+        (
+            MaxPerPeriod(count=5, period=Period.MONTH, every=2),
+            [at(2026, 12, d) for d in (1, 2, 3)] + [at(2027, 1, 4), at(2027, 1, 5)],
+            at(2027, 1, 31),
+            False,
+        ),
+        (
+            MaxPerPeriod(count=5, period=Period.MONTH, every=2),
+            [at(2026, 12, d) for d in (1, 2, 3)] + [at(2027, 1, 4), at(2027, 1, 5)],
+            at(2027, 2, 1),
+            True,
+        ),
+        (MaxPerPeriod(count=2, period=Period.MONTH, every=2), [at(2026, 10, 31), at(2026, 11, 1)], at(2026, 12, 1), True),
+        # 2 Tage: heute und gestern
+        (MaxPerPeriod(count=1, period=Period.DAY, every=2), [at(2026, 11, 3)], at(2026, 11, 4), False),
+        (MaxPerPeriod(count=1, period=Period.DAY, every=2), [at(2026, 11, 2)], at(2026, 11, 4), True),
+        # Standard every=1 bleibt unverändert (alte Daten)
+        (MaxPerPeriod(count=1, period=Period.WEEK), [at(2026, 10, 30)], at(2026, 11, 2), True),
+    ],
+)
+def test_max_per_period_spanning_several_periods(config, assigned, now, due):
+    assert MaxPerPeriodRule(config).is_due(assigned, now) is due
+
+
+@pytest.mark.parametrize(
+    ("config", "assigned", "now", "due"),
+    [
         (Interval(days=7, tolerance=0), [], at(2026, 11, 4), True),
         (Interval(days=7, tolerance=0), [at(2026, 10, 28)], at(2026, 11, 4), True),
         (Interval(days=7, tolerance=0), [at(2026, 10, 29)], at(2026, 11, 4), False),

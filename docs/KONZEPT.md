@@ -191,7 +191,7 @@ erDiagram
 | `Person` | `id`, `name`, `slug`, `color`, `load: Load` (`full`=1,0 · `half`=0,5 · `paused`=0), `absences: tuple[AbsenceConfig, ...]`, `notify_target: str \| None` |
 | `AbsenceConfig` | `kind` + Felder je Art: `once(start, end)`, `weekly_days(weekdays)`, `week_rhythm(present_weeks, cycle_weeks, change_weekday, anchor)` |
 | `Task` | `id`, `name`, `points`, `due_days`, `allowed: frozenset[PersonId]` (leer = alle Personen), `frequency: FrequencyConfig`, `no_repeat`, `respect_absence`, `swap_allowed`, `min_load: Load` (Mindest-Belastbarkeit, Standard `paused` = egal; `half` = mindestens halbe, `full` = nur volle Last), `area_id: str \| None` (optionaler HA-Bereich/Raum, nur Anzeige; der Name kommt im Panel aus `hass.areas`, ein gelöschter Bereich erscheint als „Unbekannter Raum“) |
-| `FrequencyConfig` | `every_round` · `max_per_period(count, period)` · `interval(days, tolerance)` |
+| `FrequencyConfig` | `every_round` · `max_per_period(count, period, every)` · `interval(days, tolerance)` |
 | `Schedule` | `id`, `name`, `slug`, `trigger: TriggerConfig`, `task_ids: tuple[TaskId, ...]`, `enabled`, `notify`, `skip_absent`, `archived`, `animations: tuple[AnimationKind, ...]` (0 bis 8 verschiedene Arten, Standard `wheel`; leer = ohne Animation sofort auslosen) (archiviert ⇒ nicht aktiv, nie auslösbar) |
 | `TriggerConfig` | `recurring(weekdays, time, every_n_weeks \| monthly)` · `once(at, after: keep_manual \| archive \| delete)` · `manual(remind_after_days)` |
 | `Round` | `id`, `schedule_id`, `origin: auto \| manual \| service`, `started_at`, `finished_at`, `assignments` |
@@ -263,7 +263,7 @@ Die Häufigkeitsregel wirkt **vor** dem Kandidatenfilter auf Aufgabenebene:
 | Regel | `is_due(task, last, count_in_period, now)` |
 |---|---|
 | `every_round` | immer |
-| `max_per_period(n, period)` | Anzahl Zuteilungen im laufenden Tag/Woche/Monat `< n` |
+| `max_per_period(n, period, every)` | Anzahl Zuteilungen in den letzten `every` Kalendertagen/-wochen/-monaten (laufende Periode eingeschlossen) `< n`; `every` ist standardmäßig 1 |
 | `interval(d, tol)` | Tage seit letzter Zuteilung `≥ d − tol` |
 
 ### 5.3 Fairness-Gewichtung

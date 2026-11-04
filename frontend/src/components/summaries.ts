@@ -20,10 +20,16 @@ type TriggerSummaries = {
 const FREQUENCY_SUMMARIES: FrequencySummaries = {
   every_round: (_, language) => translate('frequency.summary_every_round', language),
   max_per_period: (frequency, language) =>
-    fill(translate('frequency.summary_max', language), {
-      count: frequency.count,
-      period: translate(`period.${frequency.period}`, language),
-    }),
+    frequency.every === 1
+      ? fill(translate('frequency.summary_max', language), {
+          count: frequency.count,
+          period: translate(`period.${frequency.period}`, language),
+        })
+      : fill(translate('frequency.summary_max_span', language), {
+          count: frequency.count,
+          every: frequency.every,
+          period: translate(`period.${frequency.period}.plural`, language),
+        }),
   interval: (frequency, language) =>
     fill(translate('frequency.summary_interval', language), {
       days: frequency.days,

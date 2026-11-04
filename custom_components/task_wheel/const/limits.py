@@ -47,6 +47,10 @@ DUE_DAYS_MIN: Final = 1
 DUE_DAYS_MAX: Final = 365
 PERIOD_COUNT_MIN: Final = 1
 PERIOD_COUNT_MAX: Final = 50
+PERIOD_EVERY_MIN: Final = 1
+PERIOD_EVERY_MAX: Final = 12
+# Längster Monat; begrenzt, wie weit ein Zeitraum von `PERIOD_EVERY_MAX` Monaten zurückreicht
+PERIOD_MAX_DAYS: Final = 31
 INTERVAL_DAYS_MIN: Final = 1
 INTERVAL_DAYS_MAX: Final = 365
 INTERVAL_TOLERANCE_MIN: Final = 0
@@ -74,7 +78,9 @@ HOURS_PER_DAY: Final = 24
 OPEN_ASSIGNMENT_MAX_AGE_DAYS: Final = DUE_DAYS_MAX + GRACE_HOURS_MAX // HOURS_PER_DAY
 
 # Verlauf, der für Häufigkeitsregeln und Fairness-Fenster einer Runde herangezogen wird
-RECENT_HISTORY_DAYS: Final = max(INTERVAL_DAYS_MAX, FAIRNESS_WINDOW_MAX)
+RECENT_HISTORY_DAYS: Final = max(
+    INTERVAL_DAYS_MAX, FAIRNESS_WINDOW_MAX, PERIOD_EVERY_MAX * PERIOD_MAX_DAYS
+)
 
 # Anwesenheit
 PREVIEW_WEEKS_MIN: Final = 1

@@ -3,6 +3,10 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionierung nach [SemVer](https://semver.org/lang/de/).
 Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt (`.github/release.yml`).
 
+## [Unveröffentlicht]
+
+- Aufgaben lassen sich mit „höchstens n× in x Tagen/Wochen/Monaten“ einplanen (z. B. 5× in 2 Monaten, 1× in 2 Wochen); das Fenster umfasst die laufende und die vorherigen Kalenderperioden. Bestehende Aufgaben behalten ihr Verhalten (x = 1)
+
 ## [0.2.0] – 2026-11-04
 
 - Hinzufügen und Bearbeiten von Personen, Aufgaben und Zeitplänen öffnen in Popups (auf dem Smartphone Vollbild); Zahlenfelder (+/−) stehen paarweise nebeneinander, die Abwesenheiten scrollen ab zwei Einträgen

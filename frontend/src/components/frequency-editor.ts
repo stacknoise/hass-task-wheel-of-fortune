@@ -38,6 +38,15 @@ export class TwFrequencyEditor extends LocalizedElement {
           this.#merge({ count });
         })}
       ></tw-stepper>
+      <tw-stepper
+        .label=${this.text('frequency.every')}
+        .value=${frequency.every}
+        .min=${FORM_LIMITS.periodEvery.min}
+        .max=${FORM_LIMITS.periodEvery.max}
+        @tw-change=${onChange<number>((every) => {
+          this.#merge({ every });
+        })}
+      ></tw-stepper>
       <tw-segmented
         .label=${this.text('frequency.period')}
         .options=${PERIODS.map((period) => ({ id: period, label: this.text(`period.${period}`) }))}

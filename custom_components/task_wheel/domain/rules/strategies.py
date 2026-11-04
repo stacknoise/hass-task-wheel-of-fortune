@@ -5,7 +5,7 @@ from datetime import datetime
 
 from ..models import Interval, MaxPerPeriod
 from ..validation import ensure_aware
-from .periods import count_since, local_date, period_start
+from .periods import count_since, local_date, window_start
 
 
 class EveryRoundRule:
@@ -18,15 +18,15 @@ class EveryRoundRule:
 
 
 class MaxPerPeriodRule:
-    """Höchstens `count` Zuteilungen im laufenden Tag, in der laufenden Woche oder im Monat."""
+    """Höchstens `count` Zuteilungen im Fenster aus `every` Tagen, Wochen oder Monaten."""
 
     def __init__(self, config: MaxPerPeriod) -> None:
-        """Merkt sich Anzahl und Periode."""
+        """Merkt sich Anzahl, Periode und Fensterlänge."""
         self._config = config
 
     def is_due(self, assigned: Iterable[datetime], now: datetime) -> bool:
-        """Fällig, solange die Zuteilungen der laufenden Periode unter dem Limit liegen."""
-        start = period_start(self._config.period, now)
+        """Fällig, solange die Zuteilungen des Fensters (laufende plus vorherige Perioden) unter dem Limit liegen."""
+        start = window_start(self._config.period, self._config.every, now)
         return count_since(start, assigned, now) < self._config.count
 
 
