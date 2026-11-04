@@ -5,15 +5,19 @@ from collections.abc import Iterator, Mapping
 from types import MappingProxyType
 
 from ...const import defaults, limits
-from ...const.keys import ERR_LIMIT_REACHED, KEY_AGGREGATES, KEY_ROUNDS, STORE_HISTORY
+from ...const.keys import (
+    ERR_LIMIT_REACHED,
+    KEY_AGGREGATES,
+    KEY_ROUNDS,
+    RESOURCE_ROUND,
+    STORE_HISTORY,
+)
+from ...domain.enums import PENDING_STATUSES
 from ...domain.errors import LimitReachedError, StorageCorruptError
 from ...domain.models import Assignment, Round
 from ...domain.serialization import as_mapping, model_of, tuple_of
-from ...domain.status import PENDING_STATUSES
 from ...domain.types import AssignmentId, PersonId, RoundId, TaskId
 from .storage import StoreLike, models_by_id, read_root, read_section
-
-_RESOURCE_ROUND = "round"
 
 
 def _decode_aggregates(value: object) -> dict[str, object]:
@@ -70,7 +74,7 @@ class HistoryStore:
         """Legt eine Runde an oder ersetzt sie samt Zuteilungen und führt die Indizes nach."""
         previous = self._rounds.get(round_.id)
         if previous is None and len(self._rounds) >= limits.MAX_STORED_ROUNDS:
-            raise LimitReachedError(_RESOURCE_ROUND, limits.MAX_STORED_ROUNDS)
+            raise LimitReachedError(RESOURCE_ROUND, limits.MAX_STORED_ROUNDS)
         if previous is not None:
             self._unindex(previous)
         needs_sort = self._breaks_order(round_, previous)

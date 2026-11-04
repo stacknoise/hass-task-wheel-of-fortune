@@ -6,7 +6,7 @@ from dataclasses import replace
 from types import MappingProxyType
 from typing import Final
 
-from .enums import AssignmentAction, AssignmentStatus
+from .enums import PENDING_STATUSES, AssignmentAction, AssignmentStatus
 from .errors import InvalidTransitionError
 from .models import Assignment, Settings, Swap
 from .types import PersonId
@@ -30,12 +30,6 @@ TRANSITIONS: Final[Mapping[tuple[AssignmentStatus, AssignmentAction], Assignment
         }
     )
 )
-
-# Noch nicht abgeschlossen: kann erledigt oder verpasst werden (offen oder getauscht).
-PENDING_STATUSES: Final[frozenset[AssignmentStatus]] = frozenset({_S.OPEN, _S.SWAPPED})
-
-# Erledigt (pünktlich oder verspätet): solche Zuteilungen verhindern das Löschen ihrer Auslosung.
-DONE_STATUSES: Final[frozenset[AssignmentStatus]] = frozenset({_S.ON_TIME, _S.LATE})
 
 # Status -> Faktor auf die Aufgabenpunkte; nicht gelistete Status zählen noch nicht.
 _POINT_FACTORS: Final[Mapping[AssignmentStatus, Callable[[Settings], float]]] = MappingProxyType(

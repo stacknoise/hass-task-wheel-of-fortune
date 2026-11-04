@@ -4,13 +4,12 @@ import datetime as dt
 from collections.abc import Callable
 from itertools import count
 
+from ..const.keys import RESOURCE_SUBSCRIPTION
 from ..const.limits import MAX_SUBSCRIPTIONS
 from ..domain.errors import LimitReachedError
 from .protocols import FireCallback, TimerPort
 from .views import Snapshot, SnapshotBuilder, diff
 from .wire import Json
-
-RESOURCE_SUBSCRIPTION = "subscription"
 
 type Listener = Callable[[Json], None]
 type Unsubscribe = Callable[[], None]

@@ -24,6 +24,9 @@ from .const.keys import (
     ATTR_TO_PERSON,
     ERR_NOT_LOADED,
     ERR_TARGET_REQUIRED,
+    RESOURCE_PERSON,
+    RESOURCE_SCHEDULE,
+    RESOURCE_TASK,
 )
 from .const.limits import REF_MAX_LENGTH, REF_MIN_LENGTH
 from .domain.enums import RoundOrigin
@@ -31,10 +34,6 @@ from .domain.errors import TaskWheelError
 from .domain.models import OnceAbsence, Person, Schedule, Task
 from .entry_lookup import loaded_runtime
 from .runtime import TaskWheelData
-
-RESOURCE_PERSON: Final = "person"
-RESOURCE_TASK: Final = "task"
-RESOURCE_SCHEDULE: Final = "schedule"
 
 type Handler = Callable[[TaskWheelData, Mapping[str, Any], dt.datetime], None]
 

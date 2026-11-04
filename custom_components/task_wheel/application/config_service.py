@@ -10,7 +10,13 @@ import unicodedata
 from collections.abc import Callable, Iterable, Mapping
 from typing import Final, Protocol
 
-from ..const.keys import ERR_DUPLICATE
+from ..const.keys import (
+    ERR_DUPLICATE,
+    RESOURCE_ASSIGNMENT,
+    RESOURCE_PERSON,
+    RESOURCE_SCHEDULE,
+    RESOURCE_TASK,
+)
 from ..const.limits import SLUG_MAX_LENGTH
 from ..domain.errors import InUseError, NotFoundError, ValidationError
 from ..domain.models import Person, Schedule, Settings, Task
@@ -19,11 +25,6 @@ from .draw_service import DrawService
 from .ids import new_id
 from .protocols import ConfigRepository, HistoryRepository, IdFactory
 from .schedule_service import ScheduleService
-
-RESOURCE_PERSON = "person"
-RESOURCE_TASK = "task"
-RESOURCE_SCHEDULE = "schedule"
-RESOURCE_ASSIGNMENT = "assignment"
 
 FIELD_ID: Final = "id"
 FIELD_SLUG: Final = "slug"

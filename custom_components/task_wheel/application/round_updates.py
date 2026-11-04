@@ -2,13 +2,12 @@
 
 from dataclasses import replace
 
+from ..const.keys import RESOURCE_ASSIGNMENT
 from ..domain.errors import NotFoundError
 from ..domain.models import Assignment
 from ..domain.statistics.aggregate import AssignmentChange
 from ..domain.types import AssignmentId
 from .protocols import AssignmentRecorder, HistoryRepository
-
-RESOURCE_ASSIGNMENT = "assignment"
 
 
 def require_assignment(history: HistoryRepository, assignment_id: AssignmentId) -> Assignment:

@@ -1,11 +1,11 @@
 """Ziehungs-Engine: Kandidaten, Gewichte, Zufall (KONZEPT §5.1 bis §5.3)."""
 
-import datetime as dt
 import secrets
 from bisect import bisect_right
 from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from itertools import accumulate
 
+from ...const.limits import ONE_DAY
 from ..models import Person, Task
 from ..types import PersonId, TaskId
 from .candidates import CandidateSelector
@@ -19,8 +19,6 @@ from .types import (
 )
 from .weighting import Weighting
 
-_DAY = dt.timedelta(days=1)
-
 
 def secure_random() -> RandomSource:
     """Kryptografisch sicherer Zufall für den Betrieb (Ergebnis bestimmt nur das Backend)."""
@@ -30,7 +28,7 @@ def secure_random() -> RandomSource:
 def capacities(context: DrawContext) -> dict[PersonId, float]:
     """Kapazität je Person im Fairness-Fenster: Belastungsfaktor mal anwesende Tage."""
     end = context.now.date()
-    start = end - (context.fairness_window_days - 1) * _DAY
+    start = end - (context.fairness_window_days - 1) * ONE_DAY
     return {
         pid: person.load.factor * context.availability[pid].present_day_count(start, end)
         for pid, person in context.persons.items()

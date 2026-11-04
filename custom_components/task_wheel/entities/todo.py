@@ -8,9 +8,9 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from ..application.round_updates import RESOURCE_ASSIGNMENT
 from ..const.defaults import DOMAIN
 from ..const.entities import ERR_TODO_COMPLETE_ONLY, KEY_TODO_TASKS
+from ..const.keys import RESOURCE_ASSIGNMENT
 from ..domain.errors import NotFoundError, TaskWheelError
 from ..domain.models import Person
 from ..runtime import TaskWheelData

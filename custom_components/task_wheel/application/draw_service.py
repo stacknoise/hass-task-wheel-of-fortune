@@ -4,7 +4,12 @@ import datetime as dt
 from dataclasses import dataclass, replace
 
 from ..const.defaults import PANEL_ROUND_TIMEOUT_MINUTES
-from ..const.keys import ERR_SCHEDULE_ARCHIVED, ERR_SCHEDULE_DISABLED
+from ..const.keys import (
+    ERR_SCHEDULE_ARCHIVED,
+    ERR_SCHEDULE_DISABLED,
+    RESOURCE_PANEL_ROUND,
+    RESOURCE_SCHEDULE,
+)
 from ..const.limits import MAX_OPEN_PANEL_ROUNDS
 from ..domain.draw.draft import RoundDraft
 from ..domain.draw.engine import DrawEngine
@@ -25,8 +30,6 @@ from .protocols import (
     RoundEvents,
 )
 
-RESOURCE_SCHEDULE = "schedule"
-RESOURCE_PANEL_ROUND = "panel_round"
 _PANEL_TIMEOUT = dt.timedelta(minutes=PANEL_ROUND_TIMEOUT_MINUTES)
 
 

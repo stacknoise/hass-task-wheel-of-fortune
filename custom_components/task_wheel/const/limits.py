@@ -1,5 +1,6 @@
 """Grenzwerte für Eingaben und Ressourcen (Sicherheit, KONZEPT §8)."""
 
+import datetime as dt
 import re
 from typing import Final
 
@@ -92,6 +93,12 @@ RECENT_HISTORY_DAYS: Final = max(
 # Aufbewahrung des Verlaufs: mindestens so lange, wie Regeln, Fairness und offene Zuteilungen ihn
 # brauchen (sonst gälten Häufigkeitsregeln still nicht mehr oder offene Zuteilungen verschwänden)
 RETENTION_MIN: Final = max(RECENT_HISTORY_DAYS, OPEN_ASSIGNMENT_MAX_AGE_DAYS)
+
+# Zeitspannen
+ONE_DAY: Final = dt.timedelta(days=1)
+ONE_WEEK: Final = dt.timedelta(days=WEEKDAY_COUNT)
+OPEN_ASSIGNMENT_MAX_AGE: Final = dt.timedelta(days=OPEN_ASSIGNMENT_MAX_AGE_DAYS)
+RECENT_HISTORY: Final = dt.timedelta(days=RECENT_HISTORY_DAYS)
 
 # Anwesenheit
 PREVIEW_WEEKS_MIN: Final = 1

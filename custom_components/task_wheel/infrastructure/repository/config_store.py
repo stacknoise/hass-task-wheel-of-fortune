@@ -4,7 +4,16 @@ from collections.abc import Callable, Mapping
 from types import MappingProxyType
 
 from ...const import defaults, limits
-from ...const.keys import KEY_PERSONS, KEY_SCHEDULES, KEY_SETTINGS, KEY_TASKS, STORE_CONFIG
+from ...const.keys import (
+    KEY_PERSONS,
+    KEY_SCHEDULES,
+    KEY_SETTINGS,
+    KEY_TASKS,
+    RESOURCE_PERSON,
+    RESOURCE_SCHEDULE,
+    RESOURCE_TASK,
+    STORE_CONFIG,
+)
 from ...domain.models import Person, Schedule, Settings, Task
 from ...domain.serialization import model_of, tuple_of
 from ...domain.types import PersonId, ScheduleId, TaskId
@@ -18,10 +27,6 @@ from .storage import (
     read_section,
     remove_existing,
 )
-
-_RESOURCE_PERSON = "person"
-_RESOURCE_TASK = "task"
-_RESOURCE_SCHEDULE = "schedule"
 
 
 class ConfigStore:
@@ -80,34 +85,32 @@ class ConfigStore:
 
     def put_person(self, person: Person) -> None:
         """Legt eine Person an oder ersetzt sie."""
-        put_limited(self._persons, person.id, person, _RESOURCE_PERSON, limits.MAX_PERSONS)
+        put_limited(self._persons, person.id, person, RESOURCE_PERSON, limits.MAX_PERSONS)
         self._changed()
 
     def remove_person(self, person_id: PersonId) -> None:
         """Entfernt eine Person."""
-        remove_existing(self._persons, person_id, _RESOURCE_PERSON)
+        remove_existing(self._persons, person_id, RESOURCE_PERSON)
         self._changed()
 
     def put_task(self, task: Task) -> None:
         """Legt eine Aufgabe an oder ersetzt sie."""
-        put_limited(self._tasks, task.id, task, _RESOURCE_TASK, limits.MAX_TASKS)
+        put_limited(self._tasks, task.id, task, RESOURCE_TASK, limits.MAX_TASKS)
         self._changed()
 
     def remove_task(self, task_id: TaskId) -> None:
         """Entfernt eine Aufgabe."""
-        remove_existing(self._tasks, task_id, _RESOURCE_TASK)
+        remove_existing(self._tasks, task_id, RESOURCE_TASK)
         self._changed()
 
     def put_schedule(self, schedule: Schedule) -> None:
         """Legt einen Zeitplan an oder ersetzt ihn."""
-        put_limited(
-            self._schedules, schedule.id, schedule, _RESOURCE_SCHEDULE, limits.MAX_SCHEDULES
-        )
+        put_limited(self._schedules, schedule.id, schedule, RESOURCE_SCHEDULE, limits.MAX_SCHEDULES)
         self._changed()
 
     def remove_schedule(self, schedule_id: ScheduleId) -> None:
         """Entfernt einen Zeitplan."""
-        remove_existing(self._schedules, schedule_id, _RESOURCE_SCHEDULE)
+        remove_existing(self._schedules, schedule_id, RESOURCE_SCHEDULE)
         self._changed()
 
     def set_settings(self, settings: Settings) -> None:

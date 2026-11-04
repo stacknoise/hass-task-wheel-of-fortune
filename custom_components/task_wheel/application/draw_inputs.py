@@ -4,7 +4,7 @@ import datetime as dt
 from collections import defaultdict
 from dataclasses import replace
 
-from ..const.limits import RECENT_HISTORY_DAYS
+from ..const.limits import ONE_DAY, RECENT_HISTORY
 from ..domain.availability.calendar import PersonAvailability
 from ..domain.draw.types import DrawContext, RandomSource
 from ..domain.enums import Load
@@ -16,13 +16,11 @@ from .protocols import ConfigRepository, HistoryRepository
 
 type Recent = tuple[tuple[Assignment, dt.datetime], ...]
 
-_DAY = dt.timedelta(days=1)
-
 
 def recent_assignments(history: HistoryRepository, now: dt.datetime) -> Recent:
     """Zuteilungen der letzten `RECENT_HISTORY_DAYS` Tage mit dem Beginn ihrer Runde."""
     rounds = history.rounds
-    since = now - RECENT_HISTORY_DAYS * _DAY
+    since = now - RECENT_HISTORY
     return tuple(
         (item, rounds[item.round_id].started_at) for item in history.assignments_since(since)
     )
@@ -38,7 +36,7 @@ def assigned_times(recent: Recent) -> dict[TaskId, list[dt.datetime]]:
 
 def window_points(recent: Recent, settings: Settings, now: dt.datetime) -> dict[PersonId, float]:
     """Punkte je Person im Fairness-Fenster (Offenes zählt voll, Abgeschlossenes mit Faktor)."""
-    start = now - settings.fairness_window_days * _DAY
+    start = now - settings.fairness_window_days * ONE_DAY
     points: defaultdict[PersonId, float] = defaultdict(float)
     for item, started in recent:
         if started >= start:
@@ -69,7 +67,7 @@ def due_tasks(
 def _seats(tasks: tuple[Task, ...], context: DrawContext) -> int:
     """Personen, die in dieser Runde eine Aufgabe übernehmen können (nicht pausiert, anwesend)."""
     start = context.now.date()
-    end = start + max(task.due_days for task in tasks) * _DAY
+    end = start + max(task.due_days for task in tasks) * ONE_DAY
     ignores_absence = not all(task.respect_absence for task in tasks)
     return sum(
         1

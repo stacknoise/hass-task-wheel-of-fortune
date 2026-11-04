@@ -8,6 +8,7 @@ from ...const.defaults import DEFAULT_PREVIEW_WEEKS
 from ...const.keys import ERR_ORDER, ERR_RANGE
 from ...const.limits import (
     AVAILABILITY_WINDOW_MAX_DAYS,
+    ONE_DAY,
     PREVIEW_WEEKS_MAX,
     PREVIEW_WEEKS_MIN,
     WEEKDAY_COUNT,
@@ -17,7 +18,6 @@ from ..validation import ensure, ensure_range
 from .factory import AvailabilityRuleFactory
 from .rule import AvailabilityRule
 
-_DAY = dt.timedelta(days=1)
 _FIELD_WINDOW = "window"
 _FIELD_WEEKS = "weeks"
 
@@ -69,7 +69,7 @@ class PersonAvailability:
         day = start
         while day <= end:
             yield DayPresence(day, self.is_present(day))
-            day += _DAY
+            day += ONE_DAY
 
     def present_in_window(self, start: dt.date, end: dt.date) -> bool:
         """Anwesend an mindestens einem Tag im Fenster (Kandidatenregel, KONZEPT §5)."""

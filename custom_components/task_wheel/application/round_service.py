@@ -1,12 +1,11 @@
 """Auslosungen löschen: Runde samt Zuteilungen entfernen, Punkte und Statistik zurückrechnen."""
 
+from ..const.keys import RESOURCE_ROUND
+from ..domain.enums import DONE_STATUSES
 from ..domain.errors import NotFoundError, RoundHasDoneError
 from ..domain.models import Round
-from ..domain.status import DONE_STATUSES
 from ..domain.types import RoundId
 from .protocols import AssignmentRecorder, HistoryRepository, NoEvents, RoundEvents
-
-RESOURCE_ROUND = "round"
 
 
 class RoundService:
