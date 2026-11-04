@@ -68,7 +68,6 @@ JOKERS_MIN: Final = 0
 JOKERS_MAX: Final = 31
 FAIRNESS_WINDOW_MIN: Final = 1
 FAIRNESS_WINDOW_MAX: Final = 365
-RETENTION_MIN: Final = 30
 RETENTION_MAX: Final = 3650
 LATE_FACTOR_MIN: Final = 0.0
 LATE_FACTOR_MAX: Final = 1.0
@@ -77,14 +76,22 @@ MISSED_FACTOR_MAX: Final = 0.0
 GRACE_HOURS_MIN: Final = 0
 GRACE_HOURS_MAX: Final = 168
 
-# Zuteilungen: so lange kann eine Zuteilung höchstens offen sein (Frist plus Kulanzzeit)
+# Zuteilungen: so lange kann eine Zuteilung höchstens offen sein (Frist plus Kulanzzeit plus ein
+# Sicherheitstag, damit Sommerzeit-Verschiebungen sie nicht aus dem Suchfenster fallen lassen)
 HOURS_PER_DAY: Final = 24
-OPEN_ASSIGNMENT_MAX_AGE_DAYS: Final = DUE_DAYS_MAX + GRACE_HOURS_MAX // HOURS_PER_DAY
+OPEN_ASSIGNMENT_SAFETY_DAYS: Final = 1
+OPEN_ASSIGNMENT_MAX_AGE_DAYS: Final = (
+    DUE_DAYS_MAX + GRACE_HOURS_MAX // HOURS_PER_DAY + OPEN_ASSIGNMENT_SAFETY_DAYS
+)
 
 # Verlauf, der für Häufigkeitsregeln und Fairness-Fenster einer Runde herangezogen wird
 RECENT_HISTORY_DAYS: Final = max(
     INTERVAL_DAYS_MAX, FAIRNESS_WINDOW_MAX, PERIOD_EVERY_MAX * PERIOD_MAX_DAYS
 )
+
+# Aufbewahrung des Verlaufs: mindestens so lange, wie Regeln, Fairness und offene Zuteilungen ihn
+# brauchen (sonst gälten Häufigkeitsregeln still nicht mehr oder offene Zuteilungen verschwänden)
+RETENTION_MIN: Final = max(RECENT_HISTORY_DAYS, OPEN_ASSIGNMENT_MAX_AGE_DAYS)
 
 # Anwesenheit
 PREVIEW_WEEKS_MIN: Final = 1

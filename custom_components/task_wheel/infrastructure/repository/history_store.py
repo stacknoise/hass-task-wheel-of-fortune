@@ -131,8 +131,14 @@ class HistoryStore:
         )
 
     async def async_purge(self, cutoff: dt.datetime) -> int:
-        """Entfernt Runden, die vor `cutoff` begonnen haben, und sichert bei Änderungen."""
-        expired = [r for r in self._rounds.values() if r.started_at < cutoff]
+        """Entfernt abgeschlossene Runden, die vor `cutoff` begonnen haben.
+
+        Runden mit offenen oder getauschten Zuteilungen bleiben, bis diese abgeschlossen sind
+        (sonst verschwänden sie unbemerkt, ohne als verpasst zu zählen).
+        """
+        expired = [
+            r for r in self._rounds.values() if r.started_at < cutoff and not _has_pending(r)
+        ]
         for round_ in expired:
             self._unindex(round_)
             del self._rounds[round_.id]
@@ -168,6 +174,11 @@ class HistoryStore:
             KEY_ROUNDS: [item.to_dict() for item in self._rounds.values()],
             KEY_AGGREGATES: self._aggregates,
         }
+
+
+def _has_pending(round_: Round) -> bool:
+    """Ob die Runde noch offene oder getauschte Zuteilungen hat."""
+    return any(item.status in PENDING_STATUSES for item in round_.assignments)
 
 
 def _started(entry: tuple[RoundId, Round]) -> dt.datetime:

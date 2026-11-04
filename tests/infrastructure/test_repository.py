@@ -190,7 +190,7 @@ def test_history_last_assignment_and_ordering() -> None:
 
 async def test_history_roundtrip_aggregates_and_purge() -> None:
     repo, memory = _history()
-    old = f.assignment(id="a1", round_id="r1", task_id="t1")
+    old = f.assignment(id="a1", round_id="r1", task_id="t1", status=AssignmentStatus.SKIPPED)
     new = f.assignment(id="a2", round_id="r2", task_id="t1")
     repo.put_round(_round("r1", f.NOW - 400 * DAY, old))  # type: ignore[arg-type]
     repo.put_round(_round("r2", f.NOW, new))  # type: ignore[arg-type]
@@ -208,6 +208,18 @@ async def test_history_roundtrip_aggregates_and_purge() -> None:
     assert loaded.get_assignment("a1") is None
     assert await loaded.async_purge(f.NOW - 365 * DAY) == 0
     await loaded.async_flush()
+
+
+async def test_history_purge_keeps_rounds_with_open_assignments() -> None:
+    repo, _ = _history()
+    for status, ident in ((AssignmentStatus.OPEN, "o"), (AssignmentStatus.SWAPPED, "w")):
+        item = f.assignment(id=f"a_{ident}", round_id=f"r_{ident}", status=status)
+        repo.put_round(_round(f"r_{ident}", f.NOW - 400 * DAY, item))  # type: ignore[arg-type]
+    closed = f.assignment(id="a_c", round_id="r_c", status=AssignmentStatus.MISSED)
+    repo.put_round(_round("r_c", f.NOW - 401 * DAY, closed))  # type: ignore[arg-type]
+    assert await repo.async_purge(f.NOW - 365 * DAY) == 1
+    assert set(repo.rounds) == {"r_o", "r_w"}
+    assert repo.open_assignments("p1")
 
 
 async def test_history_empty_load_and_corrupt() -> None:
@@ -316,6 +328,33 @@ async def test_migrated_history_loads() -> None:
 
 def test_config_migration_keeps_the_data() -> None:
     assert migrate(STORE_CONFIG, {"x": 1}, (1, 1), CONFIG_MIGRATIONS) == {"x": 1}
+
+
+@pytest.mark.parametrize(
+    ("stored", "expected"),
+    [
+        (30, limits.RETENTION_MIN),
+        (limits.RETENTION_MIN - 1, limits.RETENTION_MIN),
+        (limits.RETENTION_MIN, limits.RETENTION_MIN),
+        (limits.RETENTION_MAX, limits.RETENTION_MAX),
+    ],
+)
+def test_config_migration_raises_a_too_short_retention(stored: int, expected: int) -> None:
+    old = {"settings": {"history_retention_days": stored, "jokers_per_month": 2}}
+    new = migrate(STORE_CONFIG, old, (1, 3), CONFIG_MIGRATIONS)
+    assert new["settings"] == {"history_retention_days": expected, "jokers_per_month": 2}
+
+
+@pytest.mark.parametrize(
+    "data",
+    [{}, {"settings": "x"}, {"settings": {}}, {"settings": {"history_retention_days": True}}],
+)
+def test_config_migration_leaves_unreadable_settings_alone(data: dict[str, object]) -> None:
+    assert migrate(STORE_CONFIG, data, (1, 3), CONFIG_MIGRATIONS) == data
+
+
+def test_history_migration_to_the_current_version_keeps_the_data() -> None:
+    assert migrate(STORE_HISTORY, {"x": 1}, (1, 3), HISTORY_MIGRATIONS) == {"x": 1}
 
 
 def test_config_migration_turns_the_single_room_into_a_list() -> None:

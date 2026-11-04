@@ -8,7 +8,7 @@ from .defaults import DOMAIN
 STORE_CONFIG: Final = f"{DOMAIN}.config"
 STORE_HISTORY: Final = f"{DOMAIN}.history"
 STORE_VERSION: Final = 1
-STORE_MINOR_VERSION: Final = 3
+STORE_MINOR_VERSION: Final = 4
 
 KEY_PERSONS: Final = "persons"
 KEY_TASKS: Final = "tasks"

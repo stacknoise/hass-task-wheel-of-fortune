@@ -237,7 +237,7 @@ async def test_options_flow_updates_settings(hass: HomeAssistant) -> None:
         {
             "jokers_per_month": 3,
             "fairness_window_days": 14,
-            "history_retention_days": 90,
+            "history_retention_days": 400,
             "late_points_factor": 0.5,
             "missed_points_factor": -0.5,
             "missed_grace_hours": 12,

@@ -144,7 +144,7 @@ Events: `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_
 
 A schedule and a person can be addressed by identifier or short name, a task by identifier or name. `task_wheel.complete` takes either `assignment_id` or `person` together with `task`.
 
-Settings (jokers, fairness window, retention, points factors, grace period, panel for administrators only) are changed under *Settings → Devices & services → Task Wheel of Fortune → Configure*. Every night at 03:00, missed assignments are marked and rounds older than the retention period are deleted.
+Settings (jokers, fairness window, retention, points factors, grace period, panel for administrators only) are changed under *Settings → Devices & services → Task Wheel of Fortune → Configure*. Every night at 03:00, missed assignments are marked and rounds older than the retention period (at least 373 days) are deleted; rounds that still hold open assignments are kept.
 
 ## Notifications
 

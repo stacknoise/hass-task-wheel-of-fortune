@@ -5,6 +5,9 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Die Aufbewahrung des Verlaufs beträgt mindestens 373 Tage (Standard 373): Häufigkeitsregeln, Fairness-Fenster und offene Zuteilungen brauchen diesen Verlauf. Zu kurze gespeicherte Werte werden beim Start angehoben; Runden mit offenen Zuteilungen werden nie aufgeräumt
+- Behoben: Eine Zuteilung mit längster Frist plus Kulanzzeit wurde bei Sommerzeit-Wechsel nie als verpasst markiert
+
 ## [0.4.0] – 2026-11-04
 
 - Abwesenheiten können wiederkehren: neue Art „Wiederkehrend“ mit Wochentagen, Abstand in Wochen (z. B. jeden Mittwoch alle zwei Wochen), Beginn und optionalem Ende. Die Auslosung, die Fristfenster, die Kapazität und die Vorschau werten sie wie die übrigen Abwesenheiten aus; gespeicherte Abwesenheiten bleiben unverändert gültig, eine Migration ist nicht nötig
