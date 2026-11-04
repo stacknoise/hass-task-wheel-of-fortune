@@ -142,3 +142,20 @@ def test_config_changed_anywhere_is_pushed(api: Api) -> None:
     api.run("subscribe")
     api.config.put_person(f.person(id="p3", slug="p3", name="Dritte", absences=()))
     assert [p["id"] for p in api.pushed[-1]["persons"]["upsert"]] == ["p3"]
+
+
+def test_restricting_access_to_administrators_drops_all_subscribers(api: Api) -> None:
+    api.run("subscribe")
+    api.run("settings/update", settings={"panel_admin_only": True})
+    api.pushed.clear()
+    api.run("assignment/complete", assignment_id="a1")
+    assert api.pushed == []
+
+
+def test_other_settings_changes_keep_the_subscribers(api: Api) -> None:
+    api.run("subscribe")
+    api.run("settings/update", settings={"jokers_per_month": 4})
+    api.run("settings/update", settings={"panel_admin_only": False})
+    api.pushed.clear()
+    api.run("settings/update", settings={"jokers_per_month": 5})
+    assert api.pushed

@@ -175,3 +175,21 @@ def test_unnamed_swap_giver_and_deleted_task_use_ids() -> None:
     setup.service.assignment_swapped(f.assignment(task_id="gone", person_id="p2", swap=None))
     assert len(setup.pending) == 1
     setup.pending[0].close()  # type: ignore[attr-defined]
+
+
+async def test_unexpected_notifier_errors_are_logged_and_do_not_stop_other_targets(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    setup = Setup()
+    send = setup.notifier.async_send
+
+    async def flaky(target: str, title: str, message: str) -> None:
+        if target == "notify.p1":
+            raise ValueError("schema")
+        await send(target, title, message)
+
+    setup.notifier.async_send = flaky  # type: ignore[method-assign]
+    setup.service.round_drawn(setup.round_())
+    await setup.flush()
+    assert [target for target, _, _ in setup.notifier.sent] == ["notify.p2"]
+    assert "Benachrichtigung an notify.p1 fehlgeschlagen" in caplog.text

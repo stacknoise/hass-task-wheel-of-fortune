@@ -6,19 +6,22 @@ from dataclasses import dataclass, field
 from typing import Final
 
 from ...const.limits import RELIABILITY_MIN_CLOSED
-from ..enums import AssignmentStatus, Period
+from ..enums import (
+    CLOSED_STATUSES,
+    DONE_STATUSES,
+    PENDING_STATUSES,
+    UNDONE_STATUSES,
+    AssignmentStatus,
+    Period,
+)
 from ..models import Round, Settings
 from ..rules.periods import period_start
-from ..status import PENDING_STATUSES, points_factor
+from ..status import points_factor
 from ..types import PersonId, TaskId
 from .aggregate import StatRow
 from .goals import TaskGoal
 
 _S = AssignmentStatus
-_DONE: Final = (_S.ON_TIME, _S.LATE)
-# „Bleibt unerledigt“ zählt in der Statistik wie verpasst: die Aufgabe wurde nicht gemacht.
-_UNDONE: Final = (_S.MISSED, _S.SKIPPED)
-_CLOSED: Final = (*_DONE, *_UNDONE)
 _PERFECT_INDEX: Final = 1.0
 _HALF: Final = 0.5
 _MIN_COMPARED: Final = 2
@@ -127,8 +130,8 @@ class StatisticsReport:
 
 
 def _kpis(tally: Tally) -> Kpis:
-    done = tally.count(_DONE)
-    missed = tally.count(_UNDONE)
+    done = tally.count(DONE_STATUSES)
+    missed = tally.count(UNDONE_STATUSES)
     return Kpis(
         assigned=tally.count(tuple(_S)),
         on_time=tally.count((_S.ON_TIME,)),
@@ -195,7 +198,7 @@ def _extreme(standings: tuple[Standing, ...], sign: int) -> PersonId | None:
 def _reliable(per_person: Mapping[PersonId, Tally]) -> Reliable | None:
     candidates = []
     for person_id, tally in sorted(per_person.items()):
-        closed = tally.count(_CLOSED)
+        closed = tally.count(CLOSED_STATUSES)
         if closed >= RELIABILITY_MIN_CLOSED:
             candidates.append(Reliable(person_id, tally.count((_S.ON_TIME,)) / closed, closed))
     return max(candidates, key=lambda entry: (entry.on_time_rate, entry.closed), default=None)
@@ -211,7 +214,8 @@ def weekly_rates(rounds: Iterable[Round], week_starts: tuple[dt.date, ...]) -> t
         for assignment in round_.assignments:
             tally.add(assignment.status, 1)
     return tuple(
-        WeekRate(start, tally.count(_DONE), tally.count(_UNDONE)) for start, tally in wanted.items()
+        WeekRate(start, tally.count(DONE_STATUSES), tally.count(UNDONE_STATUSES))
+        for start, tally in wanted.items()
     )
 
 

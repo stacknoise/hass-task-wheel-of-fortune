@@ -13,15 +13,20 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import Unauthorized
 
 from ..const.keys import ERR_NOT_LOADED, WS_KEY_ID
+from ..const.limits import MAX_SUBSCRIPTIONS_PER_CONNECTION
 from ..domain.errors import TaskWheelError
 from ..entry_lookup import loaded_runtime
 from .command import Access, Command, Request
 from .registry import COMMANDS
+from .subscriptions import SubscriptionBook
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from homeassistant.components.websocket_api.connection import ActiveConnection
+
+
+_BOOK = SubscriptionBook(MAX_SUBSCRIPTIONS_PER_CONNECTION)
 
 
 def _handler(command: Command) -> Callable[[HomeAssistant, ActiveConnection, dict[str, Any]], None]:
@@ -39,6 +44,8 @@ def _handler(command: Command) -> Callable[[HomeAssistant, ActiveConnection, dic
             command.access is Access.ADMIN or data.config.settings.panel_admin_only
         ):
             raise Unauthorized
+        if command.subscribes:
+            _BOOK.make_room(connection)
         request = Request(
             data, data.clock(), msg, lambda payload: connection.send_event(message_id, payload)
         )
@@ -48,7 +55,9 @@ def _handler(command: Command) -> Callable[[HomeAssistant, ActiveConnection, dic
             connection.send_error(message_id, err.key, str(err))
             return
         if reply.on_close is not None:
-            connection.subscriptions[message_id] = reply.on_close
+            connection.subscriptions[message_id] = _BOOK.register(
+                connection, message_id, reply.on_close
+            )
         connection.send_result(message_id, reply.result)
 
     return handle

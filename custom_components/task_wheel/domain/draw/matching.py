@@ -34,11 +34,6 @@ def _match(options: Options) -> Owners:
     return owner
 
 
-def max_matching(options: Options) -> int:
-    """Größte Zahl an Aufgaben, die je eine eigene Person bekommen (`options[i]` = Kandidaten)."""
-    return len(_match(options))
-
-
 def _free_persons(options: Options, owner: Owners, universe: frozenset[PersonId]) -> set[PersonId]:
     """Personen, die in irgendeiner größten Zuordnung ohne Aufgabe bleiben können."""
     tasks_of: dict[PersonId, list[int]] = defaultdict(list)

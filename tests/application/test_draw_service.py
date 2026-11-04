@@ -4,7 +4,11 @@ import datetime as dt
 
 import pytest
 
-from custom_components.task_wheel.const.limits import MAX_OPEN_PANEL_ROUNDS
+from custom_components.task_wheel.const.limits import (
+    DRAW_MIN_INTERVAL,
+    DRAW_MIN_INTERVAL_SECONDS,
+    MAX_OPEN_PANEL_ROUNDS,
+)
 from custom_components.task_wheel.domain.enums import (
     AssignmentStatus,
     Period,
@@ -24,6 +28,7 @@ from .world import DAY, World
 
 NOW = f.NOW
 AUTO, MANUAL = RoundOrigin.AUTO, RoundOrigin.MANUAL
+SECOND = dt.timedelta(seconds=1)
 
 
 def test_automatic_round_is_drawn_stored_and_reported():
@@ -202,3 +207,51 @@ def test_surplus_tasks_stay_unassigned_instead_of_giving_a_person_a_second_one()
     world.config.remove_person("p2")
     round_ = world.draws.draw("s1", AUTO, NOW)
     assert [a.person_id for a in round_.assignments] == ["p1"]
+
+
+def test_manual_draws_of_one_schedule_keep_a_minimum_interval():
+    world = World()
+    world.draws.draw("s1", MANUAL, NOW)
+    with pytest.raises(DrawRejectedError) as err:
+        world.draws.draw("s1", RoundOrigin.SERVICE, NOW + DRAW_MIN_INTERVAL / 2)
+    assert err.value.key == "draw_too_soon"
+    assert dict(err.value.placeholders) == {"seconds": DRAW_MIN_INTERVAL_SECONDS}
+    assert len(world.history.rounds) == 1
+    world.draws.draw("s1", MANUAL, NOW + DRAW_MIN_INTERVAL + SECOND)
+    assert len(world.history.rounds) == 2
+
+
+def test_automatic_draws_and_other_schedules_ignore_the_minimum_interval():
+    world = World()
+    world.put_schedule(id="s2", slug="s2", name="S2")
+    world.draws.draw("s1", MANUAL, NOW)
+    world.draws.draw("s1", AUTO, NOW)
+    world.draws.draw("s2", MANUAL, NOW)
+    assert len(world.history.rounds) == 3
+
+
+def test_commit_keeps_the_minimum_interval_and_the_round_open():
+    world = World()
+    world.draws.draw("s1", MANUAL, NOW)
+    panel = world.draws.begin("s1", NOW + DRAW_MIN_INTERVAL / 3)
+    world.draws.spin_rest(panel.id, NOW)
+    with pytest.raises(DrawRejectedError):
+        world.draws.commit(panel.id, NOW + DRAW_MIN_INTERVAL / 2)
+    assert world.draws.get(panel.id, NOW)
+    assert world.draws.commit(panel.id, NOW + DRAW_MIN_INTERVAL + SECOND)
+
+
+@pytest.mark.parametrize("gone", ["person", "task", "schedule"])
+def test_commit_rejects_and_drops_a_round_whose_winner_was_deleted(gone: str):
+    world = World()
+    panel = world.draws.begin("s1", NOW)
+    world.draws.spin_rest(panel.id, NOW)
+    {
+        "person": lambda: world.config.remove_person("p1"),
+        "task": lambda: world.config.remove_task("t1"),
+        "schedule": lambda: world.config.remove_schedule("s1"),
+    }[gone]()
+    with pytest.raises(NotFoundError):
+        world.draws.commit(panel.id, NOW)
+    assert world.history.rounds == {} and world.events.drawn == []
+    assert world.draws.open_rounds(NOW) == ()

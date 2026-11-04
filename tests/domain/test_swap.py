@@ -13,7 +13,6 @@ from custom_components.task_wheel.domain.swap import (
     SwapContext,
     ensure_swap_possible,
     jokers_left,
-    jokers_used,
     jokers_used_by_person,
 )
 
@@ -107,15 +106,15 @@ def test_jokers_are_counted_per_giver_and_calendar_month() -> None:
         _swapped_at(month_start - dt.timedelta(seconds=1)),
         f.assignment(),
     ]
-    assert jokers_used(assignments, "p1", f.NOW) == 2
-    assert jokers_used(assignments, "p3", f.NOW) == 1
+    assert jokers_used_by_person(assignments, f.NOW)["p1"] == 2
+    assert jokers_used_by_person(assignments, f.NOW)["p3"] == 1
 
 
 def test_jokers_reset_at_month_change() -> None:
     swapped = [_swapped_at(dt.datetime(2026, 11, 30, 23, 59, tzinfo=f.TZ))]
     december = dt.datetime(2026, 12, 1, 0, 1, tzinfo=f.TZ)
-    assert jokers_used(swapped, "p1", f.NOW.replace(day=30)) == 1
-    assert jokers_used(swapped, "p1", december) == 0
+    assert jokers_used_by_person(swapped, f.NOW.replace(day=30))["p1"] == 1
+    assert jokers_used_by_person(swapped, december)["p1"] == 0
 
 
 def test_jokers_left_never_negative() -> None:

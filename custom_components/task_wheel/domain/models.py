@@ -8,6 +8,8 @@ from typing import ClassVar, Final, cast
 from ..const import defaults, limits
 from ..const.keys import ERR_INCONSISTENT, ERR_ORDER, ERR_REQUIRED
 from .enums import (
+    DONE_STATUSES,
+    WITHOUT_DONE_AT_STATUSES,
     AbsenceKind,
     AfterOnce,
     AnimationKind,
@@ -371,12 +373,6 @@ class Swap(Model):
         ensure_aware("at", self.at)
 
 
-_DONE_STATUSES = frozenset({AssignmentStatus.ON_TIME, AssignmentStatus.LATE})
-_UNDONE_STATUSES = frozenset(
-    {AssignmentStatus.OPEN, AssignmentStatus.MISSED, AssignmentStatus.SKIPPED}
-)
-
-
 @dataclass(slots=True, frozen=True, kw_only=True)
 class Assignment(Model):
     """Zuteilung einer Aufgabe an eine Person innerhalb einer Runde des auslosenden Zeitplans."""
@@ -402,10 +398,12 @@ class Assignment(Model):
         if self.done_at is not None:
             ensure_aware("done_at", self.done_at)
         ensure(
-            self.status not in _DONE_STATUSES or self.done_at is not None, "done_at", ERR_REQUIRED
+            self.status not in DONE_STATUSES or self.done_at is not None, "done_at", ERR_REQUIRED
         )
         ensure(
-            self.status not in _UNDONE_STATUSES or self.done_at is None, "done_at", ERR_INCONSISTENT
+            self.status not in WITHOUT_DONE_AT_STATUSES or self.done_at is None,
+            "done_at",
+            ERR_INCONSISTENT,
         )
 
 

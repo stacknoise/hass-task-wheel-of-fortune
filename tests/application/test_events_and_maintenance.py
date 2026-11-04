@@ -25,8 +25,8 @@ from custom_components.task_wheel.const.keys import (
     ATTR_PERSON_NAME,
     ATTR_TASK_NAME,
 )
-from custom_components.task_wheel.domain.enums import RoundOrigin
-from custom_components.task_wheel.domain.errors import NotFoundError
+from custom_components.task_wheel.domain.enums import AssignmentStatus, RoundOrigin
+from custom_components.task_wheel.domain.errors import AmbiguousReferenceError, NotFoundError
 from custom_components.task_wheel.domain.models import Recurring
 from custom_components.task_wheel.runtime import compose
 
@@ -131,6 +131,15 @@ def test_find_by_ref_matches_any_key_or_raises() -> None:
         find_by_ref(people, "zoe", "person", keys)
 
 
+def test_find_by_ref_rejects_an_ambiguous_reference() -> None:
+    tasks = [f.task(id="t1", name="Müll"), f.task(id="t2", name="Müll"), f.task(id="t3")]
+    keys = lambda t: (t.id, t.name)  # noqa: E731
+    with pytest.raises(AmbiguousReferenceError) as err:
+        find_by_ref(tasks, "Müll", "task", keys)
+    assert err.value.key == "ambiguous_reference"
+    assert find_by_ref(tasks, "t2", "task", keys).id == "t2"
+
+
 def _maintenance(world: EventWorld):
     timers, spawned = FakeTimers(), []
     service = MaintenanceService(
@@ -142,7 +151,13 @@ def _maintenance(world: EventWorld):
 async def test_maintenance_marks_missed_purges_and_rearms() -> None:
     world = EventWorld()
     for ident, started in (("r_old", f.NOW - 800 * DAY), ("r_new", f.NOW - 5 * DAY)):
-        item = _open(f"a_{ident}", round_id=ident, due_at=f.NOW - 3 * DAY)
+        old = ident == "r_old"
+        item = _open(
+            f"a_{ident}",
+            round_id=ident,
+            due_at=f.NOW - 3 * DAY,
+            status=AssignmentStatus.SKIPPED if old else AssignmentStatus.OPEN,
+        )
         world.history.put_round(
             f.finished_round(id=ident, started_at=started, finished_at=started, assignments=(item,))
         )
@@ -154,6 +169,34 @@ async def test_maintenance_marks_missed_purges_and_rearms() -> None:
     assert set(world.history.rounds) == {"r_new"}
     at, _ = timers.timers[TIMER_MAINTENANCE]
     assert (at.hour, at > f.NOW) == (MAINTENANCE_HOUR, True)
+
+
+def test_maintenance_arms_the_next_run_even_if_marking_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    world = EventWorld()
+    service, timers, _spawned = _maintenance(world)
+
+    def boom(*_args: object) -> None:
+        raise KeyError
+
+    monkeypatch.setattr(world.assignments, "mark_missed", boom)
+    with pytest.raises(KeyError):
+        service.run(f.NOW)
+    assert TIMER_MAINTENANCE in timers.timers
+
+
+async def test_maintenance_keeps_old_rounds_with_open_assignments() -> None:
+    world = EventWorld()
+    started = f.NOW - 800 * DAY
+    item = _open("a_old", round_id="r_old", due_at=f.NOW + 30 * DAY)
+    world.history.put_round(
+        f.finished_round(id="r_old", started_at=started, finished_at=started, assignments=(item,))
+    )
+    service, _timers, spawned = _maintenance(world)
+    service.run(f.NOW)
+    await spawned[0]
+    assert set(world.history.rounds) == {"r_old"}
 
 
 async def test_maintenance_keeps_recent_rounds() -> None:

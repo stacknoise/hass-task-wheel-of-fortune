@@ -86,8 +86,14 @@ class NotificationService(NoEvents):
         await asyncio.gather(*(self._send_one(target, message) for target in targets))
 
     async def _send_one(self, target: str, message: Message) -> None:
-        """Sendet an ein Ziel; Fachfehler werden protokolliert, nicht weitergegeben."""
+        """Sendet an ein Ziel; jeder Fehler wird protokolliert, nicht weitergegeben.
+
+        Auch Fehler eines Benachrichtigungsdienstes, die kein Fachfehler sind (etwa ein
+        abgelehntes Schema), dürfen die übrigen Ziele und den Hintergrundtask nicht stören.
+        """
         try:
             await self._notifier.async_send(target, message.title, message.body)
         except TaskWheelError as err:
             _LOGGER.warning("Benachrichtigung an %s nicht gesendet: %s", target, err.key)
+        except Exception:
+            _LOGGER.exception("Benachrichtigung an %s fehlgeschlagen", target)

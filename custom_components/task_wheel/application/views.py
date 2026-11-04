@@ -28,8 +28,8 @@ from ..const.keys import (
     WIRE_UPSERT,
     WS_FIELD_SCHEDULE_ID,
 )
-from ..domain.models import Round, Schedule
-from ..domain.status import DONE_STATUSES
+from ..domain.enums import DONE_STATUSES
+from ..domain.models import Assignment, Round, Schedule
 from .draw_service import DrawService, PanelRound
 from .history_service import HistoryEntry
 from .protocols import ConfigRepository, HistoryRepository
@@ -74,7 +74,7 @@ def panel_round_view(panel_round: PanelRound) -> Json:
     draft = panel_round.draft
     return {
         KEY_ID: panel_round.id,
-        "schedule_id": draft.schedule_id,
+        WS_FIELD_SCHEDULE_ID: draft.schedule_id,
         WIRE_EXPIRES_AT: panel_round.expires_at.isoformat(),
         WIRE_RESULTS: to_wire(draft.results),
         WIRE_PENDING: [task.id for task in draft.pending],
@@ -115,33 +115,31 @@ class SnapshotBuilder:
     def build(self, now: dt.datetime) -> Snapshot:
         """Liest den aktuellen Stand; nur offene Zuteilungen, nicht die ganze Historie."""
         config = self._config
+        open_items = self._open_assignments()
         collections = {
             WIRE_PERSONS: _by_id(self._persons(now)),
             WIRE_TASKS: _by_id([to_json(item) for item in config.tasks.values()]),
             WIRE_SCHEDULES: _by_id(
                 [self._schedule(item, now) for item in config.schedules.values()]
             ),
-            WIRE_ASSIGNMENTS: _by_id(
-                [
-                    to_json(item)
-                    for person_id in config.persons
-                    for item in self._history.open_assignments(person_id)
-                ]
-            ),
-            WIRE_ROUNDS: _by_id(self._open_rounds()),
+            WIRE_ASSIGNMENTS: _by_id([to_json(item) for item in open_items]),
+            WIRE_ROUNDS: _by_id(self._open_rounds({item.round_id for item in open_items})),
             WIRE_PANEL_ROUNDS: _by_id(
                 [panel_round_view(item) for item in self._draws.open_rounds(now)]
             ),
         }
         return Snapshot(collections, to_json(config.settings), now)
 
-    def _open_rounds(self) -> list[Json]:
-        """Kopf der Runden mit offenen Zuteilungen (Zeitplan, Beginn, Zahl der erledigten)."""
-        open_ids = {
-            item.round_id
+    def _open_assignments(self) -> list[Assignment]:
+        """Offene Zuteilungen der bekannten Personen (einmal gelesen für Zuteilungen und Runden)."""
+        return [
+            item
             for person_id in self._config.persons
             for item in self._history.open_assignments(person_id)
-        }
+        ]
+
+    def _open_rounds(self, open_ids: set[str]) -> list[Json]:
+        """Kopf der Runden mit offenen Zuteilungen (Zeitplan, Beginn, Zahl der erledigten)."""
         return [
             round_head(round_) for round_ in self._history.rounds.values() if round_.id in open_ids
         ]

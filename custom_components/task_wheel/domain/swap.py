@@ -79,11 +79,6 @@ def jokers_used_by_person(assignments: Iterable[Assignment], now: dt.datetime) -
     )
 
 
-def jokers_used(assignments: Iterable[Assignment], person_id: str, now: dt.datetime) -> int:
-    """Anzahl der Joker, die `person_id` im Kalendermonat von `now` bereits eingesetzt hat."""
-    return jokers_used_by_person(assignments, now)[person_id]
-
-
 def jokers_left(settings: Settings, used: int) -> int:
     """Verbleibende Joker im Monat (nie negativ; der Zähler beginnt jeden Monat bei null)."""
     return max(0, settings.jokers_per_month - used)

@@ -7,6 +7,7 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity, EntityDescription
 
+from ..access import ensure_allowed
 from ..const.defaults import DOMAIN
 from ..const.entities import (
     DEVICE_MANUFACTURER,
@@ -75,6 +76,12 @@ class TaskWheelEntity(Entity):
             manufacturer=DEVICE_MANUFACTURER,
             model=owner.model,
             entry_type=DeviceEntryType.SERVICE,
+        )
+
+    async def _ensure_allowed(self) -> None:
+        """Lässt Aktionen (Button, Abhaken) nur zu, wenn das Panel-Recht es erlaubt."""
+        await ensure_allowed(
+            self.hass, self._context, admin_only=self._data.config.settings.panel_admin_only
         )
 
     async def async_added_to_hass(self) -> None:

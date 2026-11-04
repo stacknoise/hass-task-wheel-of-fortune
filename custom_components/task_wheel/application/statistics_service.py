@@ -6,11 +6,11 @@ from dataclasses import replace
 
 from ..const.defaults import DEFAULT_STATISTICS_MONTHS, DEFAULT_STATISTICS_WEEKS
 from ..const.limits import (
+    ONE_WEEK,
     STATISTICS_MONTHS_MAX,
     STATISTICS_MONTHS_MIN,
     STATISTICS_WEEKS_MAX,
     STATISTICS_WEEKS_MIN,
-    WEEKDAY_COUNT,
 )
 from ..domain.availability.calendar import PersonAvailability
 from ..domain.enums import Period
@@ -26,7 +26,6 @@ from .protocols import ConfigRepository, HistoryRepository
 
 _FIELD_MONTHS = "months"
 _FIELD_WEEKS = "weeks"
-_WEEK = dt.timedelta(days=WEEKDAY_COUNT)
 
 
 class StatisticsService:
@@ -108,6 +107,6 @@ class StatisticsService:
 
     def _weekly(self, now: dt.datetime, weeks: int) -> tuple[WeekRate, ...]:
         last = period_start(Period.WEEK, now)
-        starts = tuple(last - _WEEK * back for back in reversed(range(weeks)))
+        starts = tuple(last - ONE_WEEK * back for back in reversed(range(weeks)))
         since = dt.datetime.combine(starts[0], dt.time.min, tzinfo=now.tzinfo)
         return weekly_rates(self._history.rounds_since(since), starts)

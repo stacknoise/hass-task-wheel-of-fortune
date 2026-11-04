@@ -1,5 +1,6 @@
 """Grenzwerte für Eingaben und Ressourcen (Sicherheit, KONZEPT §8)."""
 
+import datetime as dt
 import re
 from typing import Final
 
@@ -12,6 +13,9 @@ MAX_ABSENCES_PER_PERSON: Final = 20
 MAX_TASKS_PER_SCHEDULE: Final = MAX_TASKS
 MAX_ASSIGNMENTS_PER_ROUND: Final = MAX_TASKS
 MAX_STORED_ROUNDS: Final = 20000
+# Mindestabstand zwischen zwei von Hand oder per Dienst ausgelösten Runden desselben Zeitplans
+# (Schutz davor, den Verlauf zu fluten); automatische Auslosungen sind nicht betroffen
+DRAW_MIN_INTERVAL_SECONDS: Final = 30
 
 # Zeichenketten
 NAME_MIN_LENGTH: Final = 1
@@ -68,7 +72,6 @@ JOKERS_MIN: Final = 0
 JOKERS_MAX: Final = 31
 FAIRNESS_WINDOW_MIN: Final = 1
 FAIRNESS_WINDOW_MAX: Final = 365
-RETENTION_MIN: Final = 30
 RETENTION_MAX: Final = 3650
 LATE_FACTOR_MIN: Final = 0.0
 LATE_FACTOR_MAX: Final = 1.0
@@ -77,14 +80,29 @@ MISSED_FACTOR_MAX: Final = 0.0
 GRACE_HOURS_MIN: Final = 0
 GRACE_HOURS_MAX: Final = 168
 
-# Zuteilungen: so lange kann eine Zuteilung höchstens offen sein (Frist plus Kulanzzeit)
+# Zuteilungen: so lange kann eine Zuteilung höchstens offen sein (Frist plus Kulanzzeit plus ein
+# Sicherheitstag, damit Sommerzeit-Verschiebungen sie nicht aus dem Suchfenster fallen lassen)
 HOURS_PER_DAY: Final = 24
-OPEN_ASSIGNMENT_MAX_AGE_DAYS: Final = DUE_DAYS_MAX + GRACE_HOURS_MAX // HOURS_PER_DAY
+OPEN_ASSIGNMENT_SAFETY_DAYS: Final = 1
+OPEN_ASSIGNMENT_MAX_AGE_DAYS: Final = (
+    DUE_DAYS_MAX + GRACE_HOURS_MAX // HOURS_PER_DAY + OPEN_ASSIGNMENT_SAFETY_DAYS
+)
 
 # Verlauf, der für Häufigkeitsregeln und Fairness-Fenster einer Runde herangezogen wird
 RECENT_HISTORY_DAYS: Final = max(
     INTERVAL_DAYS_MAX, FAIRNESS_WINDOW_MAX, PERIOD_EVERY_MAX * PERIOD_MAX_DAYS
 )
+
+# Aufbewahrung des Verlaufs: mindestens so lange, wie Regeln, Fairness und offene Zuteilungen ihn
+# brauchen (sonst gälten Häufigkeitsregeln still nicht mehr oder offene Zuteilungen verschwänden)
+RETENTION_MIN: Final = max(RECENT_HISTORY_DAYS, OPEN_ASSIGNMENT_MAX_AGE_DAYS)
+
+# Zeitspannen
+ONE_DAY: Final = dt.timedelta(days=1)
+ONE_WEEK: Final = dt.timedelta(days=WEEKDAY_COUNT)
+DRAW_MIN_INTERVAL: Final = dt.timedelta(seconds=DRAW_MIN_INTERVAL_SECONDS)
+OPEN_ASSIGNMENT_MAX_AGE: Final = dt.timedelta(days=OPEN_ASSIGNMENT_MAX_AGE_DAYS)
+RECENT_HISTORY: Final = dt.timedelta(days=RECENT_HISTORY_DAYS)
 
 # Anwesenheit
 PREVIEW_WEEKS_MIN: Final = 1
@@ -110,3 +128,5 @@ WS_MAX_DEPTH: Final = 4
 WS_ISO_MAX_LENGTH: Final = 40
 WS_MESSAGE_ID_MIN: Final = 1
 MAX_SUBSCRIPTIONS: Final = 50
+# Je Verbindung: ein weiteres Abonnement ersetzt das älteste
+MAX_SUBSCRIPTIONS_PER_CONNECTION: Final = 2

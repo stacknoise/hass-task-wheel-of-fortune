@@ -8,7 +8,7 @@ from .defaults import DOMAIN
 STORE_CONFIG: Final = f"{DOMAIN}.config"
 STORE_HISTORY: Final = f"{DOMAIN}.history"
 STORE_VERSION: Final = 1
-STORE_MINOR_VERSION: Final = 3
+STORE_MINOR_VERSION: Final = 4
 
 KEY_PERSONS: Final = "persons"
 KEY_TASKS: Final = "tasks"
@@ -78,6 +78,7 @@ ERR_NAIVE_DATETIME: Final = "naive_datetime"
 ERR_INCONSISTENT: Final = "inconsistent"
 ERR_LIMIT_REACHED: Final = "limit_reached"
 ERR_NOT_FOUND: Final = "not_found"
+ERR_AMBIGUOUS: Final = "ambiguous_reference"
 ERR_STORAGE_CORRUPT: Final = "storage_corrupt"
 ERR_STORAGE_VERSION: Final = "storage_version_unsupported"
 
@@ -98,6 +99,7 @@ ERR_SCHEDULE_DISABLED: Final = "schedule_disabled"
 ERR_SCHEDULE_ARCHIVED: Final = "schedule_archived"
 ERR_ROUND_INCOMPLETE: Final = "round_incomplete"
 ERR_ROUND_COMPLETE: Final = "round_complete"
+ERR_DRAW_TOO_SOON: Final = "draw_too_soon"
 
 # Fehlerschlüssel der Dienste
 ERR_NOT_LOADED: Final = "not_loaded"
@@ -153,6 +155,18 @@ WIRE_EXPIRES_AT: Final = "expires_at"
 WIRE_PENDING: Final = "pending_task_ids"
 WIRE_NEXT_RUN: Final = "next_run"
 WIRE_PRESENT: Final = "present"
+
+# Namen der Ressourcen in Fehlern (Platzhalter `resource`)
+RESOURCE_PERSON: Final = "person"
+RESOURCE_TASK: Final = "task"
+RESOURCE_SCHEDULE: Final = "schedule"
+RESOURCE_ASSIGNMENT: Final = "assignment"
+RESOURCE_ROUND: Final = "round"
+RESOURCE_PANEL_ROUND: Final = "panel_round"
+RESOURCE_SUBSCRIPTION: Final = "subscription"
+
+# Platzhalter in Fehlermeldungen
+PH_SECONDS: Final = "seconds"
 
 # Fehlerschlüssel der Benachrichtigung
 ERR_NOTIFY_TARGET: Final = "notify_target_invalid"

@@ -2,7 +2,8 @@
 
 import datetime as dt
 
-from ..const.limits import OPEN_ASSIGNMENT_MAX_AGE_DAYS
+from ..const.keys import RESOURCE_ASSIGNMENT
+from ..const.limits import OPEN_ASSIGNMENT_MAX_AGE
 from ..domain import status
 from ..domain.errors import NotFoundError
 from ..domain.models import Assignment
@@ -14,9 +15,7 @@ from .protocols import (
     NoEvents,
     RoundEvents,
 )
-from .round_updates import RESOURCE_ASSIGNMENT, require_assignment, store_assignment
-
-_MAX_AGE = dt.timedelta(days=OPEN_ASSIGNMENT_MAX_AGE_DAYS)
+from .round_updates import require_assignment, store_assignment, store_assignments
 
 
 class AssignmentService:
@@ -77,11 +76,11 @@ class AssignmentService:
         settings = self._config.settings
         due = [
             item
-            for item in self._history.assignments_since(now - _MAX_AGE)
+            for item in self._history.assignments_since(now - OPEN_ASSIGNMENT_MAX_AGE)
             if status.is_missable(item, settings, now)
         ]
-        missed = tuple(
-            store_assignment(self._history, self._recorder, status.miss(item)) for item in due
+        missed = store_assignments(
+            self._history, self._recorder, (status.miss(item) for item in due)
         )
         for item in missed:
             self._events.assignment_missed(item)
