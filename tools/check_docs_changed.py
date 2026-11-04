@@ -1,19 +1,35 @@
-"""CI-Prüfung: Code geändert ⇒ Änderungsprotokoll in CODE_DOKU.md geändert."""
+"""CI-Prüfung: Code geändert ⇒ neue Zeile im Änderungsprotokoll von CODE_DOKU.md."""
 
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 from typing import Final
 
-CODE_PREFIXES: Final = ("custom_components/", "frontend/src/")
+CODE_PREFIXES: Final = (
+    "custom_components/",
+    "frontend/src/",
+    "tools/",
+    "e2e/tests/",
+    "e2e/screenshots/",
+    ".github/workflows/",
+    ".github/dependabot.yml",
+)
 DOC_FILE: Final = "docs/CODE_DOKU.md"
 ENV_BASE_REF: Final = "GITHUB_BASE_REF"
+ENV_ACTOR: Final = "GITHUB_ACTOR"
+# Abhängigkeits-Bots ändern Workflows und Lockdateien, ohne das Protokoll pflegen zu können
+EXEMPT_ACTORS: Final = frozenset({"dependabot[bot]"})
 FALLBACK_BASE: Final = "HEAD~1"
+# Neue Protokollzeile: Tabellenzeile, die mit einem Datum beginnt
+NEW_ROW: Final = re.compile(r"^\+\| \d{4}-\d{2}-\d{2} \|")
 EXIT_OK: Final = 0
 EXIT_FAIL: Final = 1
-MESSAGE_FAIL: Final = f"Code wurde geändert, aber {DOC_FILE} (Änderungsprotokoll) nicht."
+MESSAGE_FAIL: Final = (
+    f"Code wurde geändert, aber {DOC_FILE} hat keine neue Zeile im Änderungsprotokoll (§4)."
+)
 MESSAGE_OK: Final = "Code-Doku-Prüfung bestanden."
 
 
@@ -34,15 +50,47 @@ def changed_files(base: str) -> list[str]:
     return output.splitlines()
 
 
-def docs_missing(files: list[str]) -> bool:
-    """Wahr, wenn Code geändert wurde, die Code-Doku aber nicht."""
-    code_changed = any(name.startswith(CODE_PREFIXES) for name in files)
-    return code_changed and DOC_FILE not in files
+def doc_diff(base: str) -> list[str]:
+    """Liefert die Diff-Zeilen der Code-Doku gegenüber `base` (ohne Kontext)."""
+    output = subprocess.run(  # noqa: S603
+        ["git", "diff", "--unified=0", f"{base}...HEAD", "--", DOC_FILE],  # noqa: S607
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    return output.splitlines()
+
+
+def code_changed(files: list[str]) -> bool:
+    """Wahr, wenn Code, Werkzeuge, E2E-Tests oder die Pipeline geändert wurden."""
+    return any(name.startswith(CODE_PREFIXES) for name in files)
+
+
+def has_new_row(diff: list[str]) -> bool:
+    """Wahr, wenn der Diff mindestens eine neue Protokollzeile (Datum in Spalte 1) enthält."""
+    return any(NEW_ROW.match(line) for line in diff)
+
+
+def docs_missing(files: list[str], diff: list[str] | None = None) -> bool:
+    """Wahr, wenn Code geändert wurde, aber die Code-Doku keine neue Protokollzeile hat.
+
+    Ohne `diff` genügt eine beliebige Änderung der Datei (nur für Aufrufer ohne Diff).
+    """
+    if not code_changed(files):
+        return False
+    if diff is None:
+        return DOC_FILE not in files
+    return not has_new_row(diff)
 
 
 def main() -> int:
     """Einstiegspunkt für CI."""
-    if docs_missing(changed_files(base_ref(dict(os.environ)))):
+    environ = dict(os.environ)
+    if environ.get(ENV_ACTOR) in EXEMPT_ACTORS:
+        sys.stdout.write(f"{MESSAGE_OK}\n")
+        return EXIT_OK
+    base = base_ref(environ)
+    if docs_missing(changed_files(base), doc_diff(base)):
         sys.stderr.write(f"{MESSAGE_FAIL}\n")
         return EXIT_FAIL
     sys.stdout.write(f"{MESSAGE_OK}\n")

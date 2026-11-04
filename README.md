@@ -118,12 +118,17 @@ Without points in the window, everyone's chance is their fair share; people with
 
 ## Releasing (for developers)
 
-1. Raise `version` in `custom_components/task_wheel/manifest.json`, add an entry to `CHANGELOG.md` and to the
-   change log of `docs/CODE_DOKU.md`, via pull request to `main`
-2. Set the tag: `git tag v0.4.0 && git push origin v0.4.0`, or enter the tag on GitHub under *Actions → Release → Run workflow* (the workflow creates it at the state of `main`)
-3. The `Release` workflow checks that the tag and the manifest version match, builds the panel and attaches
-   `task_wheel.zip` to the new GitHub release (see `hacs.json`: `zip_release`). Tags with a suffix (`v0.4.0-beta.1`)
-   are published as a pre-release.
+1. Raise the version in all places, via pull request to `main`: `custom_components/task_wheel/manifest.json`,
+   `pyproject.toml`, `frontend/package.json` and `e2e/package.json` (each with its `package-lock.json`, root package
+   and top-level `version`), and the "Code-Version" in the header of `docs/CODE_DOKU.md`; add an entry to `CHANGELOG.md`
+   and to the change log of `docs/CODE_DOKU.md`. `python3 tools/check_docs_consistency.py` (CI job `docs-check`) fails if
+   the versions differ.
+2. Wait until the CI of the merge commit on `main` is green, then set the tag: `git tag v0.4.0 && git push origin v0.4.0`,
+   or enter the tag on GitHub under *Actions → Release → Run workflow* (the workflow creates it at the state of `main`)
+3. The `Release` workflow checks that the tag and the manifest version match, that the commit is part of `main` and that
+   all CI jobs are green on it (it waits for running jobs), builds the panel without write permissions on
+   the repository and attaches `task_wheel.zip` and its checksum `SHA256SUMS` to the new GitHub release (see `hacs.json`:
+   `zip_release`). Tags with a suffix (`v0.4.0-beta.1`) are published as a pre-release.
 
 ## Services and events
 
@@ -140,7 +145,7 @@ data:
 | `task_wheel.swap` | Swap an assignment with a joker |
 | `task_wheel.set_absence` | Enter an absence for a person |
 
-Events: `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_wheel_missed`, `task_wheel_reminder`. With `animate_on`, `task_wheel.draw` additionally fires `task_wheel_animate` (a hint for a display). The payloads contain only identifiers, names and numbers.
+Events: `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_wheel_missed`, `task_wheel_reminder`. With `animate_on`, `task_wheel.draw` additionally fires `task_wheel_animate` (a hint for a display). The payloads contain only identifiers, names and numbers. "Stays undone" and deleting a draw fire no event.
 
 A schedule and a person can be addressed by identifier or short name, a task by identifier or name. `task_wheel.complete` takes either `assignment_id` or `person` together with `task`.
 
@@ -163,7 +168,7 @@ A target shared by several people (e.g. a family channel) receives each message 
 After setup, the entry "Task Wheel of Fortune" (`/task-wheel`) appears in the sidebar. The panel has the
 tabs Overview, Draw, Tasks, People, Schedules, History and Statistics, loads the state via `snapshot` and
 stays up to date via `subscribe`. The **Draw** tab is finished: choose a schedule, start a round (an open round
-can be resumed), play the schedule's animation for each task (wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or award ceremony, size = chance, "Who takes part?" with reasons; whoever already has a task in the round is no longer on the wheel for the further ones; surplus tasks stay open as "not distributable"; if only one person is left for a task, they are assigned without spinning),
+can be resumed), play the schedule's animation for each task (wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or award ceremony; for the first five the size equals the chance, scratch cards, breaking news and the award ceremony show no chances; "Who is in?" lists the reasons; whoever already has a task in the round is no longer on the wheel for the further ones; a round contains only as many due tasks as people can take part, and if there are more, the tasks are chosen at random (the schedule's order is kept); if only one person is left for a task, they are assigned without spinning),
 draw the rest without animation and complete the round. The backend always determines the result; the animation only
 follows it, and with "reduced motion" in the operating system it is skipped. **Overview**, **History**, **Statistics**, **Tasks**, **People** and **Schedules** are finished as well.
 
@@ -202,7 +207,7 @@ in a grid; adding and editing open a popup (full screen on a smartphone, close w
 
 The panel talks to the backend through WebSocket commands with the prefix `task_wheel/`: `snapshot`, `subscribe`
 (first the full state, then only changes per object), `history/list`, `statistics/get`, `availability/preview` (presence preview),
-`assignment/complete`, `assignment/swap`, `assignment/skip`, `draw/begin|spin|spin_rest|commit|cancel` for every signed-in
+`assignment/complete`, `assignment/swap`, `assignment/skip`, `draw/begin|preview|spin|spin_rest|commit|cancel` for every signed-in
 user, and `round/delete`, `person/*`, `task/*`, `schedule/*` and `settings/update` for administrators only. All inputs
 are validated against strict schemas (no unknown fields, limited lengths). If "Panel for administrators only" is set in the settings,
 the read commands are also reserved for administrators. Details:
@@ -268,8 +273,8 @@ python3 docs/code-doku/generate.py --check
 ### Continuous integration
 
 Pull requests and `main` run the jobs `hassfest`, `HACS validation`, `lint`, `typecheck`, `architecture`
-(import direction, duplicates), `test-backend`, `test-frontend`, `build-frontend` (incl. bundle budget), `audit` and
-`docs-check` (code changed ⇒ `docs/CODE_DOKU.md` changed) and `code-doku` (the generator runs, thresholds from `docs/CODE_DOKU.md` §1.1 are met). Dependabot keeps pip, npm and GitHub Actions up to date.
+(import direction, duplicates), `test-backend`, `test-frontend`, `build-frontend` (incl. bundle budget), `e2e` (Playwright against a real Home Assistant), `audit` and
+`docs-check` (code, tools, e2e tests or workflows changed ⇒ `docs/CODE_DOKU.md` has a new change-log row; versions and the module table are consistent) and `code-doku` (the generator runs, thresholds from `docs/CODE_DOKU.md` §1.1 are met). A weekly `Audit` workflow checks the npm and pip dependencies for new advisories. Dependabot keeps pip, npm and GitHub Actions up to date.
 
 Please report security vulnerabilities confidentially, see [SECURITY.md](SECURITY.md).
 

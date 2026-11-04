@@ -1,6 +1,8 @@
 name: Release
 # Erstellt das GitHub-Release mit `task_wheel.zip` (Panel gebaut, siehe hacs.json), entweder aus einem
 # gepushten Tag `vX.Y.Z` oder per manuellem Start (Actions -> Release -> Run workflow), der den Tag am gewählten Stand anlegt.
+# Ein Release entsteht nur, wenn der Stand auf `main` liegt und alle CI-Jobs auf genau diesem Commit grün sind
+# (Job `verify`). Gebaut wird ohne Schreibrechte; nur der letzte Job darf Releases anlegen.
 on:
   push:
     tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
@@ -11,17 +13,32 @@ on:
         required: true
         type: string
 permissions:
-  contents: write
+  contents: read
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 env:
   NODE_VERSION: "22"
   INTEGRATION_DIR: custom_components/task_wheel
   ARCHIVE: task_wheel.zip
+  # Jobs aus ci.yml, die auf dem Release-Commit erfolgreich sein müssen (`audit` bewusst nicht: neue
+  # Advisories sollen kein Release für unveränderten Code blockieren)
+  REQUIRED_CHECKS: "lint typecheck architecture test-backend test-frontend build-frontend e2e docs-check code-doku"
+  CI_WAIT_ATTEMPTS: "90"
+  CI_WAIT_SECONDS: "30"
 jobs:
-  release:
-    name: release
+  verify:
+    name: verify
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      checks: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - name: Tag muss zur Version im Manifest passen
         env:
           TAG: ${{ inputs.tag || github.ref_name }}
@@ -31,12 +48,61 @@ jobs:
             echo "Tag $TAG passt nicht zur Manifest-Version $version" >&2
             exit 1
           fi
+      - name: Commit muss auf main liegen
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Commit $GITHUB_SHA ist nicht in main enthalten; Releases entstehen nur aus main." >&2
+            exit 1
+          fi
+      - name: CI muss auf dem Commit grün sein
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Der Tag wird meist unmittelbar nach dem Merge gepusht: laufende Jobs abwarten.
+          for attempt in $(seq 1 "$CI_WAIT_ATTEMPTS"); do
+            runs=$(gh api --paginate "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100" \
+              --jq '.check_runs[] | [.id, .name, .status, (.conclusion // "")] | @tsv' | sort -n -k1,1)
+            pending=""
+            for name in $REQUIRED_CHECKS; do
+              # bei wiederholten Läufen zählt der neueste (höchste id)
+              line=$(printf '%s\n' "$runs" | awk -F'\t' -v n="$name" '$2 == n { last = $0 } END { print last }')
+              status=$(printf '%s' "$line" | cut -f3)
+              conclusion=$(printf '%s' "$line" | cut -f4)
+              if [ "$status" = "completed" ] && [ "$conclusion" != "success" ]; then
+                echo "CI-Job '$name' ist nicht erfolgreich ($conclusion); kein Release." >&2
+                exit 1
+              fi
+              if [ "$status" != "completed" ]; then
+                pending="$pending $name"
+              fi
+            done
+            if [ -z "$pending" ]; then
+              echo "Alle CI-Jobs sind auf $GITHUB_SHA grün."
+              exit 0
+            fi
+            echo "Warte auf CI (Versuch $attempt):$pending"
+            sleep "$CI_WAIT_SECONDS"
+          done
+          echo "CI ist auf $GITHUB_SHA nicht rechtzeitig fertig geworden:$pending" >&2
+          exit 1
+  release:
+    name: release
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
+      # ohne Lifecycle-Skripte der Abhängigkeiten: dieser Job darf Releases schreiben
+      - run: npm ci --ignore-scripts
         working-directory: frontend
       - run: npm run build
         working-directory: frontend
@@ -44,9 +110,12 @@ jobs:
         working-directory: frontend
       - name: ZIP aus dem Integrationsordner bauen
         run: |
-          test -f "$INTEGRATION_DIR/frontend/dist/index.html" -o -d "$INTEGRATION_DIR/frontend/dist"
+          # der Einstieg des Panels (mit Inhalts-Hash im Namen) muss gebaut worden sein
+          ls "$INTEGRATION_DIR"/frontend/dist/task-wheel-panel.*.js
           cd "$INTEGRATION_DIR"
           zip -r -q "$GITHUB_WORKSPACE/$ARCHIVE" . -x "*/__pycache__/*" -x "__pycache__/*"
+          cd "$GITHUB_WORKSPACE"
+          sha256sum "$ARCHIVE" | tee SHA256SUMS
       - name: Release erstellen
         env:
           GH_TOKEN: ${{ github.token }}
@@ -60,4 +129,4 @@ jobs:
           else
             target="--target $GITHUB_SHA"
           fi
-          gh release create "$TAG" "$ARCHIVE" --title "$TAG" --generate-notes $target $prerelease
+          gh release create "$TAG" "$ARCHIVE" SHA256SUMS --title "$TAG" --generate-notes $target $prerelease
