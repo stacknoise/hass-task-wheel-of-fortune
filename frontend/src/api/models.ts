@@ -171,6 +171,8 @@ export interface GoalWindow {
 }
 
 export interface TaskGoal {
+  /** Zeitplan, in dem gezählt wird (eine Aufgabe kann in mehreren Zeitplänen stehen). */
+  readonly schedule_id: string;
   readonly task_id: string;
   readonly target: number;
   readonly period: Period;

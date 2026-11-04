@@ -92,7 +92,7 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'statistics.weeklyLabel': 'Completion rate of the last {weeks} weeks, latest {last}',
   'statistics.goals': 'Draws per task: target vs. actual',
   'statistics.goalsHint':
-    'How often a task was drawn in the window of its frequency ("n× in x periods") against the target; current window first, then earlier ones',
+    'How often a task was drawn by a schedule in the window of its frequency ("n× in x periods") against the target; counted per schedule, each collapsible; current window first, then earlier ones',
   'statistics.goalRule': 'Rule',
   'statistics.goalCurrent': 'Current',
   'statistics.goalPast': 'Earlier',
