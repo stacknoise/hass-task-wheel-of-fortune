@@ -1,3 +1,4 @@
+export { compareText } from './collate.ts';
 export { ApiClient } from './client.ts';
 export type { Unsubscribe } from './client.ts';
 export type {

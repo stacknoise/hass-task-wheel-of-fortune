@@ -19,7 +19,7 @@ import { formatNumber, formatPercent } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
 import { AsyncValue, StoreController, areaNames, indexById } from '../state/index.ts';
-import { roomTag } from './room.ts';
+import { roomTags } from './room.ts';
 import { pointBars, weeklyChart } from './statistics-charts.ts';
 import { barRows, matrixRows } from './statistics-model.ts';
 import { defineOnce } from '../components/define.ts';
@@ -291,7 +291,7 @@ export class TwStatisticsView extends LitElement {
                 html`<tr>
                   <td>
                     ${row.name ?? this.#text('common.unknownTask')}
-                    ${roomTag(areas, row.areaId, this.#text('common.unknownArea'))}
+                    ${roomTags(areas, row.areaIds, this.#text('common.unknownArea'))}
                   </td>
                   ${row.cells.map(
                     (cell) =>

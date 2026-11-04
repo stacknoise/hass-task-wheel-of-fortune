@@ -27,7 +27,7 @@ import {
   areaNames,
   indexById,
 } from '../state/index.ts';
-import { roomTag } from './room.ts';
+import { roomTags } from './room.ts';
 import { personChips } from './person-chips.ts';
 import { buildCsv } from './csv.ts';
 import { roundDelete } from './round-delete.ts';
@@ -297,9 +297,9 @@ export class TwHistoryView extends LitElement {
     return html`<tr>
       <td>
         ${lookups.tasks.get(assignment.task_id)?.name ?? this.#text('common.unknownTask')}
-        ${roomTag(
+        ${roomTags(
           lookups.areas,
-          lookups.tasks.get(assignment.task_id)?.area_id,
+          lookups.tasks.get(assignment.task_id)?.area_ids,
           this.#text('common.unknownArea'),
         )}
       </td>

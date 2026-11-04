@@ -36,7 +36,7 @@ import {
   indexById,
 } from '../state/index.ts';
 import type { AreaNames } from '../state/index.ts';
-import { roomTag } from './room.ts';
+import { roomTags } from './room.ts';
 import { personChips } from './person-chips.ts';
 import { assignmentGroups } from './overview-assignments.ts';
 import type { AssignmentHandlers } from './overview-assignments.ts';
@@ -368,9 +368,9 @@ export class TwOverviewView extends LitElement {
                         }
                         ·
                         ${taskById.get(assignment.task_id)?.name ?? this.#text('common.unknownTask')}
-                        ${roomTag(
+                        ${roomTags(
                           areas,
-                          taskById.get(assignment.task_id)?.area_id,
+                          taskById.get(assignment.task_id)?.area_ids,
                           this.#text('common.unknownArea'),
                         )}
                         <div class="muted">${formatDateTime(at, this.language)}</div>

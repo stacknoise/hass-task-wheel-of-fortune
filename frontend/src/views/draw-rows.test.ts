@@ -15,7 +15,7 @@ const TASK: TaskInfo = {
   points: 1,
   dueDays: 1,
   allowed: new Set<string>(),
-  areaId: '',
+  areaIds: [],
 };
 const RESULT: TaskDrawWire = {
   task_id: 't',

@@ -1,5 +1,6 @@
 import type { ApiClient, Delta, Snapshot, Unsubscribe } from '../api/index.ts';
 import { applyDelta } from './delta.ts';
+import { sortSnapshot } from './sort.ts';
 
 export type LoadStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -72,7 +73,7 @@ export class Store {
       });
       const snapshot = await this.#client.snapshot();
       this.#ready = true;
-      this.#set({ status: 'ready', snapshot });
+      this.#set({ status: 'ready', snapshot: this.#sorted(snapshot) });
     } catch {
       this.#set({ status: 'error', snapshot: this.#state.snapshot });
     }
@@ -81,8 +82,12 @@ export class Store {
   #apply(delta: Delta): void {
     const { snapshot } = this.#state;
     if (this.#ready && snapshot) {
-      this.#set({ status: 'ready', snapshot: applyDelta(snapshot, delta) });
+      this.#set({ status: 'ready', snapshot: this.#sorted(applyDelta(snapshot, delta)) });
     }
+  }
+
+  #sorted(snapshot: Snapshot): Snapshot {
+    return sortSnapshot(snapshot, this.#client.language());
   }
 
   #set(state: StoreState): void {

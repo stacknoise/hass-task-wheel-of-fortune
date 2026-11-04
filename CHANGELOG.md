@@ -3,6 +3,11 @@
 Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionierung nach [SemVer](https://semver.org/lang/de/).
 Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt (`.github/release.yml`).
 
+## [Unveröffentlicht]
+
+- Personen, Aufgaben und Zeitpläne erscheinen im Panel alphabetisch, ohne Beachtung der Groß-/Kleinschreibung und nach der Sprache von Home Assistant (Umlaute, Zahlen nach ihrem Wert); ebenso die Räume in der Auswahl
+- Eine Aufgabe kann mehrere Räume haben (Mehrfachauswahl im Aufgaben-Popup); alle Räume erscheinen in Übersicht, Auslosung, Aufgabenkarte, Historie (auch im CSV, durch Komma getrennt) und Statistik. Bereits gespeicherte einzelne Räume werden beim Start automatisch übernommen (Speicherstand 1.3)
+
 ## [0.2.0] – 2026-11-04
 
 - Hinzufügen und Bearbeiten von Personen, Aufgaben und Zeitplänen öffnen in Popups (auf dem Smartphone Vollbild); Zahlenfelder (+/−) stehen paarweise nebeneinander, die Abwesenheiten scrollen ab zwei Einträgen

@@ -15,8 +15,8 @@ export interface TaskInfo {
   readonly points: number;
   readonly dueDays: number;
   readonly allowed: ReadonlySet<string>;
-  /** Kennung des Raums; leer = kein Raum. */
-  readonly areaId: string;
+  /** Kennungen der Räume; leer = kein Raum. */
+  readonly areaIds: readonly string[];
 }
 
 export interface ScheduleInfo {
@@ -67,7 +67,7 @@ export function tasksById(snapshot: Snapshot): ReadonlyMap<string, TaskInfo> {
       points: count(item, 'points'),
       dueDays: count(item, 'due_days'),
       allowed: new Set(texts(item, 'allowed')),
-      areaId: text(item, 'area_id'),
+      areaIds: texts(item, 'area_ids'),
     })),
   );
 }
