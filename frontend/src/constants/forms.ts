@@ -23,23 +23,28 @@ export const MS_PER_DAY = 86_400_000;
 export const TIME_INPUT_LENGTH = 5;
 export const DATE_LENGTH = 10;
 
+/** Standardfarbe neuer Personen (wie `DEFAULT_PERSON_COLOR` im Backend). */
+export const DEFAULT_PERSON_COLOR = '#4f8cff';
+/** Spalten der Farbauswahl; die Farben füllen genau zwei Reihen. */
+export const PERSON_COLOR_COLUMNS = 8;
+/** Nach Farbton sortiert (Rot bis Weinrot), zuletzt Grau. */
 export const PERSON_COLORS = [
-  '#4f8cff',
-  '#e8590c',
-  '#2f9e44',
-  '#ae3ec9',
   '#e03131',
+  '#e8590c',
+  '#9c6644',
   '#f08c00',
+  '#b08900',
+  '#74a30b',
+  '#2f9e44',
+  '#099268',
   '#0c8599',
-  '#5c7080',
-  '#d6336c',
+  '#4f8cff',
   '#4263eb',
   '#7048e8',
-  '#099268',
-  '#74a30b',
-  '#9c6644',
-  '#b08900',
+  '#ae3ec9',
+  '#d6336c',
   '#a61e4d',
+  '#5c7080',
 ] as const;
 
 export const FORM_LIMITS = {
