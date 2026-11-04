@@ -146,6 +146,7 @@ export const REPORT: StatisticsReport = {
   },
   goals: [
     {
+      schedule_id: 's1',
       task_id: 't1',
       target: 3,
       period: 'month',
@@ -155,6 +156,14 @@ export const REPORT: StatisticsReport = {
         { start: '2026-08-01', end: '2026-09-30', assigned: 3, done: 3 },
         { start: '2026-06-01', end: '2026-07-31', assigned: 1, done: 1 },
       ],
+    },
+    {
+      schedule_id: 's2',
+      task_id: 't1',
+      target: 3,
+      period: 'month',
+      every: 2,
+      windows: [{ start: '2026-10-01', end: '2026-11-30', assigned: 0, done: 0 }],
     },
   ],
 };
