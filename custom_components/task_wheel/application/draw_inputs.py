@@ -90,13 +90,21 @@ def limit_to_participants(
     """Beschränkt die Runde auf so viele Aufgaben, wie Personen mitmachen können.
 
     Jede Person bekommt je Runde höchstens eine Aufgabe; weitere Aufgaben wären nur "nicht
-    verteilbar". Gibt es mehr Aufgaben als Plätze, wird zufällig gewählt (nicht vorhersehbar);
-    die Reihenfolge der Auswahl bleibt die des Zeitplans.
+    verteilbar". Täglich anfallende Aufgaben sind immer dabei, der Rest der Plätze wird zufällig
+    gefüllt (nicht vorhersehbar). Gibt es mehr tägliche Aufgaben als Plätze, wird unter ihnen
+    zufällig gewählt. Die Reihenfolge der Auswahl bleibt die des Zeitplans.
     """
     if not tasks:
         return tasks
     seats = _seats(tasks, context)
-    return tasks if seats >= len(tasks) else _random_pick(tasks, rng, seats)
+    if seats >= len(tasks):
+        return tasks
+    daily = tuple(task for task in tasks if task.is_daily)
+    if len(daily) >= seats:
+        return _random_pick(daily, rng, seats)
+    others = tuple(task for task in tasks if not task.is_daily)
+    chosen = {task.id for task in (*daily, *_random_pick(others, rng, seats - len(daily)))}
+    return tuple(task for task in tasks if task.id in chosen)
 
 
 def build_context(
