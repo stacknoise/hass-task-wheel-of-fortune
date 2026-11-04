@@ -18,6 +18,7 @@ export function personRows(
   result: TaskDrawWire | undefined,
   task: TaskInfo | undefined,
   persons: ReadonlyMap<string, PersonInfo>,
+  showChance: boolean,
   text: (key: TextKey) => string,
 ): readonly Row[] {
   const chances = new Map(result?.segments.map((segment) => [segment.person_id, segment.chance]));
@@ -25,7 +26,7 @@ export function personRows(
   return [...persons.values()].map((person) => {
     const chance = chances.get(person.id);
     if (chance !== undefined) {
-      return { person, inWheel: true, note: percentText(chance) };
+      return { person, inWheel: true, note: showChance ? percentText(chance) : EMPTY_TEXT };
     }
     const allowed = task ? allowsPerson(task.allowed, person.id) : false;
     const reason = allowed ? reasons.get(person.id) : NOT_ALLOWED;

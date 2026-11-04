@@ -29,6 +29,9 @@ export const STAGE_TAGS: Readonly<Record<AnimationKind, string>> = {
   oscar: 'tw-oscar',
 };
 
+/** Animationen ohne Chance-Anzeige: ihre Größen bedeuten nichts, in „Wer ist dabei?“ stehen keine Prozente. */
+export const CHANCE_FREE_ANIMATIONS: readonly AnimationKind[] = ['scratch', 'news', 'oscar'];
+
 /** Wo der Knopf zum Starten sitzt: in der Mitte der Bühne (Rad) oder darunter. */
 export type StartPlacement = 'center' | 'below';
 export const START_PLACEMENT: Readonly<Record<AnimationKind, StartPlacement>> = {
