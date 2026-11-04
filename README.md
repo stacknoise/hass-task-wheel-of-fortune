@@ -3,7 +3,7 @@
 Distributes household chores fairly and with a bit of fun: a wheel of fortune draws who takes what. The odds
 depend on who has done how much recently, who is around, and how much load each person can take.
 
-> **Status:** version 0.1.0, the first release. All features below are implemented. Installation is done through HACS
+> **Status:** version 0.2.0. All features below are implemented. Installation is done through HACS
 > as a custom repository (see below). Feedback is welcome as an [issue](https://github.com/stacknoise/hass-task-wheel-of-fortune/issues).
 
 ## Installation via HACS
