@@ -59,9 +59,12 @@ def due_tasks(
         if task is not None
         and FrequencyRuleFactory.create(task.frequency).is_due(times.get(task.id, ()), now)
     )
-    if schedule.skip_absent:
-        return tuple(due)
-    return tuple(replace(task, respect_absence=False) for task in due)
+    return tuple(respecting_schedule(schedule, task) for task in due)
+
+
+def respecting_schedule(schedule: Schedule, task: Task) -> Task:
+    """Die Aufgabe, wie der Zeitplan sie behandelt (ohne `skip_absent` zählt Abwesenheit nicht)."""
+    return task if schedule.skip_absent else replace(task, respect_absence=False)
 
 
 def _seats(tasks: tuple[Task, ...], context: DrawContext) -> int:

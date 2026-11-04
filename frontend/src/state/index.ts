@@ -20,7 +20,7 @@ export { animationsOf, isAnimationKind, pickAnimation } from './animation.ts';
 export { safeColor } from './color.ts';
 export { AsyncValue } from './async-value.ts';
 export type { AsyncStatus } from './async-value.ts';
-export { DrawSession, canSkip, isIdle, shownCount } from './draw-session.ts';
+export { DrawSession, canReplace, canSkip, isIdle, shownCount } from './draw-session.ts';
 export type { DrawPhase, DrawState } from './draw-session.ts';
 export {
   allowsPerson,

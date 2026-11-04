@@ -164,3 +164,22 @@ def test_skip_twice_is_rejected(api: Api) -> None:
     api.run("assignment/skip", assignment_id="a1")
     with pytest.raises(InvalidTransitionError):
         api.run("assignment/skip", assignment_id="a1")
+
+
+def _spare_task(api: Api) -> None:
+    """Fügt dem Zeitplan eine dritte Aufgabe hinzu, die nicht in der laufenden Runde ist."""
+    api.config.put_task(f.task(id="t3", allowed=frozenset({"p1", "p2"})))
+    api.config.put_schedule(f.schedule(id="s1", task_ids=("t1", "t2", "t3")))
+
+
+def test_replace_task_swaps_before_the_start_and_is_admin_only(api: Api) -> None:
+    rid = api.result("draw/begin", schedule_id="s1")["id"]
+    _spare_task(api)
+    options = api.result("draw/replacements", panel_round_id=rid)["replacements"]
+    assert options == [{"task_id": "t3", "doable": True}]
+    view = api.result("draw/replace_task", panel_round_id=rid, task_id="t1", new_task_id="t3")
+    assert "t3" in view["panel_round"]["pending_task_ids"]
+    assert "t1" not in view["panel_round"]["pending_task_ids"]
+    api.run("draw/spin", panel_round_id=rid)
+    with pytest.raises(DrawRejectedError):
+        api.run("draw/replace_task", panel_round_id=rid, task_id="t2", new_task_id="t1")
