@@ -16,7 +16,6 @@ import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import { decoysOf } from './decoys.ts';
 import { defineOnce } from './define.ts';
-import { percentText } from './format.ts';
 import type { MotionToken } from './motion.ts';
 import { StageElement, sharesOf } from './stage-base.ts';
 import type { Share } from './stage-base.ts';
@@ -43,6 +42,11 @@ export class TwNews extends StageElement {
     baseStyles,
     css`
       :host {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .frame {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -223,7 +227,7 @@ export class TwNews extends StageElement {
   #rumor(share: Share): Page {
     return {
       headline: this.#text('news.rumor', { name: share.label }),
-      sub: this.#text('news.rumor.sub', { chance: percentText(share.share) }),
+      sub: this.#text('news.rumor.sub'),
       color: share.color,
     };
   }
@@ -231,7 +235,7 @@ export class TwNews extends StageElement {
   #extra(share: Share): Page {
     return {
       headline: this.#text('news.extra', { name: share.label, task: this.taskName }),
-      sub: this.#text('news.extra.sub', { chance: percentText(share.share) }),
+      sub: this.#text('news.extra.sub'),
       color: share.color,
     };
   }
@@ -245,19 +249,21 @@ export class TwNews extends StageElement {
       `--tw-page-color:${page?.color || 'inherit'}`,
     ].join(';');
     return html`
-      <div
-        class="paper ${this.#phase} ${this.#stamped ? 'stamped' : EMPTY_TEXT}"
-        style=${style}
-        role="img"
-        aria-label=${this.label}
-        data-stamped=${this.#stamped ? 'true' : 'false'}
-      >
-        <div class="mast">${this.#text('news.masthead')}</div>
-        <div class="rule"></div>
-        <div class="head">${page?.headline ?? this.#text('news.ready')}</div>
-        <div class="sub">${page?.sub ?? EMPTY_TEXT}</div>
-        <div class="lines"><i></i><i></i><i></i></div>
-        <div class="stamp">${this.#text('news.stamp')}</div>
+      <div class="frame">
+        <div
+          class="paper ${this.#phase} ${this.#stamped ? 'stamped' : EMPTY_TEXT}"
+          style=${style}
+          role="img"
+          aria-label=${this.label}
+          data-stamped=${this.#stamped ? 'true' : 'false'}
+        >
+          <div class="mast">${this.#text('news.masthead')}</div>
+          <div class="rule"></div>
+          <div class="head">${page?.headline ?? this.#text('news.ready')}</div>
+          <div class="sub">${page?.sub ?? EMPTY_TEXT}</div>
+          <div class="lines"><i></i><i></i><i></i></div>
+          <div class="stamp">${this.#text('news.stamp')}</div>
+        </div>
       </div>
     `;
   }

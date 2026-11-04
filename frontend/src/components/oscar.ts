@@ -21,7 +21,6 @@ import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import './confetti.ts';
 import { defineOnce } from './define.ts';
-import { percentText } from './format.ts';
 import type { MotionToken } from './motion.ts';
 import { StageElement, sharesOf } from './stage-base.ts';
 import type { Share } from './stage-base.ts';
@@ -95,16 +94,11 @@ export class TwOscar extends StageElement {
       .nominee.lose {
         opacity: var(--tw-lose-opacity);
       }
-      .nominee b,
-      .nominee span {
+      .nominee b {
         display: block;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-      }
-      .nominee span {
-        color: #c9dcec;
-        font-size: 0.85em;
       }
       .curtain {
         position: absolute;
@@ -150,6 +144,15 @@ export class TwOscar extends StageElement {
         border-radius: 6px;
         background: #e7d9b8;
       }
+      .pocket {
+        position: absolute;
+        z-index: 2;
+        inset: auto 0 0;
+        height: 62%;
+        border: 2px solid #bda76d;
+        border-radius: 0 0 6px 6px;
+        background: #e7d9b8;
+      }
       .flap {
         position: absolute;
         inset: 0 0 auto;
@@ -157,17 +160,21 @@ export class TwOscar extends StageElement {
         border: 2px solid #bda76d;
         background: #f1e6c6;
         clip-path: polygon(0 0, 100% 0, 50% 100%);
+        z-index: 3;
         transform-origin: top;
         transition: transform var(--tw-flap);
       }
       .at-flap .flap {
         transform: rotateX(180deg);
+        z-index: 0;
       }
       .card {
         position: absolute;
+        z-index: 1;
         inset: -40% 6% 30%;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
+        padding-top: 6%;
         justify-content: center;
         border: 3px solid #f5c542;
         border-radius: 6px;
@@ -176,6 +183,7 @@ export class TwOscar extends StageElement {
         font-size: clamp(10px, 3.4cqw, 14px);
         font-weight: 700;
         text-align: center;
+        transform: translateY(45%);
         opacity: 0;
         transition:
           transform var(--tw-card),
@@ -185,7 +193,7 @@ export class TwOscar extends StageElement {
         opacity: 1;
       }
       .at-card .card {
-        transform: translateY(-30%);
+        transform: translateY(-55%);
       }
       .award {
         position: absolute;
@@ -218,10 +226,6 @@ export class TwOscar extends StageElement {
         font-size: clamp(22px, 11cqw, 44px);
         font-weight: 900;
         overflow-wrap: anywhere;
-      }
-      .award .odds {
-        color: #5a616b;
-        font-size: clamp(11px, 3.6cqw, 14px);
       }
       .still * {
         transition: none;
@@ -319,8 +323,9 @@ export class TwOscar extends StageElement {
           )}
         </div>
         <div class="envelope">
-          <div class="card">${this.#text('oscar.envelope')}</div>
           <div class="body"></div>
+          <div class="card">${this.#text('oscar.envelope')}</div>
+          <div class="pocket"></div>
           <div class="flap"></div>
         </div>
         ${winner ? this.#award(winner) : EMPTY_TEXT}
@@ -340,7 +345,7 @@ export class TwOscar extends StageElement {
       <div class="face" style="background:${share.color || FALLBACK_COLOR}">
         ${share.label.slice(0, 1)}
       </div>
-      <b>${share.label}</b><span>${percentText(share.share)}</span>
+      <b>${share.label}</b>
     </div>`;
   }
 
@@ -348,7 +353,6 @@ export class TwOscar extends StageElement {
     return html`<div class="award">
       <div class="what">${this.#text('oscar.award', { task: this.taskName })}</div>
       <div class="who" style="color:${winner.color || FALLBACK_COLOR}">${winner.label}</div>
-      <div class="odds">${this.#text('oscar.chance', { chance: percentText(winner.share) })}</div>
     </div>`;
   }
 }

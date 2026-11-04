@@ -62,7 +62,7 @@ describe('tw-oscar', () => {
     await element.spinTo('b');
     await element.updateComplete;
     expect(element.phase).toBe('win');
-    expect(award(element)).toBe('„Bad putzen“ geht an Ben Chance war 40 %');
+    expect(award(element)).toBe('„Bad putzen“ geht an Ben');
     expect(element.shadowRoot?.querySelector('tw-confetti')).toBeNull();
     expect(element.shadowRoot?.querySelectorAll('.lose')).toHaveLength(1);
     expect(stopped).toHaveBeenCalledOnce();
@@ -85,7 +85,7 @@ describe('tw-oscar', () => {
     await spin;
     await element.updateComplete;
     expect(element.phase).toBe('win');
-    expect(award(element)).toBe('“Bad putzen” goes to Anna Chance was 60 %');
+    expect(award(element)).toBe('“Bad putzen” goes to Anna');
     expect(element.shadowRoot?.querySelector('tw-confetti')).not.toBeNull();
   });
 

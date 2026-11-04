@@ -8,6 +8,7 @@ import { percentText } from '../components/index.ts';
 import '../components/index.ts';
 import type { TwStage, WheelSegment } from '../components/index.ts';
 import {
+  CHANCE_FREE_ANIMATIONS,
   DEFAULT_ANIMATIONS,
   EMPTY_TEXT,
   EVENT_TAB_SELECT,
@@ -449,7 +450,8 @@ export class TwDrawView extends LitElement {
     task: TaskInfo | undefined,
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
-    const rows = personRows(state.current ?? state.preview, task, persons, (key) =>
+    const showChance = !CHANCE_FREE_ANIMATIONS.includes(this.#kind);
+    const rows = personRows(state.current ?? state.preview, task, persons, showChance, (key) =>
       this.#text(key),
     );
     return html`
@@ -467,7 +469,7 @@ export class TwDrawView extends LitElement {
             </div>
           `,
         )}
-        <span class="muted hint">${this.#text('draw.who.hint')}</span>
+        ${showChance ? html`<span class="muted hint">${this.#text('draw.who.hint')}</span>` : nothing}
       </div>
     `;
   }
