@@ -22,19 +22,11 @@ import { roomTag } from './room.ts';
 import type { ConfigTexts } from './config-view.ts';
 import { defineOnce } from '../components/define.ts';
 
-interface TaskDraft {
-  readonly name: string;
-  readonly allowed: readonly string[];
-  readonly frequency: FrequencyWire;
-  readonly points: number;
-  readonly due_days: number;
-  readonly no_repeat: boolean;
-  readonly respect_absence: boolean;
-  readonly swap_allowed: boolean;
-  readonly min_load: Load;
+/** Formularstand: wie `TaskWire` ohne Kennung; der Raum ist leer statt `null`. */
+type TaskDraft = Omit<TaskWire, 'area_id' | 'id'> & {
   /** Kennung des Raums; leer = kein Raum. */
   readonly area_id: string;
-}
+};
 
 const TEXTS: ConfigTexts = { add: 'tasks.add', create: 'tasks.new', edit: 'tasks.edit' };
 
