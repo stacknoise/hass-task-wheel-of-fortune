@@ -164,7 +164,7 @@ class DrawService:
         recent = recent_assignments(self._history, now)
         context = build_context(self._config, self._history, recent, now)
         tasks = limit_to_participants(
-            due_tasks(self._config, schedule, recent, now), context, recent
+            due_tasks(self._config, schedule, recent, now), context, self._rng
         )
         return RoundDraft(schedule_id, origin, now, context, tasks)
 

@@ -6,7 +6,7 @@ from dataclasses import replace
 
 from ..const.limits import RECENT_HISTORY_DAYS
 from ..domain.availability.calendar import PersonAvailability
-from ..domain.draw.types import DrawContext
+from ..domain.draw.types import DrawContext, RandomSource
 from ..domain.enums import Load
 from ..domain.models import Assignment, Schedule, Settings, Task
 from ..domain.rules.factory import FrequencyRuleFactory
@@ -17,7 +17,6 @@ from .protocols import ConfigRepository, HistoryRepository
 type Recent = tuple[tuple[Assignment, dt.datetime], ...]
 
 _DAY = dt.timedelta(days=1)
-_NEVER = dt.datetime.min.replace(tzinfo=dt.UTC)
 
 
 def recent_assignments(history: HistoryRepository, now: dt.datetime) -> Recent:
@@ -80,27 +79,26 @@ def _seats(tasks: tuple[Task, ...], context: DrawContext) -> int:
     )
 
 
-def _longest_unassigned(tasks: tuple[Task, ...], recent: Recent, count: int) -> tuple[Task, ...]:
-    """Die `count` am längsten nicht zugeteilten Aufgaben in der Reihenfolge des Zeitplans."""
-    last = {task_id: max(times) for task_id, times in assigned_times(recent).items()}
-    ranked = sorted(range(len(tasks)), key=lambda i: (last.get(tasks[i].id, _NEVER), i))
+def _random_pick(tasks: tuple[Task, ...], rng: RandomSource, count: int) -> tuple[Task, ...]:
+    """`count` zufällig gewählte Aufgaben (gleiche Chance), in der Reihenfolge des Zeitplans."""
+    keys = [rng.random() for _ in tasks]
+    ranked = sorted(range(len(tasks)), key=keys.__getitem__)
     return tuple(tasks[i] for i in sorted(ranked[:count]))
 
 
 def limit_to_participants(
-    tasks: tuple[Task, ...], context: DrawContext, recent: Recent
+    tasks: tuple[Task, ...], context: DrawContext, rng: RandomSource
 ) -> tuple[Task, ...]:
     """Beschränkt die Runde auf so viele Aufgaben, wie Personen mitmachen können.
 
     Jede Person bekommt je Runde höchstens eine Aufgabe; weitere Aufgaben wären nur "nicht
-    verteilbar". Es bleiben die Aufgaben, die am längsten nicht zugeteilt wurden (nie Zugeteilte
-    zuerst, bei Gleichstand gilt die Reihenfolge des Zeitplans), damit sie über die Runden
-    abwechselnd drankommen. Die Reihenfolge der Auswahl bleibt die des Zeitplans.
+    verteilbar". Gibt es mehr Aufgaben als Plätze, wird zufällig gewählt (nicht vorhersehbar);
+    die Reihenfolge der Auswahl bleibt die des Zeitplans.
     """
     if not tasks:
         return tasks
     seats = _seats(tasks, context)
-    return tasks if seats >= len(tasks) else _longest_unassigned(tasks, recent, seats)
+    return tasks if seats >= len(tasks) else _random_pick(tasks, rng, seats)
 
 
 def build_context(

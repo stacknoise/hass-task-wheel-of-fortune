@@ -14,6 +14,7 @@ from custom_components.task_wheel.const.limits import RECENT_HISTORY_DAYS
 from custom_components.task_wheel.domain.enums import AssignmentStatus as S
 
 from ..domain import factories as f
+from ..domain.draw.helpers import FixedRandom
 from .world import DAY, World
 
 NOW = f.NOW
@@ -86,17 +87,16 @@ def test_due_tasks_keep_the_order_of_the_schedule():
     assert all(t.respect_absence for t in tasks)
 
 
-def test_round_is_limited_to_as_many_tasks_as_persons_can_take_part():
+def test_round_is_limited_to_as_many_randomly_picked_tasks_as_persons_take_part():
     world = World()
     world.config.put_task(f.task(id="t3", name="t3"))
     schedule = world.put_schedule(task_ids=("t1", "t2", "t3"))
-    add_round(world, "r1", NOW - DAY, item("a1", "r1", task_id="t1"))
-    add_round(world, "r2", NOW - 2 * DAY, item("a2", "r2", task_id="t2"))
-    recent = recent_assignments(world.history, NOW)
-    context = build_context(world.config, world.history, recent, NOW)
-    tasks = due_tasks(world.config, schedule, recent, NOW)
-    # zwei Personen, drei Aufgaben: t3 (nie) und t2 (am längsten her), in Zeitplanreihenfolge
-    assert [t.id for t in limit_to_participants(tasks, context, recent)] == ["t2", "t3"]
+    context = build_context(world.config, world.history, (), NOW)
+    tasks = due_tasks(world.config, schedule, (), NOW)
+    # zwei Personen, drei Aufgaben: die beiden kleinsten Zufallszahlen (t3, t1) bleiben,
+    # in Zeitplanreihenfolge
+    picked = limit_to_participants(tasks, context, FixedRandom(0.5, 0.9, 0.1))
+    assert [t.id for t in picked] == ["t1", "t3"]
 
 
 def test_round_keeps_all_tasks_when_enough_persons_take_part():
@@ -104,4 +104,4 @@ def test_round_keeps_all_tasks_when_enough_persons_take_part():
     schedule = world.put_schedule(task_ids=("t1", "t2"))
     context = build_context(world.config, world.history, (), NOW)
     tasks = due_tasks(world.config, schedule, (), NOW)
-    assert limit_to_participants(tasks, context, ()) == tasks
+    assert limit_to_participants(tasks, context, FixedRandom(0.5)) == tasks
