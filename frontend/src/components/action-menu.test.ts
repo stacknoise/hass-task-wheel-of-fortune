@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { EVENT_ACTION } from '../constants/index.ts';
 import { press } from './press.testing.ts';
@@ -65,5 +65,45 @@ describe('tw-action-menu', () => {
     document.body.click();
     await menu.updateComplete;
     expect(menu.shadowRoot?.querySelector('.menu')).toBeNull();
+  });
+
+  it('legt den Fokus ins Menü, wandert mit den Pfeiltasten und gibt ihn bei Escape zurück', async () => {
+    const { menu } = await mountMenu();
+    await press(menu, 'Aktionen');
+    await menu.updateComplete;
+    const items = [...(menu.shadowRoot?.querySelectorAll<HTMLElement>('.item') ?? [])];
+    expect(menu.shadowRoot?.activeElement).toBe(items[0]);
+    const key = (name: string): void => {
+      menu.shadowRoot
+        ?.querySelector('.menu')
+        ?.dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true }));
+    };
+    key('ArrowDown');
+    expect(menu.shadowRoot?.activeElement).toBe(items[1]);
+    key('ArrowDown');
+    expect(menu.shadowRoot?.activeElement).toBe(items[0]);
+    key('End');
+    expect(menu.shadowRoot?.activeElement).toBe(items[1]);
+    key('ArrowUp');
+    expect(menu.shadowRoot?.activeElement).toBe(items[0]);
+    key('Escape');
+    await menu.updateComplete;
+    expect(menu.shadowRoot?.querySelector('.menu')).toBeNull();
+    expect(menu.shadowRoot?.activeElement).toBe(menu.shadowRoot?.querySelector('.action'));
+  });
+
+  it('hört auf Klicks im Dokument nur, solange das Menü offen ist', async () => {
+    const add = vi.spyOn(document, 'addEventListener');
+    const remove = vi.spyOn(document, 'removeEventListener');
+    const { menu } = await mountMenu();
+    expect(add).not.toHaveBeenCalledWith('click', expect.anything());
+    await press(menu, 'Aktionen');
+    await menu.updateComplete;
+    expect(add).toHaveBeenCalledWith('click', expect.anything());
+    document.body.click();
+    await menu.updateComplete;
+    expect(remove).toHaveBeenCalledWith('click', expect.anything());
+    add.mockRestore();
+    remove.mockRestore();
   });
 });

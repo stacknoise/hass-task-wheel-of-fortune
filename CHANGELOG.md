@@ -5,6 +5,19 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Behoben: Beim Wechsel des Home-Assistant-Panels oder bei einem Verbindungsabbruch während des Ladens blieben serverseitige Abonnements zurück
+- Behoben: Die Auslosung hing in „Dreht“, wenn die Animation abgebrochen wurde (z. B. durch ein Live-Update); „Neu starten“ während einer laufenden Anfrage ist gesperrt und verwirft verspätete Antworten
+- Behoben: Eine laufende Auslosung geht beim Wechsel des Tabs nicht mehr verloren
+- Behoben: „Weitere laden“ in der Historie springt bei Live-Änderungen und nach dem Löschen einer Runde nicht mehr zurück
+- Panel zeigt Ladefehler einer Ansicht und einen Hinweis „Daten womöglich veraltet“ mit „Erneut versuchen“ statt einer leeren Seite
+- Tastatur und Screenreader: Dialoge nutzen das native `<dialog>` (Fokusfalle, Escape, Fokusrückgabe), das Aktionsmenü lässt sich mit Pfeiltasten bedienen, Tabellen haben Überschriften mit Bezug, Karten sind als Knöpfe benannt, Strg-/Cmd-Klick auf Tabs öffnet einen neuen Tab
+- Sicherheit: Personenfarben werden vor der Verwendung auf `#rrggbb` geprüft; Farben gelangen nicht mehr als Text in Stilangaben
+- Leistung: Das Panel zeichnet nicht mehr bei jeder Zustandsänderung von Home Assistant neu; Formatierer, Raum- und Benachrichtigungslisten werden zwischengespeichert; die Übersicht fragt nach einer Aktion nur einmal neu
+- Der Anfangsbuchstabe einer Person zerschneidet keine Emoji mehr, Prozentangaben und Daten folgen der Sprache; einheitliche Avatar-Marke
+- Download der CSV-Datei funktioniert auch in Safari, Firefox und der Companion-App
+- Die Statistik zeigt beim Wechsel des Zeitraums „in Arbeit“ (`aria-busy`), das Glücksrad teilt Abbruch und Reduced-Motion mit den übrigen Animationen
+- Intern: Farbwerte nur noch in `constants/` (neue ESLint-Regel), Totcode und 15 ungenutzte Übersetzungsschlüssel entfernt, Test für Parität und Nutzung der Schlüssel
+
 ## [0.4.0] – 2026-11-04
 
 - Abwesenheiten können wiederkehren: neue Art „Wiederkehrend“ mit Wochentagen, Abstand in Wochen (z. B. jeden Mittwoch alle zwei Wochen), Beginn und optionalem Ende. Die Auslosung, die Fristfenster, die Kapazität und die Vorschau werten sie wie die übrigen Abwesenheiten aus; gespeicherte Abwesenheiten bleiben unverändert gültig, eine Migration ist nicht nötig

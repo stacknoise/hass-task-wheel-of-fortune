@@ -6,7 +6,7 @@ import { failureFor, parseFailure } from '../api/index.ts';
 import type { ApiFailure, Snapshot } from '../api/index.ts';
 import { baseStyles, formStyles, onChange, tokenStyles } from '../components/index.ts';
 import '../components/index.ts';
-import { FORM_LIMITS } from '../constants/index.ts';
+import { ACTIVATION_KEYS, FORM_LIMITS } from '../constants/index.ts';
 import type { CollectionName, ConfigResource } from '../constants/index.ts';
 import { translate, translateError } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
@@ -25,7 +25,7 @@ export interface ConfigTexts {
  * zwischen Objekt, Entwurf und Nachricht; Fehler des Backends zeigt diese Klasse an.
  */
 export abstract class ConfigView<
-  Wire extends { readonly id: string },
+  Wire extends { readonly id: string; readonly name: string },
   Draft extends object,
 > extends LitElement {
   static override properties = {
@@ -54,6 +54,7 @@ export abstract class ConfigView<
       }
       .card {
         text-align: left;
+        color: inherit;
         padding: var(--tw-space-m);
         border-radius: var(--tw-radius);
         border: 2px solid var(--tw-color-divider);
@@ -85,7 +86,7 @@ export abstract class ConfigView<
       .primary {
         background: var(--tw-color-primary);
         border-color: var(--tw-color-primary);
-        color: #fff;
+        color: var(--tw-color-on-primary);
       }
       .danger {
         color: var(--tw-color-error);
@@ -204,15 +205,23 @@ export abstract class ConfigView<
             items,
             (item) => item.id,
             (item) => html`
-              <button
-                type="button"
+              <div
                 class="card"
+                role="button"
+                tabindex="0"
+                aria-label=${item.name}
                 @click=${() => {
                   this.#open(item.id, this.draftOf(item));
                 }}
+                @keydown=${(event: KeyboardEvent) => {
+                  if (event.target === event.currentTarget && ACTIVATION_KEYS.includes(event.key)) {
+                    event.preventDefault();
+                    this.#open(item.id, this.draftOf(item));
+                  }
+                }}
               >
                 ${this.card(item, snapshot)}
-              </button>
+              </div>
             `,
           )}
         </div>

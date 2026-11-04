@@ -1,4 +1,4 @@
-import { css, html } from 'lit';
+import { css, html, unsafeCSS } from 'lit';
 import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
@@ -7,6 +7,7 @@ import {
   EMPTY_TEXT,
   FALLBACK_COLOR,
   OSCAR_CARD_MS,
+  OSCAR_COLORS,
   OSCAR_CURTAIN_MS,
   OSCAR_ENVELOPE_MS,
   OSCAR_FLAP_MS,
@@ -19,6 +20,7 @@ import {
 } from '../constants/index.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
+import './avatar.ts';
 import './confetti.ts';
 import { defineOnce } from './define.ts';
 import type { MotionToken } from './motion.ts';
@@ -47,15 +49,15 @@ export class TwOscar extends StageElement {
         height: 100%;
         overflow: hidden;
         border-radius: 12px;
-        background: #0a1624;
-        color: #ffffff;
+        background: var(--tw-color-stage);
+        color: var(--tw-color-white);
         container-type: size;
       }
       .floor {
         position: absolute;
         inset: auto 0 0;
         height: 14%;
-        background: #7a1626;
+        background: ${unsafeCSS(OSCAR_COLORS.curtain)};
       }
       .nominees {
         position: absolute;
@@ -74,22 +76,18 @@ export class TwOscar extends StageElement {
           opacity 0.3s;
       }
       .face {
+        --tw-avatar-size: 70%;
+        --tw-avatar-border: 3px solid var(--tw-color-white);
+        --tw-avatar-font: 1.6em;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 70%;
-        aspect-ratio: 1;
         margin: 0 auto 4px;
-        border: 3px solid #ffffff;
-        border-radius: 50%;
-        font-size: 1.6em;
         font-weight: 900;
       }
       .nominee.lit {
         transform: scale(1.18);
       }
       .nominee.lit .face {
-        box-shadow: 0 0 24px 6px rgba(255, 236, 170, 0.7);
+        box-shadow: 0 0 24px 6px ${unsafeCSS(OSCAR_COLORS.litGlow)};
       }
       .nominee.lose {
         opacity: var(--tw-lose-opacity);
@@ -107,9 +105,9 @@ export class TwOscar extends StageElement {
         width: 50%;
         background: repeating-linear-gradient(
           90deg,
-          #6d1220 0 10px,
-          #b3263b 10px 22px,
-          #6d1220 22px 32px
+          ${unsafeCSS(OSCAR_COLORS.stripeDark)} 0 10px,
+          ${unsafeCSS(OSCAR_COLORS.stripeLight)} 10px 22px,
+          ${unsafeCSS(OSCAR_COLORS.stripeDark)} 22px 32px
         );
         transition: transform var(--tw-curtain) ease-in-out;
       }
@@ -140,25 +138,25 @@ export class TwOscar extends StageElement {
       .body {
         position: absolute;
         inset: 0;
-        border: 2px solid #bda76d;
+        border: 2px solid ${unsafeCSS(OSCAR_COLORS.paperBorder)};
         border-radius: 6px;
-        background: #e7d9b8;
+        background: ${unsafeCSS(OSCAR_COLORS.paper)};
       }
       .pocket {
         position: absolute;
         z-index: 2;
         inset: auto 0 0;
         height: 62%;
-        border: 2px solid #bda76d;
+        border: 2px solid ${unsafeCSS(OSCAR_COLORS.paperBorder)};
         border-radius: 0 0 6px 6px;
-        background: #e7d9b8;
+        background: ${unsafeCSS(OSCAR_COLORS.paper)};
       }
       .flap {
         position: absolute;
         inset: 0 0 auto;
         height: 55%;
-        border: 2px solid #bda76d;
-        background: #f1e6c6;
+        border: 2px solid ${unsafeCSS(OSCAR_COLORS.paperBorder)};
+        background: ${unsafeCSS(OSCAR_COLORS.paperLight)};
         clip-path: polygon(0 0, 100% 0, 50% 100%);
         z-index: 3;
         transform-origin: top;
@@ -176,10 +174,10 @@ export class TwOscar extends StageElement {
         align-items: flex-start;
         padding-top: 6%;
         justify-content: center;
-        border: 3px solid #f5c542;
+        border: 3px solid var(--tw-color-rim);
         border-radius: 6px;
-        background: #fffaf0;
-        color: #8a6d00;
+        background: ${unsafeCSS(OSCAR_COLORS.card)};
+        color: ${unsafeCSS(OSCAR_COLORS.bronze)};
         font-size: clamp(10px, 3.4cqw, 14px);
         font-weight: 700;
         text-align: center;
@@ -199,14 +197,14 @@ export class TwOscar extends StageElement {
         position: absolute;
         inset: 40% 6% auto;
         padding: 4% 3%;
-        border: 4px solid #f5c542;
+        border: 4px solid var(--tw-color-rim);
         border-radius: 14px;
-        background: #fffaf0;
-        color: #1f2328;
+        background: ${unsafeCSS(OSCAR_COLORS.card)};
+        color: var(--tw-color-ink);
         text-align: center;
         opacity: 0;
         pointer-events: none;
-        box-shadow: 0 0 40px 10px rgba(245, 197, 66, 0.6);
+        box-shadow: 0 0 40px 10px ${unsafeCSS(OSCAR_COLORS.winnerGlow)};
       }
       .at-win .award {
         opacity: 1;
@@ -215,7 +213,7 @@ export class TwOscar extends StageElement {
         opacity: 0;
       }
       .award .what {
-        color: #8a6d00;
+        color: ${unsafeCSS(OSCAR_COLORS.bronze)};
         font-size: clamp(11px, 4cqw, 16px);
         font-weight: 700;
         overflow: hidden;
@@ -342,9 +340,11 @@ export class TwOscar extends StageElement {
       winner && winner.id !== share.id ? 'lose' : EMPTY_TEXT,
     ].join(' ');
     return html`<div class="nominee ${state}" data-id=${share.id}>
-      <div class="face" style="background:${share.color || FALLBACK_COLOR}">
-        ${share.label.slice(0, 1)}
-      </div>
+      <tw-avatar
+        class="face"
+        name=${share.label}
+        color=${share.color || FALLBACK_COLOR}
+      ></tw-avatar>
       <b>${share.label}</b>
     </div>`;
   }
@@ -352,7 +352,9 @@ export class TwOscar extends StageElement {
   #award(winner: Share): TemplateResult {
     return html`<div class="award">
       <div class="what">${this.#text('oscar.award', { task: this.taskName })}</div>
-      <div class="who" style="color:${winner.color || FALLBACK_COLOR}">${winner.label}</div>
+      <div class="who" style=${styleMap({ color: winner.color || FALLBACK_COLOR })}>
+        ${winner.label}
+      </div>
     </div>`;
   }
 }

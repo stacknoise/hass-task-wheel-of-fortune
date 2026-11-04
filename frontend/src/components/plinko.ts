@@ -27,7 +27,8 @@ import {
   PLINKO_WIN_CLASS,
   STAGE_TAGS,
 } from '../constants/index.ts';
-import { numberText, percentText } from './format.ts';
+import { formatPercent } from '../i18n/format.ts';
+import { numberText } from './format.ts';
 import type { MotionToken } from './motion.ts';
 import {
   PEGS,
@@ -100,7 +101,7 @@ export class TwPlinko extends StageElement {
         stroke: var(--tw-color-surface);
       }
       text {
-        fill: #ffffff;
+        fill: var(--tw-color-white);
         text-anchor: middle;
         pointer-events: none;
       }
@@ -219,7 +220,7 @@ export class TwPlinko extends StageElement {
     return svg`<svg class=${winner ? PLINKO_WIN_CLASS : ''} x=${bin.x0} y=${PLINKO_BIN_TOP} width=${width} height=${PLINKO_BIN_HEIGHT}>
       <rect class="bin" x="0" y="0" width=${width} height=${PLINKO_BIN_HEIGHT} fill=${bin.color || FALLBACK_COLOR}></rect>
       ${width >= PLINKO_MIN_NAME_WIDTH ? svg`<text class="name" x=${centre} y=${PLINKO_NAME_Y}>${bin.label}</text>` : nothing}
-      ${width >= PLINKO_MIN_CHANCE_WIDTH ? svg`<text class="chance" x=${centre} y=${PLINKO_CHANCE_Y}>${percentText(bin.share)}</text>` : nothing}
+      ${width >= PLINKO_MIN_CHANCE_WIDTH ? svg`<text class="chance" x=${centre} y=${PLINKO_CHANCE_Y}>${formatPercent(bin.share, this.language)}</text>` : nothing}
     </svg>`;
   }
 

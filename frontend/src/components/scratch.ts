@@ -1,6 +1,7 @@
-import { css, html } from 'lit';
+import { css, html, unsafeCSS } from 'lit';
 import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
+import { styleMap } from 'lit/directives/style-map.js';
 
 import {
   EMPTY_TEXT,
@@ -13,6 +14,7 @@ import {
   SCRATCH_COIN_BRUSH,
   SCRATCH_COIN_MS,
   SCRATCH_COIN_START_MS,
+  SCRATCH_COLORS,
   SCRATCH_FOIL_HEAD,
   SCRATCH_FOIL_HINT_FONT,
   SCRATCH_FOIL_HINT_Y,
@@ -69,8 +71,8 @@ export class TwScratch extends StageElement {
         overflow: hidden;
         border: 3px solid var(--tw-card-color);
         border-radius: 12px;
-        background: #ffffff;
-        color: #1f2328;
+        background: var(--tw-color-white);
+        color: var(--tw-color-ink);
         user-select: none;
       }
       .under {
@@ -97,10 +99,14 @@ export class TwScratch extends StageElement {
         border-color: var(--tw-color-rim);
         box-shadow:
           0 0 0 3px var(--tw-color-rim),
-          0 0 26px rgba(245, 197, 66, 0.7);
+          0 0 26px var(--tw-glow-gold);
       }
       .card.win .under {
-        background: linear-gradient(135deg, #fff6d6, #ffe08a);
+        background: linear-gradient(
+          135deg,
+          ${unsafeCSS(SCRATCH_COLORS.goldLight)},
+          ${unsafeCSS(SCRATCH_COLORS.goldDark)}
+        );
       }
       .card.lose {
         opacity: 0.55;
@@ -346,7 +352,7 @@ export class TwScratch extends StageElement {
     return html`
       <div
         class="card ${verdict ?? EMPTY_TEXT}"
-        style="--tw-card-color:${share.color || FALLBACK_COLOR}"
+        style=${styleMap({ '--tw-card-color': share.color || FALLBACK_COLOR })}
         data-id=${share.id}
       >
         <div class="under">
@@ -358,7 +364,7 @@ export class TwScratch extends StageElement {
           width=${SCRATCH_CANVAS_WIDTH}
           height=${SCRATCH_CANVAS_HEIGHT}
           data-id=${share.id}
-          aria-label=${share.label}
+          aria-hidden="true"
           @pointerdown=${(event: PointerEvent) => {
             this.#onDown(event, event.currentTarget as HTMLCanvasElement);
           }}

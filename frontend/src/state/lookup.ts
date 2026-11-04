@@ -1,7 +1,8 @@
 import type { PanelRoundWire, Snapshot, WireObject } from '../api/index.ts';
-import { EMPTY_TEXT, FALLBACK_COLOR } from '../constants/index.ts';
+import { EMPTY_TEXT } from '../constants/index.ts';
 import type { AnimationKind } from '../constants/index.ts';
 import { animationsOf } from './animation.ts';
+import { safeColor } from './color.ts';
 
 export interface PersonInfo {
   readonly id: string;
@@ -54,7 +55,7 @@ export function personsById(snapshot: Snapshot): ReadonlyMap<string, PersonInfo>
     snapshot.persons.map((item) => ({
       id: item.id,
       name: text(item, 'name', item.id),
-      color: text(item, 'color', FALLBACK_COLOR),
+      color: safeColor(item['color']),
     })),
   );
 }

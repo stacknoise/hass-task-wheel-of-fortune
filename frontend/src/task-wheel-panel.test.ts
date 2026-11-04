@@ -8,6 +8,7 @@ import {
 import { FakeHass } from './api/fake-hass.testing.ts';
 import { assignment, fakeHass, text } from './views/fixtures.testing.ts';
 import type { TaskWheelPanel } from './task-wheel-panel.ts';
+import { VIEW_LOADERS } from './views/index.ts';
 import './task-wheel-panel.ts';
 
 const PREFIX = '/task-wheel';
@@ -119,6 +120,54 @@ describe('task-wheel-panel', () => {
     document.body.append(element);
     await vi.waitFor(() => {
       expect(hass.listenerCount).toBe(1);
+    });
+  });
+
+  it('zeichnet bei neuem hass nur neu, wenn sich Sprache, Räume oder Dienste ändern', async () => {
+    const hass = new FakeHass();
+    const element = await mount(hass);
+    await vi.waitFor(() => {
+      expect(hass.listenerCount).toBe(1);
+    });
+    await element.updateComplete;
+    element.hass = Object.create(hass, { states: { value: {} } }) as FakeHass;
+    expect(element.isUpdatePending).toBe(false);
+    element.hass = Object.create(hass, { areas: { value: {} } }) as FakeHass;
+    expect(element.isUpdatePending).toBe(true);
+  });
+
+  it('zeigt einen Fehler beim Nachladen einer Ansicht und lädt auf Wunsch erneut', async () => {
+    vi.spyOn(VIEW_LOADERS, 'tasks').mockRejectedValueOnce(new Error('offline'));
+    const element = await mount(new FakeHass(), '/tasks');
+    const alert = (): HTMLElement | null | undefined =>
+      element.shadowRoot?.querySelector<HTMLElement>('[role="alert"]');
+    await vi.waitFor(() => {
+      expect(alert()?.textContent).toContain('konnte nicht geladen werden');
+    });
+    alert()?.querySelector('button')?.click();
+    await vi.waitFor(() => {
+      expect(element.shadowRoot?.querySelector('tw-tasks-view')).not.toBeNull();
+    });
+  });
+
+  it('behält bei einem Verbindungsfehler den alten Stand und bietet das Neuladen an', async () => {
+    const hass = new FakeHass();
+    const element = await mount(hass);
+    await settle(element);
+    hass.failSnapshot = true;
+    hass.reconnect();
+    await vi.waitFor(async () => {
+      await element.updateComplete;
+      expect(element.shadowRoot?.querySelector('[role="alert"]')?.textContent).toContain(
+        'veraltet',
+      );
+    });
+    expect(element.shadowRoot?.querySelector('tw-overview-view')).not.toBeNull();
+    hass.failSnapshot = false;
+    element.shadowRoot?.querySelector<HTMLButtonElement>('[role="alert"] button')?.click();
+    await vi.waitFor(async () => {
+      await element.updateComplete;
+      expect(element.shadowRoot?.querySelector('[role="alert"]')).toBeNull();
     });
   });
 });

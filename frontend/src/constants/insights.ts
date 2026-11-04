@@ -43,14 +43,20 @@ export const STATUS_TONES: Readonly<Record<AssignmentStatus, Tone>> = {
 
 export const FILTER_ALL = 'all';
 export const LOAD_PAUSED = 'paused';
-export const INITIAL_LENGTH = 1;
 export const HALF = 0.5;
 export const PAIR = 2;
 
 export const HISTORY_PAGE_SIZE = 20;
+/** Größte Seite, die das Backend liefert. */
+export const HISTORY_PAGE_SIZE_MAX = 200;
 export const ACTIVITY_COUNT = 5;
 export const OVERVIEW_MONTHS = 1;
 export const OVERVIEW_WEEKS = 1;
+
+/** Attribut, mit dem eine Ansicht meldet, dass sie gerade neu lädt. */
+export const ATTRIBUTE_BUSY = 'aria-busy';
+/** Deckkraft veralteter Zahlen, während neue geladen werden. */
+export const BUSY_OPACITY = 0.6;
 
 export const STATISTICS_WEEKS = 8;
 export const STATISTICS_RANGES = [
@@ -61,6 +67,8 @@ export const STATISTICS_RANGES = [
 export type StatisticsRangeId = (typeof STATISTICS_RANGES)[number]['id'];
 export const DEFAULT_RANGE: StatisticsRangeId = 'month';
 
+/** Wartezeit, bis die Adresse einer heruntergeladenen Datei freigegeben wird. */
+export const REVOKE_DELAY_MS = 1000;
 export const EXPORT_PAGE_SIZE = 200;
 export const EXPORT_MAX_PAGES = 50;
 export const CSV_SEPARATOR = ';';

@@ -39,6 +39,17 @@ describe('Bewegung', () => {
     expect(token.dead).toBe(true);
   });
 
+  it('meldet den Abbruch, damit Wartende nicht hängen bleiben', async () => {
+    const token = new MotionToken();
+    const done = vi.fn();
+    void token.cancelled.then(done);
+    await Promise.resolve();
+    expect(done).not.toHaveBeenCalled();
+    token.cancel();
+    await token.cancelled;
+    expect(done).toHaveBeenCalledOnce();
+  });
+
   it('ruft die Bildfolge bis zum Ende auf und hört nach dem Abbruch auf', async () => {
     let now = 0;
     const queue: FrameRequestCallback[] = [];

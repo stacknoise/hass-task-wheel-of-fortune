@@ -58,7 +58,7 @@ describe('tw-plinko', () => {
     expect(svg?.getAttribute('role')).toBe('img');
     expect(svg?.getAttribute('aria-label')).toBe('Plinko');
     expect(texts(plinko, 'text.name')).toEqual(['Anna', 'Ben']);
-    expect(texts(plinko, 'text.chance')).toEqual(['60 %', '38 %']);
+    expect(texts(plinko, 'text.chance')).toEqual(['60%', '38%']);
     expect(plinko.shadowRoot?.querySelectorAll('rect.bin')).toHaveLength(3);
     expect(plinko.shadowRoot?.querySelectorAll('circle.peg').length).toBeGreaterThan(50);
   });
@@ -153,7 +153,7 @@ describe('tw-plinko', () => {
     await single.spinTo('a');
     await single.updateComplete;
     expect(single.landedId).toBe('a');
-    expect(texts(single, 'text.chance')).toEqual(['100 %']);
+    expect(texts(single, 'text.chance')).toEqual(['100%']);
     const empty = await mount([]);
     await empty.spinTo('a');
     expect(empty.landedId).toBeUndefined();

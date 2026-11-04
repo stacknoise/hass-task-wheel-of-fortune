@@ -202,6 +202,16 @@ describe('Personen', () => {
     expect(q(view.shadowRoot, 'section.editor').innerHTML).toBeDefined();
   });
 
+  it('öffnet eine Karte auch mit der Tastatur und benennt sie nach dem Objekt', async () => {
+    const { view } = await open('/persons');
+    const card = q(view.shadowRoot, '.card');
+    expect(card.getAttribute('role')).toBe('button');
+    expect(card.getAttribute('aria-label')).toBeTruthy();
+    card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await view.updateComplete;
+    expect(view.shadowRoot?.querySelector('tw-dialog')).not.toBeNull();
+  });
+
   it('ändert eine Person und löscht sie erst nach Bestätigung', async () => {
     const { hass, view } = await open('/persons');
     await click(view, '.card');
@@ -248,7 +258,7 @@ describe('Personen', () => {
     await dialog.updateComplete;
     dialog.shadowRoot
       ?.querySelector('.dialog')
-      ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      ?.dispatchEvent(new Event('cancel', { cancelable: true }));
     await view.updateComplete;
     expect(view.shadowRoot?.querySelector('tw-dialog')).toBeNull();
   });

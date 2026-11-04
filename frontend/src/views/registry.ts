@@ -3,6 +3,11 @@ import { ROUTES, ROUTE_IDS } from '../constants/index.ts';
 
 type ViewLoader = () => Promise<unknown>;
 
+/** Was das Panel von einer Ansicht braucht: ein Element, dem es die Sprache setzen kann. */
+export interface SectionViewElement extends HTMLElement {
+  language: string;
+}
+
 /** Jede Ansicht wird erst beim ersten Aufruf nachgeladen. */
 export const VIEW_LOADERS: Readonly<Record<RouteId, ViewLoader>> = {
   overview: () => import('./overview.ts'),

@@ -1,8 +1,17 @@
 import { css, html, nothing } from 'lit';
-import type { TemplateResult } from 'lit';
+import type { PropertyValues, TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 
-import { COMPONENT_TAGS, EVENT_ACTION } from '../constants/index.ts';
+import {
+  COMPONENT_TAGS,
+  EVENT_ACTION,
+  KEY_ARROW_DOWN,
+  KEY_ARROW_UP,
+  KEY_END,
+  KEY_ESCAPE,
+  KEY_HOME,
+  KEY_TAB,
+} from '../constants/index.ts';
 import './confirm-dialog.ts';
 import { defineOnce } from './define.ts';
 import { LocalizedElement } from './localized.ts';
@@ -89,14 +98,21 @@ export class TwActionMenu extends LocalizedElement {
     this._pending = undefined;
   }
 
-  override connectedCallback(): void {
-    super.connectedCallback();
-    document.addEventListener('click', this.#outside);
-  }
-
   override disconnectedCallback(): void {
     document.removeEventListener('click', this.#outside);
     super.disconnectedCallback();
+  }
+
+  /** Der Klick-Zuhörer am Dokument hängt nur, solange das Menü offen ist; dann geht der Fokus ins Menü. */
+  protected override updated(changed: PropertyValues<this>): void {
+    if (changed.has('_open')) {
+      if (this._open) {
+        document.addEventListener('click', this.#outside);
+        this.#items()[0]?.focus();
+      } else {
+        document.removeEventListener('click', this.#outside);
+      }
+    }
   }
 
   protected override render(): TemplateResult {
@@ -110,7 +126,7 @@ export class TwActionMenu extends LocalizedElement {
         @click=${() => {
           this._open = !this._open;
         }}
-        @keydown=${this.#escape}
+        @keydown=${this.#onKey}
       >
         ${this.label} ▾
       </button>
@@ -121,7 +137,7 @@ export class TwActionMenu extends LocalizedElement {
 
   #menu(): TemplateResult {
     return html`
-      <ul class="menu" role="menu" @keydown=${this.#escape}>
+      <ul class="menu" role="menu" @keydown=${this.#onKey}>
         ${repeat(
           this.items,
           (item) => item.id,
@@ -181,11 +197,44 @@ export class TwActionMenu extends LocalizedElement {
     );
   }
 
-  readonly #escape = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape') {
+  /** Die bedienbaren Einträge des offenen Menüs. */
+  #items(): HTMLButtonElement[] {
+    return [...this.renderRoot.querySelectorAll<HTMLButtonElement>('.item:not(:disabled)')];
+  }
+
+  /** Escape schließt und gibt den Fokus zurück; Pfeile, Pos1 und Ende wandern durch die Einträge. */
+  readonly #onKey = (event: KeyboardEvent): void => {
+    if (!this._open) {
+      return;
+    }
+    if (event.key === KEY_ESCAPE) {
       this._open = false;
+      this.renderRoot.querySelector<HTMLElement>('.action')?.focus();
+    } else if (event.key === KEY_TAB) {
+      this._open = false;
+    } else {
+      this.#move(event);
     }
   };
+
+  #move(event: KeyboardEvent): void {
+    const items = this.#items();
+    if (items.length === 0) {
+      return;
+    }
+    const current = items.findIndex((item) => item === this.shadowRoot?.activeElement);
+    const targets: Readonly<Record<string, number>> = {
+      [KEY_ARROW_DOWN]: (current + 1) % items.length,
+      [KEY_ARROW_UP]: (current - 1 + items.length) % items.length,
+      [KEY_HOME]: 0,
+      [KEY_END]: items.length - 1,
+    };
+    const target = targets[event.key];
+    if (target !== undefined) {
+      event.preventDefault();
+      items[target]?.focus();
+    }
+  }
 
   readonly #outside = (event: Event): void => {
     if (this._open && !event.composedPath().includes(this)) {

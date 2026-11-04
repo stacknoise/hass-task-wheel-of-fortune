@@ -42,5 +42,13 @@ export const EVENT_LOCATION_CHANGED = 'location-changed';
 export const DIALOG_COMPACT_MAX_WIDTH = 600;
 /** Höchste Breite eines Dialogs auf größeren Bildschirmen, in `em`. */
 export const DIALOG_MAX_WIDTH_EM = 40;
-/** Taste, die einen Dialog schließt. */
+/** Nummer der Maustaste für einen gewöhnlichen Klick. */
+export const PRIMARY_BUTTON = 0;
+/** Tasten für Dialoge und Menüs. */
 export const KEY_ESCAPE = 'Escape';
+export const KEY_TAB = 'Tab';
+export const ACTIVATION_KEYS: readonly string[] = ['Enter', ' '];
+export const KEY_ARROW_DOWN = 'ArrowDown';
+export const KEY_ARROW_UP = 'ArrowUp';
+export const KEY_HOME = 'Home';
+export const KEY_END = 'End';

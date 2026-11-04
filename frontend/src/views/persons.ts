@@ -37,15 +37,9 @@ export class PersonsView extends ConfigView<PersonWire, PersonDraft> {
   static override styles = [
     ...ConfigView.styles,
     css`
-      .avatar {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        color: #fff;
-        font-weight: 700;
+      tw-avatar {
+        --tw-avatar-size: 40px;
+        --tw-avatar-font: 1em;
       }
       .name {
         font-weight: 500;
@@ -122,7 +116,7 @@ export class PersonsView extends ConfigView<PersonWire, PersonDraft> {
       allowsPerson(new Set(task.allowed), person.id),
     ).length;
     return html`
-      <span class="avatar" style="background:${person.color}">${person.name.slice(0, 1)}</span>
+      <tw-avatar name=${person.name} color=${person.color}></tw-avatar>
       <span class="name">${person.name}</span>
       <div class="muted">
         ${this.text(`load.${person.load}`)} · ${this.text('persons.tasks')}: ${tasks}

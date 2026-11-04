@@ -1,10 +1,14 @@
 import { ContextConsumer, createContext } from '@lit/context';
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 
-import type { ApiClient } from '../api/index.ts';
+import type { ApiClient, AreaOption } from '../api/index.ts';
+import { areaNames } from './areas.ts';
+import type { AreaNames } from './areas.ts';
 import type { Store, StoreState } from './store.ts';
 
 export const storeContext = createContext<Store>(Symbol('task-wheel-store'));
+
+const NO_AREAS: readonly AreaOption[] = [];
 
 type Host = ReactiveControllerHost & HTMLElement;
 
@@ -34,6 +38,11 @@ export class StoreController implements ReactiveController {
   /** Der API-Zugang des Stores; vor dem Eintreffen des Stores leer. */
   get client(): ApiClient | undefined {
     return this.#store?.client;
+  }
+
+  /** Die Räume von Home Assistant als Nachschlagetabelle (zwischengespeichert, solange sie sich nicht ändern). */
+  areaNames(): AreaNames {
+    return areaNames(this.client?.areas() ?? NO_AREAS);
   }
 
   hostDisconnected(): void {

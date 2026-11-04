@@ -2,7 +2,7 @@ import { LitElement, css, html } from 'lit';
 import type { PropertyValues, TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 
-import { COMPONENT_TAGS, EVENT_TAB_SELECT } from '../constants/index.ts';
+import { COMPONENT_TAGS, EVENT_TAB_SELECT, PRIMARY_BUTTON } from '../constants/index.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import { defineOnce } from './define.ts';
 
@@ -103,6 +103,10 @@ export class TwTabBar extends LitElement {
   }
 
   #select(event: MouseEvent, tab: TabItem): void {
+    // Strg-, Cmd- und Mittelklick öffnen den Tab im Browser wie jeden Link.
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== PRIMARY_BUTTON) {
+      return;
+    }
     event.preventDefault();
     this.dispatchEvent(
       new CustomEvent<string>(EVENT_TAB_SELECT, { detail: tab.id, bubbles: true, composed: true }),

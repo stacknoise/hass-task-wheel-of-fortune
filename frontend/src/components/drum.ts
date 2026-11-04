@@ -34,7 +34,8 @@ import {
 import { DRUM_TOTAL_MS, DrumSimulation } from './drum-geometry.ts';
 import { degreesOf, legendSlot, ribsPath, wallPath } from './drum-shapes.ts';
 import type { Ball, Random } from './drum-balls.ts';
-import { numberText, percentText } from './format.ts';
+import { formatPercent } from '../i18n/format.ts';
+import { numberText } from './format.ts';
 import type { MotionToken } from './motion.ts';
 import { StageElement, sharesOf } from './stage-base.ts';
 import type { Share } from './stage-base.ts';
@@ -92,10 +93,10 @@ export class TwDrum extends StageElement {
         stroke: var(--tw-color-surface);
       }
       .shine {
-        fill: #ffffff;
+        fill: var(--tw-color-white);
       }
       .letter {
-        fill: #ffffff;
+        fill: var(--tw-color-white);
         font-weight: 900;
         text-anchor: middle;
         pointer-events: none;
@@ -202,7 +203,7 @@ export class TwDrum extends StageElement {
     const slot = legendSlot(index, count);
     return svg`<g class="entry" transform="translate(${numberText(slot.x)} ${numberText(slot.y)})">
       <circle cx=${DRUM_LEGEND_DOT} cy=${-DRUM_LEGEND_DOT} r=${DRUM_LEGEND_DOT} fill=${share.color}></circle>
-      <text class="legend" x=${DRUM_LEGEND_TEXT_GAP}>${share.label} ${percentText(share.share)}</text>
+      <text class="legend" x=${DRUM_LEGEND_TEXT_GAP}>${share.label} ${formatPercent(share.share, this.language)}</text>
     </g>`;
   }
 }

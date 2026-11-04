@@ -24,20 +24,20 @@ const RESULT: TaskDrawWire = {
   segments: [{ person_id: 'a', chance: 0.6, weight: 1 }],
   exclusions: [{ person_id: 'b', reason: 'absent' }],
 };
-const text = (key: string): string => key;
+const LANGUAGE = 'de';
 
 describe('personRows', () => {
   it('zeigt die Chance und den Ausschlussgrund', () => {
-    const [anna, ben] = personRows(RESULT, TASK, PERSONS, true, text);
-    expect(anna?.note).toBe('60 %');
-    expect(ben?.note).toBe('draw.reason.absent');
+    const [anna, ben] = personRows(RESULT, TASK, PERSONS, true, LANGUAGE);
+    expect(anna?.note).toBe('60\u00A0%');
+    expect(ben?.note).toBe('Abwesend');
   });
 
   it('lässt die Chance bei Animationen ohne Chance-Anzeige weg', () => {
     expect(CHANCE_FREE_ANIMATIONS).toContain('scratch');
-    const [anna, ben] = personRows(RESULT, TASK, PERSONS, false, text);
+    const [anna, ben] = personRows(RESULT, TASK, PERSONS, false, LANGUAGE);
     expect(anna?.note).toBe('');
     expect(anna?.inWheel).toBe(true);
-    expect(ben?.note).toBe('draw.reason.absent');
+    expect(ben?.note).toBe('Abwesend');
   });
 });

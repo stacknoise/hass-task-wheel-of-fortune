@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { EVENT_CHIP_SELECT } from '../constants/index.ts';
+import { initialOf } from './index.ts';
 import type { TwAvatar, TwBadge, TwChips, TwRoom } from './index.ts';
 import './index.ts';
 
@@ -20,6 +21,13 @@ describe('tw-avatar', () => {
     const avatar = await mount<TwAvatar>('tw-avatar', { name: 'anna', color: '#c05600' });
     expect(avatar.shadowRoot?.textContent).toMatch(/^A/);
     expect(avatar.style.getPropertyValue('--avatar')).toBe('#c05600');
+  });
+
+  it('zerschneidet Emoji nicht', async () => {
+    const avatar = await mount<TwAvatar>('tw-avatar', { name: ' 😀 Opa', color: '#c05600' });
+    expect(avatar.shadowRoot?.textContent).toMatch(/^😀/);
+    expect(initialOf('ärger')).toBe('Ä');
+    expect(initialOf('   ')).toBe('');
   });
 
   it('bleibt ohne Namen leer', async () => {

@@ -42,3 +42,6 @@ export const CONFETTI_PALETTE = ['#f5c542', '#4fa6e8', '#e8564f', '#58c47c', '#b
 export const FALLBACK_COLOR = '#727272';
 export const EMPTY_TEXT = '';
 export const PATH_DECIMALS = 2;
+
+/** Wert der CSS-Eigenschaft `transition`, wenn nichts animiert werden soll. */
+export const TRANSITION_NONE = 'none';

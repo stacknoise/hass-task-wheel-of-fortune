@@ -1,11 +1,15 @@
 import { LitElement, css, html } from 'lit';
 import type { TemplateResult } from 'lit';
 
-import { COMPONENT_TAGS, INITIAL_LENGTH } from '../constants/index.ts';
+import { COMPONENT_TAGS } from '../constants/index.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import { defineOnce } from './define.ts';
+import { initialOf } from './format.ts';
 
-/** Runde Marke einer Person: Anfangsbuchstabe auf ihrer Farbe. */
+/**
+ * Runde Marke einer Person: Anfangsbuchstabe auf ihrer Farbe. Größe, Schrift und Rand lassen sich
+ * über `--tw-avatar-size`, `--tw-avatar-font` und `--tw-avatar-border` anpassen.
+ */
 export class TwAvatar extends LitElement {
   static override properties = { name: { type: String }, color: { type: String } };
 
@@ -17,12 +21,14 @@ export class TwAvatar extends LitElement {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
-        height: 28px;
+        box-sizing: border-box;
+        width: var(--tw-avatar-size, 28px);
+        aspect-ratio: 1;
+        border: var(--tw-avatar-border, none);
         border-radius: 50%;
         background: var(--avatar, var(--tw-color-neutral));
         color: var(--tw-color-on-primary);
-        font-size: 0.8em;
+        font-size: var(--tw-avatar-font, 0.8em);
         font-weight: 700;
         flex: none;
       }
@@ -43,7 +49,7 @@ export class TwAvatar extends LitElement {
   }
 
   protected override render(): TemplateResult {
-    return html`${this.name.slice(0, INITIAL_LENGTH).toUpperCase()}`;
+    return html`${initialOf(this.name)}`;
   }
 }
 

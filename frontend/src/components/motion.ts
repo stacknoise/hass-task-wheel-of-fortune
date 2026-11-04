@@ -1,10 +1,22 @@
 import { EASE_QUADRATIC, REDUCED_MOTION_QUERY } from '../constants/index.ts';
 
-/** Bricht eine laufende Animation ab: Zeitgeber und Bildfolgen hören auf, ihre Versprechen bleiben offen. */
+/**
+ * Bricht eine laufende Animation ab: Zeitgeber und Bildfolgen hören auf, ihre Versprechen bleiben
+ * offen. Wer auf das Ende wartet, wartet zusätzlich auf `cancelled`, damit er nicht hängen bleibt.
+ */
 export class MotionToken {
   #dead = false;
   #raf = 0;
   readonly #timers = new Set<ReturnType<typeof setTimeout>>();
+  #resolveCancelled: () => void = () => undefined;
+  readonly #cancelled = new Promise<void>((resolve) => {
+    this.#resolveCancelled = resolve;
+  });
+
+  /** Wird erfüllt, sobald die Animation abgebrochen wurde. */
+  get cancelled(): Promise<void> {
+    return this.#cancelled;
+  }
 
   get dead(): boolean {
     return this.#dead;
@@ -15,6 +27,7 @@ export class MotionToken {
     cancelAnimationFrame(this.#raf);
     this.#timers.forEach(clearTimeout);
     this.#timers.clear();
+    this.#resolveCancelled();
   }
 
   /** Wartet `ms` Millisekunden; nach einem Abbruch wird das Versprechen nie erfüllt. */

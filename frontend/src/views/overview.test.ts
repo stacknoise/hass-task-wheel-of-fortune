@@ -97,6 +97,9 @@ describe('Übersicht', () => {
         assignment_id: 'a1',
       });
     });
+    // Die Statistik lädt erst nach dem Delta des Servers neu, und zwar nur einmal.
+    expect(hass.calls.filter((call) => call === WS_STATISTICS_GET)).toHaveLength(1);
+    hass.emit({ assignments: { upsert: [], remove: ['a1'] } });
     await vi.waitFor(() => {
       expect(hass.calls.filter((call) => call === WS_STATISTICS_GET)).toHaveLength(2);
     });
@@ -216,6 +219,9 @@ describe('Übersicht', () => {
         round_id: 'r2',
       });
     });
+    // Die Statistik lädt erst nach dem Delta des Servers neu, und zwar nur einmal.
+    expect(hass.calls.filter((call) => call === WS_STATISTICS_GET)).toHaveLength(1);
+    hass.emit({ assignments: { upsert: [], remove: ['a1'] } });
     await vi.waitFor(() => {
       expect(hass.calls.filter((call) => call === WS_STATISTICS_GET)).toHaveLength(2);
     });

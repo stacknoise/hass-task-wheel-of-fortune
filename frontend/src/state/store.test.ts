@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { ApiClient } from '../api/index.ts';
-import { FakeHass } from '../api/fake-hass.testing.ts';
+import { EMPTY_SNAPSHOT, FakeHass } from '../api/fake-hass.testing.ts';
 import { Store } from './store.ts';
 
 function create(): { hass: FakeHass; store: Store } {
@@ -9,7 +9,68 @@ function create(): { hass: FakeHass; store: Store } {
   return { hass, store: new Store(new ApiClient(hass)) };
 }
 
+/** Ein API-Zugang, dessen Abonnements von Hand erfüllt werden. */
+function manualClient(): {
+  client: ApiClient;
+  resolveSubscribe: (index: number) => void;
+  unsubscribed: number[];
+  reconnect: () => void;
+} {
+  const resolvers: (() => void)[] = [];
+  const unsubscribed: number[] = [];
+  let reconnect = (): void => undefined;
+  const client = {
+    language: () => 'de',
+    onReconnect: (listener: () => void) => {
+      reconnect = listener;
+      return () => undefined;
+    },
+    subscribe: () => {
+      const index = resolvers.length;
+      return new Promise<() => void>((resolve) => {
+        resolvers.push(() => {
+          resolve(() => unsubscribed.push(index));
+        });
+      });
+    },
+    snapshot: () => Promise.resolve(EMPTY_SNAPSHOT),
+  } as unknown as ApiClient;
+  return {
+    client,
+    resolveSubscribe: (index) => resolvers[index]?.(),
+    unsubscribed,
+    reconnect: () => {
+      reconnect();
+    },
+  };
+}
+
 describe('Store', () => {
+  it('beendet ein Abonnement, das erst nach stop() eintrifft', async () => {
+    const manual = manualClient();
+    const store = new Store(manual.client);
+    const started = store.start();
+    store.stop();
+    manual.resolveSubscribe(0);
+    await started;
+    expect(manual.unsubscribed).toEqual([0]);
+    expect(store.state.status).toBe('loading');
+  });
+
+  it('behält nach einem Reconnect während des Ladens nur das neueste Abonnement', async () => {
+    const manual = manualClient();
+    const store = new Store(manual.client);
+    const first = store.start();
+    manual.reconnect();
+    manual.resolveSubscribe(0);
+    manual.resolveSubscribe(1);
+    await first;
+    await vi.waitFor(() => {
+      expect(store.state.status).toBe('ready');
+    });
+    expect(manual.unsubscribed).toEqual([0]);
+  });
+
   it('abonniert zuerst und lädt dann den Snapshot', async () => {
     const { hass, store } = create();
     await store.start();

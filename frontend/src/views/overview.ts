@@ -28,13 +28,7 @@ import {
 import { formatDateTime, formatNumber } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
-import {
-  AsyncValue,
-  RevisionTracker,
-  StoreController,
-  areaNames,
-  indexById,
-} from '../state/index.ts';
+import { AsyncValue, LiveLoad, StoreController, indexById } from '../state/index.ts';
 import type { AreaNames } from '../state/index.ts';
 import { roomTags } from './room.ts';
 import { personChips } from './person-chips.ts';
@@ -123,8 +117,7 @@ export class TwOverviewView extends LitElement {
   readonly #store = new StoreController(this);
   readonly #points = new AsyncValue<StatisticsReport>(this);
   readonly #activity = new AsyncValue<HistoryPage>(this);
-  readonly #revision = new RevisionTracker();
-  #started = false;
+  readonly #live = new LiveLoad();
 
   constructor() {
     super();
@@ -141,9 +134,7 @@ export class TwOverviewView extends LitElement {
 
   protected override willUpdate(): void {
     const client = this.#store.client;
-    const changed = this.#revision.advance(this.#store.state?.snapshot);
-    if (client && (!this.#started || changed)) {
-      this.#started = true;
+    if (client && this.#live.due(this.#store.state?.snapshot, true)) {
       this.#refresh(client);
     }
   }
@@ -339,7 +330,7 @@ export class TwOverviewView extends LitElement {
   }
 
   #areas(): AreaNames {
-    return areaNames(this.#store.client?.areas() ?? []);
+    return this.#store.areaNames();
   }
 
   #activityCard(
@@ -361,7 +352,7 @@ export class TwOverviewView extends LitElement {
                   (item) => item.assignment.id,
                   ({ assignment, at }) =>
                     html`<li class="row nowrap">
-                      <span class="grow">
+                      <div class="grow">
                         ${
                           personById.get(assignment.person_id)?.name ??
                           this.#text('common.unknownPerson')
@@ -374,7 +365,7 @@ export class TwOverviewView extends LitElement {
                           this.#text('common.unknownArea'),
                         )}
                         <div class="muted">${formatDateTime(at, this.language)}</div>
-                      </span>
+                      </div>
                       <tw-badge class="fixed" tone=${STATUS_TONES[assignment.status]}
                         >${this.#text(`status.${assignment.status}`)}</tw-badge
                       >
@@ -404,8 +395,8 @@ export class TwOverviewView extends LitElement {
     this._failed = false;
     task(client)
       .then(() => {
+        // Die Statistik lädt sich selbst neu: die Änderung der Zuteilungen kommt als Delta an.
         this._swapOpen = '';
-        this.#refresh(client);
       })
       .catch(() => {
         this._failed = true;

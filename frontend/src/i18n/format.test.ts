@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   formatDate,
@@ -23,5 +23,15 @@ describe('Formatierung', () => {
   it('formatiert Anteile und Zahlen', () => {
     expect(formatPercent(0.756, 'en')).toBe('76%');
     expect(formatNumber(0.8333, 'de')).toBe('0,83');
+  });
+
+  it('baut jeden Formatierer pro Sprache nur einmal', () => {
+    const construct = vi.spyOn(Intl, 'NumberFormat');
+    formatNumber(1, 'it');
+    formatNumber(2, 'it');
+    formatPercent(0.5, 'it');
+    formatPercent(0.25, 'it');
+    expect(construct).toHaveBeenCalledTimes(2);
+    construct.mockRestore();
   });
 });

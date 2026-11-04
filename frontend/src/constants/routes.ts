@@ -14,3 +14,5 @@ export type RouteId = keyof typeof ROUTES;
 
 export const ROUTE_IDS = Object.keys(ROUTES) as readonly RouteId[];
 export const DEFAULT_ROUTE: RouteId = 'overview';
+/** Ziel von „Zum Verlauf“ nach einer Auslosung. */
+export const ROUTE_HISTORY: RouteId = 'history';

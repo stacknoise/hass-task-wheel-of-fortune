@@ -1,8 +1,9 @@
-import { css, html } from 'lit';
+import { css, html, unsafeCSS } from 'lit';
 import type { TemplateResult } from 'lit';
 
 import {
   EMPTY_TEXT,
+  NEWS_COLORS,
   NEWS_DECOYS,
   NEWS_END_HOLD_MS,
   NEWS_FINAL_IN_MS,
@@ -59,9 +60,9 @@ export class TwNews extends StageElement {
         width: min(100%, 300px);
         padding: 16px 18px 22px;
         border-radius: 6px;
-        background: #f6f1e3;
-        color: #1f2328;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        background: ${unsafeCSS(NEWS_COLORS.paper)};
+        color: var(--tw-color-ink);
+        box-shadow: 0 8px 24px ${unsafeCSS(NEWS_COLORS.shadow)};
         font-family: Georgia, serif;
       }
       .mast {
@@ -73,8 +74,8 @@ export class TwNews extends StageElement {
       .rule {
         height: 3px;
         margin: 4px 0 10px;
-        background: #1f2328;
-        box-shadow: 0 4px 0 #1f2328;
+        background: var(--tw-color-ink);
+        box-shadow: 0 4px 0 var(--tw-color-ink);
       }
       .head {
         color: var(--tw-page-color);
@@ -85,7 +86,7 @@ export class TwNews extends StageElement {
       }
       .sub {
         margin-top: 8px;
-        color: #5a616b;
+        color: ${unsafeCSS(NEWS_COLORS.muted)};
         font-family: inherit;
         font-size: 0.8em;
       }
@@ -99,16 +100,16 @@ export class TwNews extends StageElement {
         display: block;
         height: 5px;
         border-radius: 2px;
-        background: #d9d2bd;
+        background: ${unsafeCSS(NEWS_COLORS.rule)};
       }
       .stamp {
         position: absolute;
         right: 10px;
         bottom: 10px;
         padding: 0 8px;
-        border: 4px solid #d32f2f;
+        border: 4px solid ${unsafeCSS(NEWS_COLORS.stamp)};
         border-radius: 6px;
-        color: #d32f2f;
+        color: ${unsafeCSS(NEWS_COLORS.stamp)};
         font-family: Roboto, system-ui, sans-serif;
         font-size: 1.4em;
         font-weight: 900;

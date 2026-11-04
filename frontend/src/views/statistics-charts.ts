@@ -1,6 +1,7 @@
 import { html, svg } from 'lit';
 import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
+import { styleMap } from 'lit/directives/style-map.js';
 
 import type { PersonObject, WeekRate } from '../api/index.ts';
 import { CHART, PAIR } from '../constants/index.ts';
@@ -26,9 +27,9 @@ export function pointBars(
         <div class="track">
           <div
             class="fill"
-            style="width: ${row.pointsPercent}%; background: ${person?.color ?? ''}"
+            style=${styleMap({ width: `${String(row.pointsPercent)}%`, background: person?.color })}
           ></div>
-          <div class="fair" style="left: ${row.fairPercent}%"></div>
+          <div class="fair" style=${styleMap({ left: `${String(row.fairPercent)}%` })}></div>
         </div>
         <strong>${row.points}</strong>
       </div>`;

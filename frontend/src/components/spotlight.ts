@@ -1,4 +1,4 @@
-import { css, html } from 'lit';
+import { css, html, unsafeCSS } from 'lit';
 import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
@@ -6,13 +6,15 @@ import { styleMap } from 'lit/directives/style-map.js';
 import {
   EMPTY_TEXT,
   PERCENT,
+  SPOTLIGHT_COLORS,
   SPOTLIGHT_FALLBACK_COLOR,
   SPOTLIGHT_HEIGHT,
   SPOTLIGHT_HOLD_MS,
   SPOTLIGHT_WIDTH,
   STAGE_TAGS,
 } from '../constants/index.ts';
-import { numberText, percentText } from './format.ts';
+import { formatPercent } from '../i18n/format.ts';
+import { numberText } from './format.ts';
 import type { MotionToken } from './motion.ts';
 import { StageElement, sharesOf } from './stage-base.ts';
 import { defineOnce } from './define.ts';
@@ -45,7 +47,7 @@ export class TwSpotlight extends StageElement {
         position: relative;
         width: 100%;
         aspect-ratio: ${SPOTLIGHT_WIDTH} / ${SPOTLIGHT_HEIGHT};
-        background: #0a1624;
+        background: var(--tw-color-stage);
         border-radius: 12px;
         overflow: hidden;
       }
@@ -65,7 +67,7 @@ export class TwSpotlight extends StageElement {
         align-items: center;
         justify-content: center;
         gap: 2px;
-        color: #ffffff;
+        color: var(--tw-color-white);
         overflow: hidden;
         filter: brightness(0.42) saturate(0.65);
         transition:
@@ -89,14 +91,14 @@ export class TwSpotlight extends StageElement {
       .on .face {
         filter: brightness(1.12) saturate(1.1);
         box-shadow:
-          0 0 0 4px #ffffff,
-          0 0 34px 8px rgba(255, 255, 255, 0.55);
+          0 0 0 4px var(--tw-color-white),
+          0 0 34px 8px ${unsafeCSS(SPOTLIGHT_COLORS.whiteGlow)};
         transform: scale(1.03);
       }
       .final .face {
         box-shadow:
           0 0 0 5px var(--tw-color-rim),
-          0 0 40px 10px rgba(245, 197, 66, 0.7);
+          0 0 40px 10px var(--tw-glow-gold);
       }
       .lose .face {
         filter: brightness(0.3) saturate(0.5);
@@ -204,7 +206,7 @@ export class TwSpotlight extends StageElement {
     return html`<div class="tile ${state}" data-id=${tile.id} style=${place}>
       <div class="face" style=${face}>
         <span class="name">${tile.label}</span>
-        <span class="chance">${percentText(tile.share)}</span>
+        <span class="chance">${formatPercent(tile.share, this.language)}</span>
       </div>
     </div>`;
   }
