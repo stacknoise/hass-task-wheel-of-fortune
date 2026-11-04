@@ -168,6 +168,23 @@ describe('Auslosung', () => {
     expect(text(view)).toContain('Anna');
   });
 
+  it('zeigt ohne Animation sofort die Aufgabenliste mit den Zuteilungen', async () => {
+    const hass = hassWith([], []);
+    hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
+    hass.replies.set('task_wheel/draw/spin_rest', {
+      results: [result('t1', 'p1'), result('t2', 'p1')],
+      panel_round: round([], []),
+    });
+    const { view } = await mount(hass);
+    await click(view, '.button.primary');
+    await vi.waitFor(() => {
+      expect(text(view)).toContain('Alle Aufgaben sind verteilt');
+    });
+    expect(text(view)).toContain('Anna');
+    expect(hass.calls).not.toContain('task_wheel/draw/spin');
+    expect(hass.calls).not.toContain('task_wheel/draw/preview');
+  });
+
   it('setzt eine offene Runde fort und zieht die letzte Aufgabe ohne Drehen', async () => {
     const hass = hassWith([round([result('t1', 'p1')], ['t2'])]);
     hass.replies.set('task_wheel/draw/spin', {

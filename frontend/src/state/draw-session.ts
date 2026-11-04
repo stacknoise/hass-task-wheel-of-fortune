@@ -57,15 +57,22 @@ export class DrawSession {
     };
   }
 
-  /** Beginnt eine neue Runde für den Zeitplan (eine offene desselben Plans entfällt im Backend). */
-  async begin(scheduleId: string): Promise<void> {
+  /**
+   * Beginnt eine neue Runde für den Zeitplan (eine offene desselben Plans entfällt im Backend).
+   * Ohne Animation (`animated` falsch) wird sofort alles gezogen und die Runde abgeschlossen.
+   */
+  async begin(scheduleId: string, animated = true): Promise<void> {
     if (!this.#idle()) {
       return;
     }
     await this.#run(async () => {
       this.#open(scheduleId, await this.#client.beginDraw(scheduleId));
       await this.#finishIfNothingPending();
-      await this.#loadPreview();
+      if (animated) {
+        await this.#loadPreview();
+      } else {
+        await this.#drawRemaining();
+      }
     });
   }
 
@@ -119,11 +126,18 @@ export class DrawSession {
     if ((this.#state.phase !== 'ready' && this.#state.phase !== 'revealed') || !roundId) {
       return;
     }
-    await this.#run(async () => {
-      const { results } = await this.#client.spinRest(roundId);
-      this.#set({ results: [...this.#state.results, ...results], current: undefined });
-      await this.#commitRound(roundId);
-    });
+    await this.#run(() => this.#drawRemaining());
+  }
+
+  /** Zieht alle übrigen Aufgaben der offenen Runde und schließt sie ab (nichts mehr offen: nichts tun). */
+  async #drawRemaining(): Promise<void> {
+    const { roundId, phase } = this.#state;
+    if (!roundId || phase === 'done') {
+      return;
+    }
+    const { results } = await this.#client.spinRest(roundId);
+    this.#set({ results: [...this.#state.results, ...results], current: undefined });
+    await this.#commitRound(roundId);
   }
 
   /** Verwirft eine offene Runde und beginnt wieder bei der Wahl des Zeitplans. */
