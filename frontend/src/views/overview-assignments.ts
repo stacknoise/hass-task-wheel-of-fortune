@@ -9,6 +9,8 @@ import { STATUS } from '../constants/index.ts';
 import { formatDateTime } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
+import type { AreaNames } from '../state/index.ts';
+import { roomTag } from './room.ts';
 import { canSwap, swapTargets } from './overview-model.ts';
 import { roundDelete } from './round-delete.ts';
 import type { AssignmentGroup } from './overview-model.ts';
@@ -27,6 +29,8 @@ export interface AssignmentsContext {
   readonly persons: readonly PersonObject[];
   readonly personById: ReadonlyMap<string, PersonObject>;
   readonly taskById: ReadonlyMap<string, TaskObject>;
+  /** Räume nach Kennung, um den Raum der Aufgabe zu zeigen. */
+  readonly areas: AreaNames;
   /** Kennung der Zuteilung, deren Tauschauswahl offen ist. */
   readonly swapOpen: string;
   readonly busy: boolean;
@@ -173,7 +177,10 @@ function assignmentRow(
           title=${personName}
         ></tw-avatar>
         <div class="grow info">
-          <div>${task?.name ?? text('common.unknownTask')}</div>
+          <div>
+            ${task?.name ?? text('common.unknownTask')}
+            ${roomTag(context.areas, task?.area_id, text('common.unknownArea'))}
+          </div>
           <div class="muted">${personName} · ${rowMeta(assignment, context, text)}</div>
         </div>
         ${
@@ -183,7 +190,11 @@ function assignmentRow(
         }
         ${rowActions(assignment, context, text)}
       </div>
-      ${context.swapOpen === assignment.id ? swapChoice(assignment, context, roundPersonIds, text) : nothing}
+      ${
+        context.swapOpen === assignment.id
+          ? swapChoice(assignment, context, roundPersonIds, text)
+          : nothing
+      }
     </li>
   `;
 }

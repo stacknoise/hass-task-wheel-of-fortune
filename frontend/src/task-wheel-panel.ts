@@ -180,6 +180,7 @@ export class TaskWheelPanel extends LitElement {
 
   #startStore(hass: HassApi): void {
     if (this.#store) {
+      this.#store.client.useHass(hass);
       return;
     }
     const store = new Store(new ApiClient(hass));

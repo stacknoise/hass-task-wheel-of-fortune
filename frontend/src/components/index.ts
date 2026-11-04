@@ -15,6 +15,7 @@ export { TwStepper } from './stepper.ts';
 export { describeFrequency, describeTrigger } from './summaries.ts';
 export { TwAvatar } from './avatar.ts';
 export { TwBadge } from './badge.ts';
+export { TwRoom } from './room.ts';
 export { TwActionMenu } from './action-menu.ts';
 export type { ActionItem } from './action-menu.ts';
 export { TwConfirmAction } from './confirm-action.ts';
