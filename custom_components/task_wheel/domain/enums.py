@@ -39,6 +39,7 @@ class AbsenceKind(StrEnum):
     ONCE = "once"
     WEEKLY_DAYS = "weekly_days"
     WEEK_RHYTHM = "week_rhythm"
+    RECURRING = "recurring"
 
 
 class FrequencyKind(StrEnum):

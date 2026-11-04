@@ -93,7 +93,7 @@ Schlüssel, unbekannte Arten werfen eine eigene Ausnahme.
 | Fabrik | Erzeugt aus | Arten |
 |---|---|---|
 | `FrequencyRuleFactory` | `FrequencyConfig` | `every_round`, `max_per_period`, `interval` |
-| `AvailabilityRuleFactory` | `AbsenceConfig` | `once`, `weekly_days`, `week_rhythm` |
+| `AvailabilityRuleFactory` | `AbsenceConfig` | `once`, `weekly_days`, `week_rhythm`, `recurring` |
 | `TriggerFactory` | `TriggerConfig` | `recurring`, `once`, `manual` |
 | `WeightingFactory` | `Settings.weighting` | `fairness` (Standard), `uniform` |
 | `NotifierFactory` | Ziel des Benachrichtigungsdienstes | `notify_entity` (`notify.send_message`), `notify_service` (Legacy `notify.*`), `none` |
@@ -189,7 +189,7 @@ erDiagram
 | Modell | Wichtige Felder |
 |---|---|
 | `Person` | `id`, `name`, `slug`, `color`, `load: Load` (`full`=1,0 · `half`=0,5 · `paused`=0), `absences: tuple[AbsenceConfig, ...]`, `notify_target: str \| None` |
-| `AbsenceConfig` | `kind` + Felder je Art: `once(start, end)`, `weekly_days(weekdays)`, `week_rhythm(present_weeks, cycle_weeks, change_weekday, anchor)` |
+| `AbsenceConfig` | `kind` + Felder je Art: `once(start, end)`, `weekly_days(weekdays)`, `week_rhythm(present_weeks, cycle_weeks, change_weekday, anchor)`, `recurring(weekdays, interval_weeks, start, end?)` (abwesend an den Wochentagen jeder n-ten Woche ab der Woche von `start`, bis einschließlich `end`; ohne `end` unbefristet) |
 | `Task` | `id`, `name`, `points`, `due_days`, `allowed: frozenset[PersonId]` (leer = alle Personen), `frequency: FrequencyConfig`, `no_repeat`, `respect_absence`, `swap_allowed`, `min_load: Load` (Mindest-Belastbarkeit, Standard `paused` = egal; `half` = mindestens halbe, `full` = nur volle Last), `area_ids: tuple[str, ...]` (null bis `MAX_AREAS_PER_TASK` HA-Bereiche/Räume ohne Doppelte, nur Anzeige; die Namen kommen im Panel aus `hass.areas`, ein gelöschter Bereich erscheint als „Unbekannter Raum“; Speicherstand 1.3 macht aus dem früheren einzelnen `area_id` eine Liste) |
 | `FrequencyConfig` | `every_round` · `max_per_period(count, period, every)` · `interval(days, tolerance)` |
 | `Schedule` | `id`, `name`, `slug`, `trigger: TriggerConfig`, `task_ids: tuple[TaskId, ...]`, `enabled`, `notify`, `skip_absent`, `archived`, `animations: tuple[AnimationKind, ...]` (0 bis 8 verschiedene Arten, Standard `wheel`; leer = ohne Animation sofort auslosen) (archiviert ⇒ nicht aktiv, nie auslösbar) |

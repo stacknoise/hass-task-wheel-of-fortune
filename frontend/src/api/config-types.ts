@@ -29,7 +29,17 @@ export interface WeekRhythmAbsenceWire {
   readonly anchor: string;
 }
 
-export type AbsenceWire = OnceAbsenceWire | WeeklyDaysAbsenceWire | WeekRhythmAbsenceWire;
+export interface RecurringAbsenceWire {
+  readonly kind: Extract<AbsenceKind, 'recurring'>;
+  readonly weekdays: readonly number[];
+  readonly interval_weeks: number;
+  readonly start: string;
+  /** Letzter Tag der Wiederholung; `null` heißt ohne Ende. */
+  readonly end: string | null;
+}
+
+export type AbsenceWire =
+  OnceAbsenceWire | WeeklyDaysAbsenceWire | WeekRhythmAbsenceWire | RecurringAbsenceWire;
 
 export interface EveryRoundWire {
   readonly kind: Extract<FrequencyKind, 'every_round'>;

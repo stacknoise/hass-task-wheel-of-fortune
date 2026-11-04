@@ -7,12 +7,14 @@ from custom_components.task_wheel.domain.availability import (
     AvailabilityRuleFactory,
     OnceRule,
     PersonAvailability,
+    RecurringRule,
     WeeklyDaysRule,
     WeekRhythmRule,
 )
 from custom_components.task_wheel.domain.errors import UnknownKindError, ValidationError
 from custom_components.task_wheel.domain.models import (
     OnceAbsence,
+    RecurringAbsence,
     WeeklyDaysAbsence,
     WeekRhythmAbsence,
 )
@@ -85,9 +87,10 @@ def test_factory_all_kinds_and_unknown() -> None:
         WeekRhythmAbsence(
             present_weeks=frozenset({0}), cycle_weeks=2, change_weekday=0, anchor=D(2026, 1, 5)
         ),
+        RecurringAbsence(weekdays=frozenset({2}), interval_weeks=2, start=D(2026, 1, 7)),
     )
     types = [type(rule) for rule in factory.create_all(configs)]
-    assert types == [OnceRule, WeeklyDaysRule, WeekRhythmRule]
+    assert types == [OnceRule, WeeklyDaysRule, WeekRhythmRule, RecurringRule]
     with pytest.raises(UnknownKindError):
         AvailabilityRuleFactory({}).create(configs[0])
 
@@ -146,3 +149,38 @@ def test_week_preview_starts_on_monday_of_the_week() -> None:
     days = avail.week_preview(D(2026, 11, 4), 1)
     assert days[0].day == D(2026, 11, 2)
     assert [entry.present for entry in days] == [False, True, True, True, True, True, True]
+
+
+def recurring(interval: int = 2, end: dt.date | None = None) -> RecurringRule:
+    """Jeden zweiten Mittwoch ab Mittwoch, 4.11.2026."""
+    return RecurringRule(
+        RecurringAbsence(
+            weekdays=frozenset({2}), interval_weeks=interval, start=D(2026, 11, 4), end=end
+        )
+    )
+
+
+def test_recurring_every_second_wednesday() -> None:
+    rule = recurring()
+    assert not rule.is_present(D(2026, 11, 4))
+    assert rule.is_present(D(2026, 11, 11))
+    assert not rule.is_present(D(2026, 11, 18))
+    assert rule.is_present(D(2026, 11, 19))  # anderer Wochentag in einer Abwesenheitswoche
+    assert not rule.is_present(D(2027, 1, 1) - dt.timedelta(days=2))  # 30.12.2026, Jahreswechsel
+
+
+def test_recurring_respects_start_and_end() -> None:
+    rule = recurring(end=D(2026, 11, 18))
+    assert rule.is_present(D(2026, 10, 28))  # vor dem Beginn
+    assert not rule.is_present(D(2026, 11, 18))  # Endtag zählt noch
+    assert rule.is_present(D(2026, 12, 2))  # nach dem Ende
+
+
+def test_recurring_weekdays_before_start_weekday_count_in_first_week() -> None:
+    rule = RecurringRule(
+        RecurringAbsence(weekdays=frozenset({0, 4}), interval_weeks=2, start=D(2026, 11, 4))
+    )
+    assert rule.is_present(D(2026, 11, 2))  # Montag vor dem Beginn
+    assert not rule.is_present(D(2026, 11, 6))  # Freitag derselben Woche
+    assert rule.is_present(D(2026, 11, 13))
+    assert not rule.is_present(D(2026, 11, 16))  # Montag zwei Wochen später

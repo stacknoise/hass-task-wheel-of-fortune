@@ -94,15 +94,7 @@ export class TwAbsenceEditor extends LocalizedElement {
       </div>
     `,
     weekly_days: (absence: Extract<AbsenceWire, { kind: 'weekly_days' }>, index) => html`
-      <tw-chip-select
-        .label=${this.text('absence.weekdays')}
-        .options=${weekdayOptions(this.language)}
-        compact
-        .selected=${toIds(absence.weekdays)}
-        @tw-change=${onChange<string[]>((ids) => {
-          this.replaceAt(this.value, index, { weekdays: toNumbers(ids) });
-        })}
-      ></tw-chip-select>
+      ${this.#weekdayChips(absence.weekdays, index)}
     `,
     week_rhythm: (absence: Extract<AbsenceWire, { kind: 'week_rhythm' }>, index) => html`
       <tw-stepper
@@ -141,6 +133,36 @@ export class TwAbsenceEditor extends LocalizedElement {
           this.replaceAt(this.value, index, { anchor });
         })}
       ></tw-field>
+    `,
+    recurring: (absence: Extract<AbsenceWire, { kind: 'recurring' }>, index) => html`
+      ${this.#weekdayChips(absence.weekdays, index)}
+      <tw-stepper
+        .label=${this.text('absence.interval')}
+        .value=${absence.interval_weeks}
+        .min=${FORM_LIMITS.recurrenceInterval.min}
+        .max=${FORM_LIMITS.recurrenceInterval.max}
+        @tw-change=${onChange<number>((interval) => {
+          this.replaceAt(this.value, index, { interval_weeks: interval });
+        })}
+      ></tw-stepper>
+      <div class="pair">
+        <tw-field
+          type="date"
+          .label=${this.text('absence.recurring_start')}
+          .value=${absence.start}
+          @tw-change=${onChange<string>((start) => {
+            this.replaceAt(this.value, index, { start });
+          })}
+        ></tw-field>
+        <tw-field
+          type="date"
+          .label=${this.text('absence.recurring_end')}
+          .value=${absence.end ?? ''}
+          @tw-change=${onChange<string>((end) => {
+            this.replaceAt(this.value, index, { end: end === '' ? null : end });
+          })}
+        ></tw-field>
+      </div>
     `,
   };
 
@@ -204,6 +226,21 @@ export class TwAbsenceEditor extends LocalizedElement {
         </div>
         ${this.#renderers[absence.kind](absence as never, index)}
       </div>
+    `;
+  }
+
+  /** Auswahl der Wochentage, gemeinsam für „Wochentage“ und „Wiederkehrend“. */
+  #weekdayChips(weekdays: readonly number[], index: number): TemplateResult {
+    return html`
+      <tw-chip-select
+        .label=${this.text('absence.weekdays')}
+        .options=${weekdayOptions(this.language)}
+        compact
+        .selected=${toIds(weekdays)}
+        @tw-change=${onChange<string[]>((ids) => {
+          this.replaceAt(this.value, index, { weekdays: toNumbers(ids) });
+        })}
+      ></tw-chip-select>
     `;
   }
 

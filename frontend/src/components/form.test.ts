@@ -183,6 +183,24 @@ describe('Editoren', () => {
     expect(seen).toEqual([[{ kind: 'weekly_days', weekdays: [0, 6] }]]);
   });
 
+  it('Abwesenheit: wiederkehrend mit optionalem Ende', async () => {
+    const editor = await mount(FORM_TAGS.absenceEditor, {
+      language: 'en',
+      today: '2026-11-03',
+      value: [
+        { kind: 'recurring', weekdays: [2], interval_weeks: 2, start: '2026-11-04', end: null },
+      ],
+    });
+    const seen = changes(editor);
+    say(part(editor, 'tw-stepper'), 3);
+    expect(seen.at(-1)).toMatchObject([{ kind: 'recurring', interval_weeks: 3, end: null }]);
+    const fields = [...(editor.shadowRoot?.querySelectorAll('tw-field') ?? [])] as El[];
+    say(fields[1] as El, '2027-01-06');
+    expect(seen.at(-1)).toMatchObject([{ end: '2027-01-06' }]);
+    say(fields[1] as El, '');
+    expect(seen.at(-1)).toMatchObject([{ end: null }]);
+  });
+
   it('Häufigkeit: Art wechseln und Werte ändern', async () => {
     const editor = await mount(FORM_TAGS.frequencyEditor, {
       language: 'de',

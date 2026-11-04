@@ -106,10 +106,36 @@ class WeekRhythmAbsence(KindModel):
         )
 
 
-type AbsenceConfig = OnceAbsence | WeeklyDaysAbsence | WeekRhythmAbsence
+@dataclass(slots=True, frozen=True, kw_only=True)
+class RecurringAbsence(KindModel):
+    """Wiederkehrende Abwesenheit: an `weekdays` jeder `interval_weeks`-ten Woche ab `start`.
+
+    Die Zählung beginnt mit der Woche (Montag bis Sonntag) von `start`; vor `start` und nach
+    `end` (falls gesetzt, einschließlich) ist die Person anwesend.
+    """
+
+    kind: ClassVar[AbsenceKind] = AbsenceKind.RECURRING
+    weekdays: frozenset[Weekday] = spec(frozenset_of(to_int))
+    interval_weeks: int = spec(to_int)
+    start: dt.date = spec(to_date)
+    end: dt.date | None = spec(optional(to_date), default=None)
+
+    def __post_init__(self) -> None:
+        """Prüft Wochentage, Intervall und die Reihenfolge von Beginn und Ende."""
+        ensure_weekdays("weekdays", self.weekdays)
+        ensure_range(
+            "interval_weeks",
+            self.interval_weeks,
+            limits.RECURRENCE_INTERVAL_MIN,
+            limits.RECURRENCE_INTERVAL_MAX,
+        )
+        ensure(self.end is None or self.start <= self.end, "end", ERR_ORDER)
+
+
+type AbsenceConfig = OnceAbsence | WeeklyDaysAbsence | WeekRhythmAbsence | RecurringAbsence
 
 ABSENCE_REGISTRY: Mapping[str, type[AbsenceConfig]] = registry_of(
-    OnceAbsence, WeeklyDaysAbsence, WeekRhythmAbsence
+    OnceAbsence, WeeklyDaysAbsence, WeekRhythmAbsence, RecurringAbsence
 )
 decode_absence: Decoder[AbsenceConfig] = kind_model(ABSENCE_REGISTRY)
 

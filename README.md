@@ -29,7 +29,7 @@ to `config/custom_components/task_wheel` (the repository itself does not contain
 ## Features
 
 - **People** as their own objects, independent of HA users: color on the wheel, full or half load or paused,
-  absences (one-off, on fixed weekdays, in a weekly rhythm such as "every 2nd week Fri–Fri"),
+  absences (one-off, on fixed weekdays, in a weekly rhythm such as "every 2nd week Fri–Fri", or recurring such as "every second Wednesday" with a start and an optional end date),
   optional notification
 - **Tasks** with allowed people, points (effort), deadline and frequency: every round,
   at most n× per x days/weeks/months (e.g. 5× in 2 months, 1× in 2 weeks; sliding window of whole calendar periods), or a fixed interval with tolerance; optionally assigned to one or more Home Assistant areas (rooms), shown in the overview, draw, history and statistics
@@ -63,7 +63,7 @@ statistics. This is **not** "everyone gets the same amount", but the share that 
 **Calculation**
 
 1. A person's capacity = load capacity (full 1.0 · half 0.5 · paused 0) × number of days present in the period.
-   Absences (one-off, fixed weekdays, weekly rhythm) reduce the days.
+   Absences (one-off, fixed weekdays, weekly rhythm, recurring) reduce the days.
 2. Fair share = total points of all people × the person's capacity ÷ sum of all capacities.
 3. Points of an assignment: completed on time counts in full; late and missed ("Stays undone" included) count with the
    factor from the settings (default: late 1.0, missed 0). Open and swapped assignments do not count in the statistics
@@ -191,7 +191,7 @@ warning to the log.
 The *People*, *Tasks* and *Schedules* tabs create, change and delete objects (administrators only). People and tasks cannot be deleted while they are still in use: a person not while a task allows them or they have open assignments; a task not while a schedule contains it or it is still assigned and open. The cards are laid out
 in a grid; adding and editing open a popup (full screen on a smartphone, close with Escape or ✕), and deleting asks for confirmation in another popup. Backend errors appear at the affected field and as a note in the popup.
 
-- **People:** color on the wheel, load capacity (full, half, paused), presence (one-off, weekdays, weekly rhythm) with a
+- **People:** color on the wheel, load capacity (full, half, paused), presence (one-off, weekdays, weekly rhythm, recurring) with a
   preview of the next four weeks, and optionally a notification entity (`notify.…`, with a search across the entities and services of Home Assistant, checked when saving).
 - **Tasks:** allowed people, frequency (every round, at most n× per period, fixed interval with a timeline),
   points, deadline, minimum load capacity (any, at least half or full load only; whoever is below it does not get onto the wheel for the task and cannot take it over by swapping) and the extra rules "no repetition", "respect absence", "swap allowed". A task can optionally be assigned to a **room** (a Home Assistant area); the room is shown on the task card, in the overview, the draw, the history (also as a column in the CSV export) and the statistics. If an area is deleted in Home Assistant, the task keeps the assignment and shows "Unknown room" until you pick another one.

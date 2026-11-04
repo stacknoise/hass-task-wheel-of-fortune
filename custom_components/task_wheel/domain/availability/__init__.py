@@ -3,7 +3,7 @@
 from .calendar import DayPresence, PersonAvailability
 from .factory import RULE_BUILDERS, AvailabilityRuleFactory
 from .rule import AvailabilityRule
-from .strategies import OnceRule, WeeklyDaysRule, WeekRhythmRule
+from .strategies import OnceRule, RecurringRule, WeeklyDaysRule, WeekRhythmRule
 
 __all__ = [
     "RULE_BUILDERS",
@@ -12,6 +12,7 @@ __all__ = [
     "DayPresence",
     "OnceRule",
     "PersonAvailability",
+    "RecurringRule",
     "WeekRhythmRule",
     "WeeklyDaysRule",
 ]
