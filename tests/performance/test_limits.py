@@ -49,7 +49,7 @@ def _full_world() -> Api:
     everyone = frozenset(f"p{i}" for i in range(limits.MAX_PERSONS))
     task_ids = tuple(f"t{i}" for i in range(limits.MAX_TASKS))
     for i in range(limits.MAX_PERSONS):
-        api.config.put_person(f.person(id=f"p{i}", slug=f"p{i}", name=f"P{i}"))
+        api.config.put_person(f.person(id=f"p{i}", slug=f"p{i}", name=f"P{i}", absences=()))
     for ident in task_ids:
         api.config.put_task(
             f.task(id=ident, name=ident, allowed=everyone, frequency=EveryRound(), points=3)
