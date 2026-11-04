@@ -48,24 +48,26 @@ export class TwFrequencyEditor extends LocalizedElement {
       ></tw-segmented>
     `,
     interval: (frequency: Extract<FrequencyWire, { kind: 'interval' }>) => html`
-      <tw-stepper
-        .label=${this.text('frequency.days')}
-        .value=${frequency.days}
-        .min=${FORM_LIMITS.intervalDays.min}
-        .max=${FORM_LIMITS.intervalDays.max}
-        @tw-change=${onChange<number>((days) => {
-          this.#merge({ days, tolerance: Math.min(frequency.tolerance, days - 1) });
-        })}
-      ></tw-stepper>
-      <tw-stepper
-        .label=${this.text('frequency.tolerance')}
-        .value=${frequency.tolerance}
-        .min=${0}
-        .max=${frequency.days - 1}
-        @tw-change=${onChange<number>((tolerance) => {
-          this.#merge({ tolerance });
-        })}
-      ></tw-stepper>
+      <div class="pair">
+        <tw-stepper
+          .label=${this.text('frequency.days')}
+          .value=${frequency.days}
+          .min=${FORM_LIMITS.intervalDays.min}
+          .max=${FORM_LIMITS.intervalDays.max}
+          @tw-change=${onChange<number>((days) => {
+            this.#merge({ days, tolerance: Math.min(frequency.tolerance, days - 1) });
+          })}
+        ></tw-stepper>
+        <tw-stepper
+          .label=${this.text('frequency.tolerance')}
+          .value=${frequency.tolerance}
+          .min=${0}
+          .max=${frequency.days - 1}
+          @tw-change=${onChange<number>((tolerance) => {
+            this.#merge({ tolerance });
+          })}
+        ></tw-stepper>
+      </div>
       <tw-timeline
         .language=${this.language}
         .days=${frequency.days}

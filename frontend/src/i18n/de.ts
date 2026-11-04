@@ -2,7 +2,7 @@ import { insightsDe } from './insights.de.ts';
 
 export const de = {
   ...insightsDe,
-  'panel.title': 'Task Wheel of Fortune',
+  'panel.title': 'Aufgaben-Glücksrad',
   'panel.loading': 'Daten werden geladen …',
   'panel.error': 'Die Daten konnten nicht geladen werden.',
   'panel.nav': 'Bereiche',
