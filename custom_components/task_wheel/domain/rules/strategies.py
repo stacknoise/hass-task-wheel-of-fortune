@@ -25,7 +25,7 @@ class MaxPerPeriodRule:
         self._config = config
 
     def is_due(self, assigned: Iterable[datetime], now: datetime) -> bool:
-        """Fällig, solange die Zuteilungen des Fensters (laufende plus vorherige Perioden) unter dem Limit liegen."""
+        """Fällig, solange die Zuteilungen im Fenster (laufende plus vorherige Perioden) < Limit."""
         start = window_start(self._config.period, self._config.every, now)
         return count_since(start, assigned, now) < self._config.count
 

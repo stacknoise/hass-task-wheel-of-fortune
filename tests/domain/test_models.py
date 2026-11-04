@@ -30,6 +30,7 @@ from custom_components.task_wheel.domain.models import (
     Task,
     WeeklyDaysAbsence,
     WeekRhythmAbsence,
+    decode_frequency,
     decode_trigger,
 )
 
@@ -295,7 +296,5 @@ def test_task_area_is_optional_and_roundtrips():
 
 def test_max_per_period_without_every_decodes_with_default():
     """Gespeicherte Aufgaben aus Version 0.2.0 haben kein `every` und gelten je einer Periode."""
-    from custom_components.task_wheel.domain.models import decode_frequency
-
     decoded = decode_frequency({"kind": "max_per_period", "count": 2, "period": "week"})
     assert decoded == MaxPerPeriod(count=2, period=Period.WEEK, every=1)
