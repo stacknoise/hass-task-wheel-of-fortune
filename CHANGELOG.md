@@ -6,6 +6,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 ## [Unveröffentlicht]
 
 - Aufgaben lassen sich mit „höchstens n× in x Tagen/Wochen/Monaten“ einplanen (z. B. 5× in 2 Monaten, 1× in 2 Wochen); das Fenster umfasst die laufende und die vorherigen Kalenderperioden. Bestehende Aufgaben behalten ihr Verhalten (x = 1)
+- Personen, Aufgaben und Zeitpläne erscheinen im Panel alphabetisch, ohne Beachtung der Groß-/Kleinschreibung und nach der Sprache von Home Assistant (Umlaute, Zahlen nach ihrem Wert); ebenso die Räume in der Auswahl
+- Eine Aufgabe kann mehrere Räume haben (Mehrfachauswahl im Aufgaben-Popup); alle Räume erscheinen in Übersicht, Auslosung, Aufgabenkarte, Historie (auch im CSV, durch Komma getrennt) und Statistik. Bereits gespeicherte einzelne Räume werden beim Start automatisch übernommen (Speicherstand 1.3)
 
 ## [0.2.0] – 2026-11-04
 

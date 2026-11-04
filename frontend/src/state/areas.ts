@@ -9,14 +9,14 @@ export function areaNames(areas: readonly AreaOption[]): AreaNames {
 }
 
 /**
- * Raum einer Aufgabe für die Anzeige; ohne Raum leer.
+ * Namen der Räume einer Aufgabe für die Anzeige; ohne Raum leer.
  *
  * Ein Raum, den Home Assistant nicht mehr kennt (gelöscht), zeigt `unknown` statt der Kennung.
  */
-export function roomOf(
+export function roomsOf(
   areas: AreaNames,
-  areaId: string | null | undefined,
+  areaIds: readonly string[] | null | undefined,
   unknown: string,
-): string {
-  return areaId ? (areas.get(areaId) ?? unknown) : '';
+): readonly string[] {
+  return (areaIds ?? []).map((id) => areas.get(id) ?? unknown);
 }

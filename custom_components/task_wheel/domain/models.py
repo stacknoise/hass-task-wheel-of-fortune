@@ -38,6 +38,7 @@ from .serialization import (
     to_str,
     to_time,
     tuple_of,
+    unique_tuple_of,
 )
 from .types import AssignmentId, PersonId, RoundId, ScheduleId, TaskId, Weekday
 from .validation import (
@@ -270,10 +271,10 @@ class Task(Model):
     respect_absence: bool = spec(to_bool, default=True)
     swap_allowed: bool = spec(to_bool, default=True)
     min_load: Load = spec(enum_of(Load), default=Load.PAUSED)
-    area_id: str | None = spec(optional(to_str), default=None)
+    area_ids: tuple[str, ...] = spec(unique_tuple_of(to_str), default=())
 
     def __post_init__(self) -> None:
-        """Prüft Kennung, Namen, Punkte, Frist, erlaubte Personen und Bereich."""
+        """Prüft Kennung, Namen, Punkte, Frist, erlaubte Personen und Räume."""
         ensure_id("id", self.id)
         ensure_name("name", self.name)
         ensure_range("points", self.points, limits.POINTS_MIN, limits.POINTS_MAX)
@@ -281,8 +282,9 @@ class Task(Model):
         ensure_size("allowed", self.allowed, 0, limits.MAX_PERSONS)
         for person_id in self.allowed:
             ensure_id("allowed", person_id)
-        if self.area_id is not None:
-            ensure_length("area_id", self.area_id, 1, limits.AREA_ID_MAX_LENGTH)
+        ensure_size("area_ids", self.area_ids, 0, limits.MAX_AREAS_PER_TASK)
+        for area_id in self.area_ids:
+            ensure_length("area_ids", area_id, 1, limits.AREA_ID_MAX_LENGTH)
 
     def allows(self, person_id: PersonId) -> bool:
         """Ob die Person die Aufgabe bekommen darf (ohne erlaubte Personen: jede)."""

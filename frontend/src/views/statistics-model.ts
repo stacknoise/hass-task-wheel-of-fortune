@@ -70,8 +70,8 @@ export interface MatrixRow {
   readonly taskId: string;
   /** Leer, wenn die Aufgabe gelöscht wurde. */
   readonly name: string | undefined;
-  /** Kennung des Raums der Aufgabe, falls gesetzt. */
-  readonly areaId: string | null | undefined;
+  /** Kennungen der Räume der Aufgabe. */
+  readonly areaIds: readonly string[] | undefined;
   readonly cells: readonly MatrixCell[];
 }
 
@@ -87,13 +87,13 @@ export function matrixRows(
     ...tasks.map((task) => ({
       taskId: task.id,
       name: task.name,
-      areaId: task.area_id,
+      areaIds: task.area_ids,
       allowed: new Set(task.allowed),
     })),
     ...removed.map((taskId) => ({
       taskId,
       name: undefined,
-      areaId: undefined,
+      areaIds: undefined,
       allowed: undefined,
     })),
   ];
@@ -102,7 +102,7 @@ export function matrixRows(
   return rows.map((row) => ({
     taskId: row.taskId,
     name: row.name,
-    areaId: row.areaId,
+    areaIds: row.areaIds,
     cells: persons.map((person) => {
       const count = matrix[row.taskId]?.[person.id] ?? 0;
       const permitted = row.allowed === undefined || row.allowed.has(person.id) || count > 0;

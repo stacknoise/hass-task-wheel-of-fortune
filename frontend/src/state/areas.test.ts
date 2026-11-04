@@ -1,22 +1,25 @@
 import { describe, expect, it } from 'vitest';
 
-import { areaNames, roomOf } from './areas.ts';
+import { areaNames, roomsOf } from './areas.ts';
 
 const AREAS = areaNames([
   { id: 'kueche', label: 'Küche' },
   { id: 'bad', label: 'Bad' },
 ]);
 
-describe('roomOf', () => {
-  it('liefert den Namen des Raums', () => {
-    expect(roomOf(AREAS, 'kueche', '?')).toBe('Küche');
+describe('roomsOf', () => {
+  it('liefert die Namen aller Räume in der Reihenfolge der Aufgabe', () => {
+    expect(roomsOf(AREAS, ['kueche', 'bad'], '?')).toEqual(['Küche', 'Bad']);
   });
   it('bleibt ohne Raum leer', () => {
-    expect(roomOf(AREAS, null, '?')).toBe('');
-    expect(roomOf(AREAS, undefined, '?')).toBe('');
-    expect(roomOf(AREAS, '', '?')).toBe('');
+    expect(roomsOf(AREAS, [], '?')).toEqual([]);
+    expect(roomsOf(AREAS, null, '?')).toEqual([]);
+    expect(roomsOf(AREAS, undefined, '?')).toEqual([]);
   });
   it('zeigt einen gelöschten Raum als unbekannt', () => {
-    expect(roomOf(AREAS, 'keller', 'Unbekannter Raum')).toBe('Unbekannter Raum');
+    expect(roomsOf(AREAS, ['kueche', 'keller'], 'Unbekannter Raum')).toEqual([
+      'Küche',
+      'Unbekannter Raum',
+    ]);
   });
 });

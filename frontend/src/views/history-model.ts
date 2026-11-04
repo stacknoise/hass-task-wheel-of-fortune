@@ -5,10 +5,10 @@ import type {
   ScheduleObject,
   TaskObject,
 } from '../api/index.ts';
-import { DONE_STATUSES, PERCENT } from '../constants/index.ts';
+import { DONE_STATUSES, PERCENT, ROOM_SEPARATOR } from '../constants/index.ts';
 import { formatDateTime } from '../i18n/format.ts';
 import type { TextKey } from '../i18n/index.ts';
-import { roomOf } from '../state/areas.ts';
+import { roomsOf } from '../state/areas.ts';
 import type { AreaNames } from '../state/areas.ts';
 
 export interface HistoryLookups {
@@ -66,11 +66,11 @@ export function csvRows(
       originText(round.origin, text),
       formatDateTime(round.started_at, language),
       lookups.tasks.get(assignment.task_id)?.name ?? text('common.unknownTask'),
-      roomOf(
+      roomsOf(
         lookups.areas,
-        lookups.tasks.get(assignment.task_id)?.area_id,
+        lookups.tasks.get(assignment.task_id)?.area_ids,
         text('common.unknownArea'),
-      ),
+      ).join(ROOM_SEPARATOR),
       lookups.persons.get(assignment.person_id)?.name ?? text('common.unknownPerson'),
       String(Math.round(assignment.chance * PERCENT)),
       String(assignment.points),

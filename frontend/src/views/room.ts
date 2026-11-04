@@ -3,14 +3,16 @@ import type { TemplateResult } from 'lit';
 
 import '../components/index.ts';
 import type { AreaNames } from '../state/index.ts';
-import { roomOf } from '../state/index.ts';
+import { roomsOf } from '../state/index.ts';
 
-/** Raum einer Aufgabe als Marke; ohne Raum nichts. `unknown` steht für einen gelöschten Raum. */
-export function roomTag(
+/** Räume einer Aufgabe als Marken; ohne Raum nichts. `unknown` steht für einen gelöschten Raum. */
+export function roomTags(
   areas: AreaNames,
-  areaId: string | null | undefined,
+  areaIds: readonly string[] | null | undefined,
   unknown: string,
 ): TemplateResult | typeof nothing {
-  const name = roomOf(areas, areaId, unknown);
-  return name ? html`<tw-room .name=${name}></tw-room>` : nothing;
+  const names = roomsOf(areas, areaIds, unknown);
+  return names.length > 0
+    ? html`${names.map((name) => html`<tw-room .name=${name}></tw-room> `)}`
+    : nothing;
 }

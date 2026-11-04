@@ -8,7 +8,7 @@ from .defaults import DOMAIN
 STORE_CONFIG: Final = f"{DOMAIN}.config"
 STORE_HISTORY: Final = f"{DOMAIN}.history"
 STORE_VERSION: Final = 1
-STORE_MINOR_VERSION: Final = 2
+STORE_MINOR_VERSION: Final = 3
 
 KEY_PERSONS: Final = "persons"
 KEY_TASKS: Final = "tasks"
@@ -17,6 +17,8 @@ KEY_SETTINGS: Final = "settings"
 KEY_ROUNDS: Final = "rounds"
 KEY_ASSIGNMENTS: Final = "assignments"
 KEY_SCHEDULE_ID: Final = "schedule_id"
+KEY_AREA_ID: Final = "area_id"
+KEY_AREA_IDS: Final = "area_ids"
 KEY_AGGREGATES: Final = "aggregates"
 
 # Unterscheidungsmerkmal für Modelle mit mehreren Arten (Strategien)

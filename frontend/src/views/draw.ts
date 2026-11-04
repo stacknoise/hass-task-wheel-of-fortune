@@ -32,7 +32,7 @@ import {
   areaNames,
 } from '../state/index.ts';
 import type { AreaNames, DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
-import { roomTag } from './room.ts';
+import { roomTags } from './room.ts';
 import { drawSummary } from './draw-summary.ts';
 import { drawStyles } from './draw-styles.ts';
 import { personRows } from './draw-rows.ts';
@@ -144,7 +144,7 @@ export class TwDrawView extends LitElement {
   }
 
   #room(task: TaskInfo | undefined): TemplateResult | typeof nothing {
-    return roomTag(this.#areas, task?.areaId, this.#text('common.unknownArea'));
+    return roomTags(this.#areas, task?.areaIds, this.#text('common.unknownArea'));
   }
 
   #text(key: TextKey): string {

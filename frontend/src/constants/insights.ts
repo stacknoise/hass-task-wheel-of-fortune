@@ -64,6 +64,8 @@ export const DEFAULT_RANGE: StatisticsRangeId = 'month';
 export const EXPORT_PAGE_SIZE = 200;
 export const EXPORT_MAX_PAGES = 50;
 export const CSV_SEPARATOR = ';';
+/** Trenner mehrerer Räume innerhalb einer CSV-Zelle. */
+export const ROOM_SEPARATOR = ', ';
 export const CSV_QUOTE = '"';
 export const CSV_NEWLINE = '\r\n';
 export const CSV_FORMULA_PREFIXES: readonly string[] = ['=', '+', '-', '@', '\t', '\r'];

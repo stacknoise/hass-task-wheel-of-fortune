@@ -144,8 +144,12 @@ def test_load_factors():
         (lambda: f.task(points=0), "points"),
         (lambda: f.task(due_days=366), "due_days"),
         (lambda: f.task(allowed=frozenset({""})), "allowed"),
-        (lambda: f.task(area_id=""), "area_id"),
-        (lambda: f.task(area_id="x" * (limits.AREA_ID_MAX_LENGTH + 1)), "area_id"),
+        (lambda: f.task(area_ids=("",)), "area_ids"),
+        (lambda: f.task(area_ids=("x" * (limits.AREA_ID_MAX_LENGTH + 1),)), "area_ids"),
+        (
+            lambda: f.task(area_ids=tuple(str(n) for n in range(limits.MAX_AREAS_PER_TASK + 1))),
+            "area_ids",
+        ),
         (lambda: f.schedule(task_ids=()), "task_ids"),
         (lambda: f.schedule(task_ids=("t1", "t1")), "task_ids"),
         (lambda: f.schedule(slug=""), "slug"),
@@ -287,11 +291,16 @@ def test_kind_must_match_class():
     assert EveryRound.from_dict({}) == EveryRound()
 
 
-def test_task_area_is_optional_and_roundtrips():
-    legacy = {k: v for k, v in f.task().to_dict().items() if k != "area_id"}
-    assert Task.from_dict(legacy).area_id is None
-    placed = f.task(area_id="kueche")
-    assert Task.from_dict(placed.to_dict()).area_id == "kueche"
+def test_task_areas_are_optional_and_roundtrip():
+    legacy = {k: v for k, v in f.task().to_dict().items() if k != "area_ids"}
+    assert Task.from_dict(legacy).area_ids == ()
+    placed = f.task(area_ids=("kueche", "bad"))
+    assert Task.from_dict(placed.to_dict()).area_ids == ("kueche", "bad")
+
+
+def test_task_areas_drop_duplicates_and_keep_order():
+    data = {**f.task().to_dict(), "area_ids": ["bad", "kueche", "bad"]}
+    assert Task.from_dict(data).area_ids == ("bad", "kueche")
 
 
 def test_max_per_period_without_every_decodes_with_default():
