@@ -5,9 +5,15 @@ from types import MappingProxyType
 
 from ..enums import AbsenceKind
 from ..errors import UnknownKindError
-from ..models import AbsenceConfig, OnceAbsence, WeeklyDaysAbsence, WeekRhythmAbsence
+from ..models import (
+    AbsenceConfig,
+    OnceAbsence,
+    RecurringAbsence,
+    WeeklyDaysAbsence,
+    WeekRhythmAbsence,
+)
 from .rule import AvailabilityRule
-from .strategies import OnceRule, WeeklyDaysRule, WeekRhythmRule
+from .strategies import OnceRule, RecurringRule, WeeklyDaysRule, WeekRhythmRule
 
 type RuleBuilder = Callable[[AbsenceConfig], AvailabilityRule]
 
@@ -21,6 +27,9 @@ RULE_BUILDERS: Mapping[str, RuleBuilder] = MappingProxyType(
         ),
         AbsenceKind.WEEK_RHYTHM.value: lambda config: WeekRhythmRule(
             _expect(config, WeekRhythmAbsence)
+        ),
+        AbsenceKind.RECURRING.value: lambda config: RecurringRule(
+            _expect(config, RecurringAbsence)
         ),
     }
 )

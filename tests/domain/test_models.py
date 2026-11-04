@@ -23,6 +23,7 @@ from custom_components.task_wheel.domain.models import (
     OnceTrigger,
     Person,
     Recurring,
+    RecurringAbsence,
     Round,
     Schedule,
     Settings,
@@ -50,6 +51,8 @@ ROUNDTRIP = [
     f.settings(),
     Settings(),
     OnceAbsence(start=f.TODAY, end=f.TODAY),
+    RecurringAbsence(weekdays=frozenset({2}), interval_weeks=2, start=f.TODAY),
+    RecurringAbsence(weekdays=frozenset({2}), interval_weeks=2, start=f.TODAY, end=f.TODAY),
 ]
 
 
@@ -91,6 +94,23 @@ def test_load_factors():
     [
         (lambda: OnceAbsence(start=f.TODAY, end=f.TODAY - dt.timedelta(days=1)), "end"),
         (lambda: WeeklyDaysAbsence(weekdays=frozenset()), "weekdays"),
+        (
+            lambda: RecurringAbsence(
+                weekdays=frozenset({2}),
+                interval_weeks=2,
+                start=f.TODAY,
+                end=f.TODAY - dt.timedelta(days=1),
+            ),
+            "end",
+        ),
+        (
+            lambda: RecurringAbsence(weekdays=frozenset({2}), interval_weeks=0, start=f.TODAY),
+            "interval_weeks",
+        ),
+        (
+            lambda: RecurringAbsence(weekdays=frozenset(), interval_weeks=2, start=f.TODAY),
+            "weekdays",
+        ),
         (lambda: WeeklyDaysAbsence(weekdays=frozenset({7})), "weekdays"),
         (
             lambda: WeekRhythmAbsence(

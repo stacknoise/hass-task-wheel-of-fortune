@@ -7,6 +7,8 @@ import {
   DEFAULT_INTERVAL_DAYS,
   DEFAULT_PERIOD_COUNT,
   DEFAULT_PERIOD_EVERY,
+  DEFAULT_RECURRENCE_INTERVAL,
+  DEFAULT_RECURRING_ABSENCE_WEEKDAYS,
   DEFAULT_RECURRING_WEEKDAYS,
   DEFAULT_RHYTHM_CHANGE_DAY,
   DEFAULT_RHYTHM_CYCLE,
@@ -28,6 +30,13 @@ export const ABSENCE_BUILDERS: Readonly<Record<AbsenceKind, (today: string) => A
     cycle_weeks: DEFAULT_RHYTHM_CYCLE,
     change_weekday: DEFAULT_RHYTHM_CHANGE_DAY,
     anchor: dayOf(today),
+  }),
+  recurring: (today) => ({
+    kind: 'recurring',
+    weekdays: DEFAULT_RECURRING_ABSENCE_WEEKDAYS,
+    interval_weeks: DEFAULT_RECURRENCE_INTERVAL,
+    start: dayOf(today),
+    end: null,
   }),
 };
 

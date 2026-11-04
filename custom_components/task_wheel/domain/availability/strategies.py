@@ -4,7 +4,7 @@ import datetime as dt
 from dataclasses import dataclass
 
 from ...const.limits import WEEKDAY_COUNT
-from ..models import OnceAbsence, WeeklyDaysAbsence, WeekRhythmAbsence
+from ..models import OnceAbsence, RecurringAbsence, WeeklyDaysAbsence, WeekRhythmAbsence
 
 
 @dataclass(slots=True, frozen=True)
@@ -48,3 +48,25 @@ class WeekRhythmRule:
     def is_present(self, day: dt.date) -> bool:
         """Anwesend, wenn die Woche von `day` zu den Anwesenheitswochen gehört."""
         return self.week_index(day) in self.config.present_weeks
+
+
+@dataclass(slots=True, frozen=True)
+class RecurringRule:
+    """Abwesend an den Wochentagen jeder n-ten Woche zwischen `start` und `end`."""
+
+    config: RecurringAbsence
+
+    def is_present(self, day: dt.date) -> bool:
+        """Anwesend, wenn `day` nicht auf einen Abwesenheitstag im Zeitraum und Rhythmus fällt."""
+        config = self.config
+        if day < config.start or (config.end is not None and day > config.end):
+            return True
+        if day.weekday() not in config.weekdays:
+            return True
+        weeks_since_start = (_monday(day) - _monday(config.start)).days // WEEKDAY_COUNT
+        return weeks_since_start % config.interval_weeks != 0
+
+
+def _monday(day: dt.date) -> dt.date:
+    """Montag der Woche von `day`."""
+    return day - dt.timedelta(days=day.weekday())

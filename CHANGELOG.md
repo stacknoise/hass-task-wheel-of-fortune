@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Abwesenheiten können wiederkehren: neue Art „Wiederkehrend“ mit Wochentagen, Abstand in Wochen (z. B. jeden Mittwoch alle zwei Wochen), Beginn und optionalem Ende. Die Auslosung, die Fristfenster, die Kapazität und die Vorschau werten sie wie die übrigen Abwesenheiten aus; gespeicherte Abwesenheiten bleiben unverändert gültig, eine Migration ist nicht nötig
+
 ## [0.3.1] – 2026-11-04
 
 - „Verlosungen je Aufgabe: Soll und Ist“ zeigt die Räume der Aufgaben

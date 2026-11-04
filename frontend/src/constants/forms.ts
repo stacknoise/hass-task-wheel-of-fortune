@@ -56,11 +56,12 @@ export const FORM_LIMITS = {
   periodEvery: { min: 1, max: 12 },
   intervalDays: { min: 1, max: 365 },
   rhythmCycle: { min: 1, max: 8 },
+  recurrenceInterval: { min: 1, max: 52 },
   everyNWeeks: { min: 1, max: 52 },
   remindDays: { min: 1, max: 365 },
 } as const;
 
-export const ABSENCE_KINDS = ['once', 'weekly_days', 'week_rhythm'] as const;
+export const ABSENCE_KINDS = ['once', 'weekly_days', 'week_rhythm', 'recurring'] as const;
 export type AbsenceKind = (typeof ABSENCE_KINDS)[number];
 
 export const FREQUENCY_KINDS = ['every_round', 'max_per_period', 'interval'] as const;
@@ -89,6 +90,9 @@ export const DEFAULT_INTERVAL_DAYS = 7;
 export const DEFAULT_PERIOD_COUNT = 1;
 export const DEFAULT_PERIOD_EVERY = 1;
 export const DEFAULT_RHYTHM_CYCLE = 2;
+export const DEFAULT_RECURRENCE_INTERVAL = 2;
+/** Standard-Wochentag einer wiederkehrenden Abwesenheit: Mittwoch. */
+export const DEFAULT_RECURRING_ABSENCE_WEEKDAYS: readonly Weekday[] = [2];
 export const DEFAULT_RHYTHM_CHANGE_DAY: Weekday = 4;
 export const DEFAULT_ABSENT_WEEKDAYS: readonly Weekday[] = [5, 6];
 export const DEFAULT_RECURRING_WEEKDAYS: readonly Weekday[] = [0];

@@ -142,6 +142,44 @@ export class TwAbsenceEditor extends LocalizedElement {
         })}
       ></tw-field>
     `,
+    recurring: (absence: Extract<AbsenceWire, { kind: 'recurring' }>, index) => html`
+      <tw-chip-select
+        .label=${this.text('absence.weekdays')}
+        .options=${weekdayOptions(this.language)}
+        compact
+        .selected=${toIds(absence.weekdays)}
+        @tw-change=${onChange<string[]>((ids) => {
+          this.replaceAt(this.value, index, { weekdays: toNumbers(ids) });
+        })}
+      ></tw-chip-select>
+      <tw-stepper
+        .label=${this.text('absence.interval')}
+        .value=${absence.interval_weeks}
+        .min=${FORM_LIMITS.recurrenceInterval.min}
+        .max=${FORM_LIMITS.recurrenceInterval.max}
+        @tw-change=${onChange<number>((interval) => {
+          this.replaceAt(this.value, index, { interval_weeks: interval });
+        })}
+      ></tw-stepper>
+      <div class="pair">
+        <tw-field
+          type="date"
+          .label=${this.text('absence.recurring_start')}
+          .value=${absence.start}
+          @tw-change=${onChange<string>((start) => {
+            this.replaceAt(this.value, index, { start });
+          })}
+        ></tw-field>
+        <tw-field
+          type="date"
+          .label=${this.text('absence.recurring_end')}
+          .value=${absence.end ?? ''}
+          @tw-change=${onChange<string>((end) => {
+            this.replaceAt(this.value, index, { end: end === '' ? null : end });
+          })}
+        ></tw-field>
+      </div>
+    `,
   };
 
   constructor() {
