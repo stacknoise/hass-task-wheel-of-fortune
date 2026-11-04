@@ -170,7 +170,8 @@ class Model:
 
     def to_dict(self) -> dict[str, object]:
         """Gibt das Modell als JSON-taugliches Wörterbuch zurück."""
-        return {name: encode(getattr(self, name)) for name in _field_names(cast("type", type(self)))}
+        names = _field_names(cast("type", type(self)))
+        return {name: encode(getattr(self, name)) for name in names}
 
     @classmethod
     def from_dict(cls, data: Mapping[str, object]) -> Self:
