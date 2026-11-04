@@ -7,6 +7,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 - Der Name ist überall englisch: „Task Wheel of Fortune“ in HACS und in der Integrationsliste (Version 0.1.1 wurde nicht veröffentlicht, ihre Änderungen sind hier enthalten)
 - Drei neue Auslosungs-Animationen: Rubbellose (selbst rubbeln oder per Münze, beim Gewinnerlos ist die Runde fertig), Eilmeldung (Zeitung mit Gerüchten und Stempel) und Oscar-Verleihung („Und die Aufgabe geht an …“)
+- Die neuen Animationen zeigen keine Gewinnchancen; Oscar-Kuvert und Zentrierung von Eilmeldung und Rubbellosen nachgebessert
 - Aufgaben lassen sich einem Home-Assistant-Raum (Bereich) zuweisen; der Raum erscheint auf der Aufgabenkarte, in Übersicht, Auslosung, Historie (auch im CSV) und Statistik
 - Titel auf Deutsch und Englisch: Seitenleiste und Panel-Überschrift heißen bei deutscher Systemsprache „Aufgaben-Glücksrad“, sonst „Task Wheel of Fortune“; HACS und Integrationsname bleiben englisch
 - Panel für Tablet und Smartphone optimiert, vor allem die Auslosung (Bühne oben, kompaktes Layout, Menü-Knopf, Touch-Größen)
