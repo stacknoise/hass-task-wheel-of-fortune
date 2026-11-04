@@ -4,7 +4,12 @@ import datetime as dt
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass, field, replace
 
-from ...const.keys import ERR_ROUND_COMPLETE, ERR_ROUND_INCOMPLETE
+from ...const.keys import (
+    ERR_DRAW_STARTED,
+    ERR_REPLACEMENT_INVALID,
+    ERR_ROUND_COMPLETE,
+    ERR_ROUND_INCOMPLETE,
+)
 from ..enums import RoundOrigin
 from ..errors import DrawRejectedError
 from ..models import Assignment, Round, Task
@@ -49,6 +54,26 @@ class RoundDraft:
     def complete(self) -> bool:
         """Alle Aufgaben sind gezogen."""
         return len(self.results) == len(self.tasks)
+
+    @property
+    def started(self) -> bool:
+        """Es wurde schon eine Aufgabe gezogen (der Tausch von Aufgaben ist dann gesperrt)."""
+        return bool(self.results)
+
+    def replace_task(self, task_id: TaskId, new_task: Task) -> "RoundDraft":
+        """Ersetzt eine Aufgabe der Runde an derselben Stelle durch eine andere.
+
+        Raises:
+            DrawRejectedError: Es wurde schon gezogen, oder die Aufgabe gehört nicht zur Runde
+                bzw. die neue ist schon dabei.
+        """
+        if self.started:
+            raise DrawRejectedError(ERR_DRAW_STARTED)
+        ids = [task.id for task in self.tasks]
+        if task_id not in ids or new_task.id in ids:
+            raise DrawRejectedError(ERR_REPLACEMENT_INVALID)
+        tasks = tuple(new_task if task.id == task_id else task for task in self.tasks)
+        return replace(self, tasks=tasks)
 
     def spin(self, engine: DrawEngine) -> "RoundDraft":
         """Zieht die nächste Aufgabe.

@@ -155,6 +155,15 @@
     "draw_cancel_admin_only": {
       "message": "Only administrators may cancel a draw once a result is visible."
     },
+    "draw_already_started": {
+      "message": "The draw has already started, so tasks can no longer be replaced."
+    },
+    "draw_replacement_invalid": {
+      "message": "This task does not belong to the schedule or is already in the round."
+    },
+    "draw_replacement_infeasible": {
+      "message": "This task cannot be done by the people who are present."
+    },
     "swap_disabled": {
       "message": "This task may not be swapped."
     },

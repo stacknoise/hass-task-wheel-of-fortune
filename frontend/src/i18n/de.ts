@@ -241,6 +241,22 @@ export const de = {
   'draw.undistributable': 'Nicht verteilbar',
   'draw.points': 'Punkte',
   'draw.rest': 'Aufgaben direkt verteilen',
+  'draw.replace': 'Austauschen',
+  'draw.replace.title': 'Aufgabe austauschen',
+  'draw.replace.out': 'Aus der Runde nehmen:',
+  'draw.replace.with':
+    'Ersetzen durch (andere Aufgaben dieses Zeitplans, die in dieser Runde nicht dabei sind)',
+  'draw.replace.doable': 'Machbar mit den anwesenden Personen',
+  'draw.replace.infeasible': 'Nicht wählbar: mit den anwesenden Personen nicht machbar',
+  'draw.replace.none': 'Der Zeitplan hat keine weitere Aufgabe.',
+  'draw.replace.hint': 'Der Tausch gilt nur bis zum Start der Auslosung.',
+  'draw.replace.apply': 'Austauschen',
+  'error.draw_already_started':
+    'Die Auslosung hat schon begonnen, Aufgaben lassen sich nicht mehr austauschen.',
+  'error.draw_replacement_invalid':
+    'Diese Aufgabe gehört nicht zum Zeitplan oder ist schon in der Runde.',
+  'error.draw_replacement_infeasible':
+    'Mit den anwesenden Personen ist diese Aufgabe nicht machbar.',
   'draw.restart': 'Runde neu starten',
   'draw.spin': 'Los',
   'draw.spin.label': 'Auslosung starten',

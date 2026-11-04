@@ -6,8 +6,11 @@ from dataclasses import dataclass, replace
 from ..const.defaults import PANEL_ROUND_TIMEOUT_MINUTES
 from ..const.keys import (
     ERR_CANCEL_ADMIN_ONLY,
+    ERR_DRAW_STARTED,
     ERR_DRAW_TOO_SOON,
     ERR_REPLACE_UNCONFIRMED,
+    ERR_REPLACEMENT_INFEASIBLE,
+    ERR_REPLACEMENT_INVALID,
     ERR_SCHEDULE_ARCHIVED,
     ERR_SCHEDULE_DISABLED,
     PH_SECONDS,
@@ -20,13 +23,20 @@ from ..const.limits import DRAW_MIN_INTERVAL, DRAW_MIN_INTERVAL_SECONDS, MAX_OPE
 from ..domain.deadline import DeadlineWindow
 from ..domain.draw.draft import RoundDraft
 from ..domain.draw.engine import DrawEngine
-from ..domain.draw.types import RandomSource, TaskDraw
+from ..domain.draw.feasibility import is_feasible
+from ..domain.draw.types import RandomSource, TaskDraw, TaskReplacement
 from ..domain.draw.weighting import WeightingFactory
 from ..domain.enums import RoundOrigin
 from ..domain.errors import DrawRejectedError, LimitReachedError, NotFoundError
 from ..domain.models import Round, Schedule
 from ..domain.types import ScheduleId
-from .draw_inputs import build_context, due_tasks, limit_to_participants, recent_assignments
+from .draw_inputs import (
+    build_context,
+    due_tasks,
+    limit_to_participants,
+    recent_assignments,
+    respecting_schedule,
+)
 from .ids import new_id
 from .protocols import (
     AssignmentRecorder,
@@ -144,6 +154,52 @@ class DrawService:
             raise NotFoundError(RESOURCE_PANEL_ROUND, panel_round_id)
         return panel_round
 
+    def replacements(self, panel_round_id: str, now: dt.datetime) -> tuple[TaskReplacement, ...]:
+        """Aufgaben des Zeitplans, die nicht in der Runde sind, und ob sie machbar wären.
+
+        Machbar heißt: mindestens eine Person, die heute mitlosen darf, könnte sie übernehmen.
+        Nach dem Start der Auslosung gibt es keine (der Tausch ist gesperrt).
+
+        Raises:
+            NotFoundError: Die Panel-Runde oder der Zeitplan gibt es nicht (mehr).
+        """
+        panel_round = self.get(panel_round_id, now)
+        if panel_round.draft.started:
+            return ()
+        draft = panel_round.draft
+        schedule = self._known_schedule(draft.schedule_id)
+        taken = {task.id for task in draft.tasks}
+        found = (self._config.tasks.get(task_id) for task_id in schedule.task_ids)
+        return tuple(
+            TaskReplacement(task.id, is_feasible(task, draft.context))
+            for task in (respecting_schedule(schedule, t) for t in found if t is not None)
+            if task.id not in taken
+        )
+
+    def replace_task(
+        self, panel_round_id: str, task_id: str, new_task_id: str, now: dt.datetime
+    ) -> PanelRound:
+        """Tauscht vor dem Start der Auslosung eine Aufgabe der Runde gegen eine andere.
+
+        Raises:
+            NotFoundError: Die Panel-Runde, der Zeitplan oder die neue Aufgabe gibt es nicht.
+            DrawRejectedError: Es wurde schon gezogen, die neue Aufgabe gehört nicht zum Zeitplan
+                oder ist schon in der Runde, oder keine anwesende Person könnte sie übernehmen.
+        """
+        panel_round = self.get(panel_round_id, now)
+        if panel_round.draft.started:
+            raise DrawRejectedError(ERR_DRAW_STARTED)
+        options = {item.task_id: item for item in self.replacements(panel_round_id, now)}
+        option = options.get(new_task_id)
+        if option is None:
+            raise DrawRejectedError(ERR_REPLACEMENT_INVALID)
+        if not option.doable:
+            raise DrawRejectedError(ERR_REPLACEMENT_INFEASIBLE)
+        schedule = self._known_schedule(panel_round.draft.schedule_id)
+        new_task = respecting_schedule(schedule, self._config.tasks[new_task_id])
+        draft = panel_round.draft.replace_task(task_id, new_task)
+        return self._store(replace(panel_round, draft=draft))
+
     def spin(self, panel_round_id: str, now: dt.datetime) -> TaskDraw:
         """Zieht die nächste Aufgabe der Panel-Runde und liefert deren Ergebnis."""
         panel_round = self.get(panel_round_id, now)
@@ -211,6 +267,13 @@ class DrawService:
             raise DrawRejectedError(ERR_SCHEDULE_ARCHIVED)
         if origin is RoundOrigin.AUTO and not schedule.enabled:
             raise DrawRejectedError(ERR_SCHEDULE_DISABLED)
+        return schedule
+
+    def _known_schedule(self, schedule_id: ScheduleId) -> Schedule:
+        """Der Zeitplan der Runde; er kann inzwischen gelöscht sein."""
+        schedule = self._config.schedules.get(schedule_id)
+        if schedule is None:
+            raise NotFoundError(RESOURCE_SCHEDULE, schedule_id)
         return schedule
 
     def _upcoming(self, schedule_id: ScheduleId, now: dt.datetime) -> dt.datetime | None:

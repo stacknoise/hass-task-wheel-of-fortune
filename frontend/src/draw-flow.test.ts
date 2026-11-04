@@ -178,6 +178,64 @@ describe('Auslosung', () => {
     });
   });
 
+  it('tauscht als Admin vor dem Start eine Aufgabe gegen eine machbare', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    const hass = hassWith();
+    hass.snapshot = {
+      ...hass.snapshot,
+      tasks: [
+        ...TASKS,
+        { ...TASKS[0], id: 't3', name: 'Garage' },
+        { ...TASKS[0], id: 't4', name: 'Keller' },
+      ],
+    };
+    hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
+    hass.replies.set('task_wheel/draw/preview', { result: result('t1', null) });
+    hass.replies.set('task_wheel/draw/replacements', {
+      replacements: [
+        { task_id: 't3', doable: true },
+        { task_id: 't4', doable: false },
+      ],
+    });
+    hass.replies.set('task_wheel/draw/replace_task', { panel_round: round([], ['t3', 't2']) });
+    const { view } = await mount(hass);
+    await start(view);
+    await click(view, '.task .button');
+    const dialog = (): ParentNode => view().querySelector('tw-dialog') as unknown as ParentNode;
+    await vi.waitFor(() => {
+      expect(dialog().textContent).toContain('Keller');
+    });
+    const radios = dialog().querySelectorAll<HTMLInputElement>('input[type=radio]');
+    expect(radios).toHaveLength(2);
+    expect(radios[1]?.disabled).toBe(true);
+    expect(dialog().textContent).toContain('Nicht wählbar');
+    dialog().querySelector<HTMLButtonElement>('.button.primary')?.click();
+    const list = (): string => view().querySelector('ul')?.textContent ?? '';
+    await vi.waitFor(() => {
+      expect(list()).toContain('Garage');
+    });
+    expect(list()).not.toContain('Bad putzen');
+    expect(hass.messages.find((m) => m.type === 'task_wheel/draw/replace_task')).toMatchObject({
+      panel_round_id: 'r1',
+      task_id: 't1',
+      new_task_id: 't3',
+    });
+  });
+
+  it('bietet Nicht-Admins keinen Austausch an', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    const hass = hassWith();
+    (hass as { user: { is_admin: boolean } }).user.is_admin = false;
+    hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
+    hass.replies.set('task_wheel/draw/preview', { result: result('t1', null) });
+    const { view } = await mount(hass);
+    await start(view);
+    await vi.waitFor(() => {
+      expect(text(view)).toContain('0 / 2 verlost');
+    });
+    expect(view().querySelector('.task .button')).toBeNull();
+  });
+
   it('verlost den Rest ohne Animation', async () => {
     const hass = hassWith();
     hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));

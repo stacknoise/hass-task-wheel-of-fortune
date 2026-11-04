@@ -48,6 +48,14 @@ class Exclusion:
 
 
 @dataclass(slots=True, frozen=True)
+class TaskReplacement:
+    """Eine Aufgabe, die der Admin vor dem Start gegen eine der Runde tauschen könnte."""
+
+    task_id: TaskId
+    doable: bool
+
+
+@dataclass(slots=True, frozen=True)
 class CandidateSelection:
     """Ergebnis der Filterkette: verbleibende Kandidaten und Ausschlüsse."""
 

@@ -1,4 +1,10 @@
-import type { ApiClient, DrawWindowRequest, PanelRoundWire, TaskDrawWire } from '../api/index.ts';
+import type {
+  ApiClient,
+  DrawWindowRequest,
+  PanelRoundWire,
+  TaskDrawWire,
+  TaskReplacementWire,
+} from '../api/index.ts';
 import { DRAW_PHASE, DRAW_UNKNOWN_ERROR } from '../constants/index.ts';
 import type { DrawPhase } from '../constants/index.ts';
 
@@ -42,6 +48,10 @@ export const isIdle = (state: DrawState): boolean =>
 /** Wie viele Ergebnisse schon gezeigt werden dürfen: das gerade drehende bleibt verborgen. */
 export const shownCount = (state: DrawState): number =>
   state.phase === DRAW_PHASE.spinning ? state.results.length - 1 : state.results.length;
+
+/** Darf der Admin jetzt Aufgaben der Runde tauschen? Nur vor dem Start, also vor dem ersten Dreh. */
+export const canReplace = (state: DrawState): boolean =>
+  state.phase === DRAW_PHASE.ready && state.results.length === 0 && state.roundId !== undefined;
 
 const isPausedInRound = (state: DrawState): boolean =>
   state.phase === DRAW_PHASE.ready || state.phase === DRAW_PHASE.revealed;
@@ -109,6 +119,34 @@ export class DrawSession {
       this.#open(round.schedule_id, round);
       void this.#loadPreview();
     }
+  }
+
+  /** Aufgaben, die statt einer der Runde dienen könnten (leer, wenn der Tausch gesperrt ist). */
+  async replacements(): Promise<readonly TaskReplacementWire[]> {
+    const roundId = this.#state.roundId;
+    if (!canReplace(this.#state) || !roundId) {
+      return [];
+    }
+    return (await this.#client.replacements(roundId)).replacements;
+  }
+
+  /** Tauscht vor dem Start eine Aufgabe der Runde; Fehler des Backends werden angezeigt. */
+  async replaceTask(taskId: string, newTaskId: string): Promise<void> {
+    const roundId = this.#state.roundId;
+    if (!canReplace(this.#state) || !roundId) {
+      return;
+    }
+    await this.#run(async (alive) => {
+      const { panel_round: round } = await this.#client.replaceTask(roundId, taskId, newTaskId);
+      if (alive()) {
+        this.#set({
+          phase: DRAW_PHASE.ready,
+          taskIds: [...round.results.map((result) => result.task_id), ...round.pending_task_ids],
+          preview: undefined,
+        });
+        await this.#loadPreview();
+      }
+    });
   }
 
   /** Zieht die nächste Aufgabe; die Ansicht dreht das Rad danach zum Gewinner. */

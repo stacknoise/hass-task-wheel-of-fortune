@@ -4,8 +4,10 @@ import {
   FIELD_ASSIGNMENT_ID,
   FIELD_ROUND_ID,
   FIELD_MONTHS,
+  FIELD_NEW_TASK_ID,
   FIELD_PANEL_ROUND_ID,
   FIELD_SCHEDULE_ID,
+  FIELD_TASK_ID,
   WS_ACTION_CREATE,
   WS_ACTION_DELETE,
   WS_ACTION_UPDATE,
@@ -24,6 +26,8 @@ import {
   WS_DRAW_CANCEL,
   WS_DRAW_COMMIT,
   WS_DRAW_PREVIEW,
+  WS_DRAW_REPLACE_TASK,
+  WS_DRAW_REPLACEMENTS,
   WS_DRAW_SPIN,
   WS_DRAW_SPIN_REST,
   WS_PREFIX,
@@ -45,6 +49,8 @@ import type {
   NotifyTarget,
   PanelRoundWire,
   PreviewReply,
+  ReplaceTaskReply,
+  ReplacementsReply,
   Snapshot,
   SpinReply,
   SpinRestReply,
@@ -233,6 +239,26 @@ export class ApiClient {
       type: WS_DRAW_BEGIN,
       [FIELD_SCHEDULE_ID]: scheduleId,
       ...window,
+    });
+  }
+
+  /** Ist der angemeldete Benutzer Administrator (nur dann darf er Aufgaben austauschen)? */
+  isAdmin(): boolean {
+    return this.#hass.user?.is_admin === true;
+  }
+
+  /** Aufgaben des Zeitplans, die vor dem Start gegen eine der Runde getauscht werden könnten. */
+  replacements(panelRoundId: string): Promise<ReplacementsReply> {
+    return this.#call(WS_DRAW_REPLACEMENTS, FIELD_PANEL_ROUND_ID, panelRoundId);
+  }
+
+  /** Tauscht vor dem Start (nur Administratoren) eine Aufgabe der Runde gegen eine andere. */
+  replaceTask(panelRoundId: string, taskId: string, newTaskId: string): Promise<ReplaceTaskReply> {
+    return this.#hass.callWS<ReplaceTaskReply>({
+      type: WS_DRAW_REPLACE_TASK,
+      [FIELD_PANEL_ROUND_ID]: panelRoundId,
+      [FIELD_TASK_ID]: taskId,
+      [FIELD_NEW_TASK_ID]: newTaskId,
     });
   }
 
