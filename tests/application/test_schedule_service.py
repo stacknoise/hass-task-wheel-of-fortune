@@ -227,3 +227,36 @@ def test_reminder_check_arms_the_next_check_even_if_reporting_fails(
     with pytest.raises(KeyError):
         world.schedules.check_reminders(START + 7 * DAY)
     assert TIMER_REMINDERS in world.timers.timers
+
+
+def test_start_catches_up_a_once_schedule_missed_while_down() -> None:
+    world = World()
+    when = dt.datetime(2026, 11, 1, 10, tzinfo=BERLIN)
+    world.put_schedule(trigger=OnceTrigger(at=when, after=AfterOnce.DELETE))
+    world.schedules.arm_all(START)
+    assert len(world.history.rounds) == 1
+    assert "s1" not in world.config.schedules
+
+
+def test_start_does_not_repeat_a_once_schedule_that_was_already_drawn() -> None:
+    world = World()
+    when = dt.datetime(2026, 11, 1, 10, tzinfo=BERLIN)
+    world.put_schedule(trigger=OnceTrigger(at=when, after=AfterOnce.KEEP_MANUAL))
+    world.schedules.arm_all(START)
+    world.put_schedule(trigger=OnceTrigger(at=when, after=AfterOnce.KEEP_MANUAL))
+    world.schedules.arm_all(START + DAY)
+    assert len(world.history.rounds) == 1
+
+
+def test_start_ignores_future_and_paused_once_schedules() -> None:
+    world = World()
+    world.put_schedule(trigger=OnceTrigger(at=START + DAY, after=AfterOnce.DELETE))
+    world.put_schedule(
+        id="s2",
+        slug="zwei",
+        name="Zwei",
+        enabled=False,
+        trigger=OnceTrigger(at=START - DAY, after=AfterOnce.DELETE),
+    )
+    world.schedules.arm_all(START)
+    assert not world.history.rounds

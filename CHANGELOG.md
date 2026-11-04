@@ -5,6 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Behoben: ein einmaliger Zeitplan, dessen Termin während eines Ausfalls verstrichen ist, wird beim Start nachgeholt.
 - Performance: der tägliche Verpasst-Lauf speichert und rechnet die Statistik je Runde einmal statt je Zuteilung.
 - Performance: Speichern des Verlaufs kodiert nur noch geänderte Runden neu; Feldnamen der Datenklassen werden zwischengespeichert.
 - Intern: Auslosung rechnet Kapazitäten und Erreichbarkeit nur einmal je Runde (spürbar bei langem Fairness-Fenster und vielen Abwesenheitsregeln); nur von Tests genutzte Funktionen entfernt

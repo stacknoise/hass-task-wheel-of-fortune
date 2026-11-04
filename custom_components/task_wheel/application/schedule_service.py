@@ -7,7 +7,7 @@ from typing import Final
 from ..const.defaults import REMINDER_HOUR
 from ..domain.enums import RoundOrigin
 from ..domain.errors import TaskWheelError
-from ..domain.models import Schedule
+from ..domain.models import OnceTrigger, Schedule
 from ..domain.triggers.factory import TriggerFactory
 from ..domain.triggers.lifecycle import after_fired
 from ..domain.triggers.reminder import reminder_age
@@ -67,10 +67,23 @@ class ScheduleService:
         return at
 
     def arm_all(self, now: dt.datetime) -> None:
-        """Setzt alle Zeitgeber (beim Start) und die tägliche Erinnerungsprüfung."""
+        """Holt verpasste einmalige Termine nach; setzt alle Zeitgeber und die Erinnerungen."""
+        for schedule in tuple(self._config.schedules.values()):
+            if self._missed_once(schedule, now):
+                self._draw_and_finish(schedule, now)
         for schedule_id in self._config.schedules:
             self.arm(schedule_id, now)
         self.arm_reminders(now)
+
+    def _missed_once(self, schedule: Schedule, now: dt.datetime) -> bool:
+        """Ein aktiver einmaliger Zeitplan, dessen Termin in der Ausfallzeit lag und noch fehlt."""
+        trigger = schedule.trigger
+        if not isinstance(trigger, OnceTrigger) or not schedule.enabled or schedule.archived:
+            return False
+        if trigger.at > now:
+            return False
+        last = self._last_drawn(schedule.id)
+        return last is None or last < trigger.at
 
     def save(self, schedule: Schedule, now: dt.datetime) -> None:
         """Legt den Zeitplan an oder ersetzt ihn und setzt seinen Zeitgeber neu."""
