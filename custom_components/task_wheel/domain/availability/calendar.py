@@ -8,6 +8,7 @@ from ...const.defaults import DEFAULT_PREVIEW_WEEKS
 from ...const.keys import ERR_ORDER, ERR_RANGE
 from ...const.limits import (
     AVAILABILITY_WINDOW_MAX_DAYS,
+    ONE_DAY,
     PREVIEW_WEEKS_MAX,
     PREVIEW_WEEKS_MIN,
     WEEKDAY_COUNT,
@@ -17,7 +18,6 @@ from ..validation import ensure, ensure_range
 from .factory import AvailabilityRuleFactory
 from .rule import AvailabilityRule
 
-_DAY = dt.timedelta(days=1)
 _FIELD_WINDOW = "window"
 _FIELD_WEEKS = "weeks"
 
@@ -37,6 +37,10 @@ class PersonAvailability:
     rules: Sequence[AvailabilityRule]
     # Merkt sich je Fenster, ob jemand anwesend ist (viele Aufgaben fragen dasselbe Fenster ab).
     _window_cache: dict[tuple[dt.date, dt.date], bool] = field(
+        default_factory=dict, init=False, repr=False, compare=False
+    )
+    # Dasselbe für die Zahl anwesender Tage (Kapazität)
+    _count_cache: dict[tuple[dt.date, dt.date], int] = field(
         default_factory=dict, init=False, repr=False, compare=False
     )
 
@@ -69,7 +73,7 @@ class PersonAvailability:
         day = start
         while day <= end:
             yield DayPresence(day, self.is_present(day))
-            day += _DAY
+            day += ONE_DAY
 
     def present_in_window(self, start: dt.date, end: dt.date) -> bool:
         """Anwesend an mindestens einem Tag im Fenster (Kandidatenregel, KONZEPT §5)."""
@@ -80,7 +84,10 @@ class PersonAvailability:
 
     def present_day_count(self, start: dt.date, end: dt.date) -> int:
         """Anzahl anwesender Tage im Fenster (Grundlage der Kapazität, KONZEPT §5.3)."""
-        return sum(entry.present for entry in self.days(start, end))
+        key = (start, end)
+        if key not in self._count_cache:
+            self._count_cache[key] = sum(entry.present for entry in self.days(start, end))
+        return self._count_cache[key]
 
     def preview(
         self, start: dt.date, weeks: int = DEFAULT_PREVIEW_WEEKS

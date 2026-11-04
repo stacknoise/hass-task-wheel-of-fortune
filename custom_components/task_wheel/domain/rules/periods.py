@@ -3,25 +3,29 @@
 from collections.abc import Callable, Iterable, Mapping
 from datetime import date, datetime
 from types import MappingProxyType
-from typing import Final
 
+from ...const.limits import MONTHS_PER_YEAR, WEEKDAY_COUNT
 from ..enums import Period
 from ..validation import ensure_aware
 
-MONTHS_PER_YEAR: Final = 12
-
 type PeriodStart = Callable[[date], date]
+
+
+def week_start(day: date) -> date:
+    """Montag der Woche von `day`."""
+    return date.fromordinal(day.toordinal() - day.weekday())
+
 
 _PERIOD_STARTS: Mapping[Period, PeriodStart] = MappingProxyType(
     {
         Period.DAY: lambda day: day,
-        Period.WEEK: lambda day: date.fromordinal(day.toordinal() - day.weekday()),
+        Period.WEEK: week_start,
         Period.MONTH: lambda day: day.replace(day=1),
     }
 )
 
 
-_PERIOD_DAYS: Mapping[Period, int] = MappingProxyType({Period.DAY: 1, Period.WEEK: 7})
+_PERIOD_DAYS: Mapping[Period, int] = MappingProxyType({Period.DAY: 1, Period.WEEK: WEEKDAY_COUNT})
 
 
 def local_date(moment: datetime, reference: datetime) -> date:

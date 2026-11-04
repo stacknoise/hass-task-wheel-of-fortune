@@ -9,6 +9,7 @@ import datetime as dt
 import time
 from collections.abc import Callable
 from functools import partial
+from itertools import count
 from typing import Final
 
 import pytest
@@ -93,7 +94,12 @@ def world() -> Api:
 
 
 def test_draw_with_all_tasks_and_people(world: Api) -> None:
-    draw = partial(world.data.draws.draw, "s0", RoundOrigin.MANUAL, world.now)
+    minutes = count(1)
+
+    def draw() -> object:
+        later = world.now + dt.timedelta(minutes=next(minutes))
+        return world.data.draws.draw("s0", RoundOrigin.MANUAL, later)
+
     assert _seconds(draw) < BUDGET_DRAW_SECONDS
 
 

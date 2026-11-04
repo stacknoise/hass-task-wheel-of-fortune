@@ -1,6 +1,7 @@
 """Aufzählungen der Domäne (StrEnum, Werte sind Speicher- und API-Format)."""
 
 from enum import StrEnum
+from typing import Final
 
 from ..const.defaults import LOAD_FACTOR_FULL, LOAD_FACTOR_HALF, LOAD_FACTOR_PAUSED
 
@@ -91,6 +92,19 @@ class AssignmentStatus(StrEnum):
     SWAPPED = "swapped"
     MISSED = "missed"
     SKIPPED = "skipped"
+
+
+_S = AssignmentStatus
+# Noch nicht abgeschlossen: kann erledigt oder verpasst werden (offen oder getauscht).
+PENDING_STATUSES: Final = frozenset({_S.OPEN, _S.SWAPPED})
+# Erledigt (pünktlich oder verspätet): solche Zuteilungen verhindern das Löschen ihrer Auslosung.
+DONE_STATUSES: Final = frozenset({_S.ON_TIME, _S.LATE})
+# „Bleibt unerledigt“ zählt in der Statistik wie verpasst: die Aufgabe wurde nicht gemacht.
+UNDONE_STATUSES: Final = frozenset({_S.MISSED, _S.SKIPPED})
+# Abgeschlossen: erledigt oder nicht erledigt.
+CLOSED_STATUSES: Final = DONE_STATUSES | UNDONE_STATUSES
+# Status ohne Erledigungszeit (`done_at`)
+WITHOUT_DONE_AT_STATUSES: Final = UNDONE_STATUSES | {_S.OPEN}
 
 
 class AssignmentAction(StrEnum):

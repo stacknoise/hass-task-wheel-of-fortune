@@ -3,7 +3,8 @@
 import datetime as dt
 from collections.abc import Iterable
 
-from ..const.limits import OPEN_ASSIGNMENT_MAX_AGE_DAYS
+from ..const.keys import RESOURCE_PERSON, RESOURCE_TASK
+from ..const.limits import OPEN_ASSIGNMENT_MAX_AGE
 from ..domain import status
 from ..domain.enums import AssignmentAction, Period
 from ..domain.errors import NotFoundError
@@ -19,10 +20,6 @@ from .protocols import (
     RoundEvents,
 )
 from .round_updates import require_assignment, store_assignment
-
-_RESOURCE_PERSON = "person"
-_RESOURCE_TASK = "task"
-_OPEN_MAX_AGE = dt.timedelta(days=OPEN_ASSIGNMENT_MAX_AGE_DAYS)
 
 
 class SwapService:
@@ -53,7 +50,7 @@ class SwapService:
             period_start(Period.MONTH, now), dt.time.min, tzinfo=now.tzinfo
         )
         used = jokers_used_by_person(
-            self._history.assignments_since(month_start - _OPEN_MAX_AGE), now
+            self._history.assignments_since(month_start - OPEN_ASSIGNMENT_MAX_AGE), now
         )
         settings = self._config.settings
         return {person_id: jokers_left(settings, used[person_id]) for person_id in person_ids}
@@ -72,9 +69,9 @@ class SwapService:
         task = self._config.tasks.get(assignment.task_id)
         receiver = self._config.persons.get(to_person_id)
         if task is None:
-            raise NotFoundError(_RESOURCE_TASK, assignment.task_id)
+            raise NotFoundError(RESOURCE_TASK, assignment.task_id)
         if receiver is None:
-            raise NotFoundError(_RESOURCE_PERSON, to_person_id)
+            raise NotFoundError(RESOURCE_PERSON, to_person_id)
         status.next_status(assignment.status, AssignmentAction.SWAP)
         left = self.jokers_left(assignment.person_id, now)
         round_ = self._history.rounds[assignment.round_id]

@@ -173,6 +173,8 @@ export const de = {
   'error.inconsistent': 'Die Angaben passen nicht zusammen.',
   'error.limit_reached': 'Die Obergrenze ist erreicht.',
   'error.not_found': 'Nicht gefunden.',
+  'error.ambiguous_reference': 'Mehrere Einträge passen, bitte die ID verwenden.',
+  'error.draw_too_soon': 'Es gibt schon eine neuere Auslosung, bitte kurz warten.',
   'error.in_use': 'Wird noch verwendet (Zeitplan, erlaubte Person oder offene Zuteilung).',
   'error.notify_target_invalid': 'Ungültiges Benachrichtigungsziel.',
   'error.too_deep': 'Zu tief verschachtelt.',

@@ -217,3 +217,14 @@ def test_skip_swapped_assignment_and_rejects_closed_ones() -> None:
             world.assignments.skip(ident)
     with pytest.raises(NotFoundError):
         world.assignments.skip("nope")
+
+
+def test_mark_missed_saves_and_records_once_per_round(monkeypatch) -> None:
+    world = World(missed_grace_hours=0)
+    world.add_round(_open(), _open("a2"))
+    saved: list[object] = []
+    real = world.history.put_round
+    monkeypatch.setattr(world.history, "put_round", lambda r: saved.append(r) or real(r))
+    missed = world.assignments.mark_missed(DUE + DAY)
+    assert [m.id for m in missed] == ["a1", "a2"]
+    assert len(saved) == 1

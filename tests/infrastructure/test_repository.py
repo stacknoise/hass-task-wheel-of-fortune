@@ -190,7 +190,7 @@ def test_history_last_assignment_and_ordering() -> None:
 
 async def test_history_roundtrip_aggregates_and_purge() -> None:
     repo, memory = _history()
-    old = f.assignment(id="a1", round_id="r1", task_id="t1")
+    old = f.assignment(id="a1", round_id="r1", task_id="t1", status=AssignmentStatus.SKIPPED)
     new = f.assignment(id="a2", round_id="r2", task_id="t1")
     repo.put_round(_round("r1", f.NOW - 400 * DAY, old))  # type: ignore[arg-type]
     repo.put_round(_round("r2", f.NOW, new))  # type: ignore[arg-type]
@@ -210,6 +210,18 @@ async def test_history_roundtrip_aggregates_and_purge() -> None:
     await loaded.async_flush()
 
 
+async def test_history_purge_keeps_rounds_with_open_assignments() -> None:
+    repo, _ = _history()
+    for status, ident in ((AssignmentStatus.OPEN, "o"), (AssignmentStatus.SWAPPED, "w")):
+        item = f.assignment(id=f"a_{ident}", round_id=f"r_{ident}", status=status)
+        repo.put_round(_round(f"r_{ident}", f.NOW - 400 * DAY, item))  # type: ignore[arg-type]
+    closed = f.assignment(id="a_c", round_id="r_c", status=AssignmentStatus.MISSED)
+    repo.put_round(_round("r_c", f.NOW - 401 * DAY, closed))  # type: ignore[arg-type]
+    assert await repo.async_purge(f.NOW - 365 * DAY) == 1
+    assert set(repo.rounds) == {"r_o", "r_w"}
+    assert repo.open_assignments("p1")
+
+
 async def test_history_empty_load_and_corrupt() -> None:
     repo, _ = _history()
     await repo.async_load()
@@ -223,10 +235,26 @@ async def test_history_empty_load_and_corrupt() -> None:
 def test_history_round_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(limits, "MAX_STORED_ROUNDS", 1)
     repo = HistoryStore(MemoryStore())
-    repo.put_round(_round("r1", f.NOW))  # type: ignore[arg-type]
-    repo.put_round(_round("r1", f.NOW))  # type: ignore[arg-type]
+    open_item = f.assignment(id="a1", round_id="r1")
+    repo.put_round(_round("r1", f.NOW, open_item))  # type: ignore[arg-type]
+    repo.put_round(_round("r1", f.NOW, open_item))  # type: ignore[arg-type]
     with pytest.raises(LimitReachedError):
         repo.put_round(_round("r2", f.NOW))  # type: ignore[arg-type]
+
+
+def test_history_round_limit_evicts_the_oldest_closed_round(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.setattr(limits, "MAX_STORED_ROUNDS", 2)
+    repo = HistoryStore(MemoryStore())
+    open_item = f.assignment(id="a1", round_id="r1")
+    closed = f.assignment(id="a2", round_id="r2", status=AssignmentStatus.MISSED)
+    repo.put_round(_round("r1", f.NOW - 2 * DAY, open_item))  # type: ignore[arg-type]
+    repo.put_round(_round("r2", f.NOW - DAY, closed))  # type: ignore[arg-type]
+    repo.put_round(_round("r3", f.NOW))  # type: ignore[arg-type]
+    assert list(repo.rounds) == ["r1", "r3"]
+    assert repo.get_assignment("a2") is None
+    assert "Obergrenze für Runden" in caplog.text
 
 
 async def test_history_too_many_rounds_on_load(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -318,6 +346,33 @@ def test_config_migration_keeps_the_data() -> None:
     assert migrate(STORE_CONFIG, {"x": 1}, (1, 1), CONFIG_MIGRATIONS) == {"x": 1}
 
 
+@pytest.mark.parametrize(
+    ("stored", "expected"),
+    [
+        (30, limits.RETENTION_MIN),
+        (limits.RETENTION_MIN - 1, limits.RETENTION_MIN),
+        (limits.RETENTION_MIN, limits.RETENTION_MIN),
+        (limits.RETENTION_MAX, limits.RETENTION_MAX),
+    ],
+)
+def test_config_migration_raises_a_too_short_retention(stored: int, expected: int) -> None:
+    old = {"settings": {"history_retention_days": stored, "jokers_per_month": 2}}
+    new = migrate(STORE_CONFIG, old, (1, 3), CONFIG_MIGRATIONS)
+    assert new["settings"] == {"history_retention_days": expected, "jokers_per_month": 2}
+
+
+@pytest.mark.parametrize(
+    "data",
+    [{}, {"settings": "x"}, {"settings": {}}, {"settings": {"history_retention_days": True}}],
+)
+def test_config_migration_leaves_unreadable_settings_alone(data: dict[str, object]) -> None:
+    assert migrate(STORE_CONFIG, data, (1, 3), CONFIG_MIGRATIONS) == data
+
+
+def test_history_migration_to_the_current_version_keeps_the_data() -> None:
+    assert migrate(STORE_HISTORY, {"x": 1}, (1, 3), HISTORY_MIGRATIONS) == {"x": 1}
+
+
 def test_config_migration_turns_the_single_room_into_a_list() -> None:
     old = {
         "tasks": [
@@ -337,3 +392,26 @@ def test_config_migration_turns_the_single_room_into_a_list() -> None:
         "kaputt",
     ]
     assert migrate(STORE_CONFIG, {"tasks": "x"}, (1, 2), CONFIG_MIGRATIONS) == {"tasks": "x"}
+
+
+async def test_history_saves_encode_only_the_changed_rounds() -> None:
+    repo, memory = _history()
+    for ident in ("r1", "r2"):
+        item = f.assignment(id=f"a_{ident}", round_id=ident)
+        repo.put_round(_round(ident, f.NOW, item))  # type: ignore[arg-type]
+    first = repo._snapshot()["rounds"]  # type: ignore[index]
+    second = repo._snapshot()["rounds"]  # type: ignore[index]
+    assert all(a is b for a, b in zip(first, second, strict=True))
+
+    done = f.assignment(id="a_r1", round_id="r1", status=AssignmentStatus.MISSED)
+    repo.put_round(_round("r1", f.NOW, done))  # type: ignore[arg-type]
+    third = repo._snapshot()["rounds"]  # type: ignore[index]
+    assert third[0] is not first[0] and third[1] is first[1]
+    assert third[0]["assignments"][0]["status"] == "missed"
+
+    repo.remove_round("r2")
+    assert [r["id"] for r in repo._snapshot()["rounds"]] == ["r1"]  # type: ignore[index]
+    memory.flush_pending()
+    loaded = HistoryStore(MemoryStore(memory.data))
+    await loaded.async_load()
+    assert loaded.rounds["r1"].assignments[0].status is AssignmentStatus.MISSED

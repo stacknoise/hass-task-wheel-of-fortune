@@ -18,7 +18,7 @@ from custom_components.task_wheel.domain.enums import ExclusionReason, Load
 from custom_components.task_wheel.domain.models import WeeklyDaysAbsence
 
 from ..factories import task
-from .helpers import FixedRandom, make_context, make_person
+from .helpers import FixedRandom, draw_round, make_context, make_person
 
 
 def uniform(rng):
@@ -77,7 +77,7 @@ def test_points_assigned_in_round_count_immediately():
     ctx = make_context([make_person("a"), make_person("b"), make_person("c")], points={"c": 50})
     tasks = [task(id=f"t{i}", allowed=frozenset({"a", "b", "c"}), points=10) for i in range(3)]
     engine = DrawEngine(FairnessWeighting(), FixedRandom(0.0))
-    first, second, third = engine.draw_round(tasks, ctx)
+    first, second, third = draw_round(engine, tasks, ctx)
     assert first.winner_id == "a"
     # der Gewinner der ersten Aufgabe ist nicht mehr im Rad; c hat die meisten Punkte
     chances = {s.person_id: s.chance for s in second.segments}
@@ -88,7 +88,7 @@ def test_points_assigned_in_round_count_immediately():
 def test_no_repeat_uses_winner_of_earlier_task_in_round():
     ctx = make_context([make_person("a"), make_person("b")])
     same = [task(id="t1", allowed=frozenset({"a", "b"}), no_repeat=True)] * 2
-    first, second = uniform(FixedRandom(0.0)).draw_round(same, ctx)
+    first, second = draw_round(uniform(FixedRandom(0.0)), same, ctx)
     assert first.winner_id == "a"
     assert second.winner_id == "b"
 
@@ -96,7 +96,7 @@ def test_no_repeat_uses_winner_of_earlier_task_in_round():
 def test_draw_round_does_not_mutate_context():
     ctx = make_context([make_person("a")], points={"a": 1})
     snapshot = dict(ctx.points)
-    uniform(FixedRandom(0.0)).draw_round([task(allowed=frozenset({"a"}))], ctx)
+    draw_round(uniform(FixedRandom(0.0)), [task(allowed=frozenset({"a"}))], ctx)
     assert dict(ctx.points) == snapshot
     assert dataclasses.is_dataclass(ctx)
 
@@ -129,7 +129,7 @@ def test_round_runtime_is_measured_and_small():
     runs = 50
     start = time.perf_counter()
     for _ in range(runs):
-        engine.draw_round(tasks, ctx)
+        draw_round(engine, tasks, ctx)
     per_round_ms = (time.perf_counter() - start) / runs * 1000
     print(f"Laufzeit pro Runde: {per_round_ms:.2f} ms")  # noqa: T201
     assert per_round_ms < 50
@@ -149,5 +149,5 @@ def test_draw_round_gives_nobody_a_second_task():
         task(id="t1", allowed=frozenset({"a", "b"})),
         task(id="t2", allowed=frozenset({"a", "b"})),
     ]
-    first, second = uniform(FixedRandom(0.0)).draw_round(same, ctx)
+    first, second = draw_round(uniform(FixedRandom(0.0)), same, ctx)
     assert first.winner_id != second.winner_id

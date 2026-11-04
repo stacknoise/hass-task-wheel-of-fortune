@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from ...const.limits import WEEKDAY_COUNT
 from ..models import OnceAbsence, RecurringAbsence, WeeklyDaysAbsence, WeekRhythmAbsence
+from ..rules.periods import week_start
 
 
 @dataclass(slots=True, frozen=True)
@@ -63,10 +64,5 @@ class RecurringRule:
             return True
         if day.weekday() not in config.weekdays:
             return True
-        weeks_since_start = (_monday(day) - _monday(config.start)).days // WEEKDAY_COUNT
+        weeks_since_start = (week_start(day) - week_start(config.start)).days // WEEKDAY_COUNT
         return weeks_since_start % config.interval_weeks != 0
-
-
-def _monday(day: dt.date) -> dt.date:
-    """Montag der Woche von `day`."""
-    return day - dt.timedelta(days=day.weekday())

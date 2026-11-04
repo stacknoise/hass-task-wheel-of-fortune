@@ -8,6 +8,7 @@ import dataclasses
 import datetime as dt
 from collections.abc import Callable, Mapping
 from enum import StrEnum
+from functools import cache
 from types import MappingProxyType
 from typing import Any, ClassVar, Final, Self, cast, overload
 
@@ -156,6 +157,12 @@ def spec[T](decoder: Decoder[T], *, default: object = MISSING) -> T:
     return cast("T", dataclasses.field(default=default, metadata=metadata))
 
 
+@cache
+def _field_names(model: type) -> tuple[str, ...]:
+    """Feldnamen einer Datenklasse (einmal je Klasse ermittelt, nicht je Aufruf)."""
+    return tuple(field.name for field in dataclasses.fields(cast("Any", model)))
+
+
 class Model:
     """Basis der Datenklassen: einheitliche Serialisierung."""
 
@@ -163,10 +170,8 @@ class Model:
 
     def to_dict(self) -> dict[str, object]:
         """Gibt das Modell als JSON-taugliches Wörterbuch zurück."""
-        return {
-            field.name: encode(getattr(self, field.name))
-            for field in dataclasses.fields(cast("Any", self))
-        }
+        names = _field_names(cast("type", type(self)))
+        return {name: encode(getattr(self, name)) for name in names}
 
     @classmethod
     def from_dict(cls, data: Mapping[str, object]) -> Self:

@@ -4,9 +4,10 @@ import datetime as dt
 
 import pytest
 import voluptuous as vol
+from homeassistant.auth.models import User
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ServiceValidationError
+from homeassistant.core import Context, HomeAssistant
+from homeassistant.exceptions import ServiceValidationError, Unauthorized
 from pytest_homeassistant_custom_component.common import (
     async_capture_events,
     async_fire_time_changed,
@@ -179,6 +180,31 @@ async def test_set_absence_adds_once_absence_and_drops_expired(hass: HomeAssista
     assert data.config.persons["p1"].absences == (OnceAbsence(start=today, end=today + DAY),)
 
 
+async def test_services_respect_panel_admin_only(
+    hass: HomeAssistant, hass_admin_user: User, hass_read_only_user: User
+) -> None:
+    _, data = await _setup(hass)
+    data.config.set_settings(f.settings(panel_admin_only=True))
+    today = data.clock().date()
+    fields = {"person": "anna", "start": today.isoformat(), "end": today.isoformat()}
+
+    async def call(context: Context | None) -> None:
+        await hass.services.async_call(
+            DOMAIN, "set_absence", fields, blocking=True, context=context
+        )
+
+    with pytest.raises(Unauthorized):
+        await call(Context(user_id=hass_read_only_user.id))
+    assert not data.config.persons["p1"].absences
+    await call(Context(user_id=hass_admin_user.id))
+    await call(Context())  # Automation ohne Benutzer
+    assert len(data.config.persons["p1"].absences) == 2
+
+    data.config.set_settings(f.settings(panel_admin_only=False))
+    await call(Context(user_id=hass_read_only_user.id))
+    assert len(data.config.persons["p1"].absences) == 3
+
+
 async def test_set_absence_with_reversed_dates_is_rejected(hass: HomeAssistant) -> None:
     _, data = await _setup(hass)
     today = data.clock().date()
@@ -237,7 +263,7 @@ async def test_options_flow_updates_settings(hass: HomeAssistant) -> None:
         {
             "jokers_per_month": 3,
             "fairness_window_days": 14,
-            "history_retention_days": 90,
+            "history_retention_days": 400,
             "late_points_factor": 0.5,
             "missed_points_factor": -0.5,
             "missed_grace_hours": 12,

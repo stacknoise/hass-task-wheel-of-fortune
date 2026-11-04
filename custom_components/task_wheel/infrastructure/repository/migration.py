@@ -10,10 +10,13 @@ from ...const.keys import (
     KEY_ASSIGNMENTS,
     KEY_ROUNDS,
     KEY_SCHEDULE_ID,
+    KEY_SETTINGS,
     KEY_TASKS,
+    OPT_RETENTION,
     STORE_MINOR_VERSION,
     STORE_VERSION,
 )
+from ...const.limits import RETENTION_MIN
 from ...domain.errors import StorageVersionError
 
 type Version = tuple[int, int]
@@ -69,12 +72,31 @@ def _with_area_list(task: object) -> object:
     return {**rest, KEY_AREA_IDS: [legacy] if isinstance(legacy, str) and legacy else []}
 
 
+def _retention_floor(data: dict[str, object]) -> dict[str, object]:
+    """1.3 -> 1.4: zu kurze Aufbewahrung wird auf das Minimum angehoben (`RETENTION_MIN`)."""
+    settings = data.get(KEY_SETTINGS)
+    if not isinstance(settings, dict):
+        return data
+    days = settings.get(OPT_RETENTION)
+    if not isinstance(days, int) or isinstance(days, bool) or days >= RETENTION_MIN:
+        return data
+    return {**data, KEY_SETTINGS: {**settings, OPT_RETENTION: RETENTION_MIN}}
+
+
 # `von-Version -> (nach-Version, Funktion)`; bei Schemaänderungen hier ergänzen.
 CONFIG_MIGRATIONS: Final[Migrations] = MappingProxyType(
-    {(1, 1): ((1, 2), _unchanged), (1, 2): ((1, 3), _task_areas)}
+    {
+        (1, 1): ((1, 2), _unchanged),
+        (1, 2): ((1, 3), _task_areas),
+        (1, 3): ((1, 4), _retention_floor),
+    }
 )
 HISTORY_MIGRATIONS: Final[Migrations] = MappingProxyType(
-    {(1, 1): ((1, 2), _assignment_schedule), (1, 2): ((1, 3), _unchanged)}
+    {
+        (1, 1): ((1, 2), _assignment_schedule),
+        (1, 2): ((1, 3), _unchanged),
+        (1, 3): ((1, 4), _unchanged),
+    }
 )
 
 

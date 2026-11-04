@@ -9,7 +9,7 @@ from .application.config_service import ConfigService
 from .application.draw_service import DrawService
 from .application.entity_state import EntityStateService
 from .application.history_service import HistoryService
-from .application.live_view import LiveView, ObservedTimers
+from .application.live_view import AccessWatch, LiveView, ObservedTimers
 from .application.maintenance_service import MaintenanceService, Spawn
 from .application.notification_service import NotificationService
 from .application.protocols import ConfigRepository, HistoryRepository, RoundEvents, TimerPort
@@ -73,6 +73,7 @@ def compose(
     schedules = ScheduleService(config, history, draws, observed, events)
     live = LiveView(SnapshotBuilder(config, history, draws, swaps, schedules), clock)
     observed.listen(live.publish)
+    config.subscribe(AccessWatch(live, lambda: config.settings.panel_admin_only).check)
     config.subscribe(live.publish)
     return TaskWheelData(
         config=config,

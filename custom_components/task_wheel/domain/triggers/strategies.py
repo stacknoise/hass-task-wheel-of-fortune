@@ -2,17 +2,10 @@
 
 import datetime as dt
 
-from ...const.limits import TRIGGER_LOOKAHEAD_DAYS, WEEKDAY_COUNT
+from ...const.limits import ONE_DAY, ONE_WEEK, TRIGGER_LOOKAHEAD_DAYS, WEEKDAY_COUNT
 from ..models import ManualTrigger, OnceTrigger, Recurring
+from ..rules.periods import week_start
 from ..validation import ensure_aware
-
-_DAY = dt.timedelta(days=1)
-_WEEK = dt.timedelta(days=WEEKDAY_COUNT)
-
-
-def _monday(day: dt.date) -> dt.date:
-    """Montag der Woche von `day`."""
-    return day - dt.timedelta(days=day.weekday())
 
 
 class RecurringStrategy:
@@ -30,7 +23,7 @@ class RecurringStrategy:
         ensure_aware("after", after)
         first = after.date()
         moments = (
-            dt.datetime.combine(first + offset * _DAY, self._config.time, tzinfo=after.tzinfo)
+            dt.datetime.combine(first + offset * ONE_DAY, self._config.time, tzinfo=after.tzinfo)
             for offset in range(TRIGGER_LOOKAHEAD_DAYS + 1)
         )
         return next((m for m in moments if m > after and self._matches(m.date())), None)
@@ -47,7 +40,7 @@ class RecurringStrategy:
     def _week_index(self, day: dt.date) -> int:
         """Wochen seit der Ankerwoche (ohne Anker: 0)."""
         anchor = self._config.anchor or day
-        return (_monday(day) - _monday(anchor)) // _WEEK
+        return (week_start(day) - week_start(anchor)) // ONE_WEEK
 
 
 class OnceStrategy:

@@ -35,21 +35,16 @@ class EntityEvents(NoEvents):
         persons = {item.person_id for item in round_.assignments}
         self._send(signal_schedule(round_.schedule_id), *map(signal_person, persons))
 
-    def assignment_skipped(self, assignment: Assignment) -> None:
+    def _refresh_person(self, assignment: Assignment) -> None:
         """Offene Aufgaben und Punkte der Person aktualisieren."""
         self._send(signal_person(assignment.person_id))
+
+    # Erledigen, Verpassen und „Bleibt unerledigt“ ändern dieselben Entitäten der Person
+    assignment_completed = assignment_missed = assignment_skipped = _refresh_person
 
     def round_deleted(self, round_: Round) -> None:
         """Wie bei einer neuen Runde: alle Personen der Runde und der Zeitplan."""
         self.round_drawn(round_)
-
-    def assignment_completed(self, assignment: Assignment) -> None:
-        """Offene Aufgaben und Punkte der Person aktualisieren."""
-        self._send(signal_person(assignment.person_id))
-
-    def assignment_missed(self, assignment: Assignment) -> None:
-        """Offene Aufgaben und Punkte der Person aktualisieren."""
-        self._send(signal_person(assignment.person_id))
 
     def assignment_swapped(self, assignment: Assignment) -> None:
         """Abgebende und übernehmende Person aktualisieren."""

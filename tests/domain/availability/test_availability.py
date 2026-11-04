@@ -184,3 +184,19 @@ def test_recurring_weekdays_before_start_weekday_count_in_first_week() -> None:
     assert not rule.is_present(D(2026, 11, 6))  # Freitag derselben Woche
     assert rule.is_present(D(2026, 11, 13))
     assert not rule.is_present(D(2026, 11, 16))  # Montag zwei Wochen später
+
+
+def test_present_day_count_is_cached_per_window() -> None:
+    calls: list[dt.date] = []
+
+    class Counting:
+        def is_present(self, day: dt.date) -> bool:
+            calls.append(day)
+            return day.weekday() != FRIDAY
+
+    availability = PersonAvailability([Counting()])  # type: ignore[list-item]
+    window = (D(2026, 11, 2), D(2026, 11, 8))
+    assert availability.present_day_count(*window) == 6
+    made = len(calls)
+    assert availability.present_day_count(*window) == 6
+    assert len(calls) == made

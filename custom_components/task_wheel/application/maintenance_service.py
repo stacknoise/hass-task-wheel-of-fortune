@@ -40,12 +40,12 @@ class MaintenanceService:
         self.run(now)
 
     def run(self, now: dt.datetime) -> None:
-        """Markiert Verpasstes, stößt das Aufräumen an und plant den nächsten Lauf."""
-        self._assignments.mark_missed(now)
-        self._spawn(self._purge(now))
+        """Plant zuerst den nächsten Lauf (ein Fehler verliert ihn nicht), markiert und räumt."""
         at = next_daily(MAINTENANCE_HOUR, now)
         if at is not None:
             self._timers.schedule(TIMER_MAINTENANCE, at, self.run)
+        self._assignments.mark_missed(now)
+        self._spawn(self._purge(now))
 
     async def _purge(self, now: dt.datetime) -> None:
         """Löscht Runden außerhalb der Aufbewahrungsfrist (die Aggregate bleiben erhalten)."""

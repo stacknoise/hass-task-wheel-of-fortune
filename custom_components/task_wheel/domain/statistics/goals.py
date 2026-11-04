@@ -5,14 +5,13 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
 from ...const.defaults import DEFAULT_GOAL_WINDOWS
-from ..enums import Period
+from ...const.limits import ONE_DAY
+from ..enums import DONE_STATUSES, Period
 from ..models import Assignment, MaxPerPeriod, Task
 from ..rules.periods import local_date, shift_periods, window_start
-from ..status import DONE_STATUSES
 from ..types import TaskId
 
 type Placed = tuple[Assignment, dt.datetime]
-_DAY = dt.timedelta(days=1)
 
 
 @dataclass(slots=True, frozen=True)
@@ -65,7 +64,7 @@ def task_goal(
     result: list[GoalWindow] = []
     for back in range(windows):
         start = shift_periods(rule.period, first, -back * rule.every)
-        end = shift_periods(rule.period, start, rule.every) - _DAY
+        end = shift_periods(rule.period, start, rule.every) - ONE_DAY
         result.append(_window(start, end, mine, now.date()))
     return TaskGoal(task.id, rule.count, rule.period, rule.every, tuple(result))
 

@@ -10,7 +10,7 @@ from ..domain.enums import RoundOrigin
 from ..domain.errors import TaskWheelError
 from ..domain.models import Schedule
 from ..runtime import TaskWheelData
-from ..services import to_service_error
+from ..service_errors import to_service_error
 from .base import Owner, TaskWheelEntity
 from .factory import EntityFactory, EntityGroup, TaskWheelEntry, active_schedules
 from .signals import signal_schedule
@@ -26,8 +26,10 @@ class DrawButton(TaskWheelEntity, ButtonEntity):
 
         Raises:
             ServiceValidationError: Der Zeitplan ist archiviert oder die Ziehung nicht möglich.
+            Unauthorized: „Panel nur für Administratoren“ ist aktiv, der Benutzer aber keiner.
         """
         data = self._data
+        await self._ensure_allowed()
         try:
             data.draws.draw(self._item_id, RoundOrigin.MANUAL, data.clock())
         except TaskWheelError as err:

@@ -7,7 +7,7 @@ from typing import Final
 from ..const.defaults import REMINDER_HOUR
 from ..domain.enums import RoundOrigin
 from ..domain.errors import TaskWheelError
-from ..domain.models import Schedule
+from ..domain.models import OnceTrigger, Schedule
 from ..domain.triggers.factory import TriggerFactory
 from ..domain.triggers.lifecycle import after_fired
 from ..domain.triggers.reminder import reminder_age
@@ -67,10 +67,23 @@ class ScheduleService:
         return at
 
     def arm_all(self, now: dt.datetime) -> None:
-        """Setzt alle Zeitgeber (beim Start) und die tägliche Erinnerungsprüfung."""
+        """Holt verpasste einmalige Termine nach; setzt alle Zeitgeber und die Erinnerungen."""
+        for schedule in tuple(self._config.schedules.values()):
+            if self._missed_once(schedule, now):
+                self._draw_and_finish(schedule, now)
         for schedule_id in self._config.schedules:
             self.arm(schedule_id, now)
         self.arm_reminders(now)
+
+    def _missed_once(self, schedule: Schedule, now: dt.datetime) -> bool:
+        """Ein aktiver einmaliger Zeitplan, dessen Termin in der Ausfallzeit lag und noch fehlt."""
+        trigger = schedule.trigger
+        if not isinstance(trigger, OnceTrigger) or not schedule.enabled or schedule.archived:
+            return False
+        if trigger.at > now:
+            return False
+        last = self._last_drawn(schedule.id)
+        return last is None or last < trigger.at
 
     def save(self, schedule: Schedule, now: dt.datetime) -> None:
         """Legt den Zeitplan an oder ersetzt ihn und setzt seinen Zeitgeber neu."""
@@ -97,12 +110,12 @@ class ScheduleService:
             self._timers.schedule(TIMER_REMINDERS, at, self.check_reminders)
 
     def check_reminders(self, now: dt.datetime) -> None:
-        """Meldet alle fälligen Erinnerungen und plant die nächste Prüfung."""
+        """Plant die nächste Prüfung (zuerst, damit ein Fehler sie nicht verliert) und meldet."""
+        self.arm_reminders(now)
         for schedule in self._config.schedules.values():
             age = reminder_age(schedule, self._last_drawn(schedule.id), now)
             if age is not None:
                 self._events.reminder_due(schedule, age)
-        self.arm_reminders(now)
 
     def _last_drawn(self, schedule_id: ScheduleId) -> dt.datetime | None:
         """Beginn der jüngsten Runde des Zeitplans (jeder Herkunft)."""
@@ -112,19 +125,26 @@ class ScheduleService:
         return max(starts, default=None)
 
     def _on_fire(self, schedule_id: ScheduleId, planned: dt.datetime, fired: dt.datetime) -> None:
-        """Zeitgeber ausgelöst: auslosen, einmalige Pläne abschließen, nächsten Zeitgeber setzen."""
+        """Zeitgeber ausgelöst: auslosen, einmalige Pläne abschließen, immer neu setzen."""
         now = max(fired, planned)
         schedule = self._config.schedules.get(schedule_id)
         if schedule is None:
             return
         try:
-            self._draws.draw(schedule_id, RoundOrigin.AUTO, now)
+            self._draw_and_finish(schedule, now)
+        finally:
+            self.arm(schedule_id, now)
+
+    def _draw_and_finish(self, schedule: Schedule, now: dt.datetime) -> None:
+        """Löst aus; nur nach einer gelungenen Auslosung gilt ein einmaliger Plan als erledigt."""
+        try:
+            self._draws.draw(schedule.id, RoundOrigin.AUTO, now)
         except TaskWheelError:
             _LOGGER.warning(
                 "Automatische Auslosung fehlgeschlagen: %s", schedule.slug, exc_info=True
             )
+            return
         self._finish_once(schedule)
-        self.arm(schedule_id, now)
 
     def _finish_once(self, schedule: Schedule) -> None:
         """Wendet an, was nach einem einmaligen Zeitplan gilt (behalten, archivieren, löschen)."""

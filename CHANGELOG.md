@@ -17,6 +17,23 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 - Download der CSV-Datei funktioniert auch in Safari, Firefox und der Companion-App
 - Die Statistik zeigt beim Wechsel des Zeitraums „in Arbeit“ (`aria-busy`), das Glücksrad teilt Abbruch und Reduced-Motion mit den übrigen Animationen
 - Intern: Farbwerte nur noch in `constants/` (neue ESLint-Regel), Totcode und 15 ungenutzte Übersetzungsschlüssel entfernt, Test für Parität und Nutzung der Schlüssel
+- Intern: Schlüssel-Literal in der Panel-Rundenansicht durch Konstante ersetzt.
+- Behoben: ein einmaliger Zeitplan, dessen Termin während eines Ausfalls verstrichen ist, wird beim Start nachgeholt.
+- Performance: der tägliche Verpasst-Lauf speichert und rechnet die Statistik je Runde einmal statt je Zuteilung.
+- Performance: Speichern des Verlaufs kodiert nur noch geänderte Runden neu; Feldnamen der Datenklassen werden zwischengespeichert.
+- Intern: Auslosung rechnet Kapazitäten und Erreichbarkeit nur einmal je Runde (spürbar bei langem Fairness-Fenster und vielen Abwesenheitsregeln); nur von Tests genutzte Funktionen entfernt
+- Je Panel-Verbindung gibt es höchstens zwei Live-Abonnements (ein neues ersetzt das älteste)
+- Dienste lehnen einen mehrdeutigen Aufgabennamen ab (`ambiguous_reference`) statt still die erste Aufgabe zu nehmen; Fehler eines Benachrichtigungsdienstes werden protokolliert und stören die übrigen Ziele nicht
+- „Panel nur für Administratoren“ gilt jetzt auch für die Dienste, den Button „Auslosen“ und das Abhaken in der To-do-Liste; beim Aktivieren werden bestehende Panel-Verbindungen abgemeldet, und die Seitenleiste folgt der Einstellung sofort
+- Behoben: Das Panel wird beim erneuten Einrichten nach einem abgebrochenen Setup nicht mehr doppelt registriert
+- Beschädigter oder zu neuer Speicher zeigt beim Einrichten eine verständliche Fehlermeldung statt „Fehler beim Einrichten“
+- Eine Auslosung im Panel schlägt fehl (und entfällt), wenn die gezogene Person, Aufgabe oder der Zeitplan inzwischen gelöscht wurde, statt unsichtbare Zuteilungen zu erzeugen
+- Von Hand oder per Dienst ausgelöste Runden desselben Zeitplans brauchen 30 Sekunden Abstand; ist die Obergrenze gespeicherter Runden erreicht, entfällt die älteste abgeschlossene Runde statt alle weiteren Auslosungen zu blockieren
+- Intern: doppelte Konstanten und doppelter Code zusammengeführt (Ressourcennamen, Statusmengen, Zeitspannen, Wochenanfang, offene Zuteilungen im Snapshot)
+- Behoben: Ein einmaliger Zeitplan wird nicht mehr archiviert oder gelöscht, wenn seine Auslosung fehlgeschlagen ist
+- Behoben: Zeitplan-, Erinnerungs- und Wartungs-Zeitgeber werden auch nach einem unerwarteten Fehler im Rückruf neu gesetzt
+- Die Aufbewahrung des Verlaufs beträgt mindestens 373 Tage (Standard 373): Häufigkeitsregeln, Fairness-Fenster und offene Zuteilungen brauchen diesen Verlauf. Zu kurze gespeicherte Werte werden beim Start angehoben; Runden mit offenen Zuteilungen werden nie aufgeräumt
+- Behoben: Eine Zuteilung mit längster Frist plus Kulanzzeit wurde bei Sommerzeit-Wechsel nie als verpasst markiert
 
 ## [0.4.0] – 2026-11-04
 

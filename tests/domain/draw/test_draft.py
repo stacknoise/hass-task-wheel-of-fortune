@@ -6,6 +6,8 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
+from custom_components.task_wheel.domain.draw import draft as draft_module
+from custom_components.task_wheel.domain.draw.candidates import CandidateSelector
 from custom_components.task_wheel.domain.draw.draft import RoundDraft
 from custom_components.task_wheel.domain.draw.engine import DrawEngine
 from custom_components.task_wheel.domain.draw.weighting import UniformWeighting
@@ -91,3 +93,23 @@ def test_due_date_keeps_local_wall_clock_across_dst_change():
     assignment = one.spin_rest(engine(0.1)).to_round("r1", ids(), start).assignments[0]
     assert assignment.due_at == dt.datetime(2026, 10, 27, 10, tzinfo=berlin)
     assert assignment.due_at.utcoffset() == dt.timedelta(hours=1)
+
+
+def test_capacity_and_reach_are_computed_once_and_shared_by_every_step(monkeypatch):
+    calls = []
+    real = draft_module.capacities
+    monkeypatch.setattr(draft_module, "capacities", lambda ctx: calls.append(1) or real(ctx))
+    start = draft(tasks_ab())
+    done = start.spin(engine(0.1)).spin(engine(0.1))
+    assert len(calls) == 1
+    assert done.capacity is start.capacity
+    assert done.reach is start.reach
+    assert set(start.reach) == {"t2"}  # nur das, was als Rest einer Ziehung gebraucht wurde
+
+
+def test_reach_is_not_recomputed_for_known_tasks():
+    selector, ctx = CandidateSelector(), make_context([make_person("p1")])
+    memo: dict[str, frozenset[str]] = {}
+    assert selector._reach(memo, task(id="t1"), ctx) == frozenset({"p1"})
+    memo["t1"] = frozenset({"cached"})
+    assert selector._reach(memo, task(id="t1"), ctx) == frozenset({"cached"})

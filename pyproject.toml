@@ -58,7 +58,7 @@ include_external_packages = true
 name = "Schichten: Schnittstellen -> Anwendung -> Domäne"
 type = "layers"
 layers = [
-  "custom_components.task_wheel.websocket | custom_components.task_wheel.entities",
+  "custom_components.task_wheel.websocket | custom_components.task_wheel.entities | custom_components.task_wheel.services",
   "custom_components.task_wheel.application",
   "custom_components.task_wheel.domain",
 ]
@@ -69,6 +69,22 @@ type = "forbidden"
 source_modules = ["custom_components.task_wheel.domain"]
 forbidden_modules = ["homeassistant", "custom_components.task_wheel.infrastructure"]
 allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Anwendung und Domäne kennen die Einstiegsmodule nicht"
+type = "forbidden"
+source_modules = [
+  "custom_components.task_wheel.domain",
+  "custom_components.task_wheel.application",
+]
+forbidden_modules = [
+  "custom_components.task_wheel.services",
+  "custom_components.task_wheel.runtime",
+  "custom_components.task_wheel.entry_lookup",
+  "custom_components.task_wheel.access",
+  "custom_components.task_wheel.service_errors",
+  "custom_components.task_wheel.config_flow",
+]
 
 [[tool.importlinter.contracts]]
 name = "Anwendung kennt die Infrastruktur nicht"

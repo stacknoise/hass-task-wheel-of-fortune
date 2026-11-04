@@ -385,7 +385,9 @@ Felder, zu lange Zeichenketten und Listen sowie zu tiefe Verschachtelung ab; die
 Fachfehler kommen als Fehlerantwort, deren `code` der Übersetzungsschlüssel ist (z. B. `not_found`,
 `limit_reached`, `in_use`). Wer ein Element löscht, das noch gebraucht wird (letzte erlaubte Person einer Aufgabe,
 letzte Aufgabe eines Zeitplans), bekommt `in_use`; sonst wird es aus den Verweisen gestrichen. Ist
-`panel_admin_only` gesetzt, gilt für alle Befehle: nur Administratoren.
+`panel_admin_only` gesetzt, gilt für alle Befehle: nur Administratoren; dasselbe Recht prüfen die Dienste, der Button
+„Auslosen“ und das Abhaken in der To-do-Liste (Aufrufe ohne Benutzer, etwa aus Automationen, bleiben erlaubt). Wird die Einstellung
+aktiviert, werden bestehende Abonnements abgemeldet, und der Seitenleisteneintrag folgt der Einstellung ohne Neustart.
 
 `snapshot` und die Antwort auf `subscribe` enthalten `persons` (mit `jokers_left`), `tasks`, `schedules` (mit
 `next_run`), die offenen `assignments`, die offenen `panel_rounds`, `settings` und `now`. Ein Delta nennt je
@@ -432,7 +434,7 @@ setzen das durch.
 | XSS im Panel | Lit-Templates escapen; keine HTML-Zeichenketten aus Daten; Farben werden gegen `^#[0-9a-f]{6}$` validiert |
 | CSV-Injection | Entschärfen beim Export |
 | Benachrichtigungsdienst als Hebel | Ziel nur aus vorhandenen `notify`-Entitäten/-Diensten wählbar, Prüfung beim Speichern und beim Senden |
-| Ressourcenverbrauch | Obergrenzen für Personen, Aufgaben, Zeitpläne, offene Panel-Runden; Historie wird nach Aufbewahrungsfrist gekürzt |
+| Ressourcenverbrauch | Obergrenzen für Personen, Aufgaben, Zeitpläne, offene Panel-Runden; Historie wird nach Aufbewahrungsfrist gekürzt (Runden mit offenen Zuteilungen bleiben); von Hand oder per Dienst ausgelöste Runden desselben Zeitplans brauchen 30 Sekunden Abstand (`DRAW_MIN_INTERVAL_SECONDS`), bei Erreichen von `MAX_STORED_ROUNDS` entfällt die älteste abgeschlossene Runde (Aggregate bleiben) |
 | Abhängigkeiten | Keine Python-Laufzeitabhängigkeiten außer HA; npm-Abhängigkeiten über Lockdateien festgelegt (Frontend exakt gepinnt, `e2e/` mit `^`-Bereich), `npm audit` und `pip-audit` (wöchentlich) in CI, Dependabot |
 
 ### 8.1 Ergebnis des Security-Reviews (AP-18)
@@ -444,13 +446,13 @@ Befunde der Stufe hoch oder mittel: **keine offen.**
 |---|---|---|
 | WebSocket | Fehlerhafte Werte (falsche Typen, Übergrößen, tiefe Verschachtelung, ungültige Daten, unbekannte Arten) für jedes Feld jedes Befehls, Tests `tests/websocket/test_hardening.py` | nur Schema- oder Fachfehler, nie eine Ausnahme |
 | WebSocket | Rechte: Konfiguration nur Administratoren, `panel_admin_only` sperrt alle Befehle für Nicht-Administratoren | in `tests/websocket/test_registry.py` (Recht je Befehl) und `tests/test_websocket.py` (`panel_admin_only`) geprüft |
-| Dienste | `vol.Length` für Verweise, `cv.date`, Fachfehler werden übersetzt; `set_absence` begrenzt die Regelzahl über das Modell | keine Befunde |
-| To-do | Nur Abhaken, nur offene Zuteilungen der eigenen Liste | keine Befunde |
+| Dienste | `vol.Length` für Verweise, `cv.date`, Fachfehler werden übersetzt; `set_absence` begrenzt die Regelzahl über das Modell; bei `panel_admin_only` nur Administratoren (`access.ensure_allowed`) | in `tests/test_access.py` und `tests/test_integration.py` geprüft |
+| To-do, Button | To-do: nur Abhaken, nur offene Zuteilungen der eigenen Liste; To-do und Button bei `panel_admin_only` nur für Administratoren | in `tests/test_access.py` geprüft |
 | CSV | Formelzeichen (`= + - @ Tab CR`) werden entschärft, alles in Anführungszeichen | keine Befunde |
 | Ressourcen | Obergrenzen für Personen, Aufgaben, Zeitpläne, Abonnenten, offene Panel-Runden, Historie; Lasttest `tests/performance/` | eingehalten |
 | Abhängigkeiten | `npm audit` (Panel und E2E), Dependabot, keine Laufzeitabhängigkeiten | keine Befunde |
 | **Niedrig, akzeptiert** | Der Snapshot enthält das Benachrichtigungsziel (`notify_target`) jeder Person und geht an alle angemeldeten Benutzer (bzw. nur Administratoren bei `panel_admin_only`). Das Ziel ist ein Dienstname wie `notify.mobile_app_anna`, kein Geheimnis; Benutzer eines Haushalts sehen ohnehin dieselben Entitäten | bewusst belassen |
-| **Niedrig, akzeptiert** | Jeder angemeldete Benutzer darf Zuteilungen anderer erledigen und tauschen und Runden auslosen (Haushaltsmodell, KONZEPT §11) | bewusst belassen; wer das nicht will, setzt „Panel nur für Administratoren“ |
+| **Niedrig, akzeptiert** | Jeder angemeldete Benutzer darf Zuteilungen anderer erledigen und tauschen und Runden auslosen (Haushaltsmodell, KONZEPT §11) | bewusst belassen; wer das nicht will, setzt „Panel nur für Administratoren“ (gilt für Panel, WebSocket, Dienste, Button und To-do) |
 
 ---
 

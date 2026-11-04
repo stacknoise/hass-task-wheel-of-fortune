@@ -1,15 +1,15 @@
 """Eine Runde in Arbeit: schrittweise gezogen (Panel) oder in einem Zug (automatisch)."""
 
 import datetime as dt
-from collections.abc import Callable, Iterator
-from dataclasses import dataclass, replace
+from collections.abc import Callable, Iterator, Mapping
+from dataclasses import dataclass, field, replace
 
 from ...const.keys import ERR_ROUND_COMPLETE, ERR_ROUND_INCOMPLETE
 from ..enums import RoundOrigin
 from ..errors import DrawRejectedError
 from ..models import Assignment, Round, Task
-from ..types import PersonId, RoundId, ScheduleId
-from .engine import DrawEngine
+from ..types import PersonId, RoundId, ScheduleId, TaskId
+from .engine import DrawEngine, capacities
 from .types import DrawContext, TaskDraw
 
 
@@ -27,6 +27,17 @@ class RoundDraft:
     context: DrawContext
     tasks: tuple[Task, ...]
     results: tuple[TaskDraw, ...] = ()
+    # Ändern sich innerhalb einer Runde nicht und werden deshalb nur einmal berechnet:
+    # Kapazität je Person und (als gemeinsamer Zwischenspeicher) die möglichen Personen je Aufgabe
+    capacity: Mapping[PersonId, float] = field(default_factory=dict, compare=False, repr=False)
+    reach: dict[TaskId, frozenset[PersonId]] = field(
+        default_factory=dict, compare=False, repr=False
+    )
+
+    def __post_init__(self) -> None:
+        """Berechnet die Kapazitäten der Runde einmal (ein weitergereichter Stand behält sie)."""
+        if not self.capacity:
+            object.__setattr__(self, "capacity", capacities(self.context))
 
     @property
     def pending(self) -> tuple[Task, ...]:
@@ -47,7 +58,9 @@ class RoundDraft:
         if self.complete:
             raise DrawRejectedError(ERR_ROUND_COMPLETE)
         task = self.tasks[len(self.results)]
-        result = engine.draw_task(task, self.context, self.pending[1:])
+        result = engine.draw_task(
+            task, self.context, self.pending[1:], capacity=self.capacity, reach=self.reach
+        )
         return replace(self, context=self._advance(task, result), results=(*self.results, result))
 
     def preview(self, engine: DrawEngine) -> TaskDraw:
@@ -58,7 +71,13 @@ class RoundDraft:
         """
         if self.complete:
             raise DrawRejectedError(ERR_ROUND_COMPLETE)
-        return engine.preview_task(self.pending[0], self.context, self.pending[1:])
+        return engine.preview_task(
+            self.pending[0],
+            self.context,
+            self.pending[1:],
+            capacity=self.capacity,
+            reach=self.reach,
+        )
 
     def spin_rest(self, engine: DrawEngine) -> "RoundDraft":
         """Zieht alle übrigen Aufgaben."""

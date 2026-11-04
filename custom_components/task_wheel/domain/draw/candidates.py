@@ -178,9 +178,18 @@ class CandidateSelector:
     ) -> list[frozenset[PersonId]]:
         """Mögliche Personen je Aufgabe ohne die Besetzung der Runde (aus `reach`, falls da)."""
         memo = {} if reach is None else reach
-        return [
-            memo.setdefault(t.id, self.eligible(t, context)) - context.round_holders for t in tasks
-        ]
+        return [self._reach(memo, task, context) - context.round_holders for task in tasks]
+
+    def _reach(
+        self,
+        memo: MutableMapping[TaskId, frozenset[PersonId]],
+        task: Task,
+        context: DrawContext,
+    ) -> frozenset[PersonId]:
+        """Mögliche Personen der Aufgabe; nur berechnet, wenn `memo` sie noch nicht kennt."""
+        if task.id not in memo:
+            memo[task.id] = self.eligible(task, context)
+        return memo[task.id]
 
     @staticmethod
     def _allowed(task: Task, context: DrawContext) -> list[Person]:

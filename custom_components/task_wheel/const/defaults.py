@@ -2,6 +2,8 @@
 
 from typing import Final
 
+from .limits import RETENTION_MIN
+
 DOMAIN: Final = "task_wheel"
 INTEGRATION_NAME: Final = "Task Wheel of Fortune"
 INTEGRATION_NAME_DE: Final = "Aufgaben-Glücksrad"
@@ -10,7 +12,7 @@ GERMAN_LANGUAGE_PREFIX: Final = "de"
 # Einstellungen (KONZEPT §4, §11)
 DEFAULT_JOKERS_PER_MONTH: Final = 2
 DEFAULT_FAIRNESS_WINDOW_DAYS: Final = 30
-DEFAULT_HISTORY_RETENTION_DAYS: Final = 365
+DEFAULT_HISTORY_RETENTION_DAYS: Final = RETENTION_MIN
 DEFAULT_LATE_POINTS_FACTOR: Final = 1.0
 DEFAULT_MISSED_POINTS_FACTOR: Final = 0.0
 DEFAULT_MISSED_GRACE_HOURS: Final = 24

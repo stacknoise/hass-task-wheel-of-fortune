@@ -69,6 +69,8 @@ LAYER_RULES: Final = (
     (f"{_PKG}websocket/", LAYER_API),
     (f"{_PKG}entities/", LAYER_API),
     (f"{_PKG}services.py", LAYER_API),
+    (f"{_PKG}access.py", LAYER_API),
+    (f"{_PKG}service_errors.py", LAYER_API),
     (f"{_PKG}__init__.py", LAYER_ENTRY),
     (f"{_PKG}config_flow.py", LAYER_ENTRY),
     (f"{_PKG}runtime.py", LAYER_ENTRY),
