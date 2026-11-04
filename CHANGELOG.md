@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+## [0.5.0] – 2026-11-04
+
 - **Geändert:** Der Tausch ist ein echter Tausch Aufgabe gegen Aufgabe innerhalb einer Auslosung: Ana (Bad) und Ben (Küche) haben danach Küche und Bad, jede Person behält genau eine Aufgabe (bisher bekam Ben Anas Aufgabe zusätzlich). Das Panel zeigt je Zielperson auch deren Aufgabe („Ben (Küche)“); ohne offene Gegenaufgabe lehnt der Dienst mit `swap_person_has_no_open_assignment` ab. Die Regeln (Aufgabe tauschbar, erlaubt, nicht pausiert, Belastbarkeit, Anwesenheit) gelten für beide Richtungen, beide Zuteilungen werden gemeinsam gespeichert und lösen je ein Event `task_wheel_swapped` aus; jede Person bekommt eine Benachrichtigung
 - **Entfernt:** Der Tausch hat nichts mehr mit Jokern zu tun (keine Jokerprüfung `no_jokers_left`, kein Zähler, kein `jokers_left` in Snapshot und Panel); die Einstellung `jokers_per_month` bleibt für später reserviert und ohne Wirkung. Das Feld `person_ids` der Runden im Snapshot entfällt
 - Geändert: Eine Auslosung im Panel dürfen nach dem ersten Ergebnis nur noch Administratoren abbrechen oder durch einen Neustart ersetzen; vor dem ersten Ergebnis kann sie jeder schließen
@@ -81,7 +83,8 @@ Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.
 - Fairness-Gewichtung, Tausch mit Joker, „Bleibt unerledigt“, Historie mit CSV-Export und Statistiken
 - Home-Assistant-Anbindung: Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen
 
-[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.4.0...HEAD
+[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.2.0...v0.3.0
