@@ -6,6 +6,7 @@ import { modelsOf } from '../api/index.ts';
 import type {
   GoalWindow,
   PersonObject,
+  ScheduleObject,
   StatisticsReport,
   TaskGoal,
   TaskObject,
@@ -18,6 +19,7 @@ import {
   BUSY_OPACITY,
   DEFAULT_RANGE,
   EVENT_CHIP_SELECT,
+  GOALS_SCROLL_MAX_HEIGHT,
   STATISTICS_RANGES,
   STATISTICS_WEEKS,
   VIEW_TAGS,
@@ -130,6 +132,18 @@ export class TwStatisticsView extends LitElement {
         stroke: var(--tw-color-primary);
         stroke-width: 2;
       }
+      .goal-scroll {
+        max-height: ${unsafeCSS(GOALS_SCROLL_MAX_HEIGHT)};
+        overflow-y: auto;
+      }
+      .goal-group + .goal-group {
+        margin-top: var(--tw-space-s);
+      }
+      .goal-group summary {
+        cursor: pointer;
+        font-weight: 500;
+        padding: var(--tw-space-s);
+      }
       td.goal-cell {
         min-width: 110px;
       }
@@ -199,7 +213,11 @@ export class TwStatisticsView extends LitElement {
           label=${this.#text('statistics.range')}
         ></tw-chips>
       </div>
-      ${this.#body(modelsOf(snapshot, 'persons'), modelsOf(snapshot, 'tasks'))}
+      ${this.#body(
+        modelsOf(snapshot, 'persons'),
+        modelsOf(snapshot, 'tasks'),
+        modelsOf(snapshot, 'schedules'),
+      )}
     `;
   }
 
@@ -207,7 +225,11 @@ export class TwStatisticsView extends LitElement {
     return translate(key, this.language, params);
   }
 
-  #body(persons: readonly PersonObject[], tasks: readonly TaskObject[]): TemplateResult {
+  #body(
+    persons: readonly PersonObject[],
+    tasks: readonly TaskObject[],
+    schedules: readonly ScheduleObject[],
+  ): TemplateResult {
     const { status, value: report } = this.#report;
     if (status === 'error') {
       return html`<p class="error" role="alert">${this.#text('common.loadError')}</p>`;
@@ -218,7 +240,7 @@ export class TwStatisticsView extends LitElement {
     if (report.kpis.assigned === 0) {
       return report.goals.length === 0
         ? html`<p class="empty">${this.#text('statistics.empty')}</p>`
-        : this.#goalsCard(report, tasks);
+        : this.#goalsCard(report, tasks, schedules);
     }
     const personById = indexById(persons);
     return html`
@@ -234,7 +256,7 @@ export class TwStatisticsView extends LitElement {
             </div>`,
         )}
       </div>
-      ${this.#goalsCard(report, tasks)}
+      ${this.#goalsCard(report, tasks, schedules)}
       <div class="pair">${this.#pointsCard(report, personById)} ${this.#weeklyCard(report)}</div>
       ${this.#matrixCard(report, tasks, persons)} ${this.#highlights(report, personById)}
     `;
@@ -269,42 +291,68 @@ export class TwStatisticsView extends LitElement {
     ];
   }
 
-  /** Eigene Box: Soll gegen tatsächlich verloste Anzahl je Aufgabe im Fenster ihrer Regel. */
-  #goalsCard(report: StatisticsReport, tasks: readonly TaskObject[]): TemplateResult {
+  /** Eigene Box: Soll gegen Verlostes je Zeitplan, in einer Scrollbox mit klappbaren Zeitplänen. */
+  #goalsCard(
+    report: StatisticsReport,
+    tasks: readonly TaskObject[],
+    schedules: readonly ScheduleObject[],
+  ): TemplateResult {
     const taskById = indexById(tasks);
+    const scheduleById = indexById(schedules);
     const areas = this.#store.areaNames();
-    const windows = Math.max(...report.goals.map((goal) => goal.windows.length));
+    const groups = new Map<string, TaskGoal[]>();
+    for (const goal of report.goals) {
+      groups.set(goal.schedule_id, [...(groups.get(goal.schedule_id) ?? []), goal]);
+    }
     return html`<section class="card">
       <h2>${this.#text('statistics.goals')}</h2>
       <p class="muted">${this.#text('statistics.goalsHint')}</p>
-      <div class="scroll">
-        <table>
-          <caption class="visually-hidden">
-            ${this.#text('statistics.goals')}
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">${this.#text('statistics.task')}</th>
-              <th scope="col">${this.#text('statistics.goalRule')}</th>
-              ${Array.from(
-                { length: windows },
-                (_, index) =>
-                  html`<th scope="col">
-                    ${this.#text(index === 0 ? 'statistics.goalCurrent' : 'statistics.goalPast')}
-                  </th>`,
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            ${repeat(
-              report.goals,
-              (goal) => goal.task_id,
-              (goal) => this.#goalRow(goal, taskById.get(goal.task_id), areas),
-            )}
-          </tbody>
-        </table>
+      <div class="goal-scroll">
+        ${repeat(
+          groups,
+          ([scheduleId]) => scheduleId,
+          ([scheduleId, goals]) =>
+            html`<details class="goal-group" open>
+              <summary>
+                ${scheduleById.get(scheduleId)?.name ?? this.#text('common.unknownSchedule')}
+              </summary>
+              ${this.#goalTable(goals, taskById, areas)}
+            </details>`,
+        )}
       </div>
     </section>`;
+  }
+
+  #goalTable(
+    goals: readonly TaskGoal[],
+    taskById: ReadonlyMap<string, TaskObject>,
+    areas: AreaNames,
+  ): TemplateResult {
+    const windows = Math.max(...goals.map((goal) => goal.windows.length));
+    return html`<div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">${this.#text('statistics.task')}</th>
+            <th scope="col">${this.#text('statistics.goalRule')}</th>
+            ${Array.from(
+              { length: windows },
+              (_, index) =>
+                html`<th scope="col">
+                  ${this.#text(index === 0 ? 'statistics.goalCurrent' : 'statistics.goalPast')}
+                </th>`,
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          ${repeat(
+            goals,
+            (goal) => goal.task_id,
+            (goal) => this.#goalRow(goal, taskById.get(goal.task_id), areas),
+          )}
+        </tbody>
+      </table>
+    </div>`;
   }
 
   #goalRow(goal: TaskGoal, task: TaskObject | undefined, areas: AreaNames): TemplateResult {
