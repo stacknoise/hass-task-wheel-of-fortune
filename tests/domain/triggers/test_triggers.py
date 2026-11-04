@@ -47,6 +47,14 @@ def next_fire(config, after: dt.datetime) -> dt.datetime | None:
         # monatlich: erster gewählter Wochentag des Monats
         (recurring(SAT, monthly=True), at(11, 3), at(11, 7, 7)),
         (recurring(SAT, monthly=True), at(11, 7, 8), at(12, 5, 7)),
+        # monatlich mit mehreren Wochentagen: nur der früheste Termin des Monats
+        (recurring(MON, THU, monthly=True), at(11, 1), at(11, 2, 7)),
+        (recurring(MON, THU, monthly=True), at(11, 2, 8), at(12, 3, 7)),
+        (
+            recurring(MON, THU, monthly=True),
+            at(12, 3, 8),
+            dt.datetime(2027, 1, 4, 7, tzinfo=BERLIN),
+        ),
         # Jahreswechsel
         (recurring(THU), at(12, 31, 12), dt.datetime(2027, 1, 7, 7, tzinfo=BERLIN)),
     ],
