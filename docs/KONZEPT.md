@@ -245,7 +245,7 @@ sequenceDiagram
   DS->>HA: Event task_wheel_drawn, Entitäten aktualisieren, Benachrichtigen
 ```
 
-Vor der Ziehung werden die fälligen Aufgaben auf so viele begrenzt, wie Personen mitmachen können (nicht pausiert und, sofern die Aufgaben Abwesenheit beachten, im Fristfenster anwesend; `limit_to_participants` in `application/draw_inputs.py`). Gibt es mehr fällige Aufgaben als solche Personen, sind täglich anfallende Aufgaben (`Task.is_daily`: höchstens n× in 1 Tag) immer dabei und die injizierte Zufallsquelle füllt die übrigen Plätze gleichverteilt (nicht vorhersehbar); gibt es mehr tägliche Aufgaben als Plätze, wählt sie unter den täglichen; die Reihenfolge der gewählten Aufgaben bleibt die des Zeitplans. Nicht gewählte Aufgaben kommen in dieser Runde gar nicht vor.
+Vor der Ziehung werden die fälligen Aufgaben auf so viele begrenzt, wie Personen mitmachen können (nicht pausiert und, sofern die Aufgaben Abwesenheit beachten, heute anwesend; `limit_to_participants` in `application/draw_inputs.py`). Gibt es mehr fällige Aufgaben als solche Personen, sind täglich anfallende Aufgaben (`Task.is_daily`: höchstens n× in 1 Tag) immer dabei und die injizierte Zufallsquelle füllt die übrigen Plätze gleichverteilt (nicht vorhersehbar); gibt es mehr tägliche Aufgaben als Plätze, wählt sie unter den täglichen; die Reihenfolge der gewählten Aufgaben bleibt die des Zeitplans. Nicht gewählte Aufgaben kommen in dieser Runde gar nicht vor.
 
 Beim manuellen Ablauf im Panel wird die Runde schrittweise gezogen (`draw/begin`, `draw/spin`, `draw/spin_rest`,
 `draw/commit`, `draw/cancel`; vorab zeigt `draw/preview` Rad und Kandidaten einer Aufgabe). Das **Ergebnis bestimmt immer das Backend**; das Frontend erhält Gewinner und
@@ -262,7 +262,7 @@ Objekt mit `reason`, die Gründe erscheinen im Panel unter „Wer ist dabei?“)
 
 1. **Belastung**: `load == paused`
 2. **Mindest-Belastbarkeit** (wenn `min_load` nicht `paused`): `load.factor < min_load.factor` entfernt die Person (`load_too_low`); gibt es niemanden mit ausreichender Belastbarkeit, bleibt die Aufgabe unvergeben
-3. **Anwesenheit** (wenn `respect_absence`): nicht an mindestens einem Tag im Fristfenster `[jetzt, jetzt + due_days]` anwesend
+3. **Anwesenheit** (wenn `respect_absence`): heute abwesend (wer heute fehlt, nimmt nicht an der Auslosung teil, auch wenn die Person vor der Frist zurückkommt)
 4. **Keine Wiederholung** (wenn `no_repeat`): hatte die Aufgabe in der letzten Zuteilung, sofern noch andere Kandidaten übrig sind (nur Vorliebe: wer sonst unvergeben bliebe, bekommt die Aufgabe trotzdem; vorher sperren harte Filter und eine Zuordnung stellt sicher, dass so viele Aufgaben wie möglich verteilt werden)
 5. **Aufgabe in dieser Runde** (immer): Wer in derselben Runde schon eine Aufgabe gezogen hat, bekommt keine zweite und ist für die weiteren Aufgaben nicht mehr im Rad (`taken`). Die Begrenzung auf die Zahl der mitmachenden Personen (siehe 5.1) nimmt überzählige Aufgaben gar nicht erst in die Runde auf; bleibt dennoch eine Aufgabe ohne Kandidaten übrig (z. B. weil alle erlaubten Personen schon eine Aufgabe haben), bleibt sie unverteilt
 6. **Reserviert für andere** (`needed`, nur bei der Zuordnung): Wer für eine andere Aufgabe dieser Runde zwingend gebraucht wird (sonst bliebe sie unverteilt), ist für diese Aufgabe nicht im Rad
@@ -498,7 +498,7 @@ Befunde der Stufe hoch oder mittel: **keine offen.**
 
 ## 11. Festgelegte Annahmen (bestätigt von Anton am 2026-11-03)
 
-1. Anwesenheit im Fristfenster: Eine Person ist Kandidat, wenn sie an **mindestens einem Tag** zwischen Auslosung und Frist da ist.
+1. ~~Anwesenheit im Fristfenster~~ – abgelöst am 2026-11-04: Eine Person ist nur Kandidat, wenn sie am **Tag der Auslosung** anwesend ist (Anton: „heute abwesend, trotzdem angezeigt“). Beim Tausch gilt weiter das Fristfenster (§5.4).
 2. ~~Joker werden pro Kalendermonat zurückgesetzt~~ – abgelöst am 2026-11-04: Der Tausch ist ein echter Tausch ohne Joker (§5.4); die Einstellung `jokers_per_month` bleibt für später reserviert.
 3. Punkte für verspätete und verpasste Aufgaben sind **einstellbar** (Options Flow: `late_points_factor`, `missed_points_factor`, `missed_grace_hours`); Standard: verspätet volle Punkte, verpasst keine. Grenzen der Faktoren stehen in `const/limits.py`.
 4. Panel ist für alle angemeldeten Benutzer sichtbar, Konfiguration nur für Admins.

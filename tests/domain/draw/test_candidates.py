@@ -9,7 +9,7 @@ from custom_components.task_wheel.domain.draw.candidates import (
     RoundTakenFilter,
 )
 from custom_components.task_wheel.domain.enums import ExclusionReason, Load
-from custom_components.task_wheel.domain.models import OnceAbsence
+from custom_components.task_wheel.domain.models import OnceAbsence, RecurringAbsence
 
 from ..factories import TODAY, task
 from .helpers import make_context, make_person
@@ -34,10 +34,29 @@ def test_task_without_allowed_persons_is_open_for_everyone_in_the_round():
     assert [p.id for p in selection.candidates] == ["a", "b"]
 
 
-def test_absent_throughout_window_is_excluded_but_one_day_present_is_enough():
+def test_person_absent_today_is_excluded_even_if_back_within_the_deadline():
     gone = OnceAbsence(start=TODAY, end=TODAY + dt.timedelta(days=30))
     back = OnceAbsence(start=TODAY, end=TODAY + dt.timedelta(days=2))
-    ctx = make_context([make_person("a", absences=(gone,)), make_person("b", absences=(back,))])
+    here = OnceAbsence(start=TODAY + dt.timedelta(days=1), end=TODAY + dt.timedelta(days=2))
+    ctx = make_context(
+        [
+            make_person("a", absences=(gone,)),
+            make_person("b", absences=(back,)),
+            make_person("c", absences=(here,)),
+        ]
+    )
+    selection = CandidateSelector().select(
+        task(allowed=frozenset({"a", "b", "c"}), due_days=7), ctx
+    )
+    assert [p.id for p in selection.candidates] == ["c"]
+    assert reasons(selection) == {("a", ExclusionReason.ABSENT), ("b", ExclusionReason.ABSENT)}
+
+
+def test_recurring_absence_excludes_person_on_that_weekday():
+    recurring = RecurringAbsence(
+        weekdays=frozenset({TODAY.weekday()}), interval_weeks=2, start=TODAY, end=None
+    )
+    ctx = make_context([make_person("a", absences=(recurring,)), make_person("b")])
     selection = CandidateSelector().select(task(allowed=AB, due_days=7), ctx)
     assert [p.id for p in selection.candidates] == ["b"]
     assert reasons(selection) == {("a", ExclusionReason.ABSENT)}

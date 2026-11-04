@@ -1,6 +1,5 @@
 """Kandidatenfilter (KONZEPT §5.2): jeder Filter ein Objekt mit Ausschlussgrund."""
 
-import datetime as dt
 from collections.abc import Callable, MutableMapping, Sequence
 from dataclasses import dataclass, replace
 from typing import ClassVar, Protocol
@@ -62,19 +61,21 @@ class MinLoadFilter:
 
 
 class AbsenceFilter:
-    """Personen, die im Fristfenster an keinem Tag anwesend sind."""
+    """Personen, die heute abwesend sind und deshalb nicht mitlosen."""
 
     reason: ClassVar[ExclusionReason] = ExclusionReason.ABSENT
     soft: ClassVar[bool] = False
 
     def excluded(
-        self, task: Task, candidates: Sequence[Person], context: DrawContext
+        self,
+        task: Task,  # noqa: ARG002
+        candidates: Sequence[Person],
+        context: DrawContext,
     ) -> frozenset[str]:
-        """Personen ohne anwesenden Tag in `[heute, heute + due_days]`."""
-        start = context.now.date()
-        end = start + dt.timedelta(days=task.due_days)
+        """Personen, die am heutigen Tag nicht anwesend sind."""
+        today = context.now.date()
         return frozenset(
-            p.id for p in candidates if not context.availability[p.id].present_in_window(start, end)
+            p.id for p in candidates if not context.availability[p.id].is_present(today)
         )
 
 
