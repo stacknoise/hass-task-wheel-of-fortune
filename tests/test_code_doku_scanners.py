@@ -155,6 +155,10 @@ def test_metrics() -> None:
         ("custom_components/task_wheel/domain/models.py", c.LAYER_DOMAIN),
         ("custom_components/task_wheel/services.py", c.LAYER_API),
         ("custom_components/task_wheel/__init__.py", c.LAYER_ENTRY),
+        ("custom_components/task_wheel/runtime.py", c.LAYER_ENTRY),
+        ("custom_components/task_wheel/entry_lookup.py", c.LAYER_ENTRY),
+        ("custom_components/task_wheel/sensor.py", c.LAYER_ENTRY),
+        ("custom_components/task_wheel/infrastructure/panel.py", c.LAYER_INFRA),
         ("frontend/src/views/index.ts", c.LAYER_PANEL),
         ("elsewhere/x.py", c.LAYER_OTHER),
     ],
@@ -166,6 +170,8 @@ def test_layer_of(path: str, layer: str) -> None:
 def test_is_allowed() -> None:
     assert is_allowed(c.LAYER_APP, c.LAYER_DOMAIN)
     assert is_allowed(c.LAYER_APP, c.LAYER_APP)
+    assert is_allowed(c.LAYER_API, c.LAYER_ENTRY)
+    assert is_allowed(c.LAYER_ENTRY, c.LAYER_DOMAIN)
     assert not is_allowed(c.LAYER_DOMAIN, c.LAYER_APP)
     assert not is_allowed("unbekannt", c.LAYER_APP)
 

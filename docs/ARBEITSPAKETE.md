@@ -9,9 +9,9 @@ Jedes Paket gilt erst als fertig, wenn die **gemeinsame Definition of Done** erf
 
 - ruff, mypy `--strict`, ESLint, TypeScript `strict` ohne Fehler; keine neuen Literale außerhalb der Konstanten
 - Importrichtung (import-linter / eslint-plugin-boundaries) und Duplikatprüfung grün
-- Tests für neue Logik; Domäne ≥ 95 % Zeilenabdeckung, Rest ≥ 85 %
-- Komplexität je Funktion ≤ 8 (ruff `C901`), Wartbarkeitsindex je Modul ≥ 55 (siehe CODE_DOKU.md)
-- **Änderungsprotokoll in CODE_DOKU.md ergänzt**, Generator gelaufen, Metriken/Abhängigkeiten aktuell
+- Tests für neue Logik; Ziel: Domäne ≥ 95 % Zeilenabdeckung, Rest ≥ 85 %. Die CI erzwingt nur die globalen 85 % (pytest und Vitest); die Domänen-Zielmarke ist ein Richtwert für Reviews (CODE_DOKU.md §1.1)
+- Komplexität je Funktion ≤ 8 (ruff `C901`); Wartbarkeitsindex je Modul nicht rot (< 35), Ziel ≥ 55 (grün); gelbe Werte sind erlaubt, sollten aber bei der nächsten Änderung der Datei sinken (siehe CODE_DOKU.md §1.1)
+- **Änderungsprotokoll in CODE_DOKU.md ergänzt** (neue Zeile oben in §4; die CI prüft das für Code, `tools/`, E2E-Tests und Workflows), Generator gelaufen, Metriken/Abhängigkeiten aktuell
 - README angepasst, wenn sich Verhalten, Dienste, Entitäten oder Installation ändern
 
 ## Übersicht und Reihenfolge
@@ -192,7 +192,7 @@ Parallelisierbar: AP-04/05 nach AP-02; AP-11/12/13 nach AP-09; AP-15/16/17 nach 
 
 - `task-wheel-panel` mit Tabs aus den Mockups, Routen als Konstanten, Views per `import()`
 - Typisierter API-Client, Store mit `@lit/context`, i18n (de/en), Design-Tokens auf HA-Variablen
-- Panel-Registrierung im Backend (`panel.py`, statischer Pfad)
+- Panel-Registrierung im Backend (`infrastructure/panel.py`, `panel_bundle.py`, statischer Pfad)
 
 **Fertig, wenn:** Panel lädt in HA, zeigt Snapshot, reagiert auf Deltas.
 
@@ -206,7 +206,7 @@ Parallelisierbar: AP-04/05 nach AP-02; AP-11/12/13 nach AP-09; AP-15/16/17 nach 
 ## AP-16 · Glücksrad und Auslosung (L)
 
 - `tw-wheel` (SVG, Segmentgröße = Chance, Drehung zum vom Backend gelieferten Ergebnis, reduzierte Bewegung)
-- Auslosung-View: Zeitplan wählen, je Aufgabe drehen, „Wer ist im Rad?“ mit Gründen, „Rest ohne Animation verlosen“, Abschluss mit Konfetti
+- Auslosung-View: Zeitplan wählen, je Aufgabe drehen, „Wer ist dabei?“ mit Gründen, „Rest ohne Animation verlosen“, Abschluss mit Konfetti
 
 **Fertig, wenn:** Ablauf deckt sich mit dem Mockup; Animation ruckelfrei (60 fps auf Tablet-Referenzgerät).
 
@@ -242,6 +242,9 @@ Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. 
 
 | PR | Inhalt |
 |---|---|
+| #53, #55 | Fix: keine unvergebene Aufgabe, solange Personen frei sind; Löschen sperren, solange etwas verwendet wird; Zeitstrahl mit allen Tagen (vor 0.1.0) |
+| #57, #58 | Release-Workflow: manueller Start legt Tag und Release an; Name überall englisch (Task Wheel of Fortune) |
+| #59 | README: Screenshots der Oberfläche |
 | #60, #66, #70 | Hinzufügen und Bearbeiten in Popups; Zahlenfelder (+/−) paarweise nebeneinander; Abwesenheiten-Scrollbereich mit höchstens zwei sichtbaren Einträgen |
 | #61 | Mindest-Belastbarkeit je Aufgabe (egal, halb, voll) |
 | #62 | Panel für Tablet und Smartphone optimiert, vor allem die Auslosung |
@@ -252,6 +255,7 @@ Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. 
 | #72, #73, #75 | Animationen Rubbellose, Eilmeldung, Oscar-Verleihung (ohne Chance-Anzeige) samt Nachbesserungen |
 | #63, #64 | README: Fairness erklärt, komplett auf Englisch |
 | #74 | Version 0.2.0 |
+| #76 | Dokumentation auf Stand 0.2.0 gebracht |
 
 ### Version 0.3.0
 
@@ -260,14 +264,14 @@ Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. 
 | #77 | Listen alphabetisch sortieren; mehrere Räume je Aufgabe (Speicherstand 1.3) |
 | #78 | Häufigkeit „höchstens n× in x Tagen/Wochen/Monaten“; Auslosungsliste nur mit mitmachenden Personen (zufällige Auswahl) |
 | #79, #80 | Statistik „Verlosungen je Aufgabe: Soll und Ist“, Formularlayout |
-| – | Version 0.3.0 |
+| #81 | Version 0.3.0 |
 
 ### Version 0.3.1
 
 | PR | Inhalt |
 |---|---|
 | #82 | Räume im Soll/Ist; Scroll-Sprung im Panel behoben |
-| – | Version 0.3.1 |
+| #83 | Version 0.3.1 |
 
 ### Version 0.4.0
 
@@ -275,4 +279,4 @@ Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. 
 |---|---|
 | #84 | Statistik aktualisiert sich nach jeder Aktion |
 | #85 | Wiederkehrende Abwesenheiten (Wochentage, Abstand in Wochen) |
-| – | Version 0.4.0 |
+| #86 | Version 0.4.0 |
