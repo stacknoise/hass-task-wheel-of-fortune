@@ -59,7 +59,7 @@ Die Gelbwerte erzeugt der Generator als Ampel im Explorer; sie sind kein Gate. S
 |---|---|---|---|
 | `Const` | 0 Konstanten | `custom_components/task_wheel/const/` | – |
 | `Entry` | 1 Einstieg | `__init__.py`, `config_flow.py`, `runtime.py` (Kompositionswurzel `compose`), `entry_lookup.py`, `sensor.py`, `todo.py`, `button.py` | Api, App, Infra, Domain (`config_flow.py`: Fehler; `runtime.py`: Zufallsquelle), Const |
-| `Api` | 2 Schnittstellen | `services.py`, `websocket/`, `entities/` | App, Domain (nur Modelle), Const, Entry (nur `runtime.py` und `entry_lookup.py`: Zugriff auf die Laufzeitdaten des Eintrags) |
+| `Api` | 2 Schnittstellen | `services.py`, `access.py`, `service_errors.py`, `websocket/`, `entities/` | App, Domain (nur Modelle), Const, Entry (nur `runtime.py` und `entry_lookup.py`: Zugriff auf die Laufzeitdaten des Eintrags) |
 | `App` | 3 Anwendung | `application/` | Domain, Const (Infra nur über Protokolle) |
 | `Domain` | 4 Domäne | `domain/` | Const |
 | `Infra` | 5 Infrastruktur | `infrastructure/` (u. a. `panel.py`, `panel_bundle.py`) | Domain, App (nur `protocols.py` und `event_payloads.py`), Const |
@@ -138,6 +138,8 @@ Module des Standes 0.4.0; diese Tabelle ist die maßgebliche Modulliste (KONZEPT
 | `infrastructure/events.py` | Infra | `HassRoundEvents`: feuert die Events auf dem HA-Bus (`RoundEvents`) | event_payloads, protocols | ja (nur CI) |
 | `infrastructure/notifier/` | Infra | `NotifierFactory` (Registry Art → Sender: `EntitySender` mit `notify.send_message`, `ServiceSender` für Legacy-`notify.*`, `NoSender`), `classify` (nur `notify.*`), `HassNotifier` (Prüfung beim Speichern und Senden, Zeitlimit), `TextCatalog` (Texte aus `texts/<Sprache>.json`) | protocols, models, enums, errors | ja |
 | `services.py` | Api | HA-Dienste `draw`, `complete`, `swap`, `set_absence` (Schemas, Tabelle Dienst → Handler, Fehlerübersetzung) | application, runtime | ja (nur CI) |
+| `access.py` | Api | `ensure_allowed`: Zugriffsrecht für Dienste, Button und To-do-Liste (bei „nur Administratoren“) wie bei den WebSocket-Befehlen | – | ja (nur CI) |
+| `service_errors.py` | Api | `to_service_error`: Fachfehler als übersetzbare `ServiceValidationError` für Dienste und Entitäten | domain/errors | ja (nur CI) |
 | `websocket/` | Api | Panel-API: Befehlstabellen je Bereich (`read` inkl. `availability/preview`, `actions`, `config`), Schemas aus den Modellfeldern, Anmeldung und Rechteprüfung bei HA (`__init__.py`) | application, runtime, domain/models | ja (`__init__.py` nur CI) |
 | `entities/` | Api | `EntityFactory` (Abgleich mit der Konfiguration, Anlegen/Entfernen), Sensoren, To-do, Button als `EntityDescription`-Tabellen, Dispatcher-Signale (`EntityEvents`) | application (`entity_state`), runtime, services | ja (nur CI) |
 | `entry_lookup.py` | Entry | Geladene Config Entry finden (Dienste, WebSocket) | runtime | ja (nur CI) |
