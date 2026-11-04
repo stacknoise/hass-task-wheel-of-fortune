@@ -268,6 +268,7 @@ async def test_options_flow_updates_settings(hass: HomeAssistant) -> None:
             "jokers_per_month": 3,
             "fairness_window_days": 14,
             "history_retention_days": 400,
+            "decision_retention_days": 3,
             "late_points_factor": 0.5,
             "missed_points_factor": -0.5,
             "missed_grace_hours": 12,
@@ -279,6 +280,7 @@ async def test_options_flow_updates_settings(hass: HomeAssistant) -> None:
     assert (settings.jokers_per_month, settings.fairness_window_days) == (3, 14)
     assert (settings.late_points_factor, settings.missed_points_factor) == (0.5, -0.5)
     assert settings.panel_admin_only is True
+    assert settings.decision_retention_days == 3
 
 
 async def test_options_flow_aborts_when_not_loaded(hass: HomeAssistant) -> None:

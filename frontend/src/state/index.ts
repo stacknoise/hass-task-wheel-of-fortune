@@ -40,3 +40,5 @@ export {
   tasksById,
 } from './lookup.ts';
 export type { PersonInfo, ScheduleInfo, TaskInfo } from './lookup.ts';
+export { PagedList } from './paged-list.ts';
+export type { Page } from './paged-list.ts';

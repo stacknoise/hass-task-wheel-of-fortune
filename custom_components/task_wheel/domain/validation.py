@@ -10,6 +10,7 @@ from ..const.keys import (
     ERR_INCONSISTENT,
     ERR_LENGTH,
     ERR_NAIVE_DATETIME,
+    ERR_ORDER,
     ERR_PATTERN,
     ERR_RANGE,
 )
@@ -75,3 +76,13 @@ def ensure_name(field: str, value: str) -> None:
     """Prüft einen angezeigten Namen (nicht leer, begrenzt, ohne Rand-Leerzeichen)."""
     ensure_length(field, value, NAME_MIN_LENGTH, NAME_MAX_LENGTH)
     ensure(value == value.strip(), field, ERR_INCONSISTENT)
+
+
+def ensure_time_range(since: datetime | None, until: datetime | None) -> None:
+    """Prüft einen optionalen Zeitraum: beide Grenzen mit Zeitzone, `since` vor `until`."""
+    if since is not None:
+        ensure_aware("since", since)
+    if until is not None:
+        ensure_aware("until", until)
+    if since is not None and until is not None:
+        ensure(since < until, "until", ERR_ORDER)

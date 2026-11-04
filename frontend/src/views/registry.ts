@@ -17,6 +17,7 @@ export const VIEW_LOADERS: Readonly<Record<RouteId, ViewLoader>> = {
   schedules: () => import('./schedules.ts'),
   history: () => import('./history.ts'),
   statistics: () => import('./statistics.ts'),
+  decisions: () => import('./decisions.ts'),
 };
 
 /** Der Tab zu einem Pfad des Panels (`/tasks`); unbekannte Pfade ergeben `undefined`. */

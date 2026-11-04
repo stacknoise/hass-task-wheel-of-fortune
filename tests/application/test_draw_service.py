@@ -378,6 +378,26 @@ def test_replace_task_swaps_in_place_before_the_start():
     assert [o.task_id for o in world.draws.replacements(panel.id, NOW)] == ["t1", "t4"]
 
 
+def test_replace_task_is_logged_as_exchange_before_the_start():
+    world = World()
+    _with_spare_tasks(world)
+    panel = begin(world, "s1")
+    world.draws.replace_task(panel.id, "t1", "t3", NOW)
+    (record,) = world.decision_store.records.values()
+    assert record.kind.value == "exchange" and record.schedule_id == "s1"
+    assert (record.exchange.task_id, record.exchange.other_task_id) == ("t1", "t3")
+    assert record.exchange.before_start is True
+
+
+def test_rejected_replacement_is_not_logged():
+    world = World()
+    _with_spare_tasks(world)
+    panel = begin(world, "s1")
+    with pytest.raises(DrawRejectedError):
+        world.draws.replace_task(panel.id, "t1", "t4", NOW)
+    assert not world.decision_store.records
+
+
 def test_replace_task_is_locked_after_the_first_spin():
     world = World()
     _with_spare_tasks(world)

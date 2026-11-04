@@ -28,6 +28,8 @@ from custom_components.task_wheel.const.keys import (
 from custom_components.task_wheel.domain.enums import AssignmentStatus, RoundOrigin
 from custom_components.task_wheel.domain.errors import AmbiguousReferenceError, NotFoundError
 from custom_components.task_wheel.domain.models import Recurring
+from custom_components.task_wheel.infrastructure.repository.decision_store import DecisionStore
+from custom_components.task_wheel.infrastructure.repository.memory import MemoryStore
 from custom_components.task_wheel.runtime import compose
 
 from ..domain import factories as f
@@ -246,6 +248,7 @@ def test_compose_shares_statistics_and_events() -> None:
     data = compose(
         world.config,
         world.history,
+        DecisionStore(MemoryStore()),
         timers=FakeTimers(),
         events=events,
         notifications=NotificationService(

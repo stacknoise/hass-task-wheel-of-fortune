@@ -17,6 +17,7 @@ export const en: Record<keyof typeof de, string> = {
   'tab.schedules': 'Schedules',
   'tab.history': 'History',
   'tab.statistics': 'Statistics',
+  'tab.decisions': 'Decision log',
   'form.save': 'Save',
   'form.cancel': 'Cancel',
   'form.delete': 'Delete',
@@ -251,6 +252,7 @@ export const en: Record<keyof typeof de, string> = {
   'error.draw_replacement_invalid':
     'This task does not belong to the schedule or is already in the round.',
   'error.draw_replacement_infeasible': 'This task cannot be done by the people who are present.',
+  'draw.prepare': 'The round is ready. Replace tasks if needed, then assign the tasks directly.',
   'draw.restart': 'Restart round',
   'draw.spin': 'Go',
   'draw.spin.label': 'Start the draw',

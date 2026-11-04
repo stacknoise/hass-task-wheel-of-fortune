@@ -5,10 +5,23 @@ from typing import Any
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
-from ...const.keys import STORE_CONFIG, STORE_HISTORY, STORE_MINOR_VERSION, STORE_VERSION
+from ...const.keys import (
+    STORE_CONFIG,
+    STORE_DECISIONS,
+    STORE_HISTORY,
+    STORE_MINOR_VERSION,
+    STORE_VERSION,
+)
 from .config_store import ConfigStore
+from .decision_store import DecisionStore
 from .history_store import HistoryStore
-from .migration import CONFIG_MIGRATIONS, HISTORY_MIGRATIONS, Migrations, migrate
+from .migration import (
+    CONFIG_MIGRATIONS,
+    DECISION_MIGRATIONS,
+    HISTORY_MIGRATIONS,
+    Migrations,
+    migrate,
+)
 
 
 class MigratingStore(Store[dict[str, object]]):
@@ -34,3 +47,8 @@ def create_config_store(hass: HomeAssistant) -> ConfigStore:
 def create_history_store(hass: HomeAssistant) -> HistoryStore:
     """Erzeugt das Verlaufs-Repository."""
     return HistoryStore(MigratingStore(hass, STORE_HISTORY, HISTORY_MIGRATIONS))
+
+
+def create_decision_store(hass: HomeAssistant) -> DecisionStore:
+    """Erzeugt das Repository des Entscheidungslogs."""
+    return DecisionStore(MigratingStore(hass, STORE_DECISIONS, DECISION_MIGRATIONS))

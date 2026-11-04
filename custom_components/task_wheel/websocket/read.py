@@ -14,6 +14,7 @@ from ..const.defaults import (
 )
 from ..const.events import (
     WS_AVAILABILITY_PREVIEW,
+    WS_DECISIONS_LIST,
     WS_HISTORY_LIST,
     WS_SNAPSHOT,
     WS_STATISTICS_GET,
@@ -24,6 +25,7 @@ from ..const.keys import (
     WIRE_NEXT_OFFSET,
     WIRE_PRESENT,
     WS_FIELD_ABSENCES,
+    WS_FIELD_KIND,
     WS_FIELD_LIMIT,
     WS_FIELD_MONTHS,
     WS_FIELD_OFFSET,
@@ -37,7 +39,8 @@ from ..const.keys import (
 )
 from ..const.limits import MAX_ABSENCES_PER_PERSON
 from ..domain.availability import PersonAvailability
-from ..domain.enums import AssignmentStatus
+from ..domain.decisions import DecisionFilter
+from ..domain.enums import AssignmentStatus, DecisionKind
 from ..domain.history import HistoryFilter
 from ..domain.models import decode_absence
 from ..domain.serialization import enum_of, optional, to_datetime
@@ -46,12 +49,23 @@ from .schemas import ID, INTEGER, ISO_TEXT, bounded, optional_fields, required_f
 
 _DECODE_STATUS: Final = optional(enum_of(AssignmentStatus))
 _DECODE_TIME: Final = optional(to_datetime)
+_DECODE_KIND: Final = optional(enum_of(DecisionKind))
 
 _HISTORY_FIELDS: Final[dict[Any, Any]] = optional_fields(
     (WS_FIELD_SCHEDULE_ID, ID),
     (WS_FIELD_PERSON_ID, ID),
     (WS_FIELD_TASK_ID, ID),
     (WS_FIELD_STATUS, ID),
+    (WS_FIELD_SINCE, ISO_TEXT),
+    (WS_FIELD_UNTIL, ISO_TEXT),
+    (WS_FIELD_OFFSET, INTEGER),
+    (WS_FIELD_LIMIT, INTEGER),
+)
+_DECISION_FIELDS: Final[dict[Any, Any]] = optional_fields(
+    (WS_FIELD_SCHEDULE_ID, ID),
+    (WS_FIELD_PERSON_ID, ID),
+    (WS_FIELD_TASK_ID, ID),
+    (WS_FIELD_KIND, ID),
     (WS_FIELD_SINCE, ISO_TEXT),
     (WS_FIELD_UNTIL, ISO_TEXT),
     (WS_FIELD_OFFSET, INTEGER),
@@ -103,6 +117,34 @@ def _history_list(request: Request) -> Reply:
     return Reply({WIRE_ENTRIES: entries, WIRE_NEXT_OFFSET: page.next_offset})
 
 
+def decision_filter(params: Params) -> DecisionFilter:
+    """Filter des Entscheidungslogs aus den Feldern der Nachricht."""
+    return DecisionFilter(
+        schedule_id=params.get(WS_FIELD_SCHEDULE_ID),
+        person_id=params.get(WS_FIELD_PERSON_ID),
+        task_id=params.get(WS_FIELD_TASK_ID),
+        kind=_DECODE_KIND(params.get(WS_FIELD_KIND)),
+        since=_DECODE_TIME(params.get(WS_FIELD_SINCE)),
+        until=_DECODE_TIME(params.get(WS_FIELD_UNTIL)),
+    )
+
+
+def _decisions_list(request: Request) -> Reply:
+    """Eine Seite des Entscheidungslogs, neueste zuerst (für alle sichtbar)."""
+    params = request.params
+    page = request.data.decision_service.page(
+        decision_filter(params),
+        params.get(WS_FIELD_OFFSET, 0),
+        params.get(WS_FIELD_LIMIT, DEFAULT_HISTORY_PAGE_SIZE),
+    )
+    return Reply(
+        {
+            WIRE_ENTRIES: [to_json(entry) for entry in page.entries],
+            WIRE_NEXT_OFFSET: page.next_offset,
+        }
+    )
+
+
 def _statistics_get(request: Request) -> Reply:
     """Auswertung der letzten Monate und Wochen."""
     params = request.params
@@ -131,6 +173,7 @@ COMMANDS: Final = (
     Command(WS_SNAPSHOT, {}, _snapshot),
     Command(WS_SUBSCRIBE, {}, _subscribe, subscribes=True),
     Command(WS_HISTORY_LIST, _HISTORY_FIELDS, _history_list),
+    Command(WS_DECISIONS_LIST, _DECISION_FIELDS, _decisions_list),
     Command(WS_STATISTICS_GET, _STATISTICS_FIELDS, _statistics_get),
     Command(WS_AVAILABILITY_PREVIEW, _PREVIEW_FIELDS, _availability_preview),
 )

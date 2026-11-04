@@ -23,6 +23,8 @@ export interface DrawState {
   /** Das Rad der nächsten Aufgabe vor dem Drehen (Segmente und Ausschlüsse, ohne Gewinner). */
   readonly preview: TaskDrawWire | undefined;
   readonly errorCode: string | undefined;
+  /** Vorbereitung ohne Animation: die Runde steht bereit und wird direkt verteilt (kein Rad). */
+  readonly direct: boolean;
 }
 
 type Listener = () => void;
@@ -39,6 +41,7 @@ const INITIAL: DrawState = {
   current: undefined,
   preview: undefined,
   errorCode: undefined,
+  direct: false,
 };
 
 /** Wartet die Auslosung auf eine Wahl (noch keine Runde oder ein Fehler)? */
@@ -92,9 +95,16 @@ export class DrawSession {
   /**
    * Beginnt eine neue Runde für den Zeitplan (eine offene desselben Plans entfällt im Backend);
    * `window` sagt, ab wann die Aufgaben gelten und bis wann sie erledigt sein müssen.
-   * Ohne Animation (`animated` falsch) wird sofort alles gezogen und die Runde abgeschlossen.
+   * Ohne Animation (`animated` falsch) wird sofort alles gezogen und die Runde abgeschlossen;
+   * mit `prepare` bleibt die Runde stattdessen bereit (zum Austauschen von Aufgaben), bis der
+   * Benutzer „direkt verteilen“ wählt.
    */
-  async begin(scheduleId: string, window: DrawWindowRequest, animated = true): Promise<void> {
+  async begin(
+    scheduleId: string,
+    window: DrawWindowRequest,
+    animated = true,
+    prepare = false,
+  ): Promise<void> {
     if (!isIdle(this.#state)) {
       return;
     }
@@ -107,6 +117,8 @@ export class DrawSession {
       await this.#finishIfNothingPending(alive);
       if (animated) {
         await this.#loadPreview();
+      } else if (prepare) {
+        this.#set({ direct: true });
       } else {
         await this.#drawRemaining(alive);
       }

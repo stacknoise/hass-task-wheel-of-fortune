@@ -27,6 +27,11 @@ export function translate(key: TextKey, language: string, params?: TextParams): 
     : text;
 }
 
+/** Ob es zu dem Schlüssel einen Text gibt (für Schlüssel, die erst zur Laufzeit entstehen). */
+export function hasText(key: string): key is TextKey {
+  return key in de;
+}
+
 /** Beginn der Schlüssel für Fehlercodes des Backends (`error.out_of_range`). */
 export const ERROR_PREFIX = 'error.';
 const UNKNOWN_ERROR: TextKey = 'error.unknown';

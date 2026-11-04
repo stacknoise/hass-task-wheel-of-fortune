@@ -39,6 +39,13 @@ export { personsOf, schedulesOf, tasksOf } from './collections.ts';
 export { modelsOf } from './models.ts';
 export type {
   AssignmentObject,
+  DecisionExchange,
+  DecisionExcluded,
+  DecisionPage,
+  DecisionQuery,
+  DecisionRecord,
+  DecisionTask,
+  DecisionWheelEntry,
   Highlights,
   HistoryPage,
   HistoryQuery,

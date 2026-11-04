@@ -153,6 +153,14 @@ class ExclusionReason(StrEnum):
     NEEDED = "needed"
 
 
+class DecisionKind(StrEnum):
+    """Art eines Eintrags im Entscheidungslog."""
+
+    DRAW = "draw"
+    SWAP = "swap"
+    EXCHANGE = "exchange"
+
+
 class AnimationKind(StrEnum):
     """Darstellung der Auslosung im Panel (Wahl je Zeitplan; gezogen wird im Backend)."""
 

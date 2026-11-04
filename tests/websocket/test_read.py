@@ -4,6 +4,7 @@ import datetime as dt
 
 import pytest
 
+from custom_components.task_wheel.domain.enums import RoundOrigin
 from custom_components.task_wheel.domain.errors import ValidationError
 
 from ..domain import factories as f
@@ -120,3 +121,24 @@ def test_availability_preview_combines_rules(api: Api) -> None:
 def test_availability_preview_rejects_invalid_rules(api: Api, fields: dict[str, object]) -> None:
     with pytest.raises(ValidationError):
         api.run("availability/preview", **fields)
+
+
+def test_decisions_list_shows_draws_to_every_user_and_filters(api: Api) -> None:
+    assert api.result("decisions/list") == {"entries": [], "next_offset": None}
+    api.data.draws.draw("s1", RoundOrigin.AUTO, api.now)
+    page = api.result("decisions/list", limit=1)
+    entry = page["entries"][0]
+    assert (entry["kind"], entry["origin"], page["next_offset"]) == ("draw", "auto", None)
+    assert {t["task_id"] for t in entry["tasks"]} == {"t1", "t2"}
+    assert api.result("decisions/list", kind="swap")["entries"] == []
+    assert api.result("decisions/list", person_id="p1")["entries"]
+    assert api.result("decisions/list", schedule_id="nope")["entries"] == []
+    since = (api.now + dt.timedelta(days=1)).isoformat()
+    assert api.result("decisions/list", since=since)["entries"] == []
+
+
+def test_decisions_list_rejects_unknown_kind_and_bounds(api: Api) -> None:
+    with pytest.raises(ValidationError):
+        api.run("decisions/list", kind="nope")
+    with pytest.raises(ValidationError):
+        api.run("decisions/list", limit=0)

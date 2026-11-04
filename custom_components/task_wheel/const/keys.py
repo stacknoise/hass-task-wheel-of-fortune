@@ -7,6 +7,7 @@ from .defaults import DOMAIN
 # Speicher
 STORE_CONFIG: Final = f"{DOMAIN}.config"
 STORE_HISTORY: Final = f"{DOMAIN}.history"
+STORE_DECISIONS: Final = f"{DOMAIN}.decisions"
 STORE_VERSION: Final = 1
 STORE_MINOR_VERSION: Final = 4
 
@@ -20,6 +21,7 @@ KEY_SCHEDULE_ID: Final = "schedule_id"
 KEY_AREA_ID: Final = "area_id"
 KEY_AREA_IDS: Final = "area_ids"
 KEY_AGGREGATES: Final = "aggregates"
+KEY_DECISIONS: Final = "decisions"
 
 # Unterscheidungsmerkmal für Modelle mit mehreren Arten (Strategien)
 KEY_KIND: Final = "kind"
@@ -56,6 +58,7 @@ ATTR_DAYS_SINCE: Final = "days_since"
 OPT_JOKERS: Final = "jokers_per_month"
 OPT_FAIRNESS_WINDOW: Final = "fairness_window_days"
 OPT_RETENTION: Final = "history_retention_days"
+OPT_DECISION_RETENTION: Final = "decision_retention_days"
 OPT_LATE_FACTOR: Final = "late_points_factor"
 OPT_MISSED_FACTOR: Final = "missed_points_factor"
 OPT_GRACE_HOURS: Final = "missed_grace_hours"
@@ -136,6 +139,7 @@ WS_FIELD_LIMIT: Final = "limit"
 WS_FIELD_MONTHS: Final = "months"
 WS_FIELD_WEEKS: Final = "weeks"
 WS_FIELD_ABSENCES: Final = "absences"
+WS_FIELD_KIND: Final = "kind"
 
 # Inhalt der Antworten und Deltas
 WIRE_PERSONS: Final = "persons"
@@ -163,6 +167,9 @@ WIRE_PENDING: Final = "pending_task_ids"
 WIRE_REPLACEMENTS: Final = "replacements"
 WIRE_NEXT_RUN: Final = "next_run"
 WIRE_PRESENT: Final = "present"
+
+# Grund im Entscheidungslog, den die Filterkette nicht kennt: Aufgabe für die Person nicht erlaubt
+REASON_NOT_ALLOWED: Final = "not_allowed"
 
 # Namen der Ressourcen in Fehlern (Platzhalter `resource`)
 RESOURCE_PERSON: Final = "person"

@@ -16,6 +16,7 @@ export const de = {
   'tab.schedules': 'Zeitpläne',
   'tab.history': 'Historie',
   'tab.statistics': 'Statistik',
+  'tab.decisions': 'Entscheidungslog',
   'form.save': 'Speichern',
   'form.cancel': 'Abbrechen',
   'form.delete': 'Löschen',
@@ -257,6 +258,8 @@ export const de = {
     'Diese Aufgabe gehört nicht zum Zeitplan oder ist schon in der Runde.',
   'error.draw_replacement_infeasible':
     'Mit den anwesenden Personen ist diese Aufgabe nicht machbar.',
+  'draw.prepare':
+    'Die Runde steht bereit. Tausche bei Bedarf Aufgaben aus, danach verteile die Aufgaben direkt.',
   'draw.restart': 'Runde neu starten',
   'draw.spin': 'Los',
   'draw.spin.label': 'Auslosung starten',

@@ -37,7 +37,7 @@ import {
 } from '../state/index.ts';
 import type { AreaNames, DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
 import { roomTags } from './room.ts';
-import { drawSummary } from './draw-summary.ts';
+import { drawSummary, stageNotice } from './draw-summary.ts';
 import { ReplaceFlow } from './draw-replace.ts';
 import { drawFailure, drawWindowDialog } from './draw-window.ts';
 import { drawStyles } from './draw-styles.ts';
@@ -138,7 +138,13 @@ export class TwDrawView extends LitElement {
     const snapshot = this.#store.state?.snapshot;
     const task = this.#nextTask(state);
     const key = `${state.roundId ?? EMPTY_TEXT}:${String(state.results.length)}`;
-    if (!snapshot || state.phase !== DRAW_PHASE.ready || !task || key === this.#autoSpun) {
+    if (
+      !snapshot ||
+      state.direct ||
+      state.phase !== DRAW_PHASE.ready ||
+      !task ||
+      key === this.#autoSpun
+    ) {
       return;
     }
     const taken = new Set(state.results.map((result) => result.winner_id));
@@ -240,7 +246,6 @@ export class TwDrawView extends LitElement {
   }
 
   #start(scheduleId: string, open: unknown): TemplateResult {
-    const session = this.#session;
     return html`
       <div class="actions">
         <button
@@ -252,44 +257,42 @@ export class TwDrawView extends LitElement {
         >
           ${this.#text('draw.start')}
         </button>
-        ${
-          open
-            ? html`<button
-                class="button"
-                @click=${() => {
-                  const snapshot = this.#store.state?.snapshot;
-                  const round = snapshot && openRoundFor(snapshot, scheduleId);
-                  if (round) {
-                    const kind = this.#pick(scheduleId);
-                    this.#kind = kind ?? this.#kind;
-                    session?.resume(round);
-                    if (kind === undefined) {
-                      void session?.drawRest();
-                    }
-                  }
-                }}
-              >
-                ${this.#text('draw.resume')}
-              </button>`
-            : nothing
-        }
+        ${open ? this.#resumeButton(scheduleId) : nothing}
       </div>
       <p class="muted">${this.#text('draw.choose')}</p>
       ${this._starting === scheduleId ? this.#windowDialog(scheduleId) : nothing}
     `;
   }
 
+  #resumeButton(scheduleId: string): TemplateResult {
+    const resume = () => {
+      const snapshot = this.#store.state?.snapshot;
+      const round = snapshot && openRoundFor(snapshot, scheduleId);
+      if (round) {
+        const kind = this.#pick(scheduleId);
+        this.#session?.resume(round);
+        if (kind === undefined) {
+          void this.#session?.drawRest();
+        }
+      }
+    };
+    return html`<button class="button" @click=${resume}>${this.#text('draw.resume')}</button>`;
+  }
+
   #windowDialog(scheduleId: string): TemplateResult {
-    const snapshot = this.#store.state?.snapshot;
     return drawWindowDialog({
       language: this.language,
       schedule: this.#schedule(scheduleId),
-      now: snapshot?.now ?? EMPTY_TEXT,
+      now: this.#store.state?.snapshot?.now ?? EMPTY_TEXT,
       onConfirm: (request) => {
         const kind = this.#pick(scheduleId);
-        this.#kind = kind ?? this.#kind;
         this._starting = EMPTY_TEXT;
-        void this.#session?.begin(scheduleId, request, kind !== undefined);
+        void this.#session?.begin(
+          scheduleId,
+          request,
+          kind !== undefined,
+          this.#store.client?.isAdmin() === true,
+        );
       },
       onCancel: () => {
         this._starting = EMPTY_TEXT;
@@ -297,9 +300,11 @@ export class TwDrawView extends LitElement {
     });
   }
 
-  /** Wählt zufällig eine der Animationen, die der Zeitplan erlaubt; ohne Auswahl keine. */
+  /** Wählt zufällig eine der Animationen, die der Zeitplan erlaubt (ohne Auswahl keine), und merkt sie. */
   #pick(scheduleId: string): AnimationKind | undefined {
-    return pickAnimation(this.#schedule(scheduleId)?.animations ?? DEFAULT_ANIMATIONS);
+    const kind = pickAnimation(this.#schedule(scheduleId)?.animations ?? DEFAULT_ANIMATIONS);
+    this.#kind = kind ?? this.#kind;
+    return kind;
   }
 
   #schedule(scheduleId: string): ScheduleInfo | undefined {
@@ -390,10 +395,9 @@ export class TwDrawView extends LitElement {
     tasks: ReadonlyMap<string, TaskInfo>,
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
-    if (isIdle(state)) {
-      return html`<section class="stage idle">
-        <p class="heading">${this.#text('draw.choose')}</p>
-      </section>`;
+    const notice = stageNotice(state, (key) => this.#text(key));
+    if (notice) {
+      return notice;
     }
     if (state.phase === DRAW_PHASE.done) {
       return html`<section class="stage">
