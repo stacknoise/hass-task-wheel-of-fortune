@@ -157,6 +157,28 @@ def test_cancel_discards_without_trace():
         world.draws.get(panel.id, NOW)
 
 
+def test_non_admin_may_cancel_only_before_the_first_spin():
+    world = World()
+    panel = world.draws.begin("s1", NOW)
+    world.draws.cancel(panel.id, NOW, is_admin=False)
+    panel = world.draws.begin("s1", NOW)
+    world.draws.spin(panel.id, NOW)
+    with pytest.raises(DrawRejectedError):
+        world.draws.cancel(panel.id, NOW, is_admin=False)
+    assert world.draws.get(panel.id, NOW).draft.results
+    world.draws.cancel(panel.id, NOW, is_admin=True)
+
+
+def test_non_admin_cannot_replace_a_drawn_round_by_restarting():
+    world = World()
+    panel = world.draws.begin("s1", NOW)
+    world.draws.spin(panel.id, NOW)
+    with pytest.raises(DrawRejectedError):
+        world.draws.begin("s1", NOW, is_admin=False)
+    assert world.draws.get(panel.id, NOW).draft.results
+    assert world.draws.begin("s1", NOW, is_admin=True).id != panel.id
+
+
 def test_panel_round_expires_after_the_time_limit():
     world = World()
     panel = world.draws.begin("s1", NOW)

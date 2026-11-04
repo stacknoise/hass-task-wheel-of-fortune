@@ -140,8 +140,9 @@ async def test_complete_by_id_and_by_person_and_task(hass: HomeAssistant) -> Non
 async def test_complete_needs_exactly_one_target(hass: HomeAssistant) -> None:
     await _setup(hass)
     for payload in ({}, {"person": "anna"}, {"assignment_id": "a1", "person": "anna", "task": "x"}):
-        with pytest.raises(vol.Invalid):
+        with pytest.raises(ServiceValidationError) as raised:
             await hass.services.async_call(DOMAIN, "complete", payload, blocking=True)
+        assert raised.value.translation_key == "target_required"
 
 
 async def test_swap_service_hands_over_and_fires_event(hass: HomeAssistant) -> None:

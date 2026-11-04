@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Geändert: Eine Auslosung im Panel dürfen nach dem ersten Ergebnis nur noch Administratoren abbrechen oder durch einen Neustart ersetzen; vor dem ersten Ergebnis kann sie jeder schließen
+- Geändert: Der Dienst `complete` ohne eindeutiges Ziel meldet einen übersetzten Dienstfehler statt einer Schema-Ausnahme
 - Behoben: Ein monatlicher Zeitplan mit mehreren Wochentagen (z. B. Montag und Donnerstag) löst nur noch einmal im Monat aus, am ersten gewählten Wochentag; bisher löste er an jedem gewählten Wochentag der ersten sieben Tage aus
 - Behoben: Beim Wechsel des Home-Assistant-Panels oder bei einem Verbindungsabbruch während des Ladens blieben serverseitige Abonnements zurück
 - Behoben: Die Auslosung hing in „Dreht“, wenn die Animation abgebrochen wurde (z. B. durch ein Live-Update); „Neu starten“ während einer laufenden Anfrage ist gesperrt und verwirft verspätete Antworten
