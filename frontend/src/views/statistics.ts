@@ -24,13 +24,7 @@ import type { StatisticsRangeId } from '../constants/index.ts';
 import { formatNumber, formatPercent, formatShortDate } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
-import {
-  AsyncValue,
-  RevisionTracker,
-  StoreController,
-  areaNames,
-  indexById,
-} from '../state/index.ts';
+import { AsyncValue, LiveLoad, StoreController, areaNames, indexById } from '../state/index.ts';
 import type { AreaNames, FrequencyWire } from '../state/index.ts';
 import { describeFrequency } from '../components/summaries.ts';
 import { roomTags } from './room.ts';
@@ -160,8 +154,7 @@ export class TwStatisticsView extends LitElement {
 
   readonly #store = new StoreController(this);
   readonly #report = new AsyncValue<StatisticsReport>(this);
-  readonly #revision = new RevisionTracker();
-  #started = false;
+  readonly #live = new LiveLoad();
 
   constructor() {
     super();
@@ -175,9 +168,7 @@ export class TwStatisticsView extends LitElement {
 
   /** Lädt beim Start und nach jeder Aktion (neue Auslosung, Statuswechsel, Löschen) neu. */
   protected override willUpdate(): void {
-    const changed = this.#revision.advance(this.#store.state?.snapshot);
-    if (this.#store.client && (!this.#started || changed)) {
-      this.#started = true;
+    if (this.#live.due(this.#store.state?.snapshot, this.#store.client !== undefined)) {
       this.#load();
     }
   }
