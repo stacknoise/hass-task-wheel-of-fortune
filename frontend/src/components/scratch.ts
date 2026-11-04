@@ -13,8 +13,6 @@ import {
   SCRATCH_COIN_BRUSH,
   SCRATCH_COIN_MS,
   SCRATCH_COIN_START_MS,
-  SCRATCH_FOIL_CHANCE_FONT,
-  SCRATCH_FOIL_CHANCE_Y,
   SCRATCH_FOIL_HEAD,
   SCRATCH_FOIL_HINT_FONT,
   SCRATCH_FOIL_HINT_Y,
@@ -31,7 +29,6 @@ import {
 import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import { defineOnce } from './define.ts';
-import { percentText } from './format.ts';
 import type { MotionToken } from './motion.ts';
 import { clearedShare, coinStroke, toCanvas } from './scratch-geometry.ts';
 import type { Point } from './scratch-geometry.ts';
@@ -52,6 +49,14 @@ export class TwScratch extends StageElement {
       :host {
         display: block;
         width: 100%;
+        height: 100%;
+      }
+      .frame {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
       }
       .grid {
         display: grid;
@@ -289,8 +294,6 @@ export class TwScratch extends StageElement {
     context.font = SCRATCH_FOIL_NAME_FONT;
     context.fillText(share.label, middle, SCRATCH_FOIL_NAME_Y);
     context.fillStyle = SCRATCH_FOIL_INK;
-    context.font = SCRATCH_FOIL_CHANCE_FONT;
-    context.fillText(percentText(share.share), middle, SCRATCH_FOIL_CHANCE_Y);
     context.font = SCRATCH_FOIL_HINT_FONT;
     context.fillText(this.#text('scratch.foil.hint'), middle, SCRATCH_FOIL_HINT_Y);
   }
@@ -312,14 +315,16 @@ export class TwScratch extends StageElement {
 
   protected override render(): TemplateResult {
     return html`
-      <div class="grid" role="group" aria-label=${this.label}>
-        ${repeat(
-          sharesOf(this.segments),
-          (share) => `${String(this.#generation)}:${share.id}`,
-          (share) => this.#card(share),
-        )}
+      <div class="frame">
+        <div class="grid" role="group" aria-label=${this.label}>
+          ${repeat(
+            sharesOf(this.segments),
+            (share) => `${String(this.#generation)}:${share.id}`,
+            (share) => this.#card(share),
+          )}
+        </div>
+        <p class="hint">${this.#text('scratch.hint')}</p>
       </div>
-      <p class="hint">${this.#text('scratch.hint')}</p>
     `;
   }
 
