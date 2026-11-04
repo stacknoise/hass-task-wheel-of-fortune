@@ -1,5 +1,8 @@
 """Abonnements je Verbindung: das älteste weicht, Aufräumen vergisst sie."""
 
+from collections.abc import Callable, Hashable
+from typing import Any
+
 from custom_components.task_wheel.websocket.subscriptions import SubscriptionBook
 
 
@@ -7,7 +10,7 @@ class FakeConnection:
     """Wie `ActiveConnection`: hashbar, mit den Abmelde-Funktionen je Nachrichtenkennung."""
 
     def __init__(self) -> None:
-        self.subscriptions: dict[int, object] = {}
+        self.subscriptions: dict[Hashable, Callable[[], Any]] = {}
 
 
 def _connection() -> FakeConnection:
