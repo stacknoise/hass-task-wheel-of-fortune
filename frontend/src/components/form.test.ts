@@ -270,12 +270,12 @@ describe('Editoren', () => {
 
   it('Kurztexte für Karten', () => {
     expect(describeFrequency({ kind: 'every_round' }, 'de')).toBe('jede Runde');
-    expect(describeFrequency({ kind: 'max_per_period', count: 2, period: 'week', every: 1 }, 'de')).toBe(
-      'max. 2× je Woche',
-    );
-    expect(describeFrequency({ kind: 'max_per_period', count: 5, period: 'month', every: 2 }, 'de')).toBe(
-      'max. 5× in 2 Monaten',
-    );
+    expect(
+      describeFrequency({ kind: 'max_per_period', count: 2, period: 'week', every: 1 }, 'de'),
+    ).toBe('max. 2× je Woche');
+    expect(
+      describeFrequency({ kind: 'max_per_period', count: 5, period: 'month', every: 2 }, 'de'),
+    ).toBe('max. 5× in 2 Monaten');
     expect(describeFrequency({ kind: 'interval', days: 7, tolerance: 1 }, 'en')).toBe(
       'every 7 days ± 1',
     );

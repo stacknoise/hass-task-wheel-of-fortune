@@ -34,7 +34,8 @@ export const ABSENCE_BUILDERS: Readonly<Record<AbsenceKind, (today: string) => A
 export const FREQUENCY_BUILDERS: Readonly<Record<FrequencyKind, () => FrequencyWire>> = {
   every_round: () => ({ kind: 'every_round' }),
   max_per_period: () => ({
-    kind: 'max_per_period', count: DEFAULT_PERIOD_COUNT,
+    kind: 'max_per_period',
+    count: DEFAULT_PERIOD_COUNT,
     period: 'week',
     every: DEFAULT_PERIOD_EVERY,
   }),
