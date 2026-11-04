@@ -43,7 +43,7 @@ async def async_register_static(hass: HomeAssistant, directory: Path = DIST_DIRE
 
 
 def sidebar_title(language: str) -> str:
-    """Titel der Seitenleiste: Home Assistant übersetzt Panel-Titel nicht, daher je Systemsprache."""
+    """Titel der Seitenleiste je Systemsprache (Home Assistant übersetzt ihn nicht)."""
     return INTEGRATION_NAME_DE if language.startswith(GERMAN_LANGUAGE_PREFIX) else INTEGRATION_NAME
 
 
