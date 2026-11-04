@@ -34,7 +34,7 @@ to `config/custom_components/task_wheel` (the repository itself does not contain
 - **Tasks** with allowed people, points (effort), deadline and frequency: every round,
   at most n× per day/week/month, or a fixed interval with tolerance; optionally assigned to a Home Assistant area (room), shown in the overview, draw, history and statistics
 - **Schedules**: recurring, one-off or manual only
-- **Draws** automatically or in the panel with an animation: wheel of fortune, lottery drum, slot machine, Plinko or spotlight; the size (segment, ball, row, slot, tile) equals the chance. For each schedule you choose the allowed variants with a multi-select; if there are several, one is picked at random for every draw; with none selected, "Start round" draws everything at once and shows the task list right away
+- **Draws** automatically or in the panel with an animation: wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or an award ceremony; the size (segment, ball, row, slot, tile, card) equals the chance. With the scratch cards you scratch by hand (the draw starts with the first stroke) or let a coin do it; once the winning card is uncovered the draw is over. For each schedule you choose the allowed variants with a multi-select; if there are several, one is picked at random for every draw; with none selected, "Start round" draws everything at once and shows the task list right away
 - **Fairness**: whoever has had fewer points relative to their fair share gets a bigger slice
 - **Swapping with a joker**, only with people from the same draw who are allowed to get the task
 - **"Stays undone"**: deliberately not doing an assignment; counts like missed in points and statistics
@@ -163,7 +163,7 @@ A target shared by several people (e.g. a family channel) receives each message 
 After setup, the entry "Task Wheel of Fortune" (`/task-wheel`) appears in the sidebar. The panel has the
 tabs Overview, Draw, Tasks, People, Schedules, History and Statistics, loads the state via `snapshot` and
 stays up to date via `subscribe`. The **Draw** tab is finished: choose a schedule, start a round (an open round
-can be resumed), play the schedule's animation for each task (wheel of fortune, lottery drum, slot machine, Plinko or spotlight, size = chance, "Who takes part?" with reasons; whoever already has a task in the round is no longer on the wheel for the further ones; surplus tasks stay open as "not distributable"; if only one person is left for a task, they are assigned without spinning),
+can be resumed), play the schedule's animation for each task (wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or award ceremony, size = chance, "Who takes part?" with reasons; whoever already has a task in the round is no longer on the wheel for the further ones; surplus tasks stay open as "not distributable"; if only one person is left for a task, they are assigned without spinning),
 draw the rest without animation and complete the round. The backend always determines the result; the animation only
 follows it, and with "reduced motion" in the operating system it is skipped. **Overview**, **History** and **Statistics** are also finished (AP-17); Tasks, People and Schedules
 initially show only counters and are extended with AP-15.
