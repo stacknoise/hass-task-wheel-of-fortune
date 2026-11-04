@@ -1,8 +1,8 @@
-import { html } from 'lit';
+import { html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 
 import { personsOf } from '../api/index.ts';
-import type { Snapshot, TaskWire } from '../api/index.ts';
+import type { AreaOption, Snapshot, TaskWire } from '../api/index.ts';
 import { describeFrequency, onChange } from '../components/index.ts';
 import type { ChipOption } from '../components/index.ts';
 import '../components/index.ts';
@@ -15,9 +15,10 @@ import {
   VIEW_TAGS,
 } from '../constants/index.ts';
 import type { Load } from '../constants/index.ts';
-import { FREQUENCY_BUILDERS } from '../state/index.ts';
+import { FREQUENCY_BUILDERS, areaNames } from '../state/index.ts';
 import type { FrequencyWire } from '../state/index.ts';
 import { ConfigView } from './config-view.ts';
+import { roomTag } from './room.ts';
 import type { ConfigTexts } from './config-view.ts';
 import { defineOnce } from '../components/define.ts';
 
@@ -31,6 +32,8 @@ interface TaskDraft {
   readonly respect_absence: boolean;
   readonly swap_allowed: boolean;
   readonly min_load: Load;
+  /** Kennung des Raums; leer = kein Raum. */
+  readonly area_id: string;
 }
 
 const TEXTS: ConfigTexts = { add: 'tasks.add', create: 'tasks.new', edit: 'tasks.edit' };
@@ -52,6 +55,7 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
       respect_absence: true,
       swap_allowed: true,
       min_load: DEFAULT_MIN_LOAD,
+      area_id: '',
     };
   }
 
@@ -66,11 +70,12 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
       respect_absence: task.respect_absence,
       swap_allowed: task.swap_allowed,
       min_load: task.min_load,
+      area_id: task.area_id ?? '',
     };
   }
 
   protected payload(draft: TaskDraft): object {
-    return draft;
+    return { ...draft, area_id: draft.area_id || null };
   }
 
   protected card(task: TaskWire): TemplateResult {
@@ -81,6 +86,7 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
         ${this.text('tasks.days_short')}
       </div>
       <div class="muted">${describeFrequency(task.frequency, this.language)}</div>
+      ${this.#room(task.area_id)}
     `;
   }
 
@@ -128,7 +134,40 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
           this.patch({ due_days });
         })}
       ></tw-stepper>
-      ${this.#minLoad(draft.min_load)} ${this.#rules(draft)}
+      ${this.#areaSelect(draft.area_id)} ${this.#minLoad(draft.min_load)} ${this.#rules(draft)}
+    `;
+  }
+
+  #areas(): readonly AreaOption[] {
+    return this.store.client?.areas() ?? [];
+  }
+
+  #room(areaId: string | null): TemplateResult | typeof nothing {
+    return roomTag(areaNames(this.#areas()), areaId, this.text('common.unknownArea'));
+  }
+
+  /** Alle Räume; ein vergebener, inzwischen gelöschter Raum bleibt wählbar, damit nichts still verfällt. */
+  #areaOptions(value: string): readonly AreaOption[] {
+    const areas = this.#areas();
+    const none = { id: '', label: this.text('tasks.area.none') };
+    const stale = value && !areas.some((area) => area.id === value);
+    return [
+      none,
+      ...(stale ? [{ id: value, label: this.text('common.unknownArea') }] : []),
+      ...areas,
+    ];
+  }
+
+  #areaSelect(value: string): TemplateResult {
+    return html`
+      <tw-select
+        .label=${this.text('tasks.area')}
+        .options=${this.#areaOptions(value)}
+        .value=${value}
+        @tw-change=${onChange<string>((area_id) => {
+          this.patch({ area_id });
+        })}
+      ></tw-select>
     `;
   }
 

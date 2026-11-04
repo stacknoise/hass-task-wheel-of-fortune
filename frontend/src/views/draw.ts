@@ -29,9 +29,11 @@ import {
   personsById,
   pickAnimation,
   tasksById,
+  areaNames,
 } from '../state/index.ts';
-import type { DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
-
+import type { AreaNames, DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
+import { roomTag } from './room.ts';
+import { drawSummary } from './draw-summary.ts';
 import { drawStyles } from './draw-styles.ts';
 import { defineOnce } from '../components/define.ts';
 
@@ -61,6 +63,8 @@ export class TwDrawView extends LitElement {
   declare _scheduleId: string;
 
   readonly #store = new StoreController(this);
+  /** Räume des laufenden Renders. */
+  #areas: AreaNames = new Map();
   readonly #stage = createRef<TwStage>();
   /** Die Animation der laufenden Auslosung; wird bei jedem Start zufällig neu gewählt. */
   #kind: AnimationKind = DEFAULT_ANIMATIONS[0] ?? 'wheel';
@@ -134,6 +138,7 @@ export class TwDrawView extends LitElement {
     if (!snapshot || !session) {
       return nothing;
     }
+    this.#areas = areaNames(this.#store.client?.areas() ?? []);
     const state = session.state;
     const tasks = tasksById(snapshot);
     const persons = participantsOf(personsById(snapshot), tasks, state.taskIds);
@@ -142,6 +147,10 @@ export class TwDrawView extends LitElement {
         ${this.#side(state, tasks, persons)} ${this.#stagePanel(state, tasks, persons)}
       </div>
     `;
+  }
+
+  #room(task: TaskInfo | undefined): TemplateResult | typeof nothing {
+    return roomTag(this.#areas, task?.areaId, this.#text('common.unknownArea'));
   }
 
   #text(key: TextKey): string {
@@ -197,7 +206,11 @@ export class TwDrawView extends LitElement {
               : nothing
           }
         </div>
-        ${idle ? this.#start(scheduleId, open) : this.#round(state, nameOf(schedules, state.scheduleId), tasks, persons)}
+        ${
+          idle
+            ? this.#start(scheduleId, open)
+            : this.#round(state, nameOf(schedules, state.scheduleId), tasks, persons)
+        }
         ${state.phase === 'error' ? this.#failure(state) : nothing}
       </section>
     `;
@@ -330,6 +343,7 @@ export class TwDrawView extends LitElement {
             >${task?.points ?? 0} ${this.#text('draw.points')} · ${task?.dueDays ?? 0}
             ${this.#text('draw.due')}</span
           >
+          ${this.#room(task)}
         </span>
         <span class="status">${this.#taskStatus(state, persons, index, shown)}</span>
       </li>
@@ -349,7 +363,19 @@ export class TwDrawView extends LitElement {
       </section>`;
     }
     if (state.phase === 'done') {
-      return html`<section class="stage">${this.#summary(state, tasks, persons)}</section>`;
+      return html`<section class="stage">
+        ${drawSummary({
+          state,
+          tasks,
+          persons,
+          text: (key) => this.#text(key),
+          room: (task) => this.#room(task),
+          onHistory: () => {
+            this.#toHistory();
+          },
+          onAgain: () => void this.#session?.restart(),
+        })}
+      </section>`;
     }
     const taskId = state.current?.task_id ?? state.taskIds[state.results.length];
     const task = taskId ? tasks.get(taskId) : undefined;
@@ -359,6 +385,7 @@ export class TwDrawView extends LitElement {
         <div class="heading">
           <span class="eyebrow">${this.#text('draw.step')} ${step} / ${state.taskIds.length}</span>
           <span class="title">${task?.name ?? EMPTY_TEXT}</span>
+          ${this.#room(task)}
         </div>
         ${this.#wheelBox(state, persons)} ${this.#people(state, task, persons)}
         ${state.phase === 'revealed' ? this.#result(state, task, persons) : nothing}
@@ -478,12 +505,14 @@ export class TwDrawView extends LitElement {
                 </div>
                 <div class="text">
                   <strong>${winner.name} ${this.#text('draw.takes')} ${task?.name}</strong><br />
+                  ${this.#room(task)}
                   <span class="muted"
                     >${this.#text('draw.chance')} ${percentText(state.current?.chance ?? 0)}</span
                   >
                 </div>`
             : html`<div class="text">
                 <strong>${this.#text('draw.nobody')} ${task?.name}</strong><br />
+                ${this.#room(task)}
                 <span class="muted">${this.#text('draw.nobody.hint')}</span>
               </div>`
         }
@@ -494,54 +523,10 @@ export class TwDrawView extends LitElement {
     `;
   }
 
-  #summary(
-    state: DrawState,
-    tasks: ReadonlyMap<string, TaskInfo>,
-    persons: ReadonlyMap<string, PersonInfo>,
-  ): TemplateResult {
-    return html`
-      <tw-confetti></tw-confetti>
-      <div class="done" role="status">
-        <span class="eyebrow">${this.#text('draw.done.title')}</span>
-        <span class="title"
-          >${this.#text(state.results.length > 0 ? 'draw.done.all' : 'draw.done.none')}</span
-        >
-        <ul class="summary">
-          ${state.results.map(
-            (result) => html`
-              <li>
-                <span>${tasks.get(result.task_id)?.name ?? result.task_id}</span>
-                <strong
-                  >${
-                    persons.get(result.winner_id ?? EMPTY_TEXT)?.name ??
-                    this.#text('draw.undistributable')
-                  }</strong
-                >
-              </li>
-            `,
-          )}
-        </ul>
-        <div class="actions">
-          <button
-            class="button"
-            @click=${() => {
-              this.dispatchEvent(
-                new CustomEvent(EVENT_TAB_SELECT, {
-                  detail: HISTORY_ROUTE,
-                  bubbles: true,
-                  composed: true,
-                }),
-              );
-            }}
-          >
-            ${this.#text('draw.done.history')}
-          </button>
-          <button class="button" @click=${() => void this.#session?.restart()}>
-            ${this.#text('draw.done.again')}
-          </button>
-        </div>
-      </div>
-    `;
+  #toHistory(): void {
+    this.dispatchEvent(
+      new CustomEvent(EVENT_TAB_SELECT, { detail: HISTORY_ROUTE, bubbles: true, composed: true }),
+    );
   }
 }
 

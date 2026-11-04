@@ -20,7 +20,14 @@ import {
 import { formatDateTime, formatPercent } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
-import { AsyncValue, RevisionTracker, StoreController, indexById } from '../state/index.ts';
+import {
+  AsyncValue,
+  RevisionTracker,
+  StoreController,
+  areaNames,
+  indexById,
+} from '../state/index.ts';
+import { roomTag } from './room.ts';
 import { personChips } from './person-chips.ts';
 import { buildCsv } from './csv.ts';
 import { roundDelete } from './round-delete.ts';
@@ -142,6 +149,7 @@ export class TwHistoryView extends LitElement {
       persons: indexById(persons),
       tasks: indexById(modelsOf(snapshot, 'tasks')),
       schedules: indexById(modelsOf(snapshot, 'schedules')),
+      areas: areaNames(this.#store.client?.areas() ?? []),
     };
     const chips = personChips(persons, this.#text('overview.filterAll'));
     return html`
@@ -287,7 +295,14 @@ export class TwHistoryView extends LitElement {
   #tableRow(assignment: AssignmentObject, lookups: HistoryLookups): TemplateResult {
     const person = lookups.persons.get(assignment.person_id);
     return html`<tr>
-      <td>${lookups.tasks.get(assignment.task_id)?.name ?? this.#text('common.unknownTask')}</td>
+      <td>
+        ${lookups.tasks.get(assignment.task_id)?.name ?? this.#text('common.unknownTask')}
+        ${roomTag(
+          lookups.areas,
+          lookups.tasks.get(assignment.task_id)?.area_id,
+          this.#text('common.unknownArea'),
+        )}
+      </td>
       <td>
         <span class="person"
           ><tw-avatar name=${person?.name ?? ''} color=${person?.color ?? ''}></tw-avatar>

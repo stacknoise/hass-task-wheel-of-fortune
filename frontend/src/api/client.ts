@@ -37,6 +37,7 @@ import type { AbsenceWire } from './config-types.ts';
 import type { HistoryPage, HistoryQuery, StatisticsReport } from './models.ts';
 import type {
   Delta,
+  AreaOption,
   HassApi,
   NotifyTarget,
   PanelRoundWire,
@@ -51,10 +52,22 @@ export type Unsubscribe = () => void;
 
 /** Typisierter Zugang zur WebSocket-API des Backends. */
 export class ApiClient {
-  readonly #hass: HassApi;
+  #hass: HassApi;
 
   constructor(hass: HassApi) {
     this.#hass = hass;
+  }
+
+  /** Übernimmt das aktuelle `hass`-Objekt (Home Assistant ersetzt es bei jeder Änderung). */
+  useHass(hass: HassApi): void {
+    this.#hass = hass;
+  }
+
+  /** Räume aus Home Assistant (Bereiche), nach Name sortiert; ohne Namen gilt die Kennung. */
+  areas(): readonly AreaOption[] {
+    return Object.entries(this.#hass.areas ?? {})
+      .map(([id, area]) => ({ id, label: typeof area.name === 'string' ? area.name : id }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }
 
   /** Benachrichtigungsziele aus Home Assistant: `notify`-Entitäten und -Dienste, sortiert. */

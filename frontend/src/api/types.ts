@@ -47,9 +47,17 @@ export interface HassApi {
   readonly states?: Readonly<
     Record<string, { readonly attributes?: { readonly friendly_name?: unknown } }>
   >;
+  /** Alle Bereiche (Räume) von Home Assistant nach Kennung. */
+  readonly areas?: Readonly<Record<string, { readonly name?: unknown }>>;
   /** Alle Dienste je Bereich. */
   readonly services?: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
   callWS<T>(message: { readonly type: string; readonly [field: string]: unknown }): Promise<T>;
+}
+
+/** Ein Home-Assistant-Bereich (Raum): Kennung und Anzeigename. */
+export interface AreaOption {
+  readonly id: string;
+  readonly label: string;
 }
 
 /** Ein mögliches Benachrichtigungsziel: Kennung und Anzeigename. */

@@ -92,6 +92,8 @@ export interface TaskWire {
   readonly respect_absence: boolean;
   readonly swap_allowed: boolean;
   readonly min_load: Load;
+  /** Kennung des Home-Assistant-Bereichs (Raum) oder leer. */
+  readonly area_id: string | null;
 }
 
 export interface ScheduleWire {
