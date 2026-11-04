@@ -1,282 +1,115 @@
-# Task Wheel of Fortune for Home Assistant
+<div align="center">
 
-Distributes household chores fairly and with a bit of fun: a wheel of fortune draws who takes what. The odds
-depend on who has done how much recently, who is around, and how much load each person can take.
+# 🎡 Task Wheel of Fortune
 
-> **Status:** version 0.4.0. All features below are implemented. Installation is done through HACS
-> as a custom repository (see below). Feedback is welcome as an [issue](https://github.com/stacknoise/hass-task-wheel-of-fortune/issues).
+**Who takes out the trash this week? Let the wheel decide.**
 
-## Installation via HACS
+Fair household chores for Home Assistant, drawn with a bit of drama.
 
-The integration is not (yet) in the default HACS store. It is installed as a **custom repository**. Prerequisites:
-[HACS](https://hacs.xyz) is set up and Home Assistant is version 2025.6 or newer.
+[![HACS Custom](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz)
+[![Release](https://img.shields.io/github/v/release/stacknoise/hass-task-wheel-of-fortune)](https://github.com/stacknoise/hass-task-wheel-of-fortune/releases)
+[![License: MIT](https://img.shields.io/github/license/stacknoise/hass-task-wheel-of-fortune)](LICENSE)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2025.6%2B-41BDF5.svg)](https://www.home-assistant.io)
 
-[![Open the repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=stacknoise&repository=hass-task-wheel-of-fortune&category=integration)
+[![Open your Home Assistant instance and open the repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=stacknoise&repository=hass-task-wheel-of-fortune&category=integration)
 
-The button opens the repository directly in your own Home Assistant instance (My Home Assistant, the address of the
-instance has to be set once). Manually:
+<img src="https://raw.githubusercontent.com/stacknoise/hass-task-wheel-of-fortune/main/docs/screenshots/draw-wheel.png" alt="Drawing a chore with the wheel of fortune" width="780">
 
-1. HACS → menu (⋮) → *Custom repositories* → `https://github.com/stacknoise/hass-task-wheel-of-fortune`,
-   type *Integration* → *Add*
-2. Search for "Task Wheel of Fortune" in HACS, *Download* it (pick the latest version) and restart Home Assistant
-3. *Settings → Devices & services → Add integration → Task Wheel of Fortune*
-4. **Task Wheel of Fortune** (shown as "Aufgaben-Glücksrad" if Home Assistant is set to German) appears in the sidebar; create people, tasks and schedules there
+</div>
 
-HACS reports updates like for any other integration. Without HACS: extract the folder `custom_components/task_wheel` from
-the file `task_wheel.zip` of the respective [release](https://github.com/stacknoise/hass-task-wheel-of-fortune/releases)
-to `config/custom_components/task_wheel` (the repository itself does not contain the built panel).
+## Chores without the arguments
 
-## Features
+Nobody likes dividing up the housework. Task Wheel of Fortune does it for you: it draws who takes which
+chore, keeps score of who has done how much, and makes sure the load stays fair over time. Whoever has done
+less recently gets a bigger slice of the wheel. Whoever is away is simply not on it.
 
-- **People** as their own objects, independent of HA users: color on the wheel, full or half load or paused,
-  absences (one-off, on fixed weekdays, in a weekly rhythm such as "every 2nd week Fri–Fri", or recurring such as "every second Wednesday" with a start and an optional end date),
-  optional notification
-- **Tasks** with allowed people, points (effort), deadline and frequency: every round,
-  at most n× per x days/weeks/months (e.g. 5× in 2 months, 1× in 2 weeks; sliding window of whole calendar periods), or a fixed interval with tolerance; optionally assigned to one or more Home Assistant areas (rooms), shown in the overview, draw, history and statistics
-- **Schedules**: recurring, one-off or manual only
-- **Draws** automatically or in the panel with an animation: wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or an award ceremony; for the first five the size (segment, ball, row, slot, tile) equals the chance; scratch cards, breaking news and the award ceremony deliberately show no chances. With the scratch cards you scratch by hand (the draw starts with the first stroke) or let a coin do it; once the winning card is uncovered the draw is over. For each schedule you choose the allowed variants with a multi-select; if there are several, one is picked at random for every draw; with none selected, "Start round" draws everything at once and shows the task list right away
-- **Fairness**: whoever has had fewer points relative to their fair share gets a bigger slice
-- **Swapping with a joker**, only with people from the same draw who are allowed to get the task
-- **"Stays undone"**: deliberately not doing an assignment; counts like missed in points and statistics
-- **History** with CSV export and **statistics** (fair share, completion rate, task × person matrix, draws per task against the target of "n× in x periods", for the current and earlier windows)
-- **Home Assistant integration**: services, events, sensors, a to-do list per person, buttons per schedule
+And because chores are more fun with a little suspense, every draw comes with an animation.
+
+## Why you will like it
+
+- 🎰 **Eight ways to draw.** Wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or an award ceremony ("And the chore goes to …"). Pick one per schedule, or let it surprise you every time.
+- ⚖️ **Fair by design.** Chances follow each person's fair share, based on points, presence and capacity. A person on half load, on holiday or on a weekly rota is taken into account automatically. [How fairness works →](docs/FAIRNESS.md)
+- 🗓️ **Schedules.** Draw every Monday, once, or by hand. Each round hands every person at most one chore.
+- 🏠 **Rooms and rules.** Assign chores to your Home Assistant areas. Say who may do what, how often, how much effort it is (points) and how much load a person needs to take it.
+- 🃏 **Jokers and "stays undone".** Swap a chore with someone else from the same draw, or openly skip it. Everything is counted.
+- 📊 **History and statistics.** Every draw, completion rate, task × person matrix, lucky and unlucky ones, plus CSV export.
+- 📱 **Looks good everywhere.** The panel is made for desktop, tablet and phone, in English and German.
+- 🔔 **Fits into Home Assistant.** Services, events, sensors, a to-do list per person and a draw button per schedule. Use it in automations, dashboards and notifications.
 
 ## Screenshots
 
-| | |
-|---|---|
-| ![Overview](docs/screenshots/overview.png) | ![Draw with the wheel](docs/screenshots/draw-wheel.png) |
-| **Overview:** open assignments, points this month, next draw | **Draw:** wheel of fortune, size = chance |
-| ![Draw with the slot machine](docs/screenshots/draw-slot.png) | ![Tasks](docs/screenshots/tasks.png) |
-| **Draw:** the slot machine, one of eight animations | **Tasks:** points, deadline, frequency, rules |
-| ![Schedules](docs/screenshots/schedules.png) | ![History](docs/screenshots/history.png) |
-| **Schedules:** recurring, once or manual | **History:** every draw with CSV export |
-| ![Statistics](docs/screenshots/statistics.png) | |
-| **Statistics:** fair share, completion rate, task × person | |
+<table>
+  <tr>
+    <td width="50%"><img src="https://raw.githubusercontent.com/stacknoise/hass-task-wheel-of-fortune/main/docs/screenshots/overview.png" alt="Overview"><br><sub><b>Overview:</b> open chores, points this month, next draw</sub></td>
+    <td width="50%"><img src="https://raw.githubusercontent.com/stacknoise/hass-task-wheel-of-fortune/main/docs/screenshots/draw-slot.png" alt="Slot machine"><br><sub><b>Draw:</b> the slot machine, one of eight animations</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="https://raw.githubusercontent.com/stacknoise/hass-task-wheel-of-fortune/main/docs/screenshots/schedules.png" alt="Schedules"><br><sub><b>Schedules:</b> recurring, once or manual</sub></td>
+    <td width="50%"><img src="https://raw.githubusercontent.com/stacknoise/hass-task-wheel-of-fortune/main/docs/screenshots/statistics.png" alt="Statistics"><br><sub><b>Statistics:</b> fair share, completion rate, task × person</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="https://raw.githubusercontent.com/stacknoise/hass-task-wheel-of-fortune/main/docs/screenshots/history.png" alt="History"><br><sub><b>History:</b> every draw, with CSV export</sub></td>
+    <td width="50%"></td>
+  </tr>
+</table>
 
-## Fairness and fair share
+## Installation
 
-Next to a person's points, the panel shows their **fair share** ("fair: 1.15") under "Points this month" (overview) and in the
-statistics. This is **not** "everyone gets the same amount", but the share that is due to the person according to their
-**load capacity** and their **days present** in the period. Equal points therefore do not mean equal fair shares.
+Task Wheel of Fortune is not (yet) in the default HACS store, so you add it as a **custom repository**.
+You need [HACS](https://hacs.xyz) and Home Assistant 2025.6 or newer.
 
-**Calculation**
+[![Open your Home Assistant instance and open the repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=stacknoise&repository=hass-task-wheel-of-fortune&category=integration)
 
-1. A person's capacity = load capacity (full 1.0 · half 0.5 · paused 0) × number of days present in the period.
-   Absences (one-off, fixed weekdays, weekly rhythm, recurring) reduce the days.
-2. Fair share = total points of all people × the person's capacity ÷ sum of all capacities.
-3. Points of an assignment: completed on time counts in full; late and missed ("Stays undone" included) count with the
-   factor from the settings (default: late 1.0, missed 0). Open and swapped assignments do not count in the statistics
-   yet, but count fully as load when drawing.
-4. The period of the statistics is whole calendar months **up to today**; when drawing, the fairness window applies
-   (default 30 days, adjustable in the settings).
+Or by hand:
 
-**Example 1: everyone completes exactly 1 point, yet the fair shares differ**
+1. In HACS open the menu (⋮) → *Custom repositories*, add `https://github.com/stacknoise/hass-task-wheel-of-fortune` as type *Integration*.
+2. Search for **Task Wheel of Fortune** in HACS, click *Download* and restart Home Assistant.
+3. Go to *Settings → Devices & services → Add integration* and pick **Task Wheel of Fortune**.
 
-It is Tuesday, 3 November. The "month" period therefore covers only Sunday, Monday and Tuesday. Five people have
-each completed a task worth 1 point (5 points in total):
+The panel now appears in the sidebar ("Aufgaben-Glücksrad" if Home Assistant is set to German).
 
-| Person | Presence | Days | Fair share | Points |
-|---|---|---|---|---|
-| Toni | always | 3 | 5 × 3 ÷ 13 = **1.15** | 1 |
-| Andrea | always | 3 | **1.15** | 1 |
-| Fabian | every 2 weeks Fri–Fri, present right now | 3 | **1.15** | 1 |
-| Felix | not Sat and Sun | 2 (Mon, Tue) | 5 × 2 ÷ 13 = **0.77** | 1 |
-| Laurenz | not Sat, Sun, Wed | 2 (Mon, Tue) | **0.77** | 1 |
+<details>
+<summary>Without HACS</summary>
 
-The sum of the days is 13. Whoever is around on fewer days has less claim to tasks, so 1 point is **above** the fair share
-for Felix and Laurenz. This evens out with every day, because capacity only grows on days present.
-Fabian is only on par with Toni and Andrea as long as his presence phase covers the whole period. In his
-week of absence his fair share drops.
+Extract the folder `custom_components/task_wheel` from `task_wheel.zip` of the latest
+[release](https://github.com/stacknoise/hass-task-wheel-of-fortune/releases) to `config/custom_components/task_wheel`
+and restart Home Assistant.
 
-**Example 2: half load capacity**
+</details>
 
-A month with 30 days, Anna (full) and Ben (half) are always present: capacity Anna 30, Ben 15. With 9 points in total,
-Anna is due 9 × 30 ÷ 45 = **6** and Ben 9 × 15 ÷ 45 = **3** points. If each person has 4.5 points, Ben is above his
-share and Anna below.
+## Quick start
 
-**Example 3: late and missed**
+1. **People:** add everyone who takes part. Choose a color for the wheel and a load capacity (full, half or paused), and enter absences if there are any.
+2. **Tasks:** add your chores with the people who may do them, points for the effort, an optional deadline and how often they come up (every round, "at most 2× per month", a fixed interval, …).
+3. **Schedule:** create a schedule, for example "every Saturday at 10:00", choose its tasks and animations.
+4. **Draw:** open the *Draw* tab, press start and watch. Or let the schedule draw by itself and tell everyone with a push message.
+5. **Done?** Tick chores off in the *Overview* (or in the to-do list of the person). The statistics keep score and the next draw becomes fairer.
 
-A task worth 2 points is completed late. If the "late" factor is set to 0.5, the person is credited 1
-point; for "missed" (default 0) they get 0.
-
-**Effect on the draw**
-
-Whoever is below their fair share gets a bigger slice on the wheel. The weight is
-`w = f × exp((f − a) ÷ f)` with the fair share `f` and the actual share `a` (the person's points ÷ points of
-everyone), then limited to at least 0.5 % and at most 100 % and normalized to chances. Example: Anna and Ben are
-both fully capable and always present (`f` = 50 %), Anna has 3 and Ben 1 point in the window (`a` = 75 % and 25 %). Then
-Anna's weight is 0.50 × e^−0.5 ≈ 0.30 and Ben's is 0.50 × e^0.5 ≈ 0.82. Ben thus has about a 73 % chance, Anna about 27 %.
-Without points in the window, everyone's chance is their fair share; people without capacity (paused or never present in the window) keep only the minimum weight of 0.5 %.
-
-**Further indicators**
-
-- **Fairness index** (statistics): 100 % means everyone has exactly their fair share; it falls with the sum of the
-  deviations (index = 1 − ½ × Σ|points − fair share| ÷ total points).
-- **Lucky one** is furthest below their fair share, **unlucky one** furthest above; both only with a real
-  deviation and from two people on.
-
-## Releasing (for developers)
-
-1. Raise the version in all places, via pull request to `main`: `custom_components/task_wheel/manifest.json`,
-   `pyproject.toml`, `frontend/package.json` and `e2e/package.json` (each with its `package-lock.json`, root package
-   and top-level `version`), and the "Code-Version" in the header of `docs/CODE_DOKU.md`; add an entry to `CHANGELOG.md`
-   and to the change log of `docs/CODE_DOKU.md`. `python3 tools/check_docs_consistency.py` (CI job `docs-check`) fails if
-   the versions differ.
-2. Wait until the CI of the merge commit on `main` is green, then set the tag: `git tag v0.4.0 && git push origin v0.4.0`,
-   or enter the tag on GitHub under *Actions → Release → Run workflow* (the workflow creates it at the state of `main`)
-3. The `Release` workflow checks that the tag and the manifest version match, that the commit is part of `main` and that
-   all CI jobs are green on it (it waits for running jobs), builds the panel without write permissions on
-   the repository and attaches `task_wheel.zip` and its checksum `SHA256SUMS` to the new GitHub release (see `hacs.json`:
-   `zip_release`). Tags with a suffix (`v0.4.0-beta.1`) are published as a pre-release.
-
-## Services and events
+## Use it in Home Assistant
 
 ```yaml
+# Draw a round from an automation
 action: task_wheel.draw
 data:
   schedule: weekly-plan
 ```
 
-| Service | Purpose |
+Besides the draw service there are `task_wheel.complete`, `task_wheel.swap` and `task_wheel.set_absence`, events for
+draws, completions and reminders, sensors and a to-do list per person, and a draw button per schedule.
+Everything is listed in the [reference](docs/REFERENCE.md).
+
+## More
+
+| | |
 |---|---|
-| `task_wheel.draw` | Draw a round of a schedule |
-| `task_wheel.complete` | Complete an assignment |
-| `task_wheel.swap` | Swap an assignment with a joker |
-| `task_wheel.set_absence` | Enter an absence for a person |
+| [How fairness works](docs/FAIRNESS.md) | Fair share, chances and examples |
+| [Reference](docs/REFERENCE.md) | Services, events, notifications, entities, panel, WebSocket API |
+| [Development](docs/DEVELOPMENT.md) | Build, test, release, continuous integration |
+| [Changelog](CHANGELOG.md) | What changed in which version |
+| [Concept and code documentation](docs/KONZEPT.md) | Architecture and code metrics (in German) |
 
-Events: `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_wheel_missed`, `task_wheel_reminder`. With `animate_on`, `task_wheel.draw` additionally fires `task_wheel_animate` (a hint for a display). The payloads contain only identifiers, names and numbers. "Stays undone" and deleting a draw fire no event.
-
-A schedule and a person can be addressed by identifier or short name, a task by identifier or name. `task_wheel.complete` takes either `assignment_id` or `person` together with `task`.
-
-Settings (jokers, fairness window, retention, points factors, grace period, panel for administrators only) are changed under *Settings → Devices & services → Task Wheel of Fortune → Configure*. Every night at 03:00, missed assignments are marked and rounds older than the retention period (at least 373 days) are deleted; rounds that still hold open assignments are kept.
-
-## Notifications
-
-Each person can have a target: a `notify` entity (via `notify.send_message`) or a legacy service `notify.<name>`, e.g. `notify.mobile_app_anna`. Only existing targets of the `notify` domain are allowed; this is checked when saving and on every send.
-
-| Occasion | Recipient |
-|---|---|
-| Round drawn (only if the schedule has "Send result as push message" enabled) | all people with a target, one line per person |
-| Task swapped | the person who takes over the task |
-| Reminder (schedule "manual only", after n, 2n, … days without a draw) | all people with a target |
-
-A target shared by several people (e.g. a family channel) receives each message only once. The texts are in `custom_components/task_wheel/texts/` (de, en; other languages fall back to English). A failed send is logged and blocks neither the draw nor other targets.
-
-## Panel
-
-After setup, the entry "Task Wheel of Fortune" (`/task-wheel`) appears in the sidebar. The panel has the
-tabs Overview, Draw, Tasks, People, Schedules, History and Statistics, loads the state via `snapshot` and
-stays up to date via `subscribe`. The **Draw** tab is finished: choose a schedule, start a round (an open round
-can be resumed), play the schedule's animation for each task (wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or award ceremony; for the first five the size equals the chance, scratch cards, breaking news and the award ceremony show no chances; "Who is in?" lists the reasons; whoever already has a task in the round is no longer on the wheel for the further ones; a round contains only as many due tasks as people can take part, and if there are more, the tasks are chosen at random (the schedule's order is kept); if only one person is left for a task, they are assigned without spinning),
-draw the rest without animation and complete the round. The backend always determines the result; the animation only
-follows it, and with "reduced motion" in the operating system it is skipped. **Overview**, **History**, **Statistics**, **Tasks**, **People** and **Schedules** are finished as well.
-
-- **Overview:** next draw (with paging through the schedules), open assignments per schedule with a filter by person,
-  an action menu per assignment with Complete and "Stays undone" (both with a confirmation popup) and Swap (only allowed, non-paused people of the same draw, with a note on the remaining jokers), points this month against the
-  fair share, and the latest activity. The open assignments are grouped by **draw** (most recent first, with
-  schedule and time); a draw without open assignments disappears from the list. A whole draw can be
-  **deleted** after confirmation as long as none of its tasks is completed; it then also disappears from history and statistics.
-  If a task is in several schedules, it can be drawn several times; each assignment is completed individually.
-- **History:** expandable rounds (schedule, origin, assignments with chance and status, deleting a round after confirmation), filter by person, loading in
-  pages and **CSV export** (semicolon, UTF-8 with BOM; fields that begin with `=`, `+`, `-`, `@`, a tab or a line break
-  are defused with an apostrophe so that spreadsheet programs do not execute them as a formula).
-- **Statistics:** period (month, 3 or 12 months), indicators, points against fair share, completion rate per week
-  (SVG line chart without a charting library), task × person matrix and awards (lucky one, unlucky one,
-  most reliable person). Empty periods show a note instead of empty charts.
-
-**Tablet and smartphone:** the panel adapts to its own width. On a tablet in portrait mode and on a smartphone, the stage (wheel, result, "Next task") sits at the top of the draw and the round list below it; on a smartphone everything is single-column and compact, controls have touch size (44 px), and in narrow mode the Home Assistant menu button for the sidebar appears.
-
-Texts are available in German and English (language from Home Assistant). The bundle is not checked in: before
-trying it out, run `cd frontend && npm ci && npm run build`. If it is missing, the integration stays usable and writes a
-warning to the log.
-
-### People, tasks and schedules in the panel
-
-The *People*, *Tasks* and *Schedules* tabs create, change and delete objects (administrators only). People and tasks cannot be deleted while they are still in use: a person not while a task allows them or they have open assignments; a task not while a schedule contains it or it is still assigned and open. The cards are laid out
-in a grid; adding and editing open a popup (full screen on a smartphone, close with Escape or ✕), and deleting asks for confirmation in another popup. Backend errors appear at the affected field and as a note in the popup.
-
-- **People:** color on the wheel, load capacity (full, half, paused), presence (one-off, weekdays, weekly rhythm, recurring) with a
-  preview of the next four weeks, and optionally a notification entity (`notify.…`, with a search across the entities and services of Home Assistant, checked when saving).
-- **Tasks:** allowed people, frequency (every round, at most n× per period, fixed interval with a timeline),
-  points, deadline, minimum load capacity (any, at least half or full load only; whoever is below it does not get onto the wheel for the task and cannot take it over by swapping) and the extra rules "no repetition", "respect absence", "swap allowed". A task can optionally be assigned to a **room** (a Home Assistant area); the room is shown on the task card, in the overview, the draw, the history (also as a column in the CSV export) and the statistics. If an area is deleted in Home Assistant, the task keeps the assignment and shows "Unknown room" until you pick another one.
-- **Schedules:** recurring, one-off or manual only, task selection, options and an example for `task_wheel.draw`
-  and the event `task_wheel_drawn`.
-
-## Panel API (WebSocket)
-
-The panel talks to the backend through WebSocket commands with the prefix `task_wheel/`: `snapshot`, `subscribe`
-(first the full state, then only changes per object), `history/list`, `statistics/get`, `availability/preview` (presence preview),
-`assignment/complete`, `assignment/swap`, `assignment/skip`, `draw/begin|preview|spin|spin_rest|commit|cancel` for every signed-in
-user, and `round/delete`, `person/*`, `task/*`, `schedule/*` and `settings/update` for administrators only. All inputs
-are validated against strict schemas (no unknown fields, limited lengths). If "Panel for administrators only" is set in the settings,
-the read commands are also reserved for administrators. Details:
-[docs/KONZEPT.md](docs/KONZEPT.md) §6.4 (in German).
-
-## Entities
-
-For every person and every (non-archived) schedule, the integration creates a device "Task Wheel <name>" with these entities. They appear and disappear with the people and schedules; the entity IDs result from the device name and the entity name (shown here with the English UI):
-
-| Entity | Example | Content |
-|---|---|---|
-| Open tasks per person | `sensor.task_wheel_anna_open` | number of assignments not yet completed |
-| Points this month per person | `sensor.task_wheel_anna_points` | points credited in the current month (late/missed factors from the settings) |
-| To-do list per person | `todo.task_wheel_anna` | open tasks with deadline; **checking one off completes the assignment** (app, voice assistant), other changes are not possible |
-| Next draw per schedule | `sensor.task_wheel_weekly_plan_next_draw` | timestamp; empty when paused or "manual only" |
-| Draw button per schedule | `button.task_wheel_weekly_plan_draw` | draws the schedule as in the panel |
-
-The entities do not poll; they update as soon as something changes for them (draw, completion, swap, missed, changed people and schedules).
-
-## Documentation
-
-The project documents are written in German.
-
-| Document | Content |
-|---|---|
-| [docs/KONZEPT.md](docs/KONZEPT.md) | Technical concept: architecture, layers, patterns, data model, algorithms, interfaces, security, performance, code rules |
-| [docs/ARBEITSPAKETE.md](docs/ARBEITSPAKETE.md) | Work packages AP-00 to AP-19 with dependencies, sizes and definition of done |
-| [docs/CODE_DOKU.md](docs/CODE_DOKU.md) | Code documentation: metrics, thresholds, dependencies, change log, comparison with the [code documentation guideline](https://claude.ai/artifact/9txBo1nQLP7gMmYQfYcLJe) |
-| [mockups/](mockups/) | Clickable UI mockups ([view interactively](https://claude.ai/artifact/NEch6MPsvESdj91pqQFHT7)) |
-
-## Development
-
-Short version of the rules (details in KONZEPT.md §10):
-
-- Backend: Python 3.13, Home Assistant custom integration; frontend: Lit 3 + TypeScript (strict), built with Vite
-- Factory + Strategy + Repository: factories create rule strategies by registration without `if/elif` chains, storage only through repositories
-- Clear layers (constants, entry point, interfaces, application, domain, infrastructure); the import direction is checked in CI
-- No literals in the code, everything through constants; no duplicated code
-- Security and performance first: validated inputs, configuration for administrators only, drawing only in the backend
-- **Every code change is logged in [docs/CODE_DOKU.md](docs/CODE_DOKU.md)**; the README is updated for visible changes
-
-Commands:
-
-```bash
-# Backend (Python 3.13)
-python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements-dev.txt
-ruff check . && ruff format --check . && mypy && lint-imports && pytest
-
-# Frontend (Node 22)
-cd frontend && npm ci && npm run lint && npm run typecheck && npm test && npm run build && npm run bundle-budget
-
-# End-to-end test (Playwright against a real, fresh HA instance with the integration; runs in CI as job `e2e`)
-# Procedure: build the frontend, start `hass -c <config>` with `custom_components/task_wheel`, then
-cd e2e && npm ci && npx playwright install chromium && HA_URL=http://localhost:8123 npx playwright test
-
-# Regenerate the README screenshots (a fresh HA instance with the integration is running on :8123, English UI)
-cd e2e && npm ci && HA_LANGUAGE=en SHOT_DIR=../docs/screenshots npm run screenshots
-
-# Generate the code documentation (docs/code-doku/index.html) and check thresholds
-python3 docs/code-doku/generate.py --check
-```
-
-### Continuous integration
-
-Pull requests and `main` run the jobs `hassfest`, `HACS validation`, `lint`, `typecheck`, `architecture`
-(import direction, duplicates), `test-backend`, `test-frontend`, `build-frontend` (incl. bundle budget), `e2e` (Playwright against a real Home Assistant), `audit` and
-`docs-check` (code, tools, e2e tests or workflows changed ⇒ `docs/CODE_DOKU.md` has a new change-log row; versions and the module table are consistent) and `code-doku` (the generator runs, thresholds from `docs/CODE_DOKU.md` §1.1 are met). A weekly `Audit` workflow checks the npm and pip dependencies for new advisories. Dependabot keeps pip, npm and GitHub Actions up to date.
-
-Please report security vulnerabilities confidentially, see [SECURITY.md](SECURITY.md).
+Found a bug or have an idea? Open an [issue](https://github.com/stacknoise/hass-task-wheel-of-fortune/issues).
+Please report security problems confidentially, see [SECURITY.md](SECURITY.md).
 
 ## License
 

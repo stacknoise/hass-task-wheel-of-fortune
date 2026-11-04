@@ -17,7 +17,7 @@ EXIT_OK: Final = 0
 EXIT_FAIL: Final = 1
 MESSAGE_OK: Final = "Dokumentationsprüfung bestanden."
 
-# Dateien mit der Versionsnummer des Releases (Release-Anleitung in der README)
+# Dateien mit der Versionsnummer des Releases (Release-Anleitung in docs/DEVELOPMENT.md)
 JSON_VERSION_FILES: Final = (
     f"{PACKAGE}/manifest.json",
     "frontend/package.json",
