@@ -155,6 +155,15 @@
     "draw_cancel_admin_only": {
       "message": "Nach dem ersten Ergebnis dürfen nur Administratoren die Auslosung abbrechen."
     },
+    "draw_already_started": {
+      "message": "Die Auslosung hat schon begonnen, Aufgaben lassen sich nicht mehr austauschen."
+    },
+    "draw_replacement_invalid": {
+      "message": "Diese Aufgabe gehört nicht zum Zeitplan oder ist schon in der Runde."
+    },
+    "draw_replacement_infeasible": {
+      "message": "Mit den anwesenden Personen ist diese Aufgabe nicht machbar."
+    },
     "swap_disabled": {
       "message": "Diese Aufgabe darf nicht getauscht werden."
     },

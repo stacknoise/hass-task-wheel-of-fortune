@@ -12,18 +12,23 @@ from ..const.events import (
     WS_DRAW_CANCEL,
     WS_DRAW_COMMIT,
     WS_DRAW_PREVIEW,
+    WS_DRAW_REPLACE_TASK,
+    WS_DRAW_REPLACEMENTS,
     WS_DRAW_SPIN,
     WS_DRAW_SPIN_REST,
     WS_ROUND_DELETE,
 )
 from ..const.keys import (
     WIRE_PANEL_ROUND,
+    WIRE_REPLACEMENTS,
     WIRE_RESULT,
     WIRE_RESULTS,
     WS_FIELD_ASSIGNMENT_ID,
+    WS_FIELD_NEW_TASK_ID,
     WS_FIELD_PANEL_ROUND_ID,
     WS_FIELD_ROUND_ID,
     WS_FIELD_SCHEDULE_ID,
+    WS_FIELD_TASK_ID,
     WS_FIELD_TO_PERSON_ID,
 )
 from .command import Access, Command, Reply, Request
@@ -34,6 +39,9 @@ _SWAP: Final = required_fields((WS_FIELD_ASSIGNMENT_ID, ID), (WS_FIELD_TO_PERSON
 _SCHEDULE: Final = required_fields((WS_FIELD_SCHEDULE_ID, ID))
 _ROUND: Final = required_fields((WS_FIELD_ROUND_ID, ID))
 _PANEL_ROUND: Final = required_fields((WS_FIELD_PANEL_ROUND_ID, ID))
+_REPLACE_TASK: Final = required_fields(
+    (WS_FIELD_PANEL_ROUND_ID, ID), (WS_FIELD_TASK_ID, ID), (WS_FIELD_NEW_TASK_ID, ID)
+)
 
 
 def _complete(request: Request) -> Reply:
@@ -83,6 +91,24 @@ def _preview(request: Request) -> Reply:
     return Reply({WIRE_RESULT: to_wire(result)})
 
 
+def _replacements(request: Request) -> Reply:
+    """Aufgaben, die vor dem Start gegen eine der Runde getauscht werden könnten."""
+    items = request.data.draws.replacements(request.params[WS_FIELD_PANEL_ROUND_ID], request.now)
+    return Reply({WIRE_REPLACEMENTS: to_wire(items)})
+
+
+def _replace_task(request: Request) -> Reply:
+    """Tauscht (nur Administratoren, nur vor dem Start) eine Aufgabe der Runde."""
+    params = request.params
+    request.data.draws.replace_task(
+        params[WS_FIELD_PANEL_ROUND_ID],
+        params[WS_FIELD_TASK_ID],
+        params[WS_FIELD_NEW_TASK_ID],
+        request.now,
+    )
+    return Reply({WIRE_PANEL_ROUND: _view(request)})
+
+
 def _spin(request: Request) -> Reply:
     """Zieht die nächste Aufgabe; das Ergebnis bestimmt das Backend."""
     result = request.data.draws.spin(request.params[WS_FIELD_PANEL_ROUND_ID], request.now)
@@ -116,6 +142,8 @@ COMMANDS: Final = (
     Command(WS_ROUND_DELETE, _ROUND, _delete_round, access=Access.ADMIN, mutates=True),
     Command(WS_DRAW_BEGIN, _SCHEDULE, _begin, mutates=True),
     Command(WS_DRAW_PREVIEW, _PANEL_ROUND, _preview),
+    Command(WS_DRAW_REPLACEMENTS, _PANEL_ROUND, _replacements, access=Access.ADMIN),
+    Command(WS_DRAW_REPLACE_TASK, _REPLACE_TASK, _replace_task, access=Access.ADMIN, mutates=True),
     Command(WS_DRAW_SPIN, _PANEL_ROUND, _spin, mutates=True),
     Command(WS_DRAW_SPIN_REST, _PANEL_ROUND, _spin_rest, mutates=True),
     Command(WS_DRAW_COMMIT, _PANEL_ROUND, _commit, mutates=True),

@@ -67,6 +67,32 @@ export const drawStyles: CSSResult[] = [
     .task.current {
       background: var(--tw-color-background);
     }
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: var(--tw-space-s);
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+    .option {
+      display: flex;
+      align-items: center;
+      gap: var(--tw-space-s);
+      min-height: 44px;
+      padding: var(--tw-space-s);
+      border: 1px solid var(--tw-color-divider);
+      border-radius: var(--tw-radius);
+      font-size: 1em;
+    }
+    .option.out {
+      opacity: 0.6;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--tw-space-s);
+    }
     .status {
       font-weight: 500;
       white-space: nowrap;

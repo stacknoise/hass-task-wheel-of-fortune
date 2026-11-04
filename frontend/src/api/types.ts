@@ -42,6 +42,8 @@ export interface HassConnection {
 export interface HassApi {
   readonly connection: HassConnection;
   readonly language?: string;
+  /** Der angemeldete Benutzer (Home Assistant). */
+  readonly user?: { readonly is_admin?: boolean };
   readonly locale?: { readonly language?: string };
   /** Alle Entitäten (nur die Kennungen und Anzeigenamen braucht das Panel). */
   readonly states?: Readonly<
@@ -95,6 +97,21 @@ export interface PanelRoundWire {
   readonly expires_at: string;
   readonly results: readonly TaskDrawWire[];
   readonly pending_task_ids: readonly string[];
+}
+
+/** Eine Aufgabe, die der Admin vor dem Start gegen eine der Runde tauschen könnte. */
+export interface TaskReplacementWire {
+  readonly task_id: string;
+  /** Mit den anwesenden Personen machbar. */
+  readonly doable: boolean;
+}
+
+export interface ReplacementsReply {
+  readonly replacements: readonly TaskReplacementWire[];
+}
+
+export interface ReplaceTaskReply {
+  readonly panel_round: PanelRoundWire;
 }
 
 export interface SpinReply {
