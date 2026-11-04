@@ -29,24 +29,26 @@ export class TwFrequencyEditor extends LocalizedElement {
   readonly #renderers: Readonly<Record<FrequencyKind, Renderer>> = {
     every_round: () => nothing,
     max_per_period: (frequency: Extract<FrequencyWire, { kind: 'max_per_period' }>) => html`
-      <tw-stepper
-        .label=${this.text('frequency.count')}
-        .value=${frequency.count}
-        .min=${FORM_LIMITS.periodCount.min}
-        .max=${FORM_LIMITS.periodCount.max}
-        @tw-change=${onChange<number>((count) => {
-          this.#merge({ count });
-        })}
-      ></tw-stepper>
-      <tw-stepper
-        .label=${this.text('frequency.every')}
-        .value=${frequency.every}
-        .min=${FORM_LIMITS.periodEvery.min}
-        .max=${FORM_LIMITS.periodEvery.max}
-        @tw-change=${onChange<number>((every) => {
-          this.#merge({ every });
-        })}
-      ></tw-stepper>
+      <div class="pair">
+        <tw-stepper
+          .label=${this.text('frequency.count')}
+          .value=${frequency.count}
+          .min=${FORM_LIMITS.periodCount.min}
+          .max=${FORM_LIMITS.periodCount.max}
+          @tw-change=${onChange<number>((count) => {
+            this.#merge({ count });
+          })}
+        ></tw-stepper>
+        <tw-stepper
+          .label=${this.text('frequency.every')}
+          .value=${frequency.every}
+          .min=${FORM_LIMITS.periodEvery.min}
+          .max=${FORM_LIMITS.periodEvery.max}
+          @tw-change=${onChange<number>((every) => {
+            this.#merge({ every });
+          })}
+        ></tw-stepper>
+      </div>
       <tw-segmented
         .label=${this.text('frequency.period')}
         .options=${PERIODS.map((period) => ({ id: period, label: this.text(`period.${period}`) }))}

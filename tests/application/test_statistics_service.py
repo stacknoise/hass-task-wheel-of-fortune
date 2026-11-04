@@ -9,10 +9,12 @@ from custom_components.task_wheel.application.assignment_service import Assignme
 from custom_components.task_wheel.application.history_service import HistoryService
 from custom_components.task_wheel.application.statistics_service import StatisticsService
 from custom_components.task_wheel.application.swap_service import SwapService
+from custom_components.task_wheel.application.wire import to_json
 from custom_components.task_wheel.domain.enums import AssignmentStatus as S
-from custom_components.task_wheel.domain.enums import Load
+from custom_components.task_wheel.domain.enums import Load, Period
 from custom_components.task_wheel.domain.errors import TaskWheelError, ValidationError
 from custom_components.task_wheel.domain.history import HistoryFilter
+from custom_components.task_wheel.domain.models import MaxPerPeriod
 from custom_components.task_wheel.domain.statistics.aggregate import recompute
 from custom_components.task_wheel.infrastructure.repository.config_store import ConfigStore
 from custom_components.task_wheel.infrastructure.repository.history_store import HistoryStore
@@ -230,3 +232,14 @@ def test_history_filters_assignments_and_period() -> None:
 def test_history_validates_paging(kwargs: dict[str, int]) -> None:
     with pytest.raises(ValidationError):
         HistoryService(_history_world().history).page(**kwargs)
+
+
+def test_report_holds_the_goal_progress_of_the_schedules():
+    world = World()
+    rule = MaxPerPeriod(count=2, period=Period.WEEK)
+    world.config.put_task(f.task(id="t1", allowed=frozenset(PEOPLE), frequency=rule))
+    world.config.put_schedule(f.schedule(id="s9", task_ids=("t1",)))
+    report = world.statistics.report(f.NOW)
+    (goal,) = (g for g in report.goals if g.schedule_id == "s9")
+    assert (goal.target, goal.reached) == (2, 0)
+    assert to_json(report)["goals"][0]["rate"] == 0.0

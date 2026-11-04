@@ -137,6 +137,18 @@ export const REPORT: StatisticsReport = {
     unlucky: 'p1',
     reliable: { person_id: 'p1', on_time_rate: 0.9, closed: 10 },
   },
+  goals: [
+    {
+      schedule_id: 's1',
+      tasks: [
+        { task_id: 't1', target: 5, assigned: 3, done: 2, reached: 2 },
+        { task_id: 't2', target: 1, assigned: 1, done: 2, reached: 1 },
+      ],
+      target: 6,
+      reached: 3,
+      rate: 0.5,
+    },
+  ],
 };
 
 export const EMPTY_REPORT: StatisticsReport = {
@@ -145,6 +157,7 @@ export const EMPTY_REPORT: StatisticsReport = {
   standings: [],
   weeks: [],
   highlights: { lucky: null, unlucky: null, reliable: null },
+  goals: [],
 };
 
 export function fakeHass(): FakeHass {

@@ -3,13 +3,14 @@ import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 
 import { modelsOf } from '../api/index.ts';
-import type { PersonObject, StatisticsReport, TaskObject } from '../api/index.ts';
+import type { PersonObject, ScheduleObject, StatisticsReport, TaskObject } from '../api/index.ts';
 import { baseStyles, tokenStyles, viewStyles } from '../components/index.ts';
 import type { ChipItem } from '../components/index.ts';
 import '../components/index.ts';
 import {
   DEFAULT_RANGE,
   EVENT_CHIP_SELECT,
+  PERCENT,
   STATISTICS_RANGES,
   STATISTICS_WEEKS,
   VIEW_TAGS,
@@ -65,14 +66,16 @@ export class TwStatisticsView extends LitElement {
       .pair > .card {
         flex: 1 1 340px;
       }
-      .bar-row {
+      .bar-row,
+      .goal-row {
         display: grid;
         grid-template-columns: 80px minmax(0, 1fr) 48px;
         align-items: center;
         gap: var(--tw-space-s);
         margin-bottom: var(--tw-space-s);
       }
-      .bar-row strong {
+      .bar-row strong,
+      .goal-row strong {
         text-align: right;
       }
       .track {
@@ -114,6 +117,13 @@ export class TwStatisticsView extends LitElement {
         fill: var(--tw-color-surface);
         stroke: var(--tw-color-primary);
         stroke-width: 2;
+      }
+      .goal {
+        margin-bottom: var(--tw-space-field);
+      }
+      .goal-tasks {
+        margin: var(--tw-space-s) 0 0;
+        padding-left: 1.2em;
       }
       td.cell {
         text-align: center;
@@ -172,7 +182,11 @@ export class TwStatisticsView extends LitElement {
           label=${this.#text('statistics.range')}
         ></tw-chips>
       </div>
-      ${this.#body(modelsOf(snapshot, 'persons'), modelsOf(snapshot, 'tasks'))}
+      ${this.#body(
+        modelsOf(snapshot, 'persons'),
+        modelsOf(snapshot, 'tasks'),
+        modelsOf(snapshot, 'schedules'),
+      )}
     `;
   }
 
@@ -180,7 +194,11 @@ export class TwStatisticsView extends LitElement {
     return translate(key, this.language, params);
   }
 
-  #body(persons: readonly PersonObject[], tasks: readonly TaskObject[]): TemplateResult {
+  #body(
+    persons: readonly PersonObject[],
+    tasks: readonly TaskObject[],
+    schedules: readonly ScheduleObject[],
+  ): TemplateResult {
     const { status, value: report } = this.#report;
     if (status === 'error') {
       return html`<p class="error" role="alert">${this.#text('common.loadError')}</p>`;
@@ -189,7 +207,9 @@ export class TwStatisticsView extends LitElement {
       return html`<p class="empty">${this.#text('common.loading')}</p>`;
     }
     if (report.kpis.assigned === 0) {
-      return html`<p class="empty">${this.#text('statistics.empty')}</p>`;
+      return report.goals.length === 0
+        ? html`<p class="empty">${this.#text('statistics.empty')}</p>`
+        : this.#goalsCard(report, schedules, tasks);
     }
     const personById = indexById(persons);
     return html`
@@ -205,6 +225,7 @@ export class TwStatisticsView extends LitElement {
             </div>`,
         )}
       </div>
+      ${this.#goalsCard(report, schedules, tasks)}
       <div class="pair">${this.#pointsCard(report, personById)} ${this.#weeklyCard(report)}</div>
       ${this.#matrixCard(report, tasks, persons)} ${this.#highlights(report, personById)}
     `;
@@ -237,6 +258,58 @@ export class TwStatisticsView extends LitElement {
         hint: this.#text('statistics.fairnessHint'),
       },
     ];
+  }
+
+  /** Eigene Box: Erreichungsgrad je Zeitplan (erledigt gegen Soll im aktuellen Fenster). */
+  #goalsCard(
+    report: StatisticsReport,
+    schedules: readonly ScheduleObject[],
+    tasks: readonly TaskObject[],
+  ): TemplateResult {
+    const scheduleById = indexById(schedules);
+    const taskById = indexById(tasks);
+    return html`<section class="card">
+      <h2>${this.#text('statistics.goals')}</h2>
+      <p class="muted">${this.#text('statistics.goalsHint')}</p>
+      ${repeat(
+        report.goals,
+        (goal) => goal.schedule_id,
+        (goal) =>
+          html`<div class="goal">
+            <div class="goal-row">
+              <span
+                >${scheduleById.get(goal.schedule_id)?.name ?? this.#text('common.unknownSchedule')}</span
+              >
+              <div
+                class="track"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow=${Math.round(goal.rate * PERCENT)}
+              >
+                <div class="fill" style="width: ${goal.rate * PERCENT}%"></div>
+              </div>
+              <strong>${formatPercent(goal.rate, this.language)}</strong>
+            </div>
+            <div class="muted">
+              ${this.#text('statistics.goalReached', { reached: goal.reached, target: goal.target })}
+            </div>
+            <ul class="muted goal-tasks">
+              ${goal.tasks.map(
+                (entry) =>
+                  html`<li>
+                    ${taskById.get(entry.task_id)?.name ?? this.#text('common.unknownTask')}:
+                    ${this.#text('statistics.goalTask', {
+                      done: entry.done,
+                      assigned: entry.assigned,
+                      target: entry.target,
+                    })}
+                  </li>`,
+              )}
+            </ul>
+          </div>`,
+      )}
+    </section>`;
   }
 
   #pointsCard(

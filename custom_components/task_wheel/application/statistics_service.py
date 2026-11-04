@@ -2,9 +2,11 @@
 
 import datetime as dt
 from collections.abc import Iterable
+from dataclasses import replace
 
 from ..const.defaults import DEFAULT_STATISTICS_MONTHS, DEFAULT_STATISTICS_WEEKS
 from ..const.limits import (
+    PERIOD_EVERY_MAX,
     STATISTICS_MONTHS_MAX,
     STATISTICS_MONTHS_MIN,
     STATISTICS_WEEKS_MAX,
@@ -14,9 +16,10 @@ from ..const.limits import (
 from ..domain.availability.calendar import PersonAvailability
 from ..domain.enums import Period
 from ..domain.models import Round
-from ..domain.rules.periods import period_start
+from ..domain.rules.periods import period_start, window_start
 from ..domain.statistics import aggregate
 from ..domain.statistics.aggregate import AssignmentChange
+from ..domain.statistics.goals import ScheduleGoal, build_goals
 from ..domain.statistics.report import StatisticsReport, WeekRate, build_report, weekly_rates
 from ..domain.types import PersonId
 from ..domain.validation import ensure_range
@@ -74,13 +77,26 @@ class StatisticsService:
         today = now.date()
         keys = aggregate.month_keys(today, months)
         first_day = aggregate.month_starts(today, months)[0]
-        return build_report(
+        report = build_report(
             keys,
             aggregate.rows(self._history.aggregates, keys),
             self._capacities(first_day, today),
             self._config.settings,
             self._weekly(now, weeks),
         )
+        return replace(report, goals=self._goals(now))
+
+    def _goals(self, now: dt.datetime) -> tuple[ScheduleGoal, ...]:
+        """Erreichungsgrad der Zeitpläne im aktuellen Fenster (aus den Rohdaten)."""
+        since = dt.datetime.combine(
+            window_start(Period.MONTH, PERIOD_EVERY_MAX, now), dt.time.min, tzinfo=now.tzinfo
+        )
+        placed = (
+            (item, round_.started_at)
+            for round_ in self._history.rounds_since(since)
+            for item in round_.assignments
+        )
+        return build_goals(self._config.schedules.values(), self._config.tasks, placed, now)
 
     def _capacities(self, start: dt.date, end: dt.date) -> dict[PersonId, float]:
         """Kapazität = Belastbarkeit mal anwesende Tage im Zeitraum (fairer Anteil)."""
