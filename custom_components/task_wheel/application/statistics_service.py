@@ -95,7 +95,7 @@ class StatisticsService:
             for round_ in self._history.rounds_since(since)
             for item in round_.assignments
         )
-        return build_goals(tasks, placed, now)
+        return build_goals(self._config.schedules.values(), tasks, placed, now)
 
     def _capacities(self, start: dt.date, end: dt.date) -> dict[PersonId, float]:
         """Kapazität = Belastbarkeit mal anwesende Tage im Zeitraum (fairer Anteil)."""

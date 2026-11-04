@@ -91,7 +91,7 @@ export const insightsDe = {
   'statistics.weeklyLabel': 'Erledigungsquote der letzten {weeks} Wochen, zuletzt {last}',
   'statistics.goals': 'Verlosungen je Aufgabe: Soll und Ist',
   'statistics.goalsHint':
-    'Wie oft eine Aufgabe im Fenster ihrer Häufigkeit („n× in x Zeiträumen“) verlost wurde, gegen das Soll; links das laufende Fenster, rechts frühere',
+    'Wie oft eine Aufgabe im Fenster ihrer Häufigkeit („n× in x Zeiträumen“) in einem Zeitplan verlost wurde, gegen das Soll; je Zeitplan getrennt gezählt und auf- und zuklappbar; links das laufende Fenster, rechts frühere',
   'statistics.goalRule': 'Regel',
   'statistics.goalCurrent': 'Laufend',
   'statistics.goalPast': 'Früher',
