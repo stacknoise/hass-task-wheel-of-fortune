@@ -1,6 +1,6 @@
 # Änderungsprotokoll
 
-Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionierung nach [SemVer](https://semver.org/lang/de/).
+Angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/) (ohne Kategorien), Versionierung nach [SemVer](https://semver.org/lang/de/).
 Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt (`.github/release.yml`).
 
 ## [Unveröffentlicht]
@@ -63,3 +63,10 @@ Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.
 - Personen, Aufgaben, Zeitpläne und Auslosung mit Animation im Panel
 - Fairness-Gewichtung, Tausch mit Joker, „Bleibt unerledigt“, Historie mit CSV-Export und Statistiken
 - Home-Assistant-Anbindung: Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen
+
+[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/releases/tag/v0.1.0
