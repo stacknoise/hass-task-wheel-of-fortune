@@ -120,8 +120,8 @@ def test_daily_tasks_are_always_part_of_a_limited_round():
     schedule = world.put_schedule(task_ids=("t1", "t2", "t3", "t4"))
     context = build_context(world.config, world.history, (), NOW)
     tasks = due_tasks(world.config, schedule, (), NOW)
-    # zwei Personen: t3 (täglich) ist gesetzt, den Rest füllt der Zufall (t2 hat die kleinste Zahl)
-    picked = limit_to_participants(tasks, context, FixedRandom(0.9, 0.1, 0.5))
+    # zwei Personen: t3 (täglich) ist gesetzt, t2 hat unter den übrigen die kleinste Zufallszahl
+    picked = limit_to_participants(tasks, context, FixedRandom(0.9, 0.1, 0.5, 0.7))
     assert [t.id for t in picked] == ["t2", "t3"]
 
 

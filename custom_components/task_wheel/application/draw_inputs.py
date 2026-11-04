@@ -77,10 +77,13 @@ def _seats(tasks: tuple[Task, ...], context: DrawContext) -> int:
     )
 
 
-def _random_pick(tasks: tuple[Task, ...], rng: RandomSource, count: int) -> tuple[Task, ...]:
-    """`count` zufällig gewählte Aufgaben (gleiche Chance), in der Reihenfolge des Zeitplans."""
+def _pick(tasks: tuple[Task, ...], rng: RandomSource, count: int) -> tuple[Task, ...]:
+    """`count` Aufgaben: tägliche zuerst, innerhalb der Gruppen zufällig (gleiche Chance).
+
+    Die Reihenfolge der Auswahl bleibt die des Zeitplans.
+    """
     keys = [rng.random() for _ in tasks]
-    ranked = sorted(range(len(tasks)), key=keys.__getitem__)
+    ranked = sorted(range(len(tasks)), key=lambda i: (not tasks[i].is_daily, keys[i]))
     return tuple(tasks[i] for i in sorted(ranked[:count]))
 
 
@@ -97,14 +100,7 @@ def limit_to_participants(
     if not tasks:
         return tasks
     seats = _seats(tasks, context)
-    if seats >= len(tasks):
-        return tasks
-    daily = tuple(task for task in tasks if task.is_daily)
-    if len(daily) >= seats:
-        return _random_pick(daily, rng, seats)
-    others = tuple(task for task in tasks if not task.is_daily)
-    chosen = {task.id for task in (*daily, *_random_pick(others, rng, seats - len(daily)))}
-    return tuple(task for task in tasks if task.id in chosen)
+    return tasks if seats >= len(tasks) else _pick(tasks, rng, seats)
 
 
 def build_context(
