@@ -171,7 +171,7 @@ export class TwOscar extends StageElement {
       .card {
         position: absolute;
         z-index: 1;
-        inset: -40% 6% 30%;
+        inset: 8% 8% 14%;
         display: flex;
         align-items: flex-start;
         padding-top: 6%;
@@ -183,7 +183,7 @@ export class TwOscar extends StageElement {
         font-size: clamp(10px, 3.4cqw, 14px);
         font-weight: 700;
         text-align: center;
-        transform: translateY(45%);
+        transform: none;
         opacity: 0;
         transition:
           transform var(--tw-card),
@@ -193,7 +193,7 @@ export class TwOscar extends StageElement {
         opacity: 1;
       }
       .at-card .card {
-        transform: translateY(-55%);
+        transform: translateY(-75%);
       }
       .award {
         position: absolute;
