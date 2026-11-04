@@ -141,7 +141,7 @@
       "message": "{resource} \"{id}\" was not found."
     },
     "ambiguous_reference": {
-      "message": "{resource} "{id}" is ambiguous: several match. Please use the id."
+      "message": "{resource} \"{id}\" is ambiguous: several match. Please use the id."
     },
     "limit_reached": {
       "message": "The limit for {resource} ({limit}) has been reached."
