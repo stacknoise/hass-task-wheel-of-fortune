@@ -15,7 +15,7 @@ from .protocols import (
     NoEvents,
     RoundEvents,
 )
-from .round_updates import require_assignment, store_assignment
+from .round_updates import require_assignment, store_assignment, store_assignments
 
 
 class AssignmentService:
@@ -79,8 +79,8 @@ class AssignmentService:
             for item in self._history.assignments_since(now - OPEN_ASSIGNMENT_MAX_AGE)
             if status.is_missable(item, settings, now)
         ]
-        missed = tuple(
-            store_assignment(self._history, self._recorder, status.miss(item)) for item in due
+        missed = store_assignments(
+            self._history, self._recorder, (status.miss(item) for item in due)
         )
         for item in missed:
             self._events.assignment_missed(item)
