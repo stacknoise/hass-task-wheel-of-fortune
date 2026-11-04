@@ -36,7 +36,7 @@ Synchronisation mit externen Kalendern.
 | Backend-Sprache | Python **3.13** (Mindestversion von HA 2025.x/2026.x) | Aktuellste von HA unterstützte Syntax |
 | Python-Syntax | PEP 695 `type`-Aliase und generische Klassen, `match`, `@dataclass(slots=True, frozen=True, kw_only=True)`, `StrEnum`, `Self`, `override` (PEP 698), `ExceptionGroup` wo sinnvoll | Speicher und Zugriffsgeschwindigkeit (slots), Unveränderlichkeit (frozen), eindeutige Typen |
 | HA-Mindestversion | 2025.6 (wird im Gerüst-Paket final gepinnt) | `entry.runtime_data`, `StaticPathConfig`, `notify.send_message`, Todo-Plattform |
-| Frontend | **Lit 3** + **TypeScript 5.x** (strict), ES2022-Module, Build mit **Vite** | HA selbst nutzt Lit; kleinste Bundle-Größe; Templates escapen automatisch |
+| Frontend | **Lit 3** + **TypeScript ≥ 5** (aktuell 6.x, strict), ES2022-Module, Build mit **Vite** | HA selbst nutzt Lit; kleinste Bundle-Größe; Templates escapen automatisch |
 | Grafik | SVG für das Rad, CSS-Transform für die Drehung, `prefers-reduced-motion` respektiert | Kein Canvas-Neuzeichnen pro Frame, GPU-beschleunigt |
 | Zufall | `secrets.SystemRandom` | Nicht vorhersagbar, keine Seed-Manipulation; Ergebnis entsteht nur im Backend |
 | Persistenz | `homeassistant.helpers.storage.Store` (JSON, versioniert, mit Migration) | Kein eigener DB-Zugriff nötig, Backups durch HA |
@@ -55,14 +55,17 @@ nichts aus `homeassistant` und ist dadurch ohne HA testbar und schnell.
 
 ```mermaid
 flowchart TD
-  E["1 · Einstieg<br/>__init__.py, config_flow.py, panel.py"]
+  E["1 · Einstieg<br/>__init__.py, config_flow.py, runtime.py (compose),<br/>entry_lookup.py, sensor.py, todo.py, button.py"]
   A["2 · Schnittstellen<br/>services.py, websocket/, entities/"]
   U["3 · Anwendung (Use Cases)<br/>DrawService, AssignmentService, SwapService,<br/>ScheduleService, StatisticsService, NotificationService"]
-  D["4 · Domäne (reines Python)<br/>models, rules/, availability/, weighting, draw_engine"]
-  I["5 · Infrastruktur<br/>repository/ (Store), scheduler (HA-Zeitgeber), notifier/"]
+  D["4 · Domäne (reines Python)<br/>models, rules/, availability/, triggers/, draw/, statistics/"]
+  I["5 · Infrastruktur<br/>repository/ (Store), scheduler (HA-Zeitgeber), notifier/,<br/>events (HA-Bus), panel (Bundle, Seitenleiste)"]
   C["0 · Konstanten<br/>const/ (wird von allen Schichten genutzt)"]
   E --> A --> U --> D
-  U --> I
+  A -.->|Laufzeitdaten| E
+  E --> I
+  E --> D
+  U -.->|Protokolle| I
   I --> D
   E -.-> C
   A -.-> C
@@ -74,14 +77,14 @@ flowchart TD
 | Schicht | Aufgabe | Darf nutzen | Darf **nicht** |
 |---|---|---|---|
 | 0 Konstanten | Schlüssel, Grenzen, Standardwerte, Event- und Dienstnamen | – | Logik enthalten |
-| 1 Einstieg | Setup/Unload der Config Entry, Panel registrieren, Komposition (Objekte verdrahten) | 2, 3, 5 | Fachlogik enthalten |
-| 2 Schnittstellen | Eingaben validieren (voluptuous), Rechte prüfen, an Use Cases weiterreichen, Entitäten bereitstellen | 3 | Store direkt lesen/schreiben |
+| 1 Einstieg | Setup/Unload der Config Entry, Panel registrieren, Komposition (Objekte verdrahten in `runtime.compose`), Plattform-Einstiege | 2, 3, 4 (Modelle und Fehler), 5 | Fachlogik enthalten |
+| 2 Schnittstellen | Eingaben validieren (voluptuous), Rechte prüfen, an Use Cases weiterreichen, Entitäten bereitstellen | 3, 4 (nur Modelle), 1 (nur `runtime.py`, `entry_lookup.py`: Zugriff auf die Laufzeitdaten des Eintrags) | Store direkt lesen/schreiben |
 | 3 Anwendung | Abläufe orchestrieren, Transaktionen, Events feuern | 4, 5 (über Protokolle) | HA-Objekte an die Domäne geben |
 | 4 Domäne | Regeln, Gewichtung, Ziehung, Statusübergänge | 0 | `homeassistant`, I/O, Uhr (Zeit kommt als Parameter) |
-| 5 Infrastruktur | Speichern, Zeitgeber, Benachrichtigung | 4 (Modelle) | Use Cases aufrufen |
+| 5 Infrastruktur | Speichern, Zeitgeber, Benachrichtigung, Events auf dem HA-Bus, Panel-Registrierung | 4 (Modelle), 3 (nur `protocols.py` und `event_payloads.py`) | Use Cases aufrufen |
 
 Die Anwendungsschicht spricht die Infrastruktur nur über `typing.Protocol`-Schnittstellen an
-(`ConfigRepository`, `HistoryRepository`, `Clock`, `Notifier`). Das hält die Schichten austauschbar und testbar.
+(`ConfigRepository`, `HistoryRepository`, `TimerPort`, `RoundEvents`, `Notifier` in `application/protocols.py`; die Uhr ist ein injiziertes Callable `data.clock`). Das hält die Schichten austauschbar und testbar.
 
 ### 3.2 Entwurfsmuster
 
@@ -98,56 +101,57 @@ Schlüssel, unbekannte Arten werfen eine eigene Ausnahme.
 | `WeightingFactory` | `Settings.weighting` | `fairness` (Standard), `uniform` |
 | `NotifierFactory` | Ziel des Benachrichtigungsdienstes | `notify_entity` (`notify.send_message`), `notify_service` (Legacy `notify.*`), `none` |
 | `EntityFactory` | Personen, Zeitpläne | Sensoren, To-do-Listen, Buttons über `EntityDescription`-Tabellen |
-| `ServiceFactory` (Komposition) | Config Entry | Verdrahtet Repositories, Services und Fabriken einmal beim Setup |
+| Komposition (`compose` in `runtime.py`, keine Fabrik) | Config Entry | Verdrahtet Repositories, Services und Fabriken einmal beim Setup |
 
 > **Entschieden (2026-11-03, Anton): Factory + Strategy + Repository.**
 > - **Factory** ist das Leitmuster für die Erzeugung (Tabelle oben).
 > - **Strategy:** Die Fabriken erzeugen Objekte, deren *Verhalten* sich je Art unterscheidet. Jede Regelart ist
->   eine Klasse mit derselben Schnittstelle (z. B. `FrequencyRule.is_due(...)`, `AvailabilityRule.is_present(...)`,
->   `Weighting.weights(...)`); Aufrufer kennen nur die Schnittstelle.
+>   eine Klasse mit derselben Schnittstelle (z. B. `FrequencyRule.is_due(assigned, now)`, `AvailabilityRule.is_present(...)`,
+>   `Weighting.weigh(...)`); Aufrufer kennen nur die Schnittstelle.
 > - **Repository:** Persistenz liegt hinter `ConfigRepository` und `HistoryRepository` (`typing.Protocol`);
 >   Services greifen nie direkt auf den `Store` zu. Für Tests gibt es eine In-Memory-Implementierung.
 
 ### 3.3 Verzeichnisstruktur
+
+Nur Pakete und Schlüsseldateien; die vollständige Modulliste mit Verantwortung steht in
+[CODE_DOKU.md](CODE_DOKU.md) §3.
 
 ```text
 custom_components/task_wheel/
 ├── __init__.py              # Einstieg: async_setup_entry / async_unload_entry
 ├── manifest.json
 ├── config_flow.py           # Einzelinstanz, Optionen (Joker/Monat, Fairness-Fenster, Aufbewahrung)
-├── panel.py                 # Panel + statischer Pfad für das Frontend-Bundle
-├── services.py              # task_wheel.draw, complete, swap, set_absence, …
+├── runtime.py               # TaskWheelData (entry.runtime_data) und compose: Objekte verdrahten
+├── entry_lookup.py          # geladene Config Entry für Dienste und WebSocket finden
+├── sensor.py, todo.py, button.py  # Plattform-Einstiege, reichen an entities/ durch
+├── services.py              # task_wheel.draw, complete, swap, set_absence
 ├── services.yaml
-├── const/                   # Schicht 0
-│   ├── __init__.py
-│   ├── keys.py              # Speicher- und API-Schlüssel
-│   ├── limits.py            # Längen, Anzahlen, Zeitlimits
-│   ├── defaults.py          # Standardwerte
-│   └── events.py            # Event-, Dienst- und Befehlsnamen
+├── const/                   # Schicht 0 (keys, limits, defaults, events, entities, notification, panel)
 ├── domain/                  # Schicht 4 (ohne homeassistant-Import)
 │   ├── models.py            # Person, Task, Schedule, Round, Assignment, …
-│   ├── enums.py             # StrEnums: Load, AssignmentStatus, TriggerKind, …
-│   ├── errors.py
+│   ├── serialization.py     # to_dict/from_dict für alle Modelle
+│   ├── enums.py, errors.py, types.py, validation.py
 │   ├── rules/               # FrequencyRule-Strategien + FrequencyRuleFactory
 │   ├── availability/        # AvailabilityRule-Strategien + Factory
-│   ├── weighting.py         # Gewichtung + WeightingFactory
-│   ├── draw_engine.py       # Kandidaten → Gewichte → Ziehung
-│   └── status.py            # Statusübergänge der Zuteilungen
-├── application/             # Schicht 3
-│   ├── protocols.py         # Repository-, Clock-, Notifier-Protokolle
-│   ├── draw_service.py
-│   ├── assignment_service.py
-│   ├── swap_service.py
-│   ├── schedule_service.py
-│   ├── statistics_service.py
-│   └── notification_service.py
+│   ├── triggers/            # TriggerStrategy (recurring, once, manual) + Factory
+│   ├── draw/                # candidates, matching, weighting, draft, engine, types
+│   ├── statistics/          # aggregate, report, goals
+│   ├── status.py            # Statusübergänge der Zuteilungen
+│   ├── history.py           # HistoryFilter
+│   └── swap.py              # Prüfregeln für den Tausch
+├── application/             # Schicht 3: Use Cases (draw_service, draw_inputs, assignment_service,
+│                            #   swap_service, schedule_service, round_service, config_service,
+│                            #   statistics_service, history_service, notification_service, …),
+│                            #   protocols.py, views/live_view/wire (Panel-Daten), fanout, event_payloads
 ├── infrastructure/          # Schicht 5
 │   ├── repository/          # ConfigStore, HistoryStore, Migrationen
-│   ├── scheduler.py         # HA-Zeitgeber → TriggerFactory
-│   └── notifier/            # NotifierFactory + Implementierungen
-├── websocket/               # Schicht 2: Befehle je Bereich
-├── entities/                # Schicht 2: sensor.py, todo.py, button.py, EntityFactory
-├── translations/            # de.json, en.json
+│   ├── scheduler.py         # HA-Zeitgeber (TimerPort)
+│   ├── notifier/            # NotifierFactory + Implementierungen
+│   ├── events.py            # RoundEvents auf dem HA-Bus
+│   └── panel.py, panel_bundle.py  # Panel registrieren, gebautes Bundle finden
+├── websocket/               # Schicht 2: Befehle je Bereich (read, actions, config)
+├── entities/                # Schicht 2: sensor, todo, button, EntityFactory
+├── texts/, translations/    # Benachrichtigungstexte, de.json/en.json
 └── frontend/dist/           # gebautes Panel (nicht von Hand bearbeiten)
 
 frontend/                    # Quellcode des Panels
@@ -156,7 +160,7 @@ frontend/                    # Quellcode des Panels
 │   ├── i18n/                # de.ts, en.ts, typisierte Schlüssel
 │   ├── api/                 # typisierter WebSocket-Client
 │   ├── state/               # Store + @lit/context
-│   ├── components/          # tw-wheel, tw-person-chip, tw-rule-editor, …
+│   ├── components/          # tw-wheel, tw-chips, tw-frequency-editor, tw-trigger-editor, tw-timeline, …
 │   ├── views/               # overview, draw, tasks, persons, schedules, history, statistics
 │   └── task-wheel-panel.ts  # Einstieg
 ├── vite.config.ts
@@ -164,6 +168,7 @@ frontend/                    # Quellcode des Panels
 
 docs/                        # Konzept, Arbeitspakete, Code-Doku (+ Generator)
 tests/                       # backend (pytest) – frontend-Tests liegen unter frontend/src/**/*.test.ts
+e2e/                         # Playwright gegen eine echte Home-Assistant-Instanz
 ```
 
 ---
@@ -196,16 +201,18 @@ erDiagram
 | `TriggerConfig` | `recurring(weekdays, time, every_n_weeks \| monthly)` · `once(at, after: keep_manual \| archive \| delete)` · `manual(remind_after_days)` |
 | `Round` | `id`, `schedule_id`, `origin: auto \| manual \| service`, `started_at`, `finished_at`, `assignments` |
 | `Assignment` | `id`, `round_id`, `schedule_id` (auslosender Zeitplan), `task_id`, `person_id`, `chance` (0–1), `points`, `due_at`, `status`, `done_at`, `swap: Swap \| None` |
-| `Settings` | `jokers_per_month`, `fairness_window_days`, `history_retention_days`, `weighting`, `late_points_factor` (0–1, Standard 1,0), `missed_points_factor` (−1–0, Standard 0), `missed_grace_hours` |
+| `Settings` | `jokers_per_month`, `fairness_window_days`, `history_retention_days`, `weighting`, `late_points_factor` (0–1, Standard 1,0), `missed_points_factor` (−1–0, Standard 0), `missed_grace_hours`, `panel_admin_only` (Standard aus) |
 
 ### 4.1 Speicher
 
 | Store | Inhalt | Schreibstrategie |
 |---|---|---|
-| `task_wheel.config` (Version 1) | Personen, Aufgaben, Zeitpläne, Einstellungen | `async_delay_save` (gebündelt, Verzögerung als Konstante) |
-| `task_wheel.history` (Version 1) | Runden, Zuteilungen, Monatsaggregate pro Person/Aufgabe | `async_delay_save`; Aufräumen nach `history_retention_days` einmal täglich |
+| `task_wheel.config` (Version 1, Unterversion 3) | Personen, Aufgaben, Zeitpläne, Einstellungen | `async_delay_save` (gebündelt, Verzögerung als Konstante) |
+| `task_wheel.history` (Version 1, Unterversion 3) | Runden, Zuteilungen, Monatsaggregate pro Person/Aufgabe | `async_delay_save`; Aufräumen nach `history_retention_days` einmal täglich |
 
 Version 1.2 (beide Stores): Zuteilungen tragen `schedule_id`; die Migration 1.1 → 1.2 setzt den Zeitplan der Runde ein.
+
+Version 1.3 (beide Stores): Aufgaben tragen `area_ids` (Liste) statt des einzelnen `area_id`; die Migration 1.2 → 1.3 der Konfiguration macht daraus eine Liste (`_task_areas`), die des Verlaufs ändert das Schema nicht.
 
 Migrationen laufen über `Store(..., minor_version=...)` und `_async_migrate_func`; jede Migration ist eine
 eigene, getestete Funktion.
@@ -238,8 +245,10 @@ sequenceDiagram
   DS->>HA: Event task_wheel_drawn, Entitäten aktualisieren, Benachrichtigen
 ```
 
+Vor der Ziehung werden die fälligen Aufgaben auf so viele begrenzt, wie Personen mitmachen können (nicht pausiert und, sofern die Aufgaben Abwesenheit beachten, im Fristfenster anwesend; `limit_to_participants` in `application/draw_inputs.py`). Gibt es mehr fällige Aufgaben als solche Personen, wählt die injizierte Zufallsquelle gleichverteilt aus (nicht vorhersehbar); die Reihenfolge der gewählten Aufgaben bleibt die des Zeitplans. Nicht gewählte Aufgaben kommen in dieser Runde gar nicht vor.
+
 Beim manuellen Ablauf im Panel wird die Runde schrittweise gezogen (`draw/begin`, `draw/spin`, `draw/spin_rest`,
-`draw/commit`, `draw/cancel`). Das **Ergebnis bestimmt immer das Backend**; das Frontend erhält Gewinner und
+`draw/commit`, `draw/cancel`; vorab zeigt `draw/preview` Rad und Kandidaten einer Aufgabe). Das **Ergebnis bestimmt immer das Backend**; das Frontend erhält Gewinner und
 Segmentgrenzen und animiert nur dorthin. Eine offene Runde verfällt nach einer Zeitgrenze (Konstante) und
 blockiert keine automatischen Runden desselben Zeitplans: löst der Zeitplan automatisch aus, wird die offene
 Panel-Runde verworfen (der Zeitplan geht vor, eine Runde entsteht nie doppelt). Je Zeitplan ist höchstens eine
@@ -249,18 +258,19 @@ lösen nicht automatisch aus, lassen sich aber von Hand auslosen; archivierte ni
 ### 5.2 Kandidatenfilter
 
 Kandidaten einer Aufgabe = erlaubte Personen, aus denen nacheinander entfernt wird (jeder Filter ist ein eigenes
-Objekt mit `reason`, die Gründe erscheinen im Panel unter „Wer ist im Rad?“):
+Objekt mit `reason`, die Gründe erscheinen im Panel unter „Wer ist dabei?“):
 
 1. **Belastung**: `load == paused`
 2. **Mindest-Belastbarkeit** (wenn `min_load` nicht `paused`): `load.factor < min_load.factor` entfernt die Person (`load_too_low`); gibt es niemanden mit ausreichender Belastbarkeit, bleibt die Aufgabe unvergeben
 3. **Anwesenheit** (wenn `respect_absence`): nicht an mindestens einem Tag im Fristfenster `[jetzt, jetzt + due_days]` anwesend
 4. **Keine Wiederholung** (wenn `no_repeat`): hatte die Aufgabe in der letzten Zuteilung, sofern noch andere Kandidaten übrig sind (nur Vorliebe: wer sonst unvergeben bliebe, bekommt die Aufgabe trotzdem; vorher sperren harte Filter und eine Zuordnung stellt sicher, dass so viele Aufgaben wie möglich verteilt werden)
-5. **Aufgabe in dieser Runde** (immer): Wer in derselben Runde schon eine Aufgabe gezogen hat, bekommt keine zweite und ist für die weiteren Aufgaben nicht mehr im Rad (`taken`). Gibt es mehr Aufgaben als Personen, bleiben die überzähligen unverteilt
-6. **Ohne Kandidaten** wird die Aufgabe als „nicht verteilbar“ protokolliert, nicht erzwungen
+5. **Aufgabe in dieser Runde** (immer): Wer in derselben Runde schon eine Aufgabe gezogen hat, bekommt keine zweite und ist für die weiteren Aufgaben nicht mehr im Rad (`taken`). Die Begrenzung auf die Zahl der mitmachenden Personen (siehe 5.1) nimmt überzählige Aufgaben gar nicht erst in die Runde auf; bleibt dennoch eine Aufgabe ohne Kandidaten übrig (z. B. weil alle erlaubten Personen schon eine Aufgabe haben), bleibt sie unverteilt
+6. **Reserviert für andere** (`needed`, nur bei der Zuordnung): Wer für eine andere Aufgabe dieser Runde zwingend gebraucht wird (sonst bliebe sie unverteilt), ist für diese Aufgabe nicht im Rad
+7. **Ohne Kandidaten** wird die Aufgabe als „nicht verteilbar“ protokolliert, nicht erzwungen
 
 Die Häufigkeitsregel wirkt **vor** dem Kandidatenfilter auf Aufgabenebene:
 
-| Regel | `is_due(task, last, count_in_period, now)` |
+| Regel | `is_due(assigned, now)` (`assigned` = bisherige Zuteilungszeitpunkte der Aufgabe) |
 |---|---|
 | `every_round` | immer |
 | `max_per_period(n, period, every)` | Anzahl Zuteilungen in den letzten `every` Kalendertagen/-wochen/-monaten (laufende Periode eingeschlossen) `< n`; `every` ist standardmäßig 1 |
@@ -335,9 +345,11 @@ Alle Dienste haben voluptuous-Schemas, unbekannte Felder werden abgelehnt. Fehle
 ### 6.2 Events
 
 `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_wheel_missed`, `task_wheel_reminder`.
-Payloads enthalten nur IDs, Namen und Zahlen (keine Konfiguration). Zusätzlich meldet `task_wheel.draw` mit `animate_on` das Event `task_wheel_animate` (gleicher Inhalt wie `task_wheel_drawn` plus `animate_on`).
+Payloads enthalten nur IDs, Namen und Zahlen (keine Konfiguration). Zusätzlich meldet `task_wheel.draw` mit `animate_on` das Event `task_wheel_animate` (gleicher Inhalt wie `task_wheel_drawn` plus `animate_on`). „Bleibt unerledigt“ (`assignment/skip`) und das Löschen einer Auslosung feuern **kein** Event (das Panel erfährt es über den Live-Stand, Entitäten über Signale); eine Automation kann darauf nicht reagieren, obwohl „Bleibt unerledigt“ wie „verpasst“ zählt.
 
 ### 6.3 Entitäten (über `EntityFactory`)
+
+Die Entity-IDs entstehen aus dem Gerätenamen und dem übersetzten Entitätsnamen (Übersetzungsschlüssel `open`, `points`, `next_draw`, `draw`). Die Beispiele zeigen sie bei **deutscher** Systemsprache zur Zeit der Anlage; bei englischer heißen sie z. B. `sensor.task_wheel_anna_open`, `sensor.task_wheel_anna_points`, `sensor.task_wheel_weekly_plan_next_draw`, `button.task_wheel_weekly_plan_draw` (so zeigt sie auch die README).
 
 | Entität | Beispiel | Zweck |
 |---|---|---|
@@ -359,7 +371,7 @@ Präfix `task_wheel/`. Befehle je Bereich in eigenen Modulen; jeder Befehl hat e
 | Lesen | `snapshot`, `subscribe` (Deltas), `history/list`, `statistics/get` (liefert auch `goals`: je Aufgabe mit `max_per_period` das Soll gegen die verlosten Zuteilungen im laufenden und in den drei vorherigen Fenstern aus je `every` Perioden), `availability/preview` (Anwesenheit der nächsten Wochen für ungespeicherte Regeln; einzige Quelle der Regeln ist das Backend) | angemeldeter Benutzer |
 | Erledigen/Tauschen | `assignment/complete`, `assignment/swap`, `assignment/skip` | angemeldeter Benutzer |
 | Auslosung löschen | `round/delete` | **Administrator** |
-| Auslosen | `draw/begin`, `draw/spin`, `draw/spin_rest`, `draw/commit`, `draw/cancel` | angemeldeter Benutzer |
+| Auslosen | `draw/begin`, `draw/preview` (Rad und Kandidaten einer Aufgabe vorab), `draw/spin`, `draw/spin_rest`, `draw/commit`, `draw/cancel` | angemeldeter Benutzer |
 | Konfiguration | `person/*`, `task/*`, `schedule/*`, `settings/update` | **Administrator** (`@websocket_api.require_admin`) |
 
 `subscribe` schickt nach dem ersten Snapshot nur noch Änderungen (Delta je Objekt-ID). Das hält die Datenmenge
@@ -397,7 +409,7 @@ die API trotzdem nur für Admins möglich).
 | Zustand | Ein Store (Signals-artig, `@lit/context`), gespeist durch `subscribe`; Views abonnieren nur ihre Ausschnitte |
 | Rendering | Ausschließlich Lit-Templates, **kein** `innerHTML`/`unsafeHTML`; Listen mit `repeat()` und Schlüsseln |
 | Glücksrad | `tw-wheel`: SVG-Segmente aus `{person, chance, color}`; Drehwinkel = Zielsegment + volle Umdrehungen (Konstanten), `transitionend` meldet das Ende; reduzierte Bewegung → direkt Ergebnis |
-| Auslosungs-Animationen | Strategy + Registry: `STAGE_TAGS` ordnet jede `AnimationKind` (`wheel`, `drum`, `slot`, `plinko`, `spotlight`, `scratch`, `news`, `oscar`) einem Element mit `segments`, `label`, `taskName`, `language`, `spinTo(id)` zu (Rubbellose melden das erste Rubbeln über `tw-stage-start`, dann zieht das Panel; ist das Gewinnerlos frei, endet die Animation); `tw-stage` baut das Element der gewählten Art, die Basisklasse `StageElement` liefert die Schablone (unbekannter Gewinner ignorieren, reduzierte Bewegung → `settle`, sonst `play`, Abbruch bei neuen Segmenten). Der Zeitplan trägt die erlaubten Arten (Mehrfachauswahl); bei jedem Start einer Auslosung wählt das Panel zufällig eine (`pickAnimation`, nur Optik, der Gewinner steht vorher im Backend fest). Größe = Chance in jeder Variante |
+| Auslosungs-Animationen | Strategy + Registry: `STAGE_TAGS` ordnet jede `AnimationKind` (`wheel`, `drum`, `slot`, `plinko`, `spotlight`, `scratch`, `news`, `oscar`) einem Element mit `segments`, `label`, `taskName`, `language`, `spinTo(id)` zu (Rubbellose melden das erste Rubbeln über `tw-stage-start`, dann zieht das Panel; ist das Gewinnerlos frei, endet die Animation); `tw-stage` baut das Element der gewählten Art, die Basisklasse `StageElement` liefert die Schablone (unbekannter Gewinner ignorieren, reduzierte Bewegung → `settle`, sonst `play`, Abbruch bei neuen Segmenten). Der Zeitplan trägt die erlaubten Arten (Mehrfachauswahl); bei jedem Start einer Auslosung wählt das Panel zufällig eine (`pickAnimation`, nur Optik, der Gewinner steht vorher im Backend fest). Größe = Chance bei Glücksrad, Lostrommel, Slot-Machine, Plinko und Scheinwerfer; Rubbellose, Eilmeldung und Oscar zeigen keine Chancen (`CHANCE_FREE_ANIMATIONS`, auch „Wer ist dabei?“ ohne Prozente) |
 | Texte | Alle Texte über i18n-Schlüssel (`de`, `en`), Sprache aus `hass.locale` |
 | Styling | Design-Tokens als CSS Custom Properties auf HA-Variablen (`--primary-color` …) gemappt; Farben, Abstände, Dauern als Konstanten |
 | Performance | Bundle-Budget (Konstante in CI, Ziel < 120 kB gzip), Views per `import()` nachgeladen, Statistik-Diagramme als reines SVG ohne Diagrammbibliothek |
@@ -421,7 +433,7 @@ setzen das durch.
 | CSV-Injection | Entschärfen beim Export |
 | Benachrichtigungsdienst als Hebel | Ziel nur aus vorhandenen `notify`-Entitäten/-Diensten wählbar, Prüfung beim Speichern und beim Senden |
 | Ressourcenverbrauch | Obergrenzen für Personen, Aufgaben, Zeitpläne, offene Panel-Runden; Historie wird nach Aufbewahrungsfrist gekürzt |
-| Abhängigkeiten | Keine Python-Laufzeitabhängigkeiten außer HA; npm-Abhängigkeiten gepinnt, `npm audit` in CI, Dependabot |
+| Abhängigkeiten | Keine Python-Laufzeitabhängigkeiten außer HA; npm-Abhängigkeiten über Lockdateien festgelegt (Frontend exakt gepinnt, `e2e/` mit `^`-Bereich), `npm audit` und `pip-audit` (wöchentlich) in CI, Dependabot |
 
 ### 8.1 Ergebnis des Security-Reviews (AP-18)
 
