@@ -4,6 +4,8 @@ from typing import Final
 
 DOMAIN: Final = "task_wheel"
 INTEGRATION_NAME: Final = "Task Wheel of Fortune"
+INTEGRATION_NAME_DE: Final = "Aufgaben-Glücksrad"
+GERMAN_LANGUAGE_PREFIX: Final = "de"
 
 # Einstellungen (KONZEPT §4, §11)
 DEFAULT_JOKERS_PER_MONTH: Final = 2
