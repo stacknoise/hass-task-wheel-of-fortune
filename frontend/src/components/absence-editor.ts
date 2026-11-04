@@ -1,4 +1,4 @@
-import { css, html, nothing } from 'lit';
+import { css, html, nothing, unsafeCSS } from 'lit';
 import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 
@@ -18,6 +18,9 @@ import { baseStyles, tokenStyles } from './styles.ts';
 import './week-preview.ts';
 import { defineOnce } from './define.ts';
 
+/** Höchsthöhe der Regelliste; darüber scrollt sie, damit das Popup kompakt bleibt. */
+const RULES_MAX_HEIGHT = '40vh';
+
 type Renderer = (absence: never, index: number) => TemplateResult;
 
 /** Liste der Abwesenheitsregeln einer Person; die Vorschau der nächsten Wochen kommt von außen (`present`). */
@@ -35,6 +38,12 @@ export class TwAbsenceEditor extends LocalizedElement {
     formStyles,
     stackStyles,
     css`
+      .rules {
+        display: grid;
+        gap: var(--tw-space-field);
+        max-height: ${unsafeCSS(RULES_MAX_HEIGHT)};
+        overflow-y: auto;
+      }
       .rule {
         display: grid;
         gap: var(--tw-space-field);
@@ -65,22 +74,24 @@ export class TwAbsenceEditor extends LocalizedElement {
   /** Eingabemaske je Art; die Tabelle ersetzt eine Verzweigung nach `kind`. */
   readonly #renderers: Readonly<Record<AbsenceKind, Renderer>> = {
     once: (absence: Extract<AbsenceWire, { kind: 'once' }>, index) => html`
-      <tw-field
-        type="date"
-        .label=${this.text('absence.start')}
-        .value=${absence.start}
-        @tw-change=${onChange<string>((start) => {
-          this.replaceAt(this.value, index, { start });
-        })}
-      ></tw-field>
-      <tw-field
-        type="date"
-        .label=${this.text('absence.end')}
-        .value=${absence.end}
-        @tw-change=${onChange<string>((end) => {
-          this.replaceAt(this.value, index, { end });
-        })}
-      ></tw-field>
+      <div class="pair">
+        <tw-field
+          type="date"
+          .label=${this.text('absence.start')}
+          .value=${absence.start}
+          @tw-change=${onChange<string>((start) => {
+            this.replaceAt(this.value, index, { start });
+          })}
+        ></tw-field>
+        <tw-field
+          type="date"
+          .label=${this.text('absence.end')}
+          .value=${absence.end}
+          @tw-change=${onChange<string>((end) => {
+            this.replaceAt(this.value, index, { end });
+          })}
+        ></tw-field>
+      </div>
     `,
     weekly_days: (absence: Extract<AbsenceWire, { kind: 'weekly_days' }>, index) => html`
       <tw-chip-select
@@ -143,11 +154,13 @@ export class TwAbsenceEditor extends LocalizedElement {
   protected override render(): TemplateResult {
     return html`
       ${this.value.length === 0 ? html`<p>${this.text('persons.no_absences')}</p>` : nothing}
-      ${repeat(
-        this.value,
-        (_, index) => index,
-        (absence, index) => this.#rule(absence, index),
-      )}
+      <div class="rules">
+        ${repeat(
+          this.value,
+          (_, index) => index,
+          (absence, index) => this.#rule(absence, index),
+        )}
+      </div>
       <div class="actions">
         <button
           type="button"
