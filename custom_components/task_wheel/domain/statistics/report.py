@@ -12,7 +12,7 @@ from ..rules.periods import period_start
 from ..status import PENDING_STATUSES, points_factor
 from ..types import PersonId, TaskId
 from .aggregate import StatRow
-from .goals import ScheduleGoal
+from .goals import TaskGoal
 
 _S = AssignmentStatus
 _DONE: Final = (_S.ON_TIME, _S.LATE)
@@ -123,7 +123,7 @@ class StatisticsReport:
     matrix: Mapping[TaskId, Mapping[PersonId, int]]
     weeks: tuple[WeekRate, ...]
     highlights: Highlights
-    goals: tuple[ScheduleGoal, ...] = ()
+    goals: tuple[TaskGoal, ...] = ()
 
 
 def _kpis(tally: Tally) -> Kpis:

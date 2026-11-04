@@ -6,7 +6,6 @@ from dataclasses import replace
 
 from ..const.defaults import DEFAULT_STATISTICS_MONTHS, DEFAULT_STATISTICS_WEEKS
 from ..const.limits import (
-    PERIOD_EVERY_MAX,
     STATISTICS_MONTHS_MAX,
     STATISTICS_MONTHS_MIN,
     STATISTICS_WEEKS_MAX,
@@ -16,10 +15,10 @@ from ..const.limits import (
 from ..domain.availability.calendar import PersonAvailability
 from ..domain.enums import Period
 from ..domain.models import Round
-from ..domain.rules.periods import period_start, window_start
+from ..domain.rules.periods import period_start
 from ..domain.statistics import aggregate
 from ..domain.statistics.aggregate import AssignmentChange
-from ..domain.statistics.goals import ScheduleGoal, build_goals
+from ..domain.statistics.goals import TaskGoal, build_goals, goals_start
 from ..domain.statistics.report import StatisticsReport, WeekRate, build_report, weekly_rates
 from ..domain.types import PersonId
 from ..domain.validation import ensure_range
@@ -86,17 +85,18 @@ class StatisticsService:
         )
         return replace(report, goals=self._goals(now))
 
-    def _goals(self, now: dt.datetime) -> tuple[ScheduleGoal, ...]:
-        """Erreichungsgrad der Zeitpläne im aktuellen Fenster (aus den Rohdaten)."""
+    def _goals(self, now: dt.datetime) -> tuple[TaskGoal, ...]:
+        """Soll-Ist je Aufgabe mit Häufigkeitsregel (aus den Rohdaten, nicht aus den Aggregaten)."""
+        tasks = self._config.tasks
         since = dt.datetime.combine(
-            window_start(Period.MONTH, PERIOD_EVERY_MAX, now), dt.time.min, tzinfo=now.tzinfo
+            goals_start(tasks.values(), now), dt.time.min, tzinfo=now.tzinfo
         )
         placed = (
             (item, round_.started_at)
             for round_ in self._history.rounds_since(since)
             for item in round_.assignments
         )
-        return build_goals(self._config.schedules.values(), self._config.tasks, placed, now)
+        return build_goals(tasks, placed, now)
 
     def _capacities(self, start: dt.date, end: dt.date) -> dict[PersonId, float]:
         """Kapazität = Belastbarkeit mal anwesende Tage im Zeitraum (fairer Anteil)."""

@@ -5,18 +5,12 @@ from collections.abc import Callable, Mapping
 from typing import Any, Final, cast
 
 from ..domain.serialization import Model, encode
-from ..domain.statistics.goals import ScheduleGoal, TaskGoal
 from ..domain.statistics.report import Standing, WeekRate
 
 type Json = dict[str, object]
 
 # Berechnete Eigenschaften, die ein Ergebnis zusätzlich zu seinen Feldern liefert
-_COMPUTED: Final[Mapping[type, tuple[str, ...]]] = {
-    Standing: ("difference",),
-    WeekRate: ("rate",),
-    TaskGoal: ("reached",),
-    ScheduleGoal: ("target", "reached", "rate"),
-}
+_COMPUTED: Final[Mapping[type, tuple[str, ...]]] = {Standing: ("difference",), WeekRate: ("rate",)}
 
 
 def _dataclass(value: object) -> Json:

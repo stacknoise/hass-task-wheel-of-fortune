@@ -38,7 +38,7 @@ to `config/custom_components/task_wheel` (the repository itself does not contain
 - **Fairness**: whoever has had fewer points relative to their fair share gets a bigger slice
 - **Swapping with a joker**, only with people from the same draw who are allowed to get the task
 - **"Stays undone"**: deliberately not doing an assignment; counts like missed in points and statistics
-- **History** with CSV export and **statistics** (fair share, completion rate, task × person matrix, goal progress per schedule for tasks with "n× in x periods")
+- **History** with CSV export and **statistics** (fair share, completion rate, task × person matrix, draws per task against the target of "n× in x periods", for the current and earlier windows)
 - **Home Assistant integration**: services, events, sensors, a to-do list per person, buttons per schedule
 
 ## Screenshots

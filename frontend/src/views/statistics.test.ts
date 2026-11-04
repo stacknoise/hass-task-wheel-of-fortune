@@ -34,18 +34,19 @@ describe('Statistik', () => {
     );
   });
 
-  it('zeigt den Erreichungsgrad der Zeitpläne in einer eigenen Box', async () => {
+  it('zeigt je Aufgabe Soll und tatsächlich Verlostes je Fenster in einer eigenen Box', async () => {
     const { view } = await mount();
     await vi.waitFor(() => {
-      expect(text(view)).toContain('Erreichungsgrad der Zeitpläne');
+      expect(text(view)).toContain('Verlosungen je Aufgabe');
     });
-    const content = text(view);
-    expect(content).toContain('Wochenplan');
-    expect(content).toContain('3 von 6 erreicht');
-    expect(content).toContain('Bad putzen: 2 erledigt, 3 zugeteilt, Soll 5');
-    expect(
-      view.shadowRoot?.querySelector('[role=progressbar]')?.getAttribute('aria-valuenow'),
-    ).toBe('50');
+    const cells = [...(view.shadowRoot?.querySelectorAll('td.goal-cell') ?? [])];
+    expect(cells.map((cell) => cell.querySelector('strong')?.textContent.trim())).toEqual([
+      '2 / 3',
+      '3 / 3',
+      '1 / 3',
+    ]);
+    expect(cells.map((cell) => cell.getAttribute('data-state'))).toEqual(['under', 'met', 'under']);
+    expect(text(view)).toContain('max. 3× in 2 Monaten');
   });
 
   it('zeigt in der Matrix leer, wo eine Person die Aufgabe nicht darf', async () => {

@@ -1,15 +1,15 @@
-"""Erreichungsgrad der Zeitpläne: Soll aus der Häufigkeitsregel gegen Erledigtes im Fenster."""
+"""Soll-Ist je Aufgabe: verloste Zuteilungen im Fenster der Regel gegen das Soll."""
 
 import datetime as dt
 
 from custom_components.task_wheel.domain.enums import AssignmentStatus as S
 from custom_components.task_wheel.domain.enums import Period
 from custom_components.task_wheel.domain.models import EveryRound, Interval, MaxPerPeriod
-from custom_components.task_wheel.domain.statistics.goals import build_goals
+from custom_components.task_wheel.domain.statistics.goals import build_goals, goals_start
 
 from .. import factories as f
 
-NOW = f.NOW
+NOW = f.NOW  # siehe factories
 
 
 def placed(task_id: str, days_ago: int, status: S = S.ON_TIME):
@@ -25,46 +25,39 @@ def tasks(**frequencies):
     }
 
 
-def test_goal_counts_done_in_the_window_against_the_target():
-    monthly = MaxPerPeriod(count=5, period=Period.MONTH, every=2)
+def test_current_and_past_windows_count_drawn_and_done():
+    rule = MaxPerPeriod(count=3, period=Period.MONTH, every=2)
+    first = build_goals(tasks(a=rule), [], NOW)[0].windows[0]
+    drawn = [placed("a", d) for d in (0, 1, 5)] + [placed("a", 2, S.OPEN)]
+    (goal,) = build_goals(tasks(a=rule), drawn, NOW)
+    current = goal.windows[0]
+    assert (goal.target, goal.every, goal.period) == (3, 2, Period.MONTH)
+    assert (current.start, current.assigned) == (first.start, 4)
+    assert current.done == 3  # die offene zählt als verlost, nicht als erledigt
+    assert len(goal.windows) == 4
+    # frühere Fenster schließen lückenlos an
+    assert goal.windows[1].end == goal.windows[0].start - dt.timedelta(days=1)
+    assert goal.windows[1].assigned == 0
+
+
+def test_past_window_counts_its_own_assignments():
+    rule = MaxPerPeriod(count=1, period=Period.WEEK, every=1)
+    (goal,) = build_goals(tasks(a=rule), [placed("a", 8), placed("a", 9), placed("a", 0)], NOW)
+    # 03.11. (diese Woche), 26.10. (Vorwoche), 25.10. (davor, Sonntag)
+    assert [w.assigned for w in goal.windows[:3]] == [1, 1, 1]
+
+
+def test_tasks_without_target_are_left_out():
     found = build_goals(
-        [f.schedule(task_ids=("a",))],
-        tasks(a=monthly),
-        [placed("a", 1), placed("a", 2, S.LATE), placed("a", 3, S.OPEN), placed("a", 400)],
-        NOW,
-    )
-    (goal,) = found
-    (task,) = goal.tasks
-    assert (task.target, task.assigned, task.done) == (5, 3, 2)
-    assert (goal.target, goal.reached, goal.rate) == (5, 2, 0.4)
-
-
-def test_reached_is_capped_at_the_target():
-    weekly = MaxPerPeriod(count=1, period=Period.DAY, every=3)
-    (goal,) = build_goals(
-        [f.schedule(task_ids=("a",))], tasks(a=weekly), [placed("a", 0), placed("a", 1)], NOW
-    )
-    assert (goal.reached, goal.rate) == (1, 1.0)
-
-
-def test_schedules_without_target_or_archived_are_left_out():
-    found = build_goals(
-        [
-            f.schedule(id="s1", task_ids=("a", "b")),
-            f.schedule(id="s2", task_ids=("c",), archived=True, enabled=False),
-        ],
         tasks(a=EveryRound(), b=Interval(days=3), c=MaxPerPeriod(count=1, period=Period.WEEK)),
         [],
         NOW,
     )
-    assert found == ()
+    assert [goal.task_id for goal in found] == ["c"]
 
 
-def test_unknown_tasks_are_skipped():
-    found = build_goals(
-        [f.schedule(task_ids=("gone", "a"))],
-        tasks(a=MaxPerPeriod(count=2, period=Period.WEEK)),
-        [],
-        NOW,
-    )
-    assert [task.task_id for task in found[0].tasks] == ["a"]
+def test_goals_start_reaches_back_over_all_windows():
+    rule = MaxPerPeriod(count=1, period=Period.MONTH, every=2)
+    start = goals_start(tasks(a=rule).values(), NOW)
+    assert start == build_goals(tasks(a=rule), [], NOW)[0].windows[-1].start
+    assert goals_start(tasks(a=EveryRound()).values(), NOW) == NOW.date()
