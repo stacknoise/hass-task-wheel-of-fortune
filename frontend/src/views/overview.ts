@@ -28,7 +28,15 @@ import {
 import { formatDateTime, formatNumber } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
-import { AsyncValue, RevisionTracker, StoreController, indexById } from '../state/index.ts';
+import {
+  AsyncValue,
+  RevisionTracker,
+  StoreController,
+  areaNames,
+  indexById,
+} from '../state/index.ts';
+import type { AreaNames } from '../state/index.ts';
+import { roomTag } from './room.ts';
 import { personChips } from './person-chips.ts';
 import { assignmentGroups } from './overview-assignments.ts';
 import type { AssignmentHandlers } from './overview-assignments.ts';
@@ -262,6 +270,7 @@ export class TwOverviewView extends LitElement {
                 persons,
                 personById,
                 taskById,
+                areas: this.#areas(),
                 swapOpen: this._swapOpen,
                 busy: this._busy,
                 handlers: this.#handlers(),
@@ -329,11 +338,16 @@ export class TwOverviewView extends LitElement {
     `;
   }
 
+  #areas(): AreaNames {
+    return areaNames(this.#store.client?.areas() ?? []);
+  }
+
   #activityCard(
     personById: ReadonlyMap<string, PersonObject>,
     taskById: ReadonlyMap<string, TaskObject>,
   ): TemplateResult {
     const items = recentActivity(this.#activity.value?.entries ?? [], ACTIVITY_COUNT);
+    const areas = this.#areas();
     return html`
       <section class="card">
         <h2>${this.#text('overview.activity')}</h2>
@@ -354,6 +368,11 @@ export class TwOverviewView extends LitElement {
                         }
                         ·
                         ${taskById.get(assignment.task_id)?.name ?? this.#text('common.unknownTask')}
+                        ${roomTag(
+                          areas,
+                          taskById.get(assignment.task_id)?.area_id,
+                          this.#text('common.unknownArea'),
+                        )}
                         <div class="muted">${formatDateTime(at, this.language)}</div>
                       </span>
                       <tw-badge class="fixed" tone=${STATUS_TONES[assignment.status]}

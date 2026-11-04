@@ -32,7 +32,7 @@ to `config/custom_components/task_wheel` (the repository itself does not contain
   absences (one-off, on fixed weekdays, in a weekly rhythm such as "every 2nd week Fri–Fri"),
   optional notification
 - **Tasks** with allowed people, points (effort), deadline and frequency: every round,
-  at most n× per day/week/month, or a fixed interval with tolerance
+  at most n× per day/week/month, or a fixed interval with tolerance; optionally assigned to a Home Assistant area (room), shown in the overview, draw, history and statistics
 - **Schedules**: recurring, one-off or manual only
 - **Draws** automatically or in the panel with an animation: wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or an award ceremony; the size (segment, ball, row, slot, tile, card) equals the chance. With the scratch cards you scratch by hand (the draw starts with the first stroke) or let a coin do it; once the winning card is uncovered the draw is over. For each schedule you choose the allowed variants with a multi-select; if there are several, one is picked at random for every draw; with none selected, "Start round" draws everything at once and shows the task list right away
 - **Fairness**: whoever has had fewer points relative to their fair share gets a bigger slice
@@ -195,7 +195,7 @@ in a grid; adding and editing open a popup (full screen on a smartphone, close w
 - **People:** color on the wheel, load capacity (full, half, paused), presence (one-off, weekdays, weekly rhythm) with a
   preview of the next four weeks, and optionally a notification entity (`notify.…`, with a search across the entities and services of Home Assistant, checked when saving).
 - **Tasks:** allowed people, frequency (every round, at most n× per period, fixed interval with a timeline),
-  points, deadline, minimum load capacity (any, at least half or full load only; whoever is below it does not get onto the wheel for the task and cannot take it over by swapping) and the extra rules "no repetition", "respect absence", "swap allowed".
+  points, deadline, minimum load capacity (any, at least half or full load only; whoever is below it does not get onto the wheel for the task and cannot take it over by swapping) and the extra rules "no repetition", "respect absence", "swap allowed". A task can optionally be assigned to a **room** (a Home Assistant area); the room is shown on the task card, in the overview, the draw, the history (also as a column in the CSV export) and the statistics. If an area is deleted in Home Assistant, the task keeps the assignment and shows "Unknown room" until you pick another one.
 - **Schedules:** recurring, one-off or manual only, task selection, options and an example for `task_wheel.draw`
   and the event `task_wheel_drawn`.
 

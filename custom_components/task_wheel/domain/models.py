@@ -268,9 +268,10 @@ class Task(Model):
     respect_absence: bool = spec(to_bool, default=True)
     swap_allowed: bool = spec(to_bool, default=True)
     min_load: Load = spec(enum_of(Load), default=Load.PAUSED)
+    area_id: str | None = spec(optional(to_str), default=None)
 
     def __post_init__(self) -> None:
-        """Prüft Kennung, Namen, Punkte, Frist und erlaubte Personen."""
+        """Prüft Kennung, Namen, Punkte, Frist, erlaubte Personen und Bereich."""
         ensure_id("id", self.id)
         ensure_name("name", self.name)
         ensure_range("points", self.points, limits.POINTS_MIN, limits.POINTS_MAX)
@@ -278,6 +279,8 @@ class Task(Model):
         ensure_size("allowed", self.allowed, 0, limits.MAX_PERSONS)
         for person_id in self.allowed:
             ensure_id("allowed", person_id)
+        if self.area_id is not None:
+            ensure_length("area_id", self.area_id, 1, limits.AREA_ID_MAX_LENGTH)
 
     def allows(self, person_id: PersonId) -> bool:
         """Ob die Person die Aufgabe bekommen darf (ohne erlaubte Personen: jede)."""

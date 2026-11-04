@@ -84,6 +84,8 @@ export const en: Record<keyof typeof de, string> = {
   'tasks.min_load.paused': 'Any',
   'tasks.min_load.half': 'At least half load',
   'tasks.min_load.full': 'Full load only',
+  'tasks.area': 'Room',
+  'tasks.area.none': 'No room',
   'tasks.points_short': 'pts',
   'tasks.days_short': 'days',
   'frequency.every_round': 'Every round',

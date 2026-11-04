@@ -14,6 +14,8 @@ export type {
   TaskWire,
   TriggerWire,
 } from '../api/index.ts';
+export { areaNames, roomOf } from './areas.ts';
+export type { AreaNames } from './areas.ts';
 export { animationsOf, isAnimationKind, pickAnimation } from './animation.ts';
 export { AsyncValue } from './async-value.ts';
 export type { AsyncStatus } from './async-value.ts';

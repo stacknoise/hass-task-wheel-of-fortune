@@ -141,6 +141,8 @@ def test_load_factors():
         (lambda: f.task(points=0), "points"),
         (lambda: f.task(due_days=366), "due_days"),
         (lambda: f.task(allowed=frozenset({""})), "allowed"),
+        (lambda: f.task(area_id=""), "area_id"),
+        (lambda: f.task(area_id="x" * (limits.AREA_ID_MAX_LENGTH + 1)), "area_id"),
         (lambda: f.schedule(task_ids=()), "task_ids"),
         (lambda: f.schedule(task_ids=("t1", "t1")), "task_ids"),
         (lambda: f.schedule(slug=""), "slug"),
@@ -280,3 +282,10 @@ def test_kind_must_match_class():
     with pytest.raises(UnknownKindError):
         EveryRound.from_dict({KEY_KIND: "interval"})
     assert EveryRound.from_dict({}) == EveryRound()
+
+
+def test_task_area_is_optional_and_roundtrips():
+    legacy = {k: v for k, v in f.task().to_dict().items() if k != "area_id"}
+    assert Task.from_dict(legacy).area_id is None
+    placed = f.task(area_id="kueche")
+    assert Task.from_dict(placed.to_dict()).area_id == "kueche"
