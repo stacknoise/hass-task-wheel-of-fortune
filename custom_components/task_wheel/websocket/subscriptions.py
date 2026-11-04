@@ -1,16 +1,17 @@
 """Abonnements je Verbindung begrenzen: ein Client soll nicht alle Plätze belegen können."""
 
-from collections.abc import Callable, MutableMapping
-from typing import Protocol
+from collections.abc import Callable, Hashable, MutableMapping
+from typing import Any, Protocol
 
 type Cleanup = Callable[[], None]
+type Unsubscribe = Callable[[], Any]  # so deklariert Home Assistant `connection.subscriptions`
 
 
 class Connection(Protocol):
     """Der Teil einer WebSocket-Verbindung, den die Begrenzung braucht."""
 
     @property
-    def subscriptions(self) -> MutableMapping[int, Cleanup]:
+    def subscriptions(self) -> MutableMapping[Hashable, Unsubscribe]:
         """Abmelde-Funktionen der offenen Abonnements nach Nachrichtenkennung."""
         ...
 
