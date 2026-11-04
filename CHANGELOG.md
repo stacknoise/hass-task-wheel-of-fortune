@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+## [0.3.0] – 2026-11-04
+
 - Statistik: eigene Box „Verlosungen je Aufgabe: Soll und Ist“; für Aufgaben mit „höchstens n× in x Zeiträumen“ zeigt sie, wie oft die Aufgabe im laufenden und in den drei vorherigen Fenstern verlost wurde (z. B. 2 / 3 in den letzten 2 Monaten), sodass der Admin die Häufigkeit nachprüfen kann
 - Die Auslosungsliste zeigt nur die Aufgaben, die in dieser Runde vergeben werden können: Es gibt höchstens so viele Aufgaben wie mitmachende Personen (je Person eine Aufgabe pro Runde). Bei mehr Aufgaben werden die Aufgaben zufällig gewählt, damit die Runde nicht vorhersehbar ist
 - Aufgaben lassen sich mit „höchstens n× in x Tagen/Wochen/Monaten“ einplanen (z. B. 5× in 2 Monaten, 1× in 2 Wochen); das Fenster umfasst die laufende und die vorherigen Kalenderperioden. Bestehende Aufgaben behalten ihr Verhalten (x = 1)
