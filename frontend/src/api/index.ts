@@ -47,6 +47,7 @@ export type {
   Standing,
   StatisticsReport,
   GoalWindow,
+  TaskGoal,
   TaskObject,
   WeekRate,
 } from './models.ts';
