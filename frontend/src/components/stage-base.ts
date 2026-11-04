@@ -20,12 +20,15 @@ export function sharesOf(segments: readonly WheelSegment[]): readonly Share[] {
 export interface Stage extends HTMLElement {
   segments: readonly WheelSegment[];
   label: string;
+  /** Name der Aufgabe und Sprache für Animationen mit Text (Eilmeldung, Oscar-Verleihung). */
+  taskName?: string;
+  language?: string;
   /** Spielt die Animation zum Gewinner `id`; fertig, wenn sie steht. Das Ergebnis steht vorher fest. */
   spinTo(id: string): Promise<void>;
 }
 
 /**
- * Grundgerüst der Animationen (Lostrommel, Slot-Machine, Plinko, Scheinwerfer).
+ * Grundgerüst der Animationen (alle außer dem Glücksrad).
  *
  * `spinTo` ist die Schablone: unbekannte Gewinner werden ignoriert, bei reduzierter Bewegung springt
  * die Animation mit `settle` direkt ans Ziel, sonst läuft `play`. Neue Segmente und Entfernen
@@ -35,10 +38,14 @@ export abstract class StageElement extends LitElement implements Stage {
   static override properties = {
     segments: { attribute: false },
     label: { type: String },
+    taskName: { type: String },
+    language: { type: String },
   };
 
   declare segments: readonly WheelSegment[];
   declare label: string;
+  declare taskName: string;
+  declare language: string;
 
   #token = new MotionToken();
 
@@ -46,6 +53,8 @@ export abstract class StageElement extends LitElement implements Stage {
     super();
     this.segments = [];
     this.label = '';
+    this.taskName = '';
+    this.language = '';
   }
 
   async spinTo(id: string): Promise<void> {
@@ -71,7 +80,7 @@ export abstract class StageElement extends LitElement implements Stage {
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {
-    if (changed.has('segments')) {
+    if (changed.has('segments') || changed.has('taskName')) {
       this.#token.cancel();
       this.reset();
     }

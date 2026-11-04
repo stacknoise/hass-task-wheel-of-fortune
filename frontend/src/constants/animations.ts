@@ -1,6 +1,15 @@
 /** Auslosungs-Animationen: Arten, Bausteine und Standard. Die Ziehung selbst bleibt im Backend. */
 
-export const ANIMATION_KINDS = ['wheel', 'drum', 'slot', 'plinko', 'spotlight'] as const;
+export const ANIMATION_KINDS = [
+  'wheel',
+  'drum',
+  'slot',
+  'plinko',
+  'spotlight',
+  'scratch',
+  'news',
+  'oscar',
+] as const;
 export type AnimationKind = (typeof ANIMATION_KINDS)[number];
 
 /** Gilt für Zeitpläne ohne Auswahl (wie im Backend: `DEFAULT_ANIMATIONS`). */
@@ -15,6 +24,9 @@ export const STAGE_TAGS: Readonly<Record<AnimationKind, string>> = {
   slot: 'tw-slot',
   plinko: 'tw-plinko',
   spotlight: 'tw-spotlight',
+  scratch: 'tw-scratch',
+  news: 'tw-news',
+  oscar: 'tw-oscar',
 };
 
 /** Wo der Knopf zum Starten sitzt: in der Mitte der Bühne (Rad) oder darunter. */
@@ -25,4 +37,10 @@ export const START_PLACEMENT: Readonly<Record<AnimationKind, StartPlacement>> = 
   slot: 'below',
   plinko: 'below',
   spotlight: 'below',
+  scratch: 'below',
+  news: 'below',
+  oscar: 'below',
 };
+
+/** Meldet, dass die Person die Bühne selbst bedient (Rubbeln): die Auslosung soll beginnen. */
+export const EVENT_STAGE_START = 'tw-stage-start';

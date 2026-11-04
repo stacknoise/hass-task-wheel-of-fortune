@@ -22,7 +22,6 @@ import {
   DrawSession,
   StoreController,
   drawableSchedules,
-  allowsPerson,
   openCandidates,
   openRoundFor,
   participantsOf,
@@ -35,19 +34,13 @@ import type { AreaNames, DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '.
 import { roomTag } from './room.ts';
 import { drawSummary } from './draw-summary.ts';
 import { drawStyles } from './draw-styles.ts';
+import { personRows } from './draw-rows.ts';
 import { defineOnce } from '../components/define.ts';
 
 const HISTORY_ROUTE = 'history';
-const NOT_ALLOWED = 'not_allowed';
 
 function nameOf(schedules: readonly ScheduleInfo[], id: string | undefined): string {
   return schedules.find((schedule) => schedule.id === id)?.name ?? EMPTY_TEXT;
-}
-
-interface Row {
-  readonly person: PersonInfo;
-  readonly note: string;
-  readonly inWheel: boolean;
 }
 
 /** Auslosung: Zeitplan wählen, je Aufgabe das Rad drehen (Ergebnis vom Backend), Runde abschließen. */
@@ -392,7 +385,7 @@ export class TwDrawView extends LitElement {
           <span class="title">${task?.name ?? EMPTY_TEXT}</span>
           ${this.#room(task)}
         </div>
-        ${this.#wheelBox(state, persons)} ${this.#people(state, task, persons)}
+        ${this.#wheelBox(state, task, persons)} ${this.#people(state, task, persons)}
         ${state.phase === 'revealed' ? this.#result(state, task, persons) : nothing}
       </section>
     `;
@@ -422,7 +415,11 @@ export class TwDrawView extends LitElement {
     return this.#wheelCache.segments;
   }
 
-  #wheelBox(state: DrawState, persons: ReadonlyMap<string, PersonInfo>): TemplateResult {
+  #wheelBox(
+    state: DrawState,
+    task: TaskInfo | undefined,
+    persons: ReadonlyMap<string, PersonInfo>,
+  ): TemplateResult {
     const segments = this.#wheelSegments(state.current ?? state.preview, persons);
     return html`
       <div class="wheel-box ${START_PLACEMENT[this.#kind]}">
@@ -431,6 +428,9 @@ export class TwDrawView extends LitElement {
           .kind=${this.#kind}
           .segments=${segments}
           .label=${this.#text(`animation.${this.#kind}` as TextKey)}
+          .taskName=${task?.name ?? EMPTY_TEXT}
+          .language=${this.language}
+          @tw-stage-start=${() => void this.#session?.spin()}
         ></tw-stage>
         <button
           class="hub ${START_PLACEMENT[this.#kind]}"
@@ -449,7 +449,9 @@ export class TwDrawView extends LitElement {
     task: TaskInfo | undefined,
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
-    const rows = this.#rows(state.current ?? state.preview, task, persons);
+    const rows = personRows(state.current ?? state.preview, task, persons, (key) =>
+      this.#text(key),
+    );
     return html`
       <div class="people">
         <span class="eyebrow">${this.#text('draw.who')}</span>
@@ -468,29 +470,6 @@ export class TwDrawView extends LitElement {
         <span class="muted hint">${this.#text('draw.who.hint')}</span>
       </div>
     `;
-  }
-
-  /** Jede Person mit ihrer Chance oder dem Grund, warum sie nicht im Rad ist. */
-  #rows(
-    result: TaskDrawWire | undefined,
-    task: TaskInfo | undefined,
-    persons: ReadonlyMap<string, PersonInfo>,
-  ): readonly Row[] {
-    const chances = new Map(result?.segments.map((segment) => [segment.person_id, segment.chance]));
-    const reasons = new Map(result?.exclusions.map((item) => [item.person_id, item.reason]));
-    return [...persons.values()].map((person) => {
-      const chance = chances.get(person.id);
-      if (chance !== undefined) {
-        return { person, inWheel: true, note: percentText(chance) };
-      }
-      const allowed = task ? allowsPerson(task.allowed, person.id) : false;
-      const reason = allowed ? reasons.get(person.id) : NOT_ALLOWED;
-      return {
-        person,
-        inWheel: !result && allowed,
-        note: reason ? this.#text(`draw.reason.${reason}` as TextKey) : EMPTY_TEXT,
-      };
-    });
   }
 
   #result(

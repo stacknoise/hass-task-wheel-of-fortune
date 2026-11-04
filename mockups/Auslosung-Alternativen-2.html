@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glücksrad – Auslosung: Rubbellose + 4 neue Ideen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+:root{--bg:#f2f4f7;--ink:#1f2328;--mut:#5a616b;--line:#e3e6ea;--blue:#0262a0;--blue-d:#01497a;--stage:#10243a;--gold:#f5c542}
+body{margin:0;background:var(--bg);font-family:Roboto,system-ui,sans-serif;color:var(--ink)}
+button,select{font-family:inherit}
+a{color:var(--blue)}
+:focus-visible{outline:3px solid #ffb300;outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none !important}
+
+/* Kopf */
+.top{background:#fff;border-bottom:1px solid var(--line)}
+.top-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 24px}
+.top-row h1{margin:0;font-size:22px;font-weight:400;flex:1 1 auto}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;padding:0 16px}
+.tabs a{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;text-decoration:none;font-size:14px;font-weight:500;color:var(--mut);border-bottom:3px solid transparent}
+.tabs a[aria-current="page"]{color:var(--blue);border-bottom-color:var(--blue)}
+.btn-ghost{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border-radius:20px;border:1px solid #c4c9d0;background:#fff;color:var(--blue);font:500 14px Roboto,system-ui,sans-serif;cursor:pointer}
+.btn-ghost:hover{background:#eef6fc}
+.btn-primary{min-height:44px;padding:0 22px;border-radius:22px;border:none;background:var(--blue);color:#fff;font:500 15px Roboto,system-ui,sans-serif;cursor:pointer}
+.btn-primary:hover{background:var(--blue-d)}
+
+/* Ideen-Umschalter */
+.ideas{max-width:1200px;margin:0 auto;padding:16px 24px 0;width:100%}
+.ideas-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.ideas-lbl{font-size:12px;font-weight:500;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:22px;border:1px solid #c4c9d0;background:#fff;color:var(--ink);font:500 14px Roboto,system-ui,sans-serif;cursor:pointer}
+.seg button .n{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#e3e6ea;font-size:12px;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.seg button[aria-pressed="true"] .n{background:#fff;color:var(--blue)}
+.idea-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 24px;font-size:14px;line-height:1.5}
+.idea-info h2{margin:0 0 4px;font-size:18px;font-weight:500;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.effort{display:inline-flex;align-items:center;min-height:24px;padding:0 10px;border-radius:12px;background:#dcecf8;color:var(--blue-d);font-size:12px;font-weight:700}
+.idea-info p{margin:0}
+.idea-info .k{font-weight:700}
+.idea-info .rm{color:var(--mut);font-size:13px}
+.sim{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut)}
+.sim input{width:20px;height:20px}
+
+/* Seite */
+.page{padding:24px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;max-width:1200px;margin:0 auto;width:100%}
+.side{flex:1 1 260px;max-width:320px;background:#fff;border-radius:12px;border:1px solid var(--line);padding:8px 0}
+.side .pad{padding:12px 20px;display:flex;flex-direction:column;gap:10px}
+.side label{font-size:12px;color:var(--mut);font-weight:500}
+.side select{min-height:44px;padding:0 12px;border:1px solid #c4c9d0;border-radius:8px;background:#fff;color:var(--ink);font:500 15px Roboto,system-ui,sans-serif;cursor:pointer;width:100%}
+.hint{font-size:12px;color:var(--mut)}
+.side h2{margin:4px 0 0;font-size:18px;font-weight:500}
+.side .sub{font-size:13px;color:var(--mut);margin-top:-8px}
+.rrow{display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #eef0f3}
+.rrow .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.rrow .m{flex:1 1 auto;display:flex;flex-direction:column;gap:2px;min-width:0}
+.rrow .t{font-size:15px;font-weight:500}
+.rrow .r{font-size:12px;color:var(--mut)}
+.rrow .s{font-size:13px;font-weight:500}
+.side .foot{padding:12px 20px;border-top:1px solid #eef0f3}
+.side .foot .btn-ghost{width:100%;justify-content:center}
+
+/* Bühne */
+.stage{flex:999 1 520px;min-width:0;background:var(--stage);border-radius:16px;padding:24px;color:#fff;display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.stage-head{flex:1 1 100%;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.stage-head .l{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#9fc4e4;font-weight:500}
+.stage-head .tn{font-size:30px;font-weight:900;overflow-wrap:anywhere}
+.viz-col{flex:1 1 300px;max-width:460px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:16px}
+.viz{width:100%}
+.start{min-height:52px;padding:0 28px;border-radius:26px;border:3px solid #fff;background:var(--blue);color:#fff;font:900 17px Roboto,system-ui,sans-serif;letter-spacing:.03em;cursor:pointer;animation:pulse 1.6s ease-in-out infinite}
+.start:disabled{background:#3a556f;animation:none;cursor:default}
+.start:hover:not(:disabled){background:var(--blue-d)}
+.who{flex:1 1 220px;max-width:280px;display:flex;flex-direction:column;gap:10px}
+.who h3{margin:0;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#9fc4e4;font-weight:500}
+.who .p{display:flex;align-items:center;gap:10px}
+.who .p.out{opacity:.7}
+.who .av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none;border:2px solid #fff}
+.who .nm{font-size:14px;font-weight:500}
+.who .nt{font-size:12px;color:#c9dcec}
+.who .bar{height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin-top:3px;width:100%;overflow:hidden}
+.who .bar i{display:block;height:100%;background:#9fc4e4}
+.who .legend{font-size:12px;color:#c9dcec;line-height:1.5;padding-top:6px}
+.banner{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px;background:#fff;color:var(--ink);border-radius:12px;padding:16px 20px;animation:pop .5s ease-out both;position:relative}
+.banner .badge{width:56px;height:56px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font:900 24px Roboto,system-ui,sans-serif}
+.banner .btxt{display:flex;flex-direction:column;gap:2px;flex:1 1 200px;min-width:0}
+.banner .bt{font-size:22px;font-weight:900;overflow-wrap:anywhere}
+.banner .bd{font-size:13px;color:var(--mut)}
+.done{position:absolute;inset:0;background:rgba(16,36,58,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;animation:pop .4s ease-out both;text-align:center}
+.done .l{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#9fc4e4;font-weight:500}
+.done .big{font-size:30px;font-weight:900}
+.done .list{display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px}
+.done .li{display:flex;justify-content:space-between;align-items:center;gap:12px;background:rgba(255,255,255,.08);border-radius:10px;padding:10px 14px;font-size:15px;text-align:left}
+.done .li b{font-weight:700}
+.done .note{font-size:13px;color:#c9dcec}
+.done .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.btn-out{min-height:44px;padding:0 20px;border-radius:22px;border:1px solid #9fc4e4;background:transparent;color:#fff;font:500 15px Roboto,system-ui,sans-serif;cursor:pointer}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(79,166,232,.6)}50%{box-shadow:0 0 0 14px rgba(79,166,232,0)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.04);opacity:1}100%{transform:scale(1)}}
+@keyframes blink{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* gemeinsame SVG-Texte */
+.svg{display:block;width:100%;height:auto;overflow:visible}
+.svg text{font-family:Roboto,system-ui,sans-serif}
+
+/* Idee B: Krallenautomat, Idee C: Ballons, Idee E: Kartoffel (SVG) */
+.cab{fill:#0a1624;stroke:#9fc4e4;stroke-width:3}
+.cap-t{font-weight:900;fill:#fff;text-anchor:middle;pointer-events:none}
+.cap-p{font-weight:500;fill:#fff;text-anchor:middle;pointer-events:none}
+.bob{animation:bob 3s ease-in-out infinite;animation-delay:var(--d,0s)}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.glow{filter:drop-shadow(0 0 10px #f5c542) drop-shadow(0 0 20px rgba(245,197,66,.7))}
+.dim{opacity:.35}
+.spark{animation:blink .25s steps(2) infinite}
+
+/* Rubbellose (Chance-Hinweis) + Zeitung */
+.scr{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;width:100%}
+.sc{position:relative;height:104px;border-radius:12px;overflow:hidden;background:#fff;color:var(--ink);border:3px solid var(--c);touch-action:none;user-select:none}
+.sc .under{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;padding:4px}
+.sc .under b{font-size:17px;font-weight:900;color:var(--c)}
+.sc .under span{font-size:12px;color:var(--mut)}
+.sc.win .under{background:linear-gradient(135deg,#fff6d6,#ffe08a)}
+.sc.win.rev{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold),0 0 26px rgba(245,197,66,.7)}
+.sc.lose .under{background:#eef0f3}
+.sc.lose.rev{opacity:.55}
+.sc canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none;transition:opacity calc(.3s / var(--spd,1))}
+.sc canvas.gone{opacity:0;pointer-events:none}
+.scr-note{text-align:center;font-size:12px;color:#c9dcec;margin-top:8px}
+.news{position:relative;height:290px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.paper{position:relative;width:250px;min-height:210px;background:#f6f1e3;color:#1f2328;border-radius:6px;padding:14px 16px;box-shadow:0 8px 24px rgba(0,0,0,.5);--c:#1f2328;will-change:transform}
+.paper .mast{font:900 22px Georgia,serif;text-align:center;letter-spacing:.08em}
+.paper .rule{height:3px;background:#1f2328;margin:4px 0 10px;box-shadow:0 4px 0 #1f2328}
+.paper .head{font:900 22px/1.15 Georgia,serif;color:var(--c);overflow-wrap:anywhere}
+.paper .sub{font-size:12px;color:#5a616b;margin-top:8px}
+.paper .lines{margin-top:12px;display:flex;flex-direction:column;gap:5px}
+.paper .lines i{display:block;height:5px;border-radius:2px;background:#d9d2bd}
+.paper .stamp{position:absolute;right:10px;bottom:12px;border:4px solid #d32f2f;color:#d32f2f;font:900 24px Roboto,sans-serif;padding:0 8px;border-radius:6px;transform:rotate(-14deg) scale(2.2);opacity:0;transition:transform .18s ease-in,opacity .18s}
+.paper .stamp.on{transform:rotate(-14deg) scale(1);opacity:1}
+
+@media (max-width:640px){
+  .top-row,.ideas,.page{padding-left:16px;padding-right:16px}
+  .page{padding-top:16px}
+  .stage{padding:16px;gap:16px}
+  .stage-head .tn{font-size:24px}
+  .side{max-width:none}
+  .banner .bt{font-size:19px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-row">
+    <h1>Aufgaben-Glücksrad <span class="hint" style="font-size:14px">· Mockup: Rubbellose + 4 neue Ideen</span></h1>
+    <button type="button" class="btn-ghost" id="restart">Runde neu starten</button>
+  </div>
+  <nav class="tabs" aria-label="Bereiche">
+    <a href="Main.dc.html">Übersicht</a>
+    <a href="Auslosung.dc.html" aria-current="page">Auslosung</a>
+    <a href="Aufgaben.dc.html">Aufgaben</a>
+    <a href="Personen.dc.html">Personen</a>
+    <a href="Zeitplan.dc.html">Zeitpläne</a>
+    <a href="Historie.dc.html">Historie</a>
+    <a href="Statistik.dc.html">Statistik</a>
+  </nav>
+</header>
+
+<section class="ideas" aria-label="Animationsvarianten">
+  <div class="ideas-card">
+    <span class="ideas-lbl" id="ideasLbl">Animationsidee wählen (Runde startet bei Wechsel neu)</span>
+    <div class="seg" id="seg" role="group" aria-labelledby="ideasLbl"></div>
+    <div class="idea-info" id="info"></div>
+    <label class="sim"><input type="checkbox" id="sim"> Reduzierte Bewegung simulieren (wie <code>prefers-reduced-motion: reduce</code>)</label>
+  </div>
+</section>
+
+<main class="page">
+  <section class="side" aria-label="Zeitplan und Runde">
+    <div class="pad">
+      <label for="plan">Welcher Zeitplan wird ausgelöst?</label>
+      <select id="plan"></select>
+      <span class="hint" id="planHint"></span>
+      <h2 id="planName"></h2>
+      <span class="sub" id="planSub"></span>
+    </div>
+    <div id="round"></div>
+    <div class="foot"><button type="button" class="btn-ghost" id="drawAll">Rest ohne Animation verlosen</button></div>
+  </section>
+
+  <section class="stage" id="stage" aria-label="Bühne">
+    <div class="stage-head"><span class="l" id="stepLbl"></span><span class="tn" id="taskName"></span></div>
+    <div class="viz-col">
+      <div class="viz" id="viz"></div>
+      <button type="button" class="start" id="start"></button>
+    </div>
+    <div class="who" id="who"></div>
+    <div id="sr" class="sr" aria-live="polite" aria-atomic="true"></div>
+    <div class="banner" id="banner" hidden>
+      <div class="badge" id="bBadge" aria-hidden="true"></div>
+      <div class="btxt"><span class="bt" id="bTitle"></span><span class="bd" id="bDetail"></span></div>
+      <button type="button" class="btn-primary" id="nextBtn"></button>
+    </div>
+    <div class="done" id="done" hidden>
+      <span class="l">Runde abgeschlossen</span>
+      <span class="big">Alle Aufgaben sind verteilt</span>
+      <div class="list" id="doneList"></div>
+      <span class="note">Gespeichert in der Historie · Push-Benachrichtigung an alle verschickt</span>
+      <div class="btns">
+        <button type="button" class="btn-out" id="again">Nochmal von vorn</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+'use strict';
+
+/* ---------- Beispieldaten (identisch zum Glücksrad-Mockup) ---------- */
+var P = {
+  A: { name: 'Anna', color: '#c05600' }, B: { name: 'Ben', color: '#1a5fd0' }, C: { name: 'Clara', color: '#137333' },
+  D: { name: 'David', color: '#7b2cbf' }, E: { name: 'Emma', color: '#b0136f' }
+};
+var TASKS = [
+  { task: 'Bad putzen', rule: 'Nur Anna, Ben, Clara, David · max. 1× in 2 Wochen pro Person',
+    wheel: [['A', 30], ['B', 34], ['D', 36]],
+    out: { C: 'Pause – hatte die Aufgabe letzte Woche', E: 'Nicht erlaubt für diese Aufgabe' } },
+  { task: 'Müll rausbringen', rule: 'Alle · 1× pro Woche',
+    wheel: [['A', 22], ['B', 22], ['C', 20], ['E', 36]],
+    out: { D: 'Abwesend (Urlaub bis 12.11.)' } },
+  { task: 'Rasen mähen', rule: 'Nur Ben, Clara, David · alle 2 Wochen ± 1 Tag',
+    wheel: [['B', 45], ['C', 55]],
+    out: { A: 'Nicht erlaubt für diese Aufgabe', D: 'Abwesend (Urlaub bis 12.11.)', E: 'Nicht erlaubt für diese Aufgabe' } },
+  { task: 'Staubsaugen Wohnzimmer', rule: 'Alle · max. 2× pro Woche',
+    wheel: [['A', 24], ['B', 26], ['C', 18], ['E', 32]],
+    out: { D: 'Abwesend (Urlaub bis 12.11.)' } },
+  { task: 'Spülmaschine ausräumen', rule: 'Alle · jede Runde',
+    wheel: [['A', 22], ['B', 24], ['C', 20], ['E', 34]],
+    out: { D: 'Abwesend (Urlaub bis 12.11.)' } }
+];
+var PLANS = [
+  { name: 'Wochenplan', tasks: [0, 1, 2, 3], hint: 'Automatisch jeden Montag 07:00 · jetzt vorzeitig manuell auslösen', mode: 'automatisch' },
+  { name: 'Täglich morgens', tasks: [4], hint: 'Automatisch täglich 06:30 · jetzt vorzeitig manuell auslösen', mode: 'automatisch' },
+  { name: 'Großputz', tasks: [0, 1, 3], hint: 'Nur manuell · zuletzt ausgelost Sa, 10. Okt', mode: 'nur manuell' },
+  { name: 'Vor dem Weihnachtsbesuch', tasks: [0, 1, 3], hint: 'Einmalig am Sa, 19. Dez · jetzt vorzeitig manuell auslösen', mode: 'einmalig' },
+  { name: 'Garten (Sommer)', tasks: [2], hint: 'Pausiert · manuell trotzdem möglich', mode: 'pausiert' }
+];
+
+/* ---------- Hilfen ---------- */
+function $(id) { return document.getElementById(id); }
+function speed() { return window.__speed > 0 ? window.__speed : 1; }
+function D(ms) { return ms / speed(); }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function easeInOut(t) { return t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+function rnd(a, b) { return a + Math.random() * (b - a); }
+function shuffled(arr) { var a = arr.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function reduced() {
+  var m = false;
+  try { m = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  return m || $('sim').checked;
+}
+function Tok() { this.dead = false; this.timers = []; this.raf = 0; }
+Tok.prototype.cancel = function () { this.dead = true; cancelAnimationFrame(this.raf); this.timers.forEach(clearTimeout); };
+function sleep(ms, tok) {
+  return new Promise(function (res) {
+    tok.timers.push(setTimeout(function () { if (!tok.dead) res(); }, D(ms)));
+  });
+}
+/* fn(t 0..1, dtMs echte Zeit) */
+function frames(dur, tok, fn) {
+  return new Promise(function (res) {
+    var t0 = null, last = null;
+    function step(ts) {
+      if (tok.dead) return;
+      if (t0 === null) { t0 = ts; last = ts; }
+      var t = Math.min(1, (ts - t0) / D(dur));
+      fn(t, ts - last); last = ts;
+      if (t < 1) tok.raf = requestAnimationFrame(step); else res();
+    }
+    tok.raf = requestAnimationFrame(step);
+  });
+}
+function entriesFor(task) {
+  var total = task.wheel.reduce(function (s, w) { return s + w[1]; }, 0);
+  return task.wheel.map(function (w) {
+    return { k: w[0], name: P[w[0]].name, color: P[w[0]].color, w: w[1], pct: Math.round(w[1] / total * 100), share: w[1] / total };
+  });
+}
+/* Gewichteter Zufall – simuliert das Backend. Danach ist das Ergebnis fix. */
+function pickWinner(entries) {
+  var u = Math.random(), acc = 0;
+  for (var i = 0; i < entries.length; i++) {
+    var e = entries[i];
+    if (u < acc + e.share || i === entries.length - 1) {
+      return { i: i, key: e.k, u: u, frac: Math.min(.999, Math.max(0, (u - acc) / e.share)), entries: entries };
+    }
+    acc += e.share;
+  }
+}
+function cum(entries) { var a = 0; return entries.map(function (e) { var s = a; a += e.share; return s; }); }
+function keyAt(entries, pos) { /* pos 0..1 */
+  var a = 0;
+  for (var i = 0; i < entries.length; i++) { a += entries[i].share; if (pos < a - 1e-9) return entries[i].k; }
+  return entries[entries.length - 1].k;
+}
+
+/* ---------- gemeinsame Helfer der neuen Ideen ---------- */
+var NS = 'http://www.w3.org/2000/svg';
+function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+/* Zwischenwert 0..1 mit Easing, wartet bis zum Ende */
+function tween(dur, tok, fn, ease) { return frames(dur, tok, function (t) { fn((ease || easeInOut)(t)); }); }
+/* Radius ~ Wurzel der Chance (Fläche = Chance), begrenzt auf die Breite */
+function radii(ents, rmax, floor) {
+  var mx = Math.max.apply(null, ents.map(function (e) { return e.share; }));
+  return ents.map(function (e) { return rmax * Math.max(floor || .5, Math.sqrt(e.share / mx)); });
+}
+function svgOpen(w, h, label) { return '<svg class="svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="' + esc(label) + '">'; }
+function chain(tok, steps) { /* Schritte nacheinander (jeder liefert ein Promise) */
+  return steps.reduce(function (p, s) { return p.then(function () { return tok.dead ? null : s(); }); }, Promise.resolve());
+}
+
+/* ---------- Idee 1: Rubbellose (manuell + automatisch) ---------- */
+var SCRATCH = {
+  id: 'scratch', name: 'Rubbellose', effort: 'M', btn: 'Automatisch rubbeln',
+  desc: 'Jede Person hat ein Rubbellos mit ihrer Chance auf der Silberschicht. Alle dürfen selbst rubbeln (Finger oder Maus): Ab etwa der Hälfte ist ein Los aufgedeckt. Sobald „Gewonnen!“ frei liegt, ist die Runde fertig, die übrigen Lose bleiben zu. Wer nicht warten will, startet „Automatisch rubbeln“, dann rubbelt eine Münze direkt das Gewinnerlos frei (ca. 2 s).',
+  pro: 'Echte Mitwirkung auf Tablet und Smartphone, Ergebnis steht vorab fest und wird nur freigerubbelt, kurze Dauer, sparsame Technik (Canvas).',
+  con: 'Chance nur als Zahl, nicht als Größe; bei Niete-Treffern muss man weiterrubbeln, bis das Gewinnerlos gefunden ist.',
+  mount: function (viz, ctx) {
+    var ents = ctx.entries, self = this, h = '<div class="scr" id="sc-grid">';
+    this.ctx = ctx; this.rev = ents.map(function () { return false; });
+    ents.forEach(function (e, i) { h += '<div class="sc" id="sc-' + i + '" style="--c:' + e.color + '"><div class="under"><b></b><span></span></div><canvas aria-label="Rubbellos von ' + esc(e.name) + '"></canvas></div>'; });
+    viz.innerHTML = h + '</div><div class="scr-note">Selbst rubbeln: Finger oder Maus über die Silberschicht ziehen, bis „Gewonnen!“ erscheint.</div>';
+    this.ents = ents; this.cards = ents.map(function (_, i) { var el = $('sc-' + i); return { el: el, cv: el.querySelector('canvas'), under: el.querySelector('.under') }; });
+    this.cards.forEach(function (c, i) { c.cv.width = 320; c.cv.height = 220; c.ctx = c.cv.getContext('2d', { willReadFrequently: true }); self.foil(c, ents[i]); self.bind(c, i); });
+  },
+  foil: function (c, e) {
+    var x = c.ctx, g = x.createLinearGradient(0, 0, 320, 220);
+    g.addColorStop(0, '#d7dbe0'); g.addColorStop(.5, '#f4f6f8'); g.addColorStop(1, '#aab1ba');
+    x.globalCompositeOperation = 'source-over'; x.fillStyle = g; x.fillRect(0, 0, 320, 220);
+    x.fillStyle = e.color; x.fillRect(0, 0, 320, 54);
+    x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '900 34px Roboto, sans-serif'; x.fillText(e.name, 160, 40);
+    x.fillStyle = '#4a525c'; x.font = '900 44px Roboto, sans-serif'; x.fillText(e.pct + ' %', 160, 128);
+    x.font = '500 22px Roboto, sans-serif'; x.fillText('Chance · hier rubbeln', 160, 175);
+  },
+  cleared: function (c) { /* Anteil freigerubbelter Fläche, Stichprobe */
+    var d = c.ctx.getImageData(0, 0, 320, 220).data, n = 0, t = 0, i;
+    for (i = 3; i < d.length; i += 4 * 37) { t++; if (d[i] < 128) n++; }
+    return n / t;
+  },
+  bind: function (c, idx) {
+    var self = this, down = false, last = null, cv = c.cv, lastCheck = 0;
+    function pt(ev) { var r = cv.getBoundingClientRect(); return { x: (ev.clientX - r.left) / r.width * 320, y: (ev.clientY - r.top) / r.height * 220 }; }
+    function check() { if (!self.rev[idx] && self.cleared(c) > .5) self.revealManual(idx); }
+    cv.addEventListener('pointerdown', function (ev) { down = true; last = pt(ev); try { cv.setPointerCapture(ev.pointerId); } catch (e) {} self.stroke(c, last, last, 34); });
+    cv.addEventListener('pointermove', function (ev) { if (!down) return; var p = pt(ev); self.stroke(c, last, p, 34); last = p; var now = Date.now(); if (now - lastCheck > 150) { lastCheck = now; check(); } });
+    ['pointerup', 'pointercancel'].forEach(function (n) { cv.addEventListener(n, function () { down = false; check(); }); });
+  },
+  stroke: function (c, a, b, w) { var x = c.ctx; x.globalCompositeOperation = 'destination-out'; x.lineCap = 'round'; x.lineWidth = w; x.beginPath(); x.moveTo(a.x, a.y); x.lineTo(b.x, b.y); x.stroke(); },
+  reveal: function (plan, i) {
+    var c = this.cards[i], win = i === plan.i;
+    this.rev[i] = true;
+    c.el.classList.add('rev', win ? 'win' : 'lose');
+    c.under.firstChild.textContent = win ? 'Gewonnen!' : 'Niete'; c.under.lastChild.textContent = win ? 'übernimmt die Aufgabe' : 'diesmal nicht';
+    c.cv.classList.add('gone');
+  },
+  revealManual: function (i) { /* Zielstand liegt vorab fest (getPlan), Rubbeln deckt nur auf */
+    var plan = this.ctx.getPlan(); this.reveal(plan, i);
+    if (i === plan.i) this.ctx.complete(plan); /* Gewinnerlos frei = Runde fertig */
+  },
+  scratchCard: function (i, dur, tok) { /* Zickzack-Striche per Münze */
+    var c = this.cards[i], self = this, rows = 6;
+    return frames(dur, tok, function (t) {
+      var u = t * rows, row = Math.min(rows - 1, Math.floor(u)), f = u - row, y = 18 + row * 38;
+      var x = (row % 2 ? 1 - f : f) * 300 + 10, xo = (row % 2 ? 1 - Math.max(0, f - .15) : Math.max(0, f - .15)) * 300 + 10;
+      self.stroke(c, { x: xo, y: y }, { x: x, y: y + Math.sin(f * 9) * 6 }, 46);
+    });
+  },
+  run: function (plan, tok) { /* Münze rubbelt direkt das Gewinnerlos frei, die Nieten bleiben zu */
+    var self = this, w = plan.i;
+    if (this.rev[w]) return Promise.resolve(this.ents[w].k);
+    return sleep(250, tok).then(function () { return self.scratchCard(w, 1100, tok); }).then(function () { self.reveal(plan, w); return sleep(300, tok); }).then(function () { return tok.dead ? null : self.ents[w].k; });
+  },
+  final: function (plan) { this.reveal(plan, plan.i); return this.ents[plan.i].k; }
+};
+
+/* ---------- Idee 2: Oscar-Verleihung ---------- */
+var OSCAR = {
+  id: 'oscar', name: 'Oscar-Verleihung', effort: 'M', btn: 'Umschlag, bitte!',
+  W: 340, H: 300,
+  desc: 'Der Vorhang geht auf, ein Scheinwerfer streift durch die Nominierten, dann kommt der Umschlag: Klappe auf, Karte raus, „Und die Aufgabe geht an …“. Der Name erscheint in Gold mit Stern und Konfetti. Die Texte sind übersetzbar (i18n), z. B. „And the task goes to …“. Dauer ca. 4 s.',
+  pro: 'Sehr humorvoll, passt zu „Aufgabe wird verliehen“, funktioniert mit jeder Personenzahl und ist im Hochformat gut lesbar.',
+  con: 'Chance nur als Zahl unter dem Namen; wenig „Zufallsgefühl“, eher Inszenierung als Glücksspiel.',
+  mount: function (viz, ctx) {
+    var ents = ctx.entries, n = ents.length, self = this, W = this.W, h, gap = Math.min(64, (W - 60) / n), x0 = W / 2 - gap * (n - 1) / 2;
+    this.nx = ents.map(function (_, i) { return x0 + gap * i; });
+    h = svgOpen(W, this.H, 'Oscar-Verleihung mit ' + n + ' Nominierten') + '<defs><linearGradient id="o-cur" x1="0" x2="1"><stop offset="0" stop-color="#6d1220"/><stop offset=".5" stop-color="#b3263b"/><stop offset="1" stop-color="#6d1220"/></linearGradient><pattern id="o-fold" width="22" height="10" patternUnits="userSpaceOnUse"><rect width="22" height="10" fill="url(#o-cur)"/><rect width="3" height="10" fill="rgba(0,0,0,.25)"/></pattern></defs>';
+    h += '<rect x="0" y="0" width="340" height="300" fill="#0a1624"/><rect x="0" y="262" width="340" height="38" fill="#7a1626"/>';
+    h += '<polygon id="o-beam" points="170,0 150,120 190,120" fill="rgba(255,236,170,.22)" opacity="0"/>';
+    ents.forEach(function (e, i) {
+      h += '<g id="o-n' + i + '" transform="translate(' + self.nx[i].toFixed(1) + ' 92)"><g id="o-s' + i + '"><circle r="22" fill="' + e.color + '" stroke="#fff" stroke-width="3"/><text class="cap-t" y="6" font-size="17">' + esc(e.name.charAt(0)) + '</text></g><text class="cap-t" y="42" font-size="12" style="fill:#fff">' + esc(e.name) + '</text><text class="cap-p" y="56" font-size="11" style="fill:#c9dcec">' + e.pct + ' %</text></g>';
+    });
+    h += '<g id="o-env" transform="translate(170 214)" opacity="0"><g id="o-card"><rect x="-62" y="-60" width="124" height="80" rx="6" fill="#fffaf0" stroke="#f5c542" stroke-width="3"/><text x="0" y="-40" text-anchor="middle" font-size="10" font-weight="700" fill="#8a6d00">Und die Aufgabe geht an …</text></g><rect x="-80" y="-30" width="160" height="80" rx="6" fill="#e7d9b8" stroke="#bda76d" stroke-width="2"/><g id="o-flap"><polygon points="-80,-30 80,-30 0,16" fill="#f1e6c6" stroke="#bda76d" stroke-width="2"/></g></g>';
+    h += '<g id="o-win" opacity="0"><polygon id="o-star" points="170,8 177,28 198,28 181,40 188,60 170,48 152,60 159,40 142,28 163,28" fill="#f5c542" stroke="#fff" stroke-width="2"/><rect x="40" y="130" width="260" height="96" rx="14" fill="#fffaf0" stroke="#f5c542" stroke-width="4"/><text id="o-wt" x="170" y="158" text-anchor="middle" font-size="14" font-weight="700" fill="#8a6d00"></text><text id="o-wn" x="170" y="198" text-anchor="middle" font-size="36" font-weight="900" fill="#1f2328"></text><text id="o-wp" x="170" y="218" text-anchor="middle" font-size="12" fill="#5a616b"></text></g><g id="o-fx"></g>';
+    h += '<rect id="o-cl" x="0" y="0" width="170" height="262" fill="url(#o-fold)" /><rect id="o-cr" x="170" y="0" width="170" height="262" fill="url(#o-fold)"/>';
+    viz.innerHTML = h + '</svg>'; this.ents = ents; this.task = ctx.task.task; this.cl = $('o-cl'); this.cr = $('o-cr'); this.fx = $('o-fx');
+  },
+  curtain: function (e) { this.cl.setAttribute('transform', 'translate(' + (-130 * e).toFixed(1) + ' 0)'); this.cr.setAttribute('transform', 'translate(' + (130 * e).toFixed(1) + ' 0)'); },
+  reveal: function (plan) {
+    var e = plan.entries[plan.i];
+    this.curtain(1); $('o-beam').setAttribute('opacity', '0'); $('o-env').setAttribute('opacity', '0');
+    $('o-win').setAttribute('opacity', '1'); var tn = this.task.length > 24 ? this.task.slice(0, 23) + '…' : this.task; $('o-wt').textContent = '„' + tn + '“ geht an'; $('o-wn').textContent = e.name; $('o-wn').setAttribute('fill', e.color); $('o-wp').textContent = 'Chance war ' + e.pct + ' %';
+    this.ents.forEach(function (_, i) { $('o-n' + i).setAttribute('opacity', i === plan.i ? '1' : '.25'); });
+    $('o-win').setAttribute('class', 'glow'); return e.k;
+  },
+  confetti: function (tok) {
+    var self = this, ps = [], k, cols = ['#f5c542', '#fff', '#ff7043', '#4fa6e8'];
+    for (k = 0; k < 26; k++) { var r = document.createElementNS(NS, 'rect'); r.setAttribute('width', 6); r.setAttribute('height', 10); r.setAttribute('fill', cols[k % 4]); this.fx.appendChild(r); ps.push({ el: r, x: rnd(30, 310), v: rnd(.6, 1.2), a: rnd(0, 6), d: rnd(0, .3) }); }
+    return tween(900, tok, function (e) { ps.forEach(function (p) { var u = Math.max(0, e - p.d) / (1 - p.d); p.el.setAttribute('transform', 'translate(' + (p.x + Math.sin(p.a + u * 6) * 14).toFixed(1) + ' ' + (-10 + u * 280 * p.v).toFixed(1) + ') rotate(' + (u * 360 * p.v).toFixed(0) + ')'); p.el.setAttribute('opacity', 1 - u * u); }); }, function (t) { return t; }).then(function () { ps.forEach(function (p) { self.fx.removeChild(p.el); }); });
+  },
+  run: function (plan, tok) {
+    var self = this, w = plan.i, n = this.ents.length, beam = $('o-beam'), steps = [];
+    steps.push(function () { return tween(450, tok, function (e) { self.curtain(e); }); });
+    steps.push(function () { beam.setAttribute('opacity', '1'); return sleep(0, tok); });
+    for (var k = 0; k < n; k++) (function (i) { steps.push(function () {
+      var x = self.nx[i]; beam.setAttribute('points', '170,0 ' + (x - 32) + ',120 ' + (x + 32) + ',120');
+      $('o-s' + i).setAttribute('transform', 'scale(1.18)'); return sleep(Math.max(160, 560 / n * 1.6), tok).then(function () { $('o-s' + i).setAttribute('transform', 'scale(1)'); });
+    }); })(k);
+    steps.push(function () { beam.setAttribute('opacity', '0'); $('o-env').setAttribute('opacity', '1'); return tween(350, tok, function (e) { $('o-env').setAttribute('transform', 'translate(170 ' + lerp(300, 214, e).toFixed(1) + ')'); }, easeOut); });
+    steps.push(function () { return tween(300, tok, function (e) { $('o-flap').setAttribute('transform', 'translate(0 -30) scale(1 ' + (1 - 2 * e).toFixed(3) + ') translate(0 30)'); }); });
+    steps.push(function () { return tween(350, tok, function (e) { $('o-card').setAttribute('transform', 'translate(0 ' + (-40 * e).toFixed(1) + ')'); }); });
+    steps.push(function () { return sleep(350, tok); });
+    steps.push(function () { var key = self.reveal(plan); self.confetti(tok); return sleep(450, tok).then(function () { return key; }); });
+    return chain(tok, steps).then(function () { return tok.dead ? null : self.ents[w].k; });
+  },
+  final: function (plan) { return this.reveal(plan); }
+};
+
+/* ---------- Idee 3: Torwand ---------- */
+var GOAL = {
+  id: 'goal', name: 'Torwandschießen', effort: 'S', btn: 'Anstoß!',
+  W: 340, H: 300, BX: 170, BY: 262,
+  desc: 'Eine Torwand mit einem Loch pro Person; die Lochbreite entspricht der Chance. Der erste Schuss geht knapp drüber, der zweite sitzt im Loch der vorab bestimmten Person. Dauer ca. 3 s.',
+  pro: 'Chance als Lochbreite sofort ablesbar, schnell, Fußball-Stimmung, trägt auch bei vielen Personen (Namen stehen darunter).',
+  con: 'Erinnert an das Glücksrad (Fläche = Chance); kleine Chancen ergeben sehr schmale Löcher.',
+  mount: function (viz, ctx) {
+    var ents = ctx.entries, n = ents.length, self = this, h, W = 310, g = 6, avail = W - g * (n + 1), x = 15 + g;
+    this.cx = []; this.cy = 96;
+    h = svgOpen(this.W, this.H, 'Torwand mit ' + n + ' Löchern, Breite entspricht der Chance') + '<rect x="6" y="30" width="328" height="130" rx="8" fill="#16334f" stroke="#9fc4e4" stroke-width="3"/>';
+    ents.forEach(function (e, i) {
+      var w = avail * e.share; self.cx.push(x + w / 2);
+      h += '<g id="g-w' + i + '"><rect x="' + x.toFixed(1) + '" y="46" width="' + w.toFixed(1) + '" height="100" rx="6" fill="' + e.color + '" stroke="#fff" stroke-width="2"/><text class="cap-t" x="' + (x + w / 2).toFixed(1) + '" y="105" font-size="' + Math.max(12, Math.min(26, w * .5)).toFixed(0) + '">' + esc(e.name.charAt(0)) + '</text></g>';
+      h += '<text class="cap-t" x="' + (x + w / 2).toFixed(1) + '" y="182" font-size="12" style="fill:#fff">' + esc(e.name) + '</text><text class="cap-p" x="' + (x + w / 2).toFixed(1) + '" y="197" font-size="11" style="fill:#c9dcec">' + e.pct + ' %</text>';
+      x += w + g;
+    });
+    h += '<rect x="0" y="236" width="340" height="64" fill="#1c5a35"/><g id="g-ball" transform="translate(170 262)"><circle r="14" fill="#fff" stroke="#222" stroke-width="2"/><polygon points="0,-6 6,-2 4,5 -4,5 -6,-2" fill="#222"/></g></svg>';
+    viz.innerHTML = h; this.ents = ents; this.ball = $('g-ball');
+  },
+  setBall: function (x, y, s) { this.ball.setAttribute('transform', 'translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') scale(' + s.toFixed(3) + ')'); },
+  shoot: function (x1, y1, s1, dur, tok, arc) {
+    var self = this, x0 = this.BX, y0 = this.BY;
+    return tween(dur, tok, function (e) { self.setBall(lerp(x0, x1, e), lerp(y0, y1, e) - arc * Math.sin(Math.PI * e), lerp(1, s1, e)); }, function (t) { return t; });
+  },
+  mark: function (plan) {
+    this.ents.forEach(function (_, i) { var g = $('g-w' + i); g.setAttribute('class', i === plan.i ? 'glow' : 'dim'); });
+    return this.ents[plan.i].k;
+  },
+  run: function (plan, tok) {
+    var self = this, x = this.cx[plan.i], miss = this.cx[(plan.i + 1) % this.ents.length];
+    return chain(tok, [
+      function () { return tween(300, tok, function (e) { self.setBall(170, 262 + 6 * Math.sin(Math.PI * e), 1); }); },
+      function () { return self.shoot(miss + 40, 20, .6, 600, tok, 20); },
+      function () { return tween(350, tok, function (e) { self.setBall(lerp(miss + 40, 170, e), lerp(20, 262, e * e), lerp(.6, 1, e)); }, function (t) { return t; }); },
+      function () { return sleep(150, tok); },
+      function () { return self.shoot(x, 96, .6, 750, tok, 30); },
+      function () { self.mark(plan); return tween(300, tok, function (e) { self.setBall(x, 96, .6 * (1 - .15 * Math.sin(Math.PI * e))); }); }
+    ]).then(function () { return tok.dead ? null : self.ents[plan.i].k; });
+  },
+  final: function (plan) { this.setBall(this.cx[plan.i], 96, .6); return this.mark(plan); }
+};
+
+/* ---------- Idee 4: Eilmeldung ---------- */
+var NEWS = {
+  id: 'news', name: 'Eilmeldung', effort: 'S', btn: 'Druckmaschine starten',
+  desc: 'Die Druckmaschine wirft Zeitungen in die Luft: erst „Gerüchte“ mit Namen, die noch einmal davonkommen, zuletzt die Titelseite „EXTRA: Name übernimmt Aufgabe!“ mit rotem Stempel. Dauer ca. 3 s.',
+  pro: 'Witzig, gut lesbar auf jedem Display (Text statt Grafik), sehr einfach zu bauen, passt zum Haushalts-Humor.',
+  con: 'Keine Chance-Optik (nur Zahl in der Schlagzeile); wenig Zufallsgefühl.',
+  mount: function (viz, ctx) {
+    this.ents = ctx.entries; this.task = ctx.task.task;
+    viz.innerHTML = '<div class="news" id="n-box" role="img" aria-label="Zeitungen mit Schlagzeilen"><div class="paper" id="n-p"><div class="mast">HAUS-KURIER</div><div class="rule"></div><div class="head" id="n-h">Extra!</div><div class="sub" id="n-s">Gleich wird gedruckt …</div><div class="lines"><i></i><i></i><i></i></div><div class="stamp" id="n-st">EXTRA</div></div></div>';
+    this.p = $('n-p'); this.pose(1, 0, 0, 0);
+  },
+  pose: function (s, rot, x, y) { this.p.style.transform = 'translate(' + x.toFixed(0) + 'px,' + y.toFixed(0) + 'px) rotate(' + rot.toFixed(0) + 'deg) scale(' + s.toFixed(3) + ')'; },
+  text: function (h, s, win, col) { $('n-h').textContent = h; $('n-s').textContent = s; this.p.style.setProperty('--c', col || '#1f2328'); $('n-st').classList.toggle('on', !!win); },
+  flyIn: function (tok, spins) { var self = this; return tween(480, tok, function (e) { self.pose(.2 + .8 * e, 360 * spins * (1 - e), 0, 40 * (1 - e)); }, easeOut); },
+  run: function (plan, tok) {
+    var self = this, w = plan.i, ents = this.ents, decoys = shuffled(ents.map(function (_, i) { return i; }).filter(function (i) { return i !== w; })).slice(0, 2), steps = [], task = this.task;
+    decoys.forEach(function (i) {
+      steps.push(function () { self.text('Gerücht: ' + ents[i].name + ' kommt davon?', 'Chance ' + ents[i].pct + ' % – Quellen widersprechen sich', false, ents[i].color); return self.flyIn(tok, 2); });
+      steps.push(function () { return sleep(150, tok); });
+      steps.push(function () { return tween(260, tok, function (e) { self.pose(1 - .8 * e, -90 * e, 0, 160 * e); }, function (t) { return t * t; }); });
+    });
+    steps.push(function () { self.text('EXTRA: ' + ents[w].name + ' übernimmt ' + task + '!', 'Chance war ' + ents[w].pct + ' % – es ist amtlich', true, ents[w].color); $('n-st').classList.remove('on'); return self.flyIn(tok, 3); });
+    steps.push(function () { $('n-st').classList.add('on'); return sleep(550, tok); });
+    return chain(tok, steps).then(function () { return tok.dead ? null : ents[w].k; });
+  },
+  final: function (plan) { var e = this.ents[plan.i]; this.text('EXTRA: ' + e.name + ' übernimmt ' + this.task + '!', 'Chance war ' + e.pct + ' % – es ist amtlich', true, e.color); this.pose(1, 0, 0, 0); return e.k; }
+};
+
+/* ---------- Idee 5: Zauberhut ---------- */
+var HAT = {
+  id: 'hat', name: 'Zauberhut', effort: 'M', btn: 'Zauberstab schwingen',
+  W: 340, H: 300,
+  desc: 'Aus einem Zylinder fliegen Zettel mit allen Namen heraus (Zettelgröße = Chance) und fallen zurück. Dann steigt nur der Zettel der vorab bestimmten Person auf, wird groß und klappt golden auf. Dauer ca. 4 s.',
+  pro: 'Chance als Zettelgröße, überschaubare Technik (SVG), kurze, klare Dramaturgie, passt zu „Losen ziehen“.',
+  con: 'Ähnelt dem früheren Kartenziehen; im Fluss lesen sich kleine Zettel schlecht.',
+  mount: function (viz, ctx) {
+    var ents = ctx.entries, self = this, h, ws = radii(ents, 78, .6);
+    this.sl = ents.map(function (e, i) { return { w: ws[i], h: ws[i] * .56, dx: rnd(-110, 110), H: rnd(90, 150), st: i / ents.length * .5, rot: rnd(15, 35) * (Math.random() < .5 ? -1 : 1) }; });
+    h = svgOpen(this.W, this.H, 'Zauberhut mit Zetteln, Größe entspricht der Chance');
+    ents.forEach(function (e, i) { var s = self.sl[i], fs = Math.max(10, Math.min(18, s.h * .38)); h += '<g id="h-s' + i + '" opacity="0"><rect x="' + (-s.w / 2).toFixed(1) + '" y="' + (-s.h / 2).toFixed(1) + '" width="' + s.w.toFixed(1) + '" height="' + s.h.toFixed(1) + '" rx="4" fill="' + e.color + '" stroke="#fff" stroke-width="2.5"/><text class="cap-t" y="2" font-size="' + fs.toFixed(1) + '">' + esc(e.name) + '</text><text class="cap-p" y="' + (fs + 2).toFixed(1) + '" font-size="' + Math.max(9, fs - 3).toFixed(1) + '">' + e.pct + ' %</text></g>'; });
+    h += '<g id="h-hat" transform="translate(170 250)"><ellipse cx="0" cy="22" rx="78" ry="14" fill="#0e0e12"/><rect x="-52" y="-52" width="104" height="74" fill="#17171d"/><ellipse cx="0" cy="-52" rx="52" ry="11" fill="#2a2a33"/><rect x="-52" y="2" width="104" height="14" fill="#7a1626"/></g><g id="h-fx"></g></svg>';
+    viz.innerHTML = h; this.ents = ents; this.fx = $('h-fx');
+  },
+  pose: function (i, x, y, rot, s, op) { var g = $('h-s' + i); g.setAttribute('transform', 'translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + rot.toFixed(1) + ') scale(' + s.toFixed(3) + ')'); g.setAttribute('opacity', op); },
+  top: function (plan) { var self = this; this.ents.forEach(function (_, i) { $('h-s' + i).setAttribute('class', i === plan.i ? 'glow' : ''); if (i !== plan.i) $('h-s' + i).setAttribute('opacity', '0'); }); this.pose(plan.i, 170, 96, 0, 1.55, 1); return this.ents[plan.i].k; },
+  run: function (plan, tok) {
+    var self = this, w = plan.i, n = this.ents.length, sl = this.sl, steps = [];
+    steps.push(function () { return sleep(250, tok); });
+    steps.push(function () { /* Fontäne */
+      return frames(1500, tok, function (t) { sl.forEach(function (s, i) {
+        var u = (t - s.st) / .5; if (u < 0 || u > 1) { if (u > 1) self.pose(i, 170, 240, 0, .2, 0); return; }
+        self.pose(i, 170 + s.dx * u, 235 - s.H * 4 * u * (1 - u) * 1.25 - (1 - u) * 0, s.rot * Math.sin(Math.PI * u * 2), .5 + .5 * Math.sin(Math.PI * u), 1);
+      }); });
+    });
+    steps.push(function () { var s = sl[w]; return tween(750, tok, function (e) { self.pose(w, lerp(170, 170, e), lerp(235, 96, e), 360 * (1 - e) * (s.rot > 0 ? 1 : -1) * 0 + s.rot * (1 - e), lerp(.5, 1.55, e), 1); }, easeOut); });
+    steps.push(function () { return tween(450, tok, function (e) { $('h-hat').setAttribute('transform', 'translate(170 ' + (250 + 6 * Math.sin(Math.PI * e)).toFixed(1) + ')'); }); });
+    steps.push(function () { self.top(plan); return sleep(400, tok); });
+    return chain(tok, steps).then(function () { return tok.dead ? null : self.ents[w].k; });
+  },
+  final: function (plan) { return this.top(plan); }
+};
+
+var IDEAS = [SCRATCH, OSCAR, GOAL, NEWS, HAT];
+
+
+/* ---------- Zustand ---------- */
+var state = { idea: 0, plan: 0, idx: 0, phase: 'ready', results: {} };
+var tok = new Tok();
+var cur = null; /* laufende Auslosung */
+var pre = null; /* vorab bestimmtes Ergebnis der aktuellen Aufgabe */
+function getPlan() { if (!pre) pre = pickWinner(entriesFor(curTask())); return pre; }
+try { var hv = parseInt((location.hash || '').replace('#', ''), 10); if (hv >= 1 && hv <= 5) state.idea = hv - 1; } catch (e) {}
+
+function curTasks() { return PLANS[state.plan].tasks.map(function (i) { return TASKS[i]; }); }
+function curTask() { return curTasks()[state.idx]; }
+
+function renderBar() {
+  var seg = $('seg'); seg.innerHTML = '';
+  IDEAS.forEach(function (it, i) {
+    var b = document.createElement('button'); b.type = 'button'; b.id = 'idea-' + (i + 1);
+    b.setAttribute('aria-pressed', i === state.idea ? 'true' : 'false');
+    b.innerHTML = '<span class="n">' + (i + 1) + '</span>' + esc(it.name);
+    b.addEventListener('click', function () { if (state.idea === i) return; state.idea = i; try { history.replaceState(null, '', '#' + (i + 1)); } catch (e) {} renderBar(); restart(); });
+    seg.appendChild(b);
+  });
+  var it = IDEAS[state.idea];
+  $('info').innerHTML =
+    '<div><h2>' + (state.idea + 1) + '. ' + esc(it.name) + ' <span class="effort" title="S = klein, M = mittel, L = groß">Aufwand ' + it.effort + '</span></h2><p>' + esc(it.desc) + '</p></div>' +
+    '<div><p><span class="k">Stärke:</span> ' + esc(it.pro) + '</p><p><span class="k">Schwäche:</span> ' + esc(it.con) + '</p>' +
+    '<p class="rm"><span class="k">Reduzierte Bewegung:</span> Bei <code>prefers-reduced-motion</code> entfällt jede Bewegung, das Ergebnis erscheint sofort im Endzustand.</p></div>';
+}
+
+function mountViz() {
+  tok.cancel(); tok = new Tok(); cur = null; pre = null;
+  var viz = $('viz'); viz.innerHTML = ''; viz.style.removeProperty('--spd');
+  IDEAS[state.idea].mount(viz, { entries: entriesFor(curTask()), task: curTask(), getPlan: getPlan, complete: manualDone });
+}
+
+function renderSide() {
+  var plan = PLANS[state.plan], tasks = curTasks(), done = Object.keys(state.results).length;
+  $('planHint').textContent = plan.hint; $('planName').textContent = 'Runde „' + plan.name + '“';
+  $('planSub').textContent = 'Manuell gestartet · ' + done + ' von ' + tasks.length + ' verlost';
+  $('round').innerHTML = tasks.map(function (x, i) {
+    var res = state.results[i], active = i === state.idx && state.phase !== 'done';
+    var st = res ? P[res].name : (active ? (state.phase === 'spinning' ? 'läuft …' : 'als Nächstes') : 'offen');
+    var fg = res ? '#0f5c28' : (active ? '#0262a0' : '#5a616b'), dot = res ? P[res].color : (active ? '#0262a0' : '#c4c9d0');
+    return '<div class="rrow" style="background:' + (active ? '#eef6fc' : 'transparent') + '"><div class="dot" style="background:' + dot + '"></div><div class="m"><span class="t">' + esc(x.task) + '</span><span class="r">' + esc(x.rule) + '</span></div><span class="s" style="color:' + fg + '">' + esc(st) + '</span></div>';
+  }).join('');
+}
+
+function renderStage() {
+  var tasks = curTasks(), t = curTask(), ents = entriesFor(t), inW = {};
+  ents.forEach(function (e) { inW[e.k] = e.pct; });
+  $('stepLbl').textContent = 'Aufgabe ' + (state.idx + 1) + ' von ' + tasks.length;
+  $('taskName').textContent = t.task;
+  $('who').innerHTML = '<h3>Wer ist dabei?</h3>' + ['A', 'B', 'C', 'D', 'E'].map(function (k) {
+    var on = inW[k] !== undefined;
+    return '<div class="p' + (on ? '' : ' out') + '"><div class="av" style="background:' + P[k].color + '" aria-hidden="true">' + P[k].name.charAt(0) + '</div><div style="flex:1 1 auto;min-width:0"><div class="nm">' + P[k].name + '</div><div class="nt">' + (on ? 'Chance ' + inW[k] + ' %' : 'Ausgeschlossen: ' + esc(t.out[k])) + '</div>' + (on ? '<div class="bar"><i style="width:' + inW[k] + '%"></i></div>' : '') + '</div></div>';
+  }).join('') + '<span class="legend">Größe = Chance. Wer im letzten Monat weniger Punkte gesammelt hat, bekommt ein größeres Stück.</span>';
+  var s = $('start'), it = IDEAS[state.idea];
+  s.textContent = state.phase === 'spinning' ? 'Läuft …' : (state.phase === 'result' ? 'Gelost' : it.btn);
+  s.disabled = state.phase !== 'ready';
+  $('stage').setAttribute('aria-busy', state.phase === 'spinning' ? 'true' : 'false');
+  var win = state.results[state.idx], banner = $('banner');
+  banner.hidden = !(state.phase === 'result' && win);
+  if (!banner.hidden) {
+    var isLast = state.idx === tasks.length - 1;
+    $('bBadge').style.background = P[win].color; $('bBadge').textContent = P[win].name.charAt(0);
+    $('bTitle').textContent = P[win].name + ' übernimmt ' + t.task;
+    $('bDetail').textContent = 'Chance war ' + inW[win] + ' % · fällig bis Sonntag, 15. November · +' + (state.idx === 0 ? 5 : 3) + ' Punkte';
+    $('nextBtn').textContent = isLast ? 'Runde abschließen' : 'Nächste Aufgabe';
+  }
+  var dn = $('done'); dn.hidden = state.phase !== 'done';
+  $('doneList').innerHTML = tasks.map(function (x, i) { return '<div class="li"><span>' + esc(x.task) + '</span><b>' + (state.results[i] ? P[state.results[i]].name : 'nicht verteilt') + '</b></div>'; }).join('');
+}
+
+function update() { renderSide(); renderStage(); }
+
+function restart() {
+  tok.cancel(); state.idx = 0; state.phase = 'ready'; state.results = {};
+  $('sr').textContent = '';
+  mountViz(); update();
+}
+
+function finishWith(plan, landed) {
+  window.__lastLanded = landed;
+  if (landed !== plan.key) console.error('Animation endet bei ' + landed + ', Ziel war ' + plan.key);
+  state.results[state.idx] = plan.key; state.phase = 'result'; pre = null;
+  window.__lastWinner = plan.key;
+  update();
+  $('sr').textContent = P[plan.key].name + ' übernimmt ' + curTask().task + '. Chance war ' + plan.entries[plan.i].pct + ' Prozent.';
+  try { $('nextBtn').focus({ preventScroll: true }); } catch (e) {}
+}
+/* Alle Lose von Hand aufgerubbelt */
+function manualDone(plan) {
+  if (state.phase === 'result' || state.phase === 'done') return;
+  tok.cancel(); tok = new Tok(); window.__lastTarget = plan.key; finishWith(plan, plan.key);
+}
+function start() {
+  if (state.phase !== 'ready') return;
+  var idea = IDEAS[state.idea], plan = getPlan();
+  window.__lastTarget = plan.key; window.__lastWinner = null; window.__lastLanded = null;
+  state.phase = 'spinning'; update();
+  var myTok = tok;
+  if (reduced()) { finishWith(plan, idea.final(plan)); return; }
+  idea.run(plan, myTok).then(function (landed) { if (!myTok.dead) finishWith(plan, landed); });
+}
+
+function next() {
+  var tasks = curTasks();
+  if (state.idx >= tasks.length - 1) { state.phase = 'done'; update(); $('again').focus(); return; }
+  state.idx++; state.phase = 'ready'; $('sr').textContent = '';
+  mountViz(); update();
+  try { $('start').focus({ preventScroll: true }); } catch (e) {}
+}
+
+function drawAll() {
+  tok.cancel();
+  curTasks().forEach(function (t, i) { if (!state.results[i]) state.results[i] = pickWinner(entriesFor(t)).key; });
+  state.phase = 'done'; update(); $('again').focus();
+}
+
+/* ---------- Start ---------- */
+$('plan').innerHTML = PLANS.map(function (p, i) { return '<option value="' + i + '">' + esc(p.name) + ' · ' + esc(p.mode) + '</option>'; }).join('');
+$('plan').addEventListener('change', function (e) { state.plan = parseInt(e.target.value, 10) || 0; restart(); });
+$('start').addEventListener('click', start);
+$('nextBtn').addEventListener('click', next);
+$('drawAll').addEventListener('click', drawAll);
+$('restart').addEventListener('click', restart);
+$('again').addEventListener('click', restart);
+renderBar(); restart();
+})();
+</script>
+</body>
+</html>
