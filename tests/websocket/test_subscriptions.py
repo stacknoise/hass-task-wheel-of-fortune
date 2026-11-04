@@ -1,9 +1,11 @@
 """Abonnements je Verbindung: das älteste weicht, Aufräumen vergisst sie."""
 
-from collections.abc import Callable, Hashable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from custom_components.task_wheel.websocket.subscriptions import SubscriptionBook
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Hashable
 
 
 class FakeConnection:
