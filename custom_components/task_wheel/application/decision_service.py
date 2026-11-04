@@ -156,21 +156,24 @@ class DecisionService:
     def _excluded(self, result: TaskDraw) -> tuple[ExcludedEntry, ...]:
         """Ausgeschlossene der Filterkette, danach Personen ohne Erlaubnis für die Aufgabe."""
         reasons = [(item.person_id, str(item.reason)) for item in result.exclusions]
-        task = self._config.tasks.get(result.task_id)
         known = {person_id for person_id, _reason in reasons}
         known.update(segment.person_id for segment in result.segments)
-        if task is not None:
-            reasons.extend(
-                (person_id, REASON_NOT_ALLOWED)
-                for person_id in sorted(self._config.persons)
-                if person_id not in known and not task.allows(person_id)
-            )
-        return tuple(
-            ExcludedEntry(
-                person_id=person_id, person_name=self._person_name(person_id), reason=reason
-            )
-            for person_id, reason in reasons
+        reasons.extend(
+            (pid, REASON_NOT_ALLOWED) for pid in self._not_allowed(result.task_id, known)
         )
+        return tuple(
+            ExcludedEntry(person_id=pid, person_name=self._person_name(pid), reason=reason)
+            for pid, reason in reasons
+        )
+
+    def _not_allowed(self, task_id: TaskId, known: set[PersonId]) -> list[PersonId]:
+        """Personen, die weder im Rad noch ausgeschlossen sind: die Aufgabe erlaubt sie nicht."""
+        task = self._config.tasks.get(task_id)
+        if task is None:
+            return []
+        return [
+            pid for pid in sorted(self._config.persons) if pid not in known and not task.allows(pid)
+        ]
 
     def _person_name(self, person_id: PersonId) -> str:
         person = self._config.persons.get(person_id)

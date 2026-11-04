@@ -192,10 +192,17 @@ class DecisionFilter:
     def matches(self, record: DecisionRecord) -> bool:
         """Alle gesetzten Felder passen auf den Eintrag."""
         return (
-            (self.schedule_id is None or record.schedule_id == self.schedule_id)
-            and (self.kind is None or record.kind is self.kind)
-            and (self.since is None or record.at >= self.since)
-            and (self.until is None or record.at < self.until)
+            _same(self.schedule_id, record.schedule_id)
+            and _same(self.kind, record.kind)
+            and self._in_range(record.at)
             and (self.person_id is None or record.involves_person(self.person_id))
             and (self.task_id is None or record.involves_task(self.task_id))
         )
+
+    def _in_range(self, at: dt.datetime) -> bool:
+        return (self.since is None or at >= self.since) and (self.until is None or at < self.until)
+
+
+def _same[T](wanted: T | None, actual: T) -> bool:
+    """Kein Filter gesetzt oder gleich."""
+    return wanted is None or wanted == actual

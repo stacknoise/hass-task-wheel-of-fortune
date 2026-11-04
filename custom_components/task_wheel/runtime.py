@@ -55,6 +55,19 @@ class TaskWheelData:
     live: LiveView
 
 
+def _publish_unprompted_changes(
+    config: ConfigRepository, observed: ObservedTimers, live: LiveView
+) -> None:
+    """Abonnenten der Panel-API sehen auch Änderungen, die kein Befehl ausgelöst hat.
+
+    Das sind Änderungen der Konfiguration (egal von wo) und alles, was ein Zeitgeber auslöst
+    (automatische Auslosung, Wartung).
+    """
+    observed.listen(live.publish)
+    config.subscribe(AccessWatch(live, lambda: config.settings.panel_admin_only).check)
+    config.subscribe(live.publish)
+
+
 def compose(
     config: ConfigRepository,
     history: HistoryRepository,
@@ -67,11 +80,7 @@ def compose(
     spawn: Spawn,
     rng: RandomSource | None = None,
 ) -> TaskWheelData:
-    """Baut die Dienste; alle teilen Repositories, Events und den Statistik-Dienst.
-
-    Abonnenten der Panel-API (`live`) sehen auch Änderungen, die kein Befehl ausgelöst hat:
-    Änderungen der Konfiguration (egal von wo) und alles, was ein Zeitgeber auslöst
-    (automatische Auslosung, Wartung).
+    """Baut die Dienste; alle teilen Repositories, Events, Statistik und Entscheidungslog.
 
     `notifications` hängt bereits hinter `events`; es wird hier nur für die Zielprüfung angeboten.
     """
@@ -85,9 +94,7 @@ def compose(
     swaps = SwapService(config, history, statistics, events, decisions)
     schedules = ScheduleService(config, history, draws, observed, events)
     live = LiveView(SnapshotBuilder(config, history, draws, schedules), clock)
-    observed.listen(live.publish)
-    config.subscribe(AccessWatch(live, lambda: config.settings.panel_admin_only).check)
-    config.subscribe(live.publish)
+    _publish_unprompted_changes(config, observed, live)
     return TaskWheelData(
         config=config,
         history=history,

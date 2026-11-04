@@ -201,13 +201,14 @@ erDiagram
 | `TriggerConfig` | `recurring(weekdays, time, every_n_weeks \| monthly)` · `once(at, after: keep_manual \| archive \| delete)` · `manual(remind_after_days)` |
 | `Round` | `id`, `schedule_id`, `origin: auto \| manual \| service`, `started_at`, `finished_at`, `assignments` |
 | `Assignment` | `id`, `round_id`, `schedule_id` (auslosender Zeitplan), `task_id`, `person_id`, `chance` (0–1), `points`, `due_at`, `status`, `done_at`, `swap: Swap \| None` |
-| `Settings` | `jokers_per_month` (für später reserviert, derzeit ohne Wirkung), `fairness_window_days`, `history_retention_days`, `weighting`, `late_points_factor` (0–1, Standard 1,0), `missed_points_factor` (−1–0, Standard 0), `missed_grace_hours`, `panel_admin_only` (Standard aus) |
+| `Settings` | `jokers_per_month` (für später reserviert, derzeit ohne Wirkung), `fairness_window_days`, `history_retention_days`, `weighting`, `late_points_factor` (0–1, Standard 1,0), `missed_points_factor` (−1–0, Standard 0), `missed_grace_hours`, `panel_admin_only` (Standard aus), `decision_retention_days` (1–365, Standard 7; Aufbewahrung des Entscheidungslogs) |
 
 ### 4.1 Speicher
 
 | Store | Inhalt | Schreibstrategie |
 |---|---|---|
 | `task_wheel.config` (Version 1, Unterversion 3) | Personen, Aufgaben, Zeitpläne, Einstellungen | `async_delay_save` (gebündelt, Verzögerung als Konstante) |
+| `task_wheel.decisions` (Version 1, Unterversion 4) | Entscheidungslog: je Auslosung, Tausch und Austausch ein Eintrag mit Rad, Ausschlussgründen und Gewinner | `async_delay_save`; Bereinigung nach `decision_retention_days` (Standard 7) einmal täglich, höchstens 5000 Einträge |
 | `task_wheel.history` (Version 1, Unterversion 3) | Runden, Zuteilungen, Monatsaggregate pro Person/Aufgabe | `async_delay_save`; Aufräumen nach `history_retention_days` einmal täglich |
 
 Version 1.2 (beide Stores): Zuteilungen tragen `schedule_id`; die Migration 1.1 → 1.2 setzt den Zeitplan der Runde ein.

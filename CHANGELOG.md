@@ -5,6 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- **Neu:** Entscheidungslog als Tab nach der Statistik, für alle sichtbar: Je Auslosung und Aufgabe steht, wer im Rad war (mit Chance), wer warum nicht (abwesend, nicht erlaubt, Belastbarkeit, schon versorgt …) und wer gezogen wurde; Tausch und Admin-Austausch stehen mit Vermerk darin. Die Aufbewahrung (Standard 7 Tage) stellt man in den Optionen der Integration ein, eine tägliche Bereinigung löscht ältere Einträge.
 - **Geändert:** Die Statistik „Verlosungen je Aufgabe: Soll und Ist“ wird je Zeitplan berechnet und gruppiert: Es zählen nur die Auslosungen des jeweiligen Zeitplans, eine Aufgabe in mehreren Zeitplänen erscheint in jedem davon. Die Box scrollt, die Zeitpläne lassen sich auf- und zuklappen
 - **Geändert:** Aufgaben, die täglich anfallen (Häufigkeit „höchstens n× in 1 Tag“), sind in jeder Auslosung dabei; bei mehr Aufgaben als mitmachenden Personen füllt der Zufall nur die übrigen Plätze. Gibt es mehr tägliche Aufgaben als Personen, wird unter den täglichen zufällig gewählt
 - Behoben: Wer am Tag der Auslosung abwesend ist, nimmt nicht mehr an ihr teil. Bisher genügte ein anwesender Tag zwischen Auslosung und Frist, sodass z. B. eine Person, die heute (Mittwoch) fehlt, aber morgen wieder da ist, trotzdem im Rad stand; das galt auch für wiederkehrende Abwesenheiten. Die Zahl der Aufgaben je Runde richtet sich nach den heute anwesenden Personen
