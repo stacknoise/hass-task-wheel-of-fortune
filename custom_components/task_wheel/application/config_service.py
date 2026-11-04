@@ -8,6 +8,7 @@ import datetime as dt
 import re
 import unicodedata
 from collections.abc import Callable, Iterable, Mapping
+from dataclasses import replace
 from typing import Final, Protocol
 
 from ..const.keys import (
@@ -19,7 +20,7 @@ from ..const.keys import (
 )
 from ..const.limits import SLUG_MAX_LENGTH
 from ..domain.errors import InUseError, NotFoundError, ValidationError
-from ..domain.models import Person, Schedule, Settings, Task
+from ..domain.models import OnceAbsence, Person, Schedule, Settings, Task
 from ..domain.types import PersonId, ScheduleId, TaskId
 from .draw_service import DrawService
 from .ids import new_id
@@ -112,6 +113,25 @@ class ConfigService:
         self._ensure_slug_free(person, self._config.persons.values())
         if person.notify_target != current.notify_target:
             self._check_target(person.notify_target)
+        self._config.put_person(person)
+        return person
+
+    def add_absence(
+        self, person_id: PersonId, start: dt.date, end: dt.date, today: dt.date
+    ) -> Person:
+        """Fügt eine einmalige Abwesenheit hinzu; vergangene einmalige entfallen (Obergrenze).
+
+        Raises:
+            NotFoundError: Die Person gibt es nicht.
+            ValidationError: Die Abwesenheit ist ungültig oder es sind schon zu viele.
+        """
+        current = _require(self._config.persons, person_id, RESOURCE_PERSON)
+        kept = tuple(
+            item
+            for item in current.absences
+            if not (isinstance(item, OnceAbsence) and item.end < today)
+        )
+        person = replace(current, absences=(*kept, OnceAbsence(start=start, end=end)))
         self._config.put_person(person)
         return person
 

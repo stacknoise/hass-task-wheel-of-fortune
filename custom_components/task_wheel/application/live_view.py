@@ -50,6 +50,11 @@ class LiveView:
         self._last = snapshot
         return snapshot, lambda: self._unsubscribe(key)
 
+    def drop_all(self) -> None:
+        """Meldet alle Abonnenten ab (der Zugriff wurde auf Administratoren beschränkt)."""
+        self._listeners.clear()
+        self._last = None
+
     def _unsubscribe(self, key: int) -> None:
         """Entfernt den Abonnenten (mehrfaches Abmelden ist unschädlich)."""
         self._listeners.pop(key, None)
@@ -65,6 +70,23 @@ class LiveView:
         if delta:
             for listener in tuple(self._listeners.values()):
                 listener(delta)
+
+
+class AccessWatch:
+    """Meldet die Abonnenten ab, sobald der Zugriff auf Administratoren eingeschränkt wird."""
+
+    def __init__(self, live: LiveView, restricted: Callable[[], bool]) -> None:
+        """Merkt sich den Stand der Einschränkung; `restricted` liest ihn aus den Einstellungen."""
+        self._live = live
+        self._restricted = restricted
+        self._was = restricted()
+
+    def check(self) -> None:
+        """Nach jeder Änderung der Konfiguration aufrufen."""
+        now = self._restricted()
+        if now and not self._was:
+            self._live.drop_all()
+        self._was = now
 
 
 def _nothing() -> None:

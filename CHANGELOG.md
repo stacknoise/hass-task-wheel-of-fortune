@@ -5,6 +5,9 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- „Panel nur für Administratoren“ gilt jetzt auch für die Dienste, den Button „Auslosen“ und das Abhaken in der To-do-Liste; beim Aktivieren werden bestehende Panel-Verbindungen abgemeldet, und die Seitenleiste folgt der Einstellung sofort
+- Behoben: Das Panel wird beim erneuten Einrichten nach einem abgebrochenen Setup nicht mehr doppelt registriert
+- Beschädigter oder zu neuer Speicher zeigt beim Einrichten eine verständliche Fehlermeldung statt „Fehler beim Einrichten“
 - Eine Auslosung im Panel schlägt fehl (und entfällt), wenn die gezogene Person, Aufgabe oder der Zeitplan inzwischen gelöscht wurde, statt unsichtbare Zuteilungen zu erzeugen
 - Von Hand oder per Dienst ausgelöste Runden desselben Zeitplans brauchen 30 Sekunden Abstand; ist die Obergrenze gespeicherter Runden erreicht, entfällt die älteste abgeschlossene Runde statt alle weiteren Auslosungen zu blockieren
 - Intern: doppelte Konstanten und doppelter Code zusammengeführt (Ressourcennamen, Statusmengen, Zeitspannen, Wochenanfang, offene Zuteilungen im Snapshot)

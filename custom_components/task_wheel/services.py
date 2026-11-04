@@ -2,7 +2,6 @@
 
 import datetime as dt
 from collections.abc import Callable, Mapping
-from dataclasses import replace
 from typing import Any, Final
 
 import voluptuous as vol
@@ -10,6 +9,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 
+from .access import ensure_allowed
 from .application.lookup import find_by_ref
 from .const.defaults import DOMAIN
 from .const.events import SERVICE_COMPLETE, SERVICE_DRAW, SERVICE_SET_ABSENCE, SERVICE_SWAP
@@ -31,9 +31,10 @@ from .const.keys import (
 from .const.limits import REF_MAX_LENGTH, REF_MIN_LENGTH
 from .domain.enums import RoundOrigin
 from .domain.errors import TaskWheelError
-from .domain.models import OnceAbsence, Person, Schedule, Task
+from .domain.models import Person, Schedule, Task
 from .entry_lookup import loaded_runtime
 from .runtime import TaskWheelData
+from .service_errors import to_service_error
 
 type Handler = Callable[[TaskWheelData, Mapping[str, Any], dt.datetime], None]
 
@@ -123,14 +124,9 @@ def _swap(data: TaskWheelData, call: Mapping[str, Any], now: dt.datetime) -> Non
 
 
 def _set_absence(data: TaskWheelData, call: Mapping[str, Any], now: dt.datetime) -> None:
-    """Fügt eine einmalige Abwesenheit hinzu; vergangene einmalige entfallen (Obergrenze)."""
+    """Fügt eine einmalige Abwesenheit hinzu (die Fachlogik liegt im `ConfigService`)."""
     person = _person(data, call[ATTR_PERSON])
-    today = now.date()
-    current = tuple(
-        item for item in person.absences if not (isinstance(item, OnceAbsence) and item.end < today)
-    )
-    absence = OnceAbsence(start=call[ATTR_START], end=call[ATTR_END])
-    data.config.put_person(replace(person, absences=(*current, absence)))
+    data.configuration.add_absence(person.id, call[ATTR_START], call[ATTR_END], now.date())
 
 
 HANDLERS: Final[Mapping[str, Handler]] = {
@@ -139,15 +135,6 @@ HANDLERS: Final[Mapping[str, Handler]] = {
     SERVICE_SWAP: _swap,
     SERVICE_SET_ABSENCE: _set_absence,
 }
-
-
-def to_service_error(err: TaskWheelError) -> ServiceValidationError:
-    """Macht aus einem fachlichen Fehler einen übersetzbaren Dienstfehler."""
-    return ServiceValidationError(
-        translation_domain=DOMAIN,
-        translation_key=err.key,
-        translation_placeholders={key: str(value) for key, value in err.placeholders.items()},
-    )
 
 
 def _runtime(hass: HomeAssistant) -> TaskWheelData:
@@ -163,6 +150,9 @@ def _service(hass: HomeAssistant, handler: Handler) -> Callable[[ServiceCall], A
 
     async def call(service_call: ServiceCall) -> None:
         data = _runtime(hass)
+        await ensure_allowed(
+            hass, service_call.context, admin_only=data.config.settings.panel_admin_only
+        )
         try:
             handler(data, service_call.data, data.clock())
         except TaskWheelError as err:

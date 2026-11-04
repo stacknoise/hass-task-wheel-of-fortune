@@ -32,7 +32,7 @@
           "late_points_factor": "Anteil der Punkte für verspätet erledigte Aufgaben (0 bis 1).",
           "missed_points_factor": "Anteil der Punkte für verpasste Aufgaben (−1 bis 0, negativ zieht Punkte ab).",
           "missed_grace_hours": "So lange nach der Frist gilt eine Aufgabe noch nicht als verpasst.",
-          "panel_admin_only": "Wenn aktiv, sehen nur Administratoren das Panel."
+          "panel_admin_only": "Wenn aktiv, sehen nur Administratoren das Panel und nur sie dürfen Dienste, den Button und die To-do-Listen nutzen (Automationen bleiben erlaubt)."
         }
       }
     },
@@ -128,6 +128,12 @@
     }
   },
   "exceptions": {
+    "storage_corrupt": {
+      "message": "Die gespeicherten Daten „{store}“ sind beschädigt ({reason}). Es wurde nichts überschrieben; bitte die Datei unter .storage prüfen oder aus einer Sicherung zurückspielen."
+    },
+    "storage_version_unsupported": {
+      "message": "Die gespeicherten Daten „{store}“ haben die Version {version}, die diese Version nicht lesen kann. Es wurde nichts überschrieben; bitte die Integration aktualisieren."
+    },
     "not_loaded": {
       "message": "Aufgaben-Glücksrad ist nicht geladen."
     },
