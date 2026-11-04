@@ -3,6 +3,7 @@
 import datetime as dt
 from itertools import count
 
+from custom_components.task_wheel.application.decision_service import DecisionService
 from custom_components.task_wheel.application.draw_service import DrawService
 from custom_components.task_wheel.application.schedule_service import ScheduleService
 from custom_components.task_wheel.application.statistics_service import StatisticsService
@@ -14,6 +15,7 @@ from custom_components.task_wheel.domain.models import (
     Schedule,
 )
 from custom_components.task_wheel.infrastructure.repository.config_store import ConfigStore
+from custom_components.task_wheel.infrastructure.repository.decision_store import DecisionStore
 from custom_components.task_wheel.infrastructure.repository.history_store import HistoryStore
 from custom_components.task_wheel.infrastructure.repository.memory import MemoryStore
 
@@ -86,6 +88,8 @@ class World:
     def __init__(self, *randoms: float, **settings: object) -> None:
         self.config = ConfigStore(MemoryStore())
         self.history = HistoryStore(MemoryStore())
+        self.decision_store = DecisionStore(MemoryStore())
+        self.decisions = DecisionService(self.config, self.decision_store)
         for ident in ("p1", "p2"):
             self.config.put_person(f.person(id=ident, slug=ident, name=ident, absences=()))
         both = frozenset({"p1", "p2"})
@@ -103,6 +107,7 @@ class World:
             FixedRandom(*(randoms or (0.1,))),
             StatisticsService(self.config, self.history),
             events=self.events,
+            decisions=self.decisions,
             id_factory=lambda: f"id{next(ids)}",
         )
         self.schedules = ScheduleService(

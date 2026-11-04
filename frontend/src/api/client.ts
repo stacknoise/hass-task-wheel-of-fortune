@@ -27,6 +27,7 @@ import {
   WS_DRAW_SPIN,
   WS_DRAW_SPIN_REST,
   WS_PREFIX,
+  WS_DECISIONS_LIST,
   WS_HISTORY_LIST,
   WS_SNAPSHOT,
   WS_STATISTICS_GET,
@@ -36,7 +37,13 @@ import {
 import { compareText } from './collate.ts';
 import type { ConfigResource } from '../constants/index.ts';
 import type { AbsenceWire } from './config-types.ts';
-import type { HistoryPage, HistoryQuery, StatisticsReport } from './models.ts';
+import type {
+  DecisionPage,
+  DecisionQuery,
+  HistoryPage,
+  HistoryQuery,
+  StatisticsReport,
+} from './models.ts';
 import type {
   Delta,
   AreaOption,
@@ -176,6 +183,11 @@ export class ApiClient {
   /** Eine Seite der Historie (neueste Runde zuerst), optional für eine Person. */
   history(query: HistoryQuery = {}): Promise<HistoryPage> {
     return this.#hass.callWS<HistoryPage>({ type: WS_HISTORY_LIST, ...query });
+  }
+
+  /** Eine Seite des Entscheidungslogs (neuester Eintrag zuerst), optional für Zeitplan und Person. */
+  decisions(query: DecisionQuery = {}): Promise<DecisionPage> {
+    return this.#hass.callWS<DecisionPage>({ type: WS_DECISIONS_LIST, ...query });
   }
 
   /** Auswertung der letzten Kalendermonate und Wochen. */

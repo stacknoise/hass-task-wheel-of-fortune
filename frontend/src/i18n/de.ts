@@ -16,6 +16,7 @@ export const de = {
   'tab.schedules': 'Zeitpläne',
   'tab.history': 'Historie',
   'tab.statistics': 'Statistik',
+  'tab.decisions': 'Entscheidungslog',
   'form.save': 'Speichern',
   'form.cancel': 'Abbrechen',
   'form.delete': 'Löschen',

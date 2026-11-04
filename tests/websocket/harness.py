@@ -9,6 +9,7 @@ from custom_components.task_wheel.application.notification_service import Notifi
 from custom_components.task_wheel.domain.enums import AssignmentStatus
 from custom_components.task_wheel.domain.models import EveryRound, ManualTrigger
 from custom_components.task_wheel.infrastructure.repository.config_store import ConfigStore
+from custom_components.task_wheel.infrastructure.repository.decision_store import DecisionStore
 from custom_components.task_wheel.infrastructure.repository.history_store import HistoryStore
 from custom_components.task_wheel.infrastructure.repository.memory import MemoryStore
 from custom_components.task_wheel.runtime import TaskWheelData, compose
@@ -53,6 +54,7 @@ class Api:
         self.data: TaskWheelData = compose(
             self.config,
             self.history,
+            DecisionStore(MemoryStore()),
             timers=self.timers,
             events=self.events,
             notifications=NotificationService(

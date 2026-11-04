@@ -3,6 +3,7 @@
 import { WS_PREFIX } from './api.ts';
 
 export const WS_HISTORY_LIST = `${WS_PREFIX}history/list`;
+export const WS_DECISIONS_LIST = `${WS_PREFIX}decisions/list`;
 export const WS_STATISTICS_GET = `${WS_PREFIX}statistics/get`;
 export const WS_ASSIGNMENT_COMPLETE = `${WS_PREFIX}assignment/complete`;
 export const WS_ASSIGNMENT_SWAP = `${WS_PREFIX}assignment/swap`;
@@ -50,6 +51,23 @@ export const HISTORY_PAGE_SIZE = 20;
 /** Größte Seite, die das Backend liefert. */
 export const HISTORY_PAGE_SIZE_MAX = 200;
 export const ACTIVITY_COUNT = 5;
+
+/** Einträge je Seite des Entscheidungslogs. */
+export const DECISION_PAGE_SIZE = 20;
+/** Größte Seite, die das Backend liefert. */
+export const DECISION_PAGE_SIZE_MAX = 200;
+/** Art eines Eintrags: Auslosung, Tausch zweier Personen, Austausch einer Aufgabe durch einen Admin. */
+export const DECISION_KINDS = { draw: 'draw', swap: 'swap', exchange: 'exchange' } as const;
+export type DecisionKind = (typeof DECISION_KINDS)[keyof typeof DECISION_KINDS];
+/** Ergebnis je Aufgabe, nach dem das Log gefiltert wird (neben `FILTER_ALL`). */
+export const DECISION_OUTCOMES = { assigned: 'assigned', unassigned: 'unassigned' } as const;
+export type DecisionOutcome = (typeof DECISION_OUTCOMES)[keyof typeof DECISION_OUTCOMES];
+/** Grund, den das Backend für Personen ohne Erlaubnis für die Aufgabe einträgt. */
+export const REASON_PREFIX = 'draw.reason.';
+/** Einstellung (Optionen der Integration), die die Aufbewahrung des Logs in Tagen nennt. */
+export const SETTING_DECISION_RETENTION = 'decision_retention_days';
+/** Gründe, die eine Person aus eigener Lage ausschließen (Abwesenheit, Last), im Ton „Warnung“. */
+export const WARNING_REASONS: readonly string[] = ['absent', 'paused', 'load_too_low'];
 export const OVERVIEW_MONTHS = 1;
 export const OVERVIEW_WEEKS = 1;
 

@@ -463,6 +463,7 @@ class Settings(Model):
     missed_points_factor: float = spec(to_float, default=defaults.DEFAULT_MISSED_POINTS_FACTOR)
     missed_grace_hours: int = spec(to_int, default=defaults.DEFAULT_MISSED_GRACE_HOURS)
     panel_admin_only: bool = spec(to_bool, default=defaults.DEFAULT_PANEL_ADMIN_ONLY)
+    decision_retention_days: int = spec(to_int, default=defaults.DEFAULT_DECISION_RETENTION_DAYS)
 
     def __post_init__(self) -> None:
         """Prüft alle Grenzen aus `const/limits.py`."""
@@ -480,6 +481,12 @@ class Settings(Model):
             self.history_retention_days,
             limits.RETENTION_MIN,
             limits.RETENTION_MAX,
+        )
+        ensure_range(
+            "decision_retention_days",
+            self.decision_retention_days,
+            limits.DECISION_RETENTION_MIN,
+            limits.DECISION_RETENTION_MAX,
         )
         ensure_range(
             "late_points_factor",

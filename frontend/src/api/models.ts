@@ -61,6 +61,67 @@ export interface HistoryPage {
   readonly next_offset: number | null;
 }
 
+/** Eine Person im Rad einer Aufgabe, mit dem Namen zum Zeitpunkt der Entscheidung. */
+export interface DecisionWheelEntry {
+  readonly person_id: string;
+  readonly person_name: string;
+  readonly chance: number;
+}
+
+/** Eine Person, die nicht im Rad war, mit dem Grund (Schlüssel `ExclusionReason` oder `not_allowed`). */
+export interface DecisionExcluded {
+  readonly person_id: string;
+  readonly person_name: string;
+  readonly reason: string;
+}
+
+/** Ausgang einer Auslosung für eine Aufgabe; ohne `winner_id` blieb sie unvergeben. */
+export interface DecisionTask {
+  readonly task_id: string;
+  readonly task_name: string;
+  readonly winner_id: string | null;
+  readonly wheel: readonly DecisionWheelEntry[];
+  readonly excluded: readonly DecisionExcluded[];
+}
+
+/** Tausch zweier Personen oder Austausch einer Aufgabe; `before_start` markiert den Admin-Austausch vor dem Start. */
+export interface DecisionExchange {
+  readonly person_id: string;
+  readonly person_name: string;
+  readonly task_id: string;
+  readonly task_name: string;
+  readonly other_task_id: string;
+  readonly other_task_name: string;
+  readonly other_person_id: string | null;
+  readonly other_person_name: string | null;
+  readonly before_start: boolean;
+}
+
+/** Ein Eintrag des Entscheidungslogs. */
+export interface DecisionRecord {
+  readonly id: string;
+  readonly kind: string;
+  readonly at: string;
+  readonly schedule_id: string;
+  readonly schedule_name: string;
+  readonly round_id: string | null;
+  readonly origin: string | null;
+  readonly tasks: readonly DecisionTask[];
+  readonly exchange: DecisionExchange | null;
+}
+
+export interface DecisionPage {
+  readonly entries: readonly DecisionRecord[];
+  readonly next_offset: number | null;
+}
+
+export interface DecisionQuery {
+  readonly schedule_id?: string;
+  readonly person_id?: string;
+  readonly offset?: number;
+  readonly limit?: number;
+}
+
 export interface HistoryQuery {
   readonly person_id?: string;
   readonly offset?: number;

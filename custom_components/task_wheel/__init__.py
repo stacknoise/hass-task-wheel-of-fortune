@@ -20,7 +20,11 @@ from .infrastructure.events import HassRoundEvents
 from .infrastructure.notifier.hass_notifier import HassNotifier
 from .infrastructure.notifier.texts import load_catalog
 from .infrastructure.panel import async_register_panel, async_register_static, async_remove_panel
-from .infrastructure.repository.factory import create_config_store, create_history_store
+from .infrastructure.repository.factory import (
+    create_config_store,
+    create_decision_store,
+    create_history_store,
+)
 from .infrastructure.scheduler import HassTimerScheduler
 from .runtime import TaskWheelData, compose
 from .service_errors import to_setup_error
@@ -50,9 +54,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: TaskWheelConfigEntry) ->
     """Lädt den Bestand, verdrahtet die Dienste und setzt die Zeitgeber."""
     config = create_config_store(hass)
     history = create_history_store(hass)
+    decisions = create_decision_store(hass)
     try:
         await config.async_load()
         await history.async_load()
+        await decisions.async_load()
     except TaskWheelError as err:
         raise to_setup_error(err) from err
     texts = await hass.async_add_executor_job(
@@ -62,6 +68,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: TaskWheelConfigEntry) ->
     data = compose(
         config,
         history,
+        decisions,
         timers=HassTimerScheduler(hass),
         events=FanOutRoundEvents(HassRoundEvents(hass, config), EntityEvents(hass), notifications),
         notifications=notifications,
@@ -102,4 +109,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: TaskWheelConfigEntry) -
     data.schedules.disarm_all()
     await data.config.async_flush()
     await data.history.async_flush()
+    await data.decision_repo.async_flush()
     return True

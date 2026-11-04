@@ -4,6 +4,8 @@ import datetime as dt
 from collections.abc import Callable, Iterable, Iterator, Mapping
 from typing import Protocol
 
+from ..domain.decisions import DecisionFilter, DecisionRecord
+from ..domain.draw.draft import RoundDraft
 from ..domain.models import Assignment, Person, Round, Schedule, Settings, Task
 from ..domain.statistics.aggregate import AssignmentChange
 from ..domain.types import AssignmentId, PersonId, RoundId, ScheduleId, TaskId
@@ -142,6 +144,57 @@ class HistoryRepository(Protocol):
     async def async_purge(self, cutoff: dt.datetime) -> int:
         """Entfernt Runden, die vor `cutoff` begonnen haben; liefert die Anzahl."""
         ...
+
+
+class DecisionRepository(Protocol):
+    """Entscheidungslog: Einträge je Auslosung, Tausch und Austausch (neueste zuletzt)."""
+
+    @property
+    def records(self) -> Mapping[str, DecisionRecord]:
+        """Alle Einträge nach Kennung, älteste zuerst (schreibgeschützte Sicht)."""
+        ...
+
+    async def async_load(self) -> None:
+        """Lädt (und migriert) den Bestand."""
+        ...
+
+    async def async_flush(self) -> None:
+        """Sichert sofort (z. B. beim Entladen)."""
+        ...
+
+    def add(self, record: DecisionRecord) -> None:
+        """Hängt einen Eintrag an; über der Obergrenze entfällt der älteste."""
+        ...
+
+    def query(self, flt: DecisionFilter) -> Iterator[DecisionRecord]:
+        """Passende Einträge, der neueste zuerst."""
+        ...
+
+    def purge(self, cutoff: dt.datetime) -> int:
+        """Entfernt Einträge, die vor `cutoff` entstanden; liefert die Anzahl."""
+        ...
+
+
+class DecisionRecorder(Protocol):
+    """Nimmt Entscheidungen entgegen (Auslosung, Tausch, Austausch)."""
+
+    def record_draw(self, draft: RoundDraft, round_: Round) -> None:
+        """Hält fest, wie jede Aufgabe der gezogenen Runde ausging."""
+        ...
+
+    def record_swap(self, first: Assignment, second: Assignment, now: dt.datetime) -> None:
+        """Hält einen Tausch zweier Personen fest (`first` gehört jetzt der Zielperson)."""
+        ...
+
+
+class NoDecisions:
+    """Standard ohne Log (Tests)."""
+
+    def record_draw(self, draft: RoundDraft, round_: Round) -> None:
+        """Tut nichts."""
+
+    def record_swap(self, first: Assignment, second: Assignment, now: dt.datetime) -> None:
+        """Tut nichts."""
 
 
 class TimerPort(Protocol):

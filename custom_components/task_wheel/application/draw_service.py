@@ -29,8 +29,10 @@ from .ids import new_id
 from .protocols import (
     AssignmentRecorder,
     ConfigRepository,
+    DecisionRecorder,
     HistoryRepository,
     IdFactory,
+    NoDecisions,
     NoEvents,
     RoundEvents,
 )
@@ -58,14 +60,16 @@ class DrawService:
         recorder: AssignmentRecorder,
         *,
         events: RoundEvents | None = None,
+        decisions: DecisionRecorder | None = None,
         id_factory: IdFactory = new_id,
     ) -> None:
-        """Hält Repositories, Zufallsquelle, Statistik, Ereignisempfänger und Kennungsquelle."""
+        """Hält Repositories, Zufallsquelle, Statistik, Ereignisempfänger, Log und Kennungen."""
         self._config = config
         self._history = history
         self._rng = rng
         self._recorder = recorder
         self._events = events or NoEvents()
+        self._decisions = decisions or NoDecisions()
         self._new_id = id_factory
         self._panel_rounds: dict[str, PanelRound] = {}
 
@@ -204,6 +208,7 @@ class DrawService:
         self._ensure_not_flooded(draft, now)
         self._history.put_round(round_)
         self._recorder.record_round(round_)
+        self._decisions.record_draw(draft, round_)
         self._events.round_drawn(round_)
         return round_
 

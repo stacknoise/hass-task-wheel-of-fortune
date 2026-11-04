@@ -27,6 +27,7 @@ export const VIEW_TAGS = {
   schedules: 'tw-schedules-view',
   history: 'tw-history-view',
   statistics: 'tw-statistics-view',
+  decisions: 'tw-decisions-view',
 } as const;
 
 /** Ereignis von `tw-confirm-action`, wenn die Löschung bestätigt wurde. */
