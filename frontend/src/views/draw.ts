@@ -133,7 +133,13 @@ export class TwDrawView extends LitElement {
     const snapshot = this.#store.state?.snapshot;
     const task = this.#nextTask(state);
     const key = `${state.roundId ?? EMPTY_TEXT}:${String(state.results.length)}`;
-    if (!snapshot || state.phase !== DRAW_PHASE.ready || !task || key === this.#autoSpun) {
+    if (
+      !snapshot ||
+      state.direct ||
+      state.phase !== DRAW_PHASE.ready ||
+      !task ||
+      key === this.#autoSpun
+    ) {
       return;
     }
     const taken = new Set(state.results.map((result) => result.winner_id));
@@ -244,7 +250,11 @@ export class TwDrawView extends LitElement {
           @click=${() => {
             const kind = this.#pick(scheduleId);
             this.#kind = kind ?? this.#kind;
-            void session?.begin(scheduleId, kind !== undefined);
+            void session?.begin(
+              scheduleId,
+              kind !== undefined,
+              this.#store.client?.isAdmin() === true,
+            );
           }}
         >
           ${this.#text('draw.start')}
@@ -377,6 +387,11 @@ export class TwDrawView extends LitElement {
     if (isIdle(state)) {
       return html`<section class="stage idle">
         <p class="heading">${this.#text('draw.choose')}</p>
+      </section>`;
+    }
+    if (state.direct && state.phase === DRAW_PHASE.ready) {
+      return html`<section class="stage prepare">
+        <p class="heading">${this.#text('draw.prepare')}</p>
       </section>`;
     }
     if (state.phase === DRAW_PHASE.done) {
