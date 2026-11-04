@@ -6,6 +6,7 @@ from custom_components.task_wheel.application.draw_inputs import (
     assigned_times,
     build_context,
     due_tasks,
+    limit_to_participants,
     recent_assignments,
     window_points,
 )
@@ -83,3 +84,24 @@ def test_due_tasks_keep_the_order_of_the_schedule():
     tasks = due_tasks(world.config, schedule, (), NOW)
     assert [t.id for t in tasks] == ["t2", "t1"]
     assert all(t.respect_absence for t in tasks)
+
+
+def test_round_is_limited_to_as_many_tasks_as_persons_can_take_part():
+    world = World()
+    world.config.put_task(f.task(id="t3", name="t3"))
+    schedule = world.put_schedule(task_ids=("t1", "t2", "t3"))
+    add_round(world, "r1", NOW - DAY, item("a1", "r1", task_id="t1"))
+    add_round(world, "r2", NOW - 2 * DAY, item("a2", "r2", task_id="t2"))
+    recent = recent_assignments(world.history, NOW)
+    context = build_context(world.config, world.history, recent, NOW)
+    tasks = due_tasks(world.config, schedule, recent, NOW)
+    # zwei Personen, drei Aufgaben: t3 (nie) und t2 (am längsten her), in Zeitplanreihenfolge
+    assert [t.id for t in limit_to_participants(tasks, context, recent)] == ["t2", "t3"]
+
+
+def test_round_keeps_all_tasks_when_enough_persons_take_part():
+    world = World()
+    schedule = world.put_schedule(task_ids=("t1", "t2"))
+    context = build_context(world.config, world.history, (), NOW)
+    tasks = due_tasks(world.config, schedule, (), NOW)
+    assert limit_to_participants(tasks, context, ()) == tasks

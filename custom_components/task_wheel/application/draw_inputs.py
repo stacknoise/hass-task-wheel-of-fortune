@@ -7,6 +7,7 @@ from dataclasses import replace
 from ..const.limits import RECENT_HISTORY_DAYS
 from ..domain.availability.calendar import PersonAvailability
 from ..domain.draw.types import DrawContext
+from ..domain.enums import Load
 from ..domain.models import Assignment, Schedule, Settings, Task
 from ..domain.rules.factory import FrequencyRuleFactory
 from ..domain.status import counted_points
@@ -16,6 +17,7 @@ from .protocols import ConfigRepository, HistoryRepository
 type Recent = tuple[tuple[Assignment, dt.datetime], ...]
 
 _DAY = dt.timedelta(days=1)
+_NEVER = dt.datetime.min.replace(tzinfo=dt.UTC)
 
 
 def recent_assignments(history: HistoryRepository, now: dt.datetime) -> Recent:
@@ -63,6 +65,35 @@ def due_tasks(
     if schedule.skip_absent:
         return tuple(due)
     return tuple(replace(task, respect_absence=False) for task in due)
+
+
+def limit_to_participants(
+    tasks: tuple[Task, ...], context: DrawContext, recent: Recent
+) -> tuple[Task, ...]:
+    """Beschränkt die Runde auf so viele Aufgaben, wie Personen mitmachen können.
+
+    Jede Person bekommt je Runde höchstens eine Aufgabe; weitere Aufgaben wären nur "nicht
+    verteilbar". Es bleiben die Aufgaben, die am längsten nicht zugeteilt wurden (nie Zugeteilte
+    zuerst, bei Gleichstand gilt die Reihenfolge des Zeitplans), damit sie über die Runden
+    abwechselnd drankommen. Die Reihenfolge der Auswahl bleibt die des Zeitplans.
+    """
+    if not tasks:
+        return tasks
+    start = context.now.date()
+    end = start + max(task.due_days for task in tasks) * _DAY
+    ignores_absence = not all(task.respect_absence for task in tasks)
+    seats = sum(
+        1
+        for pid, person in context.persons.items()
+        if person.load is not Load.PAUSED
+        and (ignores_absence or context.availability[pid].present_in_window(start, end))
+    )
+    if seats >= len(tasks):
+        return tasks
+    last = {task_id: max(times) for task_id, times in assigned_times(recent).items()}
+    ranked = sorted(range(len(tasks)), key=lambda i: (last.get(tasks[i].id, _NEVER), i))
+    keep = sorted(ranked[:seats])
+    return tuple(tasks[i] for i in keep)
 
 
 def build_context(
