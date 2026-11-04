@@ -392,3 +392,26 @@ def test_config_migration_turns_the_single_room_into_a_list() -> None:
         "kaputt",
     ]
     assert migrate(STORE_CONFIG, {"tasks": "x"}, (1, 2), CONFIG_MIGRATIONS) == {"tasks": "x"}
+
+
+async def test_history_saves_encode_only_the_changed_rounds() -> None:
+    repo, memory = _history()
+    for ident in ("r1", "r2"):
+        item = f.assignment(id=f"a_{ident}", round_id=ident)
+        repo.put_round(_round(ident, f.NOW, item))  # type: ignore[arg-type]
+    first = repo._snapshot()["rounds"]  # type: ignore[index]
+    second = repo._snapshot()["rounds"]  # type: ignore[index]
+    assert all(a is b for a, b in zip(first, second, strict=True))
+
+    done = f.assignment(id="a_r1", round_id="r1", status=AssignmentStatus.MISSED)
+    repo.put_round(_round("r1", f.NOW, done))  # type: ignore[arg-type]
+    third = repo._snapshot()["rounds"]  # type: ignore[index]
+    assert third[0] is not first[0] and third[1] is first[1]
+    assert third[0]["assignments"][0]["status"] == "missed"
+
+    repo.remove_round("r2")
+    assert [r["id"] for r in repo._snapshot()["rounds"]] == ["r1"]  # type: ignore[index]
+    memory.flush_pending()
+    loaded = HistoryStore(MemoryStore(memory.data))
+    await loaded.async_load()
+    assert loaded.rounds["r1"].assignments[0].status is AssignmentStatus.MISSED

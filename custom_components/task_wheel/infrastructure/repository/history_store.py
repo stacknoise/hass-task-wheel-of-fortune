@@ -39,6 +39,8 @@ class HistoryStore:
         """Startet leer; `async_load` füllt Bestand und Indizes."""
         self._store = store
         self._rounds: dict[RoundId, Round] = {}
+        # Kodierte Runden: jede Speicherung kodiert nur die geänderten Runden neu
+        self._encoded: dict[RoundId, dict[str, object]] = {}
         self._aggregates: dict[str, object] = {}
         self._assignments: dict[AssignmentId, tuple[Round, Assignment]] = {}
         self._open: dict[PersonId, dict[AssignmentId, Assignment]] = {}
@@ -66,6 +68,7 @@ class HistoryStore:
             raise StorageCorruptError(STORE_HISTORY, ERR_LIMIT_REACHED)
         self._rounds = dict(sorted(models_by_id(rounds).items(), key=_started))
         self._assignments, self._open, self._by_task = {}, {}, {}
+        self._encoded = {}
         for round_ in self._rounds.values():
             self._index(round_)
 
@@ -80,6 +83,7 @@ class HistoryStore:
             self._evict_oldest_closed()
         if previous is not None:
             self._unindex(previous)
+        self._encoded.pop(round_.id, None)
         needs_sort = self._breaks_order(round_, previous)
         self._rounds[round_.id] = round_
         if needs_sort:
@@ -92,6 +96,7 @@ class HistoryStore:
         round_ = self._rounds.pop(round_id, None)
         if round_ is not None:
             self._unindex(round_)
+            self._encoded.pop(round_id, None)
             self._changed()
         return round_
 
@@ -147,8 +152,7 @@ class HistoryStore:
             r for r in self._rounds.values() if r.started_at < cutoff and not _has_pending(r)
         ]
         for round_ in expired:
-            self._unindex(round_)
-            del self._rounds[round_.id]
+            self._forget(round_)
         if expired:
             self._changed()
         return len(expired)
@@ -163,8 +167,20 @@ class HistoryStore:
         if oldest is None:
             raise LimitReachedError(RESOURCE_ROUND, limits.MAX_STORED_ROUNDS)
         _LOGGER.warning("Obergrenze für Runden erreicht, älteste abgeschlossene Runde entfällt")
-        self._unindex(oldest)
-        del self._rounds[oldest.id]
+        self._forget(oldest)
+
+    def _forget(self, round_: Round) -> None:
+        """Nimmt die Runde samt Indizes und Zwischenspeicher aus dem Bestand."""
+        self._unindex(round_)
+        self._encoded.pop(round_.id, None)
+        del self._rounds[round_.id]
+
+    def _encode(self, round_: Round) -> dict[str, object]:
+        """Die kodierte Runde; sie wird nur nach einer Änderung neu kodiert."""
+        encoded = self._encoded.get(round_.id)
+        if encoded is None:
+            encoded = self._encoded[round_.id] = round_.to_dict()
+        return encoded
 
     def _breaks_order(self, round_: Round, previous: Round | None) -> bool:
         """Prüft, ob das Einfügen die Sortierung nach Rundenbeginn stören würde."""
@@ -191,7 +207,7 @@ class HistoryStore:
 
     def _snapshot(self) -> dict[str, object]:
         return {
-            KEY_ROUNDS: [item.to_dict() for item in self._rounds.values()],
+            KEY_ROUNDS: [self._encode(item) for item in self._rounds.values()],
             KEY_AGGREGATES: self._aggregates,
         }
 

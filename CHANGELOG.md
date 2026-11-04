@@ -5,6 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Performance: Speichern des Verlaufs kodiert nur noch geänderte Runden neu; Feldnamen der Datenklassen werden zwischengespeichert.
 - Intern: Auslosung rechnet Kapazitäten und Erreichbarkeit nur einmal je Runde (spürbar bei langem Fairness-Fenster und vielen Abwesenheitsregeln); nur von Tests genutzte Funktionen entfernt
 - Je Panel-Verbindung gibt es höchstens zwei Live-Abonnements (ein neues ersetzt das älteste)
 - Dienste lehnen einen mehrdeutigen Aufgabennamen ab (`ambiguous_reference`) statt still die erste Aufgabe zu nehmen; Fehler eines Benachrichtigungsdienstes werden protokolliert und stören die übrigen Ziele nicht
