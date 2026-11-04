@@ -5,6 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Die Statistik (inklusive „Verlosungen je Aufgabe: Soll und Ist“) aktualisiert sich nach jeder Aktion (neue Auslosung, Erledigen, Tauschen, „Bleibt unerledigt“, Löschen) und nicht nur beim Öffnen
 ## [0.3.1] – 2026-11-04
 
 - „Verlosungen je Aufgabe: Soll und Ist“ zeigt die Räume der Aufgaben

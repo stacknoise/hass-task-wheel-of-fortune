@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { VIEW_TAGS, WS_STATISTICS_GET } from '../constants/index.ts';
-import { EMPTY_REPORT, fakeHass, mountView, text } from './fixtures.testing.ts';
+import { EMPTY_REPORT, SNAPSHOT, fakeHass, mountView, text } from './fixtures.testing.ts';
 import { VIEW_LOADERS } from './registry.ts';
 
 async function mount(hass = fakeHass()) {
@@ -62,6 +62,26 @@ describe('Statistik', () => {
     const muell = rows.find((row) => row.textContent.includes('Müll'));
     const cells = [...(muell?.querySelectorAll('td.cell') ?? [])].map((c) => c.textContent.trim());
     expect(cells).toEqual(['2', '–', '–']);
+  });
+
+  it('lädt neu, wenn sich Zuteilungen live ändern (neue Auslosung, Statuswechsel)', async () => {
+    const { hass } = await mount();
+    const loads = () => hass.calls.filter((call) => call === WS_STATISTICS_GET).length;
+    await vi.waitFor(() => {
+      expect(loads()).toBe(1);
+    });
+    hass.emit({
+      assignments: {
+        upsert: [{ ...SNAPSHOT.assignments[0], id: 'a1', status: 'done' }],
+        remove: [],
+      },
+    });
+    await vi.waitFor(() => {
+      expect(loads()).toBe(2);
+    });
+    hass.emit({ persons: { upsert: [], remove: [] } });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(loads()).toBe(2);
   });
 
   it('lädt beim Wechsel des Zeitraums neu', async () => {

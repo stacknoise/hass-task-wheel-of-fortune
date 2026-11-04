@@ -20,13 +20,7 @@ import {
 import { formatDateTime, formatPercent } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
-import {
-  AsyncValue,
-  RevisionTracker,
-  StoreController,
-  areaNames,
-  indexById,
-} from '../state/index.ts';
+import { AsyncValue, LiveLoad, StoreController, areaNames, indexById } from '../state/index.ts';
 import { roomTags } from './room.ts';
 import { personChips } from './person-chips.ts';
 import { buildCsv } from './csv.ts';
@@ -113,8 +107,7 @@ export class TwHistoryView extends LitElement {
 
   readonly #store = new StoreController(this);
   readonly #data = new AsyncValue<Loaded>(this);
-  readonly #revision = new RevisionTracker();
-  #started = false;
+  readonly #live = new LiveLoad();
 
   constructor() {
     super();
@@ -132,9 +125,7 @@ export class TwHistoryView extends LitElement {
   }
 
   protected override willUpdate(): void {
-    const changed = this.#revision.advance(this.#store.state?.snapshot);
-    if (this.#store.client && (!this.#started || changed)) {
-      this.#started = true;
+    if (this.#live.due(this.#store.state?.snapshot, this.#store.client !== undefined)) {
       this.#load(false);
     }
   }

@@ -33,3 +33,19 @@ export class RevisionTracker {
     return changed;
   }
 }
+
+/** Entscheidet für Ansichten mit Serverdaten, wann neu geladen wird: beim ersten Mal und nach jeder Änderung der Zuteilungen. */
+export class LiveLoad {
+  readonly #revision = new RevisionTracker();
+  #started = false;
+
+  /** Wahr, wenn jetzt (neu) zu laden ist; `ready` sagt, ob der API-Zugang schon da ist. */
+  due(snapshot: Snapshot | undefined, ready: boolean): boolean {
+    const changed = this.#revision.advance(snapshot);
+    if (ready && (!this.#started || changed)) {
+      this.#started = true;
+      return true;
+    }
+    return false;
+  }
+}
