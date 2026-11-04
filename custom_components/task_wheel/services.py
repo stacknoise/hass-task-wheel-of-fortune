@@ -30,7 +30,7 @@ from .const.keys import (
 )
 from .const.limits import REF_MAX_LENGTH, REF_MIN_LENGTH
 from .domain.enums import RoundOrigin
-from .domain.errors import TaskWheelError
+from .domain.errors import TaskWheelError, ValidationError
 from .domain.models import Person, Schedule, Task
 from .entry_lookup import loaded_runtime
 from .runtime import TaskWheelData
@@ -41,28 +41,16 @@ type Handler = Callable[[TaskWheelData, Mapping[str, Any], dt.datetime], None]
 _REF = vol.All(cv.string, vol.Length(min=REF_MIN_LENGTH, max=REF_MAX_LENGTH))
 
 
-def _require_target(data: dict[str, Any]) -> dict[str, Any]:
-    """`complete` braucht `assignment_id` oder `person` zusammen mit `task`."""
-    by_id = ATTR_ASSIGNMENT_ID in data
-    by_name = ATTR_PERSON in data and ATTR_TASK in data
-    if by_id == by_name:
-        raise vol.Invalid(ERR_TARGET_REQUIRED)
-    return data
-
-
 SCHEMAS: Final[Mapping[str, vol.Schema | vol.All]] = {
     SERVICE_DRAW: vol.Schema(
         {vol.Required(ATTR_SCHEDULE): _REF, vol.Optional(ATTR_ANIMATE_ON): cv.entity_id}
     ),
-    SERVICE_COMPLETE: vol.All(
-        vol.Schema(
-            {
-                vol.Optional(ATTR_ASSIGNMENT_ID): _REF,
-                vol.Optional(ATTR_PERSON): _REF,
-                vol.Optional(ATTR_TASK): _REF,
-            }
-        ),
-        _require_target,
+    SERVICE_COMPLETE: vol.Schema(
+        {
+            vol.Optional(ATTR_ASSIGNMENT_ID): _REF,
+            vol.Optional(ATTR_PERSON): _REF,
+            vol.Optional(ATTR_TASK): _REF,
+        }
     ),
     SERVICE_SWAP: vol.Schema(
         {vol.Required(ATTR_ASSIGNMENT_ID): _REF, vol.Required(ATTR_TO_PERSON): _REF}
@@ -108,8 +96,17 @@ def _draw(data: TaskWheelData, call: Mapping[str, Any], now: dt.datetime) -> Non
         data.events.animation_requested(round_, target)
 
 
+def _ensure_one_target(call: Mapping[str, Any]) -> None:
+    """`complete` braucht `assignment_id` oder `person` zusammen mit `task`, aber nicht beides."""
+    by_id = ATTR_ASSIGNMENT_ID in call
+    by_name = ATTR_PERSON in call and ATTR_TASK in call
+    if by_id == by_name:
+        raise ValidationError(ATTR_ASSIGNMENT_ID, ERR_TARGET_REQUIRED)
+
+
 def _complete(data: TaskWheelData, call: Mapping[str, Any], now: dt.datetime) -> None:
     """Erledigt die Zuteilung (direkt oder über Person und Aufgabe)."""
+    _ensure_one_target(call)
     assignment_id = call.get(ATTR_ASSIGNMENT_ID)
     if assignment_id is None:
         person = _person(data, call[ATTR_PERSON])

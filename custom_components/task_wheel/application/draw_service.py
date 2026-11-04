@@ -5,6 +5,7 @@ from dataclasses import dataclass, replace
 
 from ..const.defaults import PANEL_ROUND_TIMEOUT_MINUTES
 from ..const.keys import (
+    ERR_CANCEL_ADMIN_ONLY,
     ERR_DRAW_TOO_SOON,
     ERR_SCHEDULE_ARCHIVED,
     ERR_SCHEDULE_DISABLED,
@@ -83,16 +84,23 @@ class DrawService:
         self.discard_for(schedule_id)
         return self._finish(draft.spin_rest(self._engine()), now)
 
-    def begin(self, schedule_id: ScheduleId, now: dt.datetime) -> PanelRound:
+    def begin(
+        self, schedule_id: ScheduleId, now: dt.datetime, *, is_admin: bool = True
+    ) -> PanelRound:
         """Beginnt eine Panel-Runde (Herkunft „manuell“); eine frühere desselben Plans entfällt.
+
+        Eine schon gezogene Panel-Runde ersetzen nur Administratoren (kein Neuziehen nach Sicht).
 
         Raises:
             NotFoundError: Den Zeitplan gibt es nicht.
-            DrawRejectedError: Der Zeitplan ist archiviert.
+            DrawRejectedError: Der Zeitplan ist archiviert, oder eine schon gezogene Panel-Runde
+                würde ersetzt und der Benutzer ist kein Administrator.
             LimitReachedError: Es sind schon zu viele Panel-Runden offen.
         """
         self._purge(now)
         draft = self._start(schedule_id, RoundOrigin.MANUAL, now)
+        if not is_admin and self._has_results(schedule_id):
+            raise DrawRejectedError(ERR_CANCEL_ADMIN_ONLY)
         self.discard_for(schedule_id)
         if len(self._panel_rounds) >= MAX_OPEN_PANEL_ROUNDS:
             raise LimitReachedError(RESOURCE_PANEL_ROUND, MAX_OPEN_PANEL_ROUNDS)
@@ -147,9 +155,16 @@ class DrawService:
         del self._panel_rounds[panel_round_id]
         return round_
 
-    def cancel(self, panel_round_id: str, now: dt.datetime) -> None:
-        """Verwirft die Panel-Runde ohne Wirkung auf Verlauf und Punkte."""
-        self.get(panel_round_id, now)
+    def cancel(self, panel_round_id: str, now: dt.datetime, *, is_admin: bool = True) -> None:
+        """Verwirft die Panel-Runde ohne Wirkung auf Verlauf und Punkte.
+
+        Raises:
+            NotFoundError: Die Panel-Runde gibt es nicht (mehr).
+            DrawRejectedError: Es wurde schon gezogen; Verwerfen nur für Administratoren.
+        """
+        panel_round = self.get(panel_round_id, now)
+        if not is_admin and panel_round.draft.results:
+            raise DrawRejectedError(ERR_CANCEL_ADMIN_ONLY)
         del self._panel_rounds[panel_round_id]
 
     def open_rounds(self, now: dt.datetime) -> tuple[PanelRound, ...]:
@@ -216,6 +231,13 @@ class DrawService:
         """Merkt sich die Panel-Runde."""
         self._panel_rounds[panel_round.id] = panel_round
         return panel_round
+
+    def _has_results(self, schedule_id: ScheduleId) -> bool:
+        """Hat eine Panel-Runde des Zeitplans schon Ergebnisse gezogen."""
+        return any(
+            item.draft.schedule_id == schedule_id and item.draft.results
+            for item in self._panel_rounds.values()
+        )
 
     def discard_for(self, schedule_id: ScheduleId) -> None:
         """Verwirft offene Panel-Runden des Zeitplans."""

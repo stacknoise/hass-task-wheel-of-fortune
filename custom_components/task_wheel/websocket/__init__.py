@@ -47,7 +47,11 @@ def _handler(command: Command) -> Callable[[HomeAssistant, ActiveConnection, dic
         if command.subscribes:
             _BOOK.make_room(connection)
         request = Request(
-            data, data.clock(), msg, lambda payload: connection.send_event(message_id, payload)
+            data,
+            data.clock(),
+            msg,
+            lambda payload: connection.send_event(message_id, payload),
+            user.is_admin,
         )
         try:
             reply = command.run(request)

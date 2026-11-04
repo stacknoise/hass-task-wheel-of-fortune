@@ -71,7 +71,9 @@ def _view(request: Request) -> dict[str, object]:
 
 def _begin(request: Request) -> Reply:
     """Beginnt eine Panel-Runde für den Zeitplan."""
-    panel_round = request.data.draws.begin(request.params[WS_FIELD_SCHEDULE_ID], request.now)
+    panel_round = request.data.draws.begin(
+        request.params[WS_FIELD_SCHEDULE_ID], request.now, is_admin=request.is_admin
+    )
     return Reply(panel_round_view(panel_round))
 
 
@@ -100,8 +102,10 @@ def _commit(request: Request) -> Reply:
 
 
 def _cancel(request: Request) -> Reply:
-    """Verwirft die Panel-Runde."""
-    request.data.draws.cancel(request.params[WS_FIELD_PANEL_ROUND_ID], request.now)
+    """Verwirft die Panel-Runde (nach dem ersten Ziehen nur für Administratoren)."""
+    request.data.draws.cancel(
+        request.params[WS_FIELD_PANEL_ROUND_ID], request.now, is_admin=request.is_admin
+    )
     return Reply()
 
 

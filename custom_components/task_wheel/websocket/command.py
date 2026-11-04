@@ -33,6 +33,7 @@ class Request:
     now: dt.datetime
     params: Params
     push: Push
+    is_admin: bool = False
 
 
 @dataclass(slots=True, frozen=True)

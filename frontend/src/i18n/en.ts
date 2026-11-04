@@ -174,6 +174,8 @@ export const en: Record<keyof typeof de, string> = {
   'error.inconsistent': 'The values do not fit together.',
   'error.limit_reached': 'The upper limit is reached.',
   'error.not_found': 'Not found.',
+  'error.target_required': 'Specify exactly one target.',
+  'error.draw_cancel_admin_only': 'Only administrators may cancel a draw once a result is visible.',
   'error.ambiguous_reference': 'Several entries match, please use the ID.',
   'error.draw_too_soon': 'A draw was just made, please wait a moment.',
   'error.in_use': 'Still in use (schedule, allowed person or open assignment).',

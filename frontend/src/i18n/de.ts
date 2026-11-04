@@ -173,6 +173,9 @@ export const de = {
   'error.inconsistent': 'Die Angaben passen nicht zusammen.',
   'error.limit_reached': 'Die Obergrenze ist erreicht.',
   'error.not_found': 'Nicht gefunden.',
+  'error.target_required': 'Genau ein Ziel angeben.',
+  'error.draw_cancel_admin_only':
+    'Nach dem ersten Ergebnis dürfen nur Administratoren die Auslosung abbrechen.',
   'error.ambiguous_reference': 'Mehrere Einträge passen, bitte die ID verwenden.',
   'error.draw_too_soon': 'Es gibt schon eine neuere Auslosung, bitte kurz warten.',
   'error.in_use': 'Wird noch verwendet (Zeitplan, erlaubte Person oder offene Zuteilung).',

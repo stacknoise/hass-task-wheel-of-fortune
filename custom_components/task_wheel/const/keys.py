@@ -99,6 +99,7 @@ ERR_SCHEDULE_ARCHIVED: Final = "schedule_archived"
 ERR_ROUND_INCOMPLETE: Final = "round_incomplete"
 ERR_ROUND_COMPLETE: Final = "round_complete"
 ERR_DRAW_TOO_SOON: Final = "draw_too_soon"
+ERR_CANCEL_ADMIN_ONLY: Final = "draw_cancel_admin_only"
 
 # Fehlerschlüssel der Dienste
 ERR_NOT_LOADED: Final = "not_loaded"

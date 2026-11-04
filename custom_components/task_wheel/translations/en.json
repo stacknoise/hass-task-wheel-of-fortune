@@ -149,6 +149,12 @@
     "invalid_transition": {
       "message": "The action \"{action}\" is not possible in status \"{status}\"."
     },
+    "target_required": {
+      "message": "Specify exactly one of person, task or schedule."
+    },
+    "draw_cancel_admin_only": {
+      "message": "Only administrators may cancel a draw once a result is visible."
+    },
     "swap_disabled": {
       "message": "This task may not be swapped."
     },

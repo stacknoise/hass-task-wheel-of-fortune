@@ -149,6 +149,12 @@
     "invalid_transition": {
       "message": "Die Aktion „{action}“ ist im Status „{status}“ nicht möglich."
     },
+    "target_required": {
+      "message": "Genau eines von Person, Aufgabe oder Zeitplan angeben."
+    },
+    "draw_cancel_admin_only": {
+      "message": "Nach dem ersten Ergebnis dürfen nur Administratoren die Auslosung abbrechen."
+    },
     "swap_disabled": {
       "message": "Diese Aufgabe darf nicht getauscht werden."
     },
