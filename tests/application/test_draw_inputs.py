@@ -12,6 +12,8 @@ from custom_components.task_wheel.application.draw_inputs import (
 )
 from custom_components.task_wheel.const.limits import RECENT_HISTORY_DAYS
 from custom_components.task_wheel.domain.enums import AssignmentStatus as S
+from custom_components.task_wheel.domain.enums import Period
+from custom_components.task_wheel.domain.models import MaxPerPeriod
 
 from ..domain import factories as f
 from ..domain.draw.helpers import FixedRandom
@@ -105,3 +107,36 @@ def test_round_keeps_all_tasks_when_enough_persons_take_part():
     context = build_context(world.config, world.history, (), NOW)
     tasks = due_tasks(world.config, schedule, (), NOW)
     assert limit_to_participants(tasks, context, FixedRandom(0.5)) == tasks
+
+
+def _daily(ident: str):
+    return f.task(id=ident, name=ident, frequency=MaxPerPeriod(count=1, period=Period.DAY, every=1))
+
+
+def test_daily_tasks_are_always_part_of_a_limited_round():
+    world = World()
+    world.config.put_task(_daily("t3"))
+    world.config.put_task(f.task(id="t4", name="t4"))
+    schedule = world.put_schedule(task_ids=("t1", "t2", "t3", "t4"))
+    context = build_context(world.config, world.history, (), NOW)
+    tasks = due_tasks(world.config, schedule, (), NOW)
+    # zwei Personen: t3 (täglich) ist gesetzt, t2 hat unter den übrigen die kleinste Zufallszahl
+    picked = limit_to_participants(tasks, context, FixedRandom(0.9, 0.1, 0.5, 0.7))
+    assert [t.id for t in picked] == ["t2", "t3"]
+
+
+def test_more_daily_tasks_than_persons_are_picked_randomly_among_themselves():
+    world = World()
+    for ident in ("t3", "t4"):
+        world.config.put_task(_daily(ident))
+    world.config.put_task(_daily("t5"))
+    schedule = world.put_schedule(task_ids=("t3", "t4", "t5", "t1"))
+    context = build_context(world.config, world.history, (), NOW)
+    tasks = due_tasks(world.config, schedule, (), NOW)
+    picked = limit_to_participants(tasks, context, FixedRandom(0.5, 0.9, 0.1))
+    assert [t.id for t in picked] == ["t3", "t5"]
+
+
+def test_task_over_several_days_is_not_daily():
+    weekly = f.task(frequency=MaxPerPeriod(count=1, period=Period.DAY, every=2))
+    assert not weekly.is_daily

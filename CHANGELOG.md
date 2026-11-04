@@ -5,6 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- **Geändert:** Aufgaben, die täglich anfallen (Häufigkeit „höchstens n× in 1 Tag“), sind in jeder Auslosung dabei; bei mehr Aufgaben als mitmachenden Personen füllt der Zufall nur die übrigen Plätze. Gibt es mehr tägliche Aufgaben als Personen, wird unter den täglichen zufällig gewählt
 - Behoben: Wer am Tag der Auslosung abwesend ist, nimmt nicht mehr an ihr teil. Bisher genügte ein anwesender Tag zwischen Auslosung und Frist, sodass z. B. eine Person, die heute (Mittwoch) fehlt, aber morgen wieder da ist, trotzdem im Rad stand; das galt auch für wiederkehrende Abwesenheiten. Die Zahl der Aufgaben je Runde richtet sich nach den heute anwesenden Personen
 
 ## [0.5.0] – 2026-11-04

@@ -56,6 +56,7 @@ DUE_DAYS_MAX: Final = 365
 PERIOD_COUNT_MIN: Final = 1
 PERIOD_COUNT_MAX: Final = 50
 PERIOD_EVERY_MIN: Final = 1
+DAILY_EVERY: Final = 1  # Zeitraum von 1 Tag = täglich anfallende Aufgabe
 PERIOD_EVERY_MAX: Final = 12
 # Längster Monat; begrenzt, wie weit ein Zeitraum von `PERIOD_EVERY_MAX` Monaten zurückreicht
 PERIOD_MAX_DAYS: Final = 31
