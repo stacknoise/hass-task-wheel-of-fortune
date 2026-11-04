@@ -39,6 +39,10 @@ class PersonAvailability:
     _window_cache: dict[tuple[dt.date, dt.date], bool] = field(
         default_factory=dict, init=False, repr=False, compare=False
     )
+    # Dasselbe für die Zahl anwesender Tage (Kapazität)
+    _count_cache: dict[tuple[dt.date, dt.date], int] = field(
+        default_factory=dict, init=False, repr=False, compare=False
+    )
 
     @classmethod
     def of(
@@ -80,7 +84,10 @@ class PersonAvailability:
 
     def present_day_count(self, start: dt.date, end: dt.date) -> int:
         """Anzahl anwesender Tage im Fenster (Grundlage der Kapazität, KONZEPT §5.3)."""
-        return sum(entry.present for entry in self.days(start, end))
+        key = (start, end)
+        if key not in self._count_cache:
+            self._count_cache[key] = sum(entry.present for entry in self.days(start, end))
+        return self._count_cache[key]
 
     def preview(
         self, start: dt.date, weeks: int = DEFAULT_PREVIEW_WEEKS

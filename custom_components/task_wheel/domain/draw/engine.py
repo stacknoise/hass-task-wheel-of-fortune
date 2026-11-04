@@ -2,7 +2,7 @@
 
 import secrets
 from bisect import bisect_right
-from collections.abc import Iterable, Mapping, MutableMapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from itertools import accumulate
 
 from ...const.limits import ONE_DAY
@@ -58,91 +58,61 @@ class DrawEngine:
         self._rng = rng
         self._selector = selector or CandidateSelector()
 
-    def draw_round(self, tasks: Iterable[Task], context: DrawContext) -> tuple[TaskDraw, ...]:
-        """Zieht für alle Aufgaben nacheinander.
+    def draw_task(
+        self,
+        task: Task,
+        context: DrawContext,
+        rest: Sequence[Task] = (),
+        *,
+        capacity: Mapping[PersonId, float] | None = None,
+        reach: MutableMapping[TaskId, frozenset[PersonId]] | None = None,
+    ) -> TaskDraw:
+        """Zieht für eine einzelne Aufgabe; `rest` sind die noch folgenden Aufgaben der Runde.
 
-        Punkte, die in dieser Runde vergeben wurden, zählen sofort mit, damit nicht alle Aufgaben
-        an dieselbe Person gehen. Die Kapazitäten werden einmal je Runde berechnet.
+        `capacity` und `reach` kann der Aufrufer über eine ganze Runde teilen (sie ändern sich
+        in einer Runde nicht); ohne sie rechnet die Engine selbst.
         """
-        capacity = capacities(context)
-        points: dict[PersonId, float] = dict(context.points)
-        last_holders = dict(context.last_holders)
-        round_holders = set(context.round_holders)
-        results: list[TaskDraw] = []
-        ordered = tuple(tasks)
-        reach: dict[TaskId, frozenset[PersonId]] = {}
-        for index, task in enumerate(ordered):
-            current = DrawContext(
-                context.now,
-                context.persons,
-                context.availability,
-                points,
-                last_holders,
-                context.fairness_window_days,
-                frozenset(round_holders),
-            )
-            result = self._draw_task(
-                task, current, capacity, points, rest=ordered[index + 1 :], reach=reach
-            )
-            if result.winner_id is not None:
-                points[result.winner_id] = points.get(result.winner_id, 0) + task.points
-                last_holders[task.id] = result.winner_id
-                round_holders.add(result.winner_id)
-            results.append(result)
-        return tuple(results)
+        selection, segments, weights = self._wheel(task, context, rest, capacity, reach)
+        if not segments:
+            return TaskDraw(task.id, None, 0.0, (), selection.exclusions)
+        winner = self._pick(segments, weights)
+        return self._result(task, selection, segments, winner)
 
-    def draw_task(self, task: Task, context: DrawContext, rest: Sequence[Task] = ()) -> TaskDraw:
-        """Zieht für eine einzelne Aufgabe; `rest` sind die noch folgenden Aufgaben der Runde."""
-        return self._draw_task(task, context, capacities(context), context.points, rest=rest)
-
-    def preview_task(self, task: Task, context: DrawContext, rest: Sequence[Task] = ()) -> TaskDraw:
+    def preview_task(
+        self,
+        task: Task,
+        context: DrawContext,
+        rest: Sequence[Task] = (),
+        *,
+        capacity: Mapping[PersonId, float] | None = None,
+        reach: MutableMapping[TaskId, frozenset[PersonId]] | None = None,
+    ) -> TaskDraw:
         """Das Rad für eine Aufgabe ohne Ziehung: Segmente und Ausschlüsse, aber kein Gewinner.
 
         Stimmt mit dem Rad der späteren Ziehung überein, solange sich der Stand nicht ändert.
         """
-        selection, segments, _weights = self._wheel(
-            task, context, capacities(context), context.points, rest=rest
-        )
+        selection, segments, _weights = self._wheel(task, context, rest, capacity, reach)
         return TaskDraw(task.id, None, 0.0, segments, selection.exclusions)
 
     def _wheel(
         self,
         task: Task,
         context: DrawContext,
-        capacity: Mapping[PersonId, float],
-        points: Mapping[PersonId, float],
-        *,
-        rest: Sequence[Task] = (),
-        reach: MutableMapping[TaskId, frozenset[PersonId]] | None = None,
+        rest: Sequence[Task],
+        capacity: Mapping[PersonId, float] | None,
+        reach: MutableMapping[TaskId, frozenset[PersonId]] | None,
     ) -> tuple[CandidateSelection, tuple[Segment, ...], Sequence[float]]:
         """Filtert und gewichtet: Kandidaten, Segmente des Rads und deren Gewichte."""
         selection = self._selector.select(task, context, rest, reach)
         if not selection.candidates:
             return selection, (), ()
+        shares = capacities(context) if capacity is None else capacity
         inputs = [
-            WeightInput(p.id, capacity[p.id], points.get(p.id, 0)) for p in selection.candidates
+            WeightInput(p.id, shares[p.id], context.points.get(p.id, 0))
+            for p in selection.candidates
         ]
         weights = self._weighting.weigh(inputs)
         return selection, build_segments(weights, selection.candidates), weights
-
-    def _draw_task(
-        self,
-        task: Task,
-        context: DrawContext,
-        capacity: Mapping[PersonId, float],
-        points: Mapping[PersonId, float],
-        *,
-        rest: Sequence[Task] = (),
-        reach: MutableMapping[TaskId, frozenset[PersonId]] | None = None,
-    ) -> TaskDraw:
-        """Filtert, gewichtet und zieht; ohne Kandidaten bleibt die Aufgabe unverteilt."""
-        selection, segments, weights = self._wheel(
-            task, context, capacity, points, rest=rest, reach=reach
-        )
-        if not segments:
-            return TaskDraw(task.id, None, 0.0, (), selection.exclusions)
-        winner = self._pick(segments, weights)
-        return self._result(task, selection, segments, winner)
 
     def _pick(self, segments: Sequence[Segment], weights: Sequence[float]) -> Segment:
         """Wählt ein Segment anteilig zum Gewicht (kumulierte Summen, binäre Suche)."""

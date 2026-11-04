@@ -5,6 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Intern: Auslosung rechnet Kapazitäten und Erreichbarkeit nur einmal je Runde (spürbar bei langem Fairness-Fenster und vielen Abwesenheitsregeln); nur von Tests genutzte Funktionen entfernt
 - Je Panel-Verbindung gibt es höchstens zwei Live-Abonnements (ein neues ersetzt das älteste)
 - Dienste lehnen einen mehrdeutigen Aufgabennamen ab (`ambiguous_reference`) statt still die erste Aufgabe zu nehmen; Fehler eines Benachrichtigungsdienstes werden protokolliert und stören die übrigen Ziele nicht
 - „Panel nur für Administratoren“ gilt jetzt auch für die Dienste, den Button „Auslosen“ und das Abhaken in der To-do-Liste; beim Aktivieren werden bestehende Panel-Verbindungen abgemeldet, und die Seitenleiste folgt der Einstellung sofort
