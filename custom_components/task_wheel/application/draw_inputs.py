@@ -67,6 +67,26 @@ def due_tasks(
     return tuple(replace(task, respect_absence=False) for task in due)
 
 
+def _seats(tasks: tuple[Task, ...], context: DrawContext) -> int:
+    """Personen, die in dieser Runde eine Aufgabe übernehmen können (nicht pausiert, anwesend)."""
+    start = context.now.date()
+    end = start + max(task.due_days for task in tasks) * _DAY
+    ignores_absence = not all(task.respect_absence for task in tasks)
+    return sum(
+        1
+        for pid, person in context.persons.items()
+        if person.load is not Load.PAUSED
+        and (ignores_absence or context.availability[pid].present_in_window(start, end))
+    )
+
+
+def _longest_unassigned(tasks: tuple[Task, ...], recent: Recent, count: int) -> tuple[Task, ...]:
+    """Die `count` am längsten nicht zugeteilten Aufgaben in der Reihenfolge des Zeitplans."""
+    last = {task_id: max(times) for task_id, times in assigned_times(recent).items()}
+    ranked = sorted(range(len(tasks)), key=lambda i: (last.get(tasks[i].id, _NEVER), i))
+    return tuple(tasks[i] for i in sorted(ranked[:count]))
+
+
 def limit_to_participants(
     tasks: tuple[Task, ...], context: DrawContext, recent: Recent
 ) -> tuple[Task, ...]:
@@ -79,21 +99,8 @@ def limit_to_participants(
     """
     if not tasks:
         return tasks
-    start = context.now.date()
-    end = start + max(task.due_days for task in tasks) * _DAY
-    ignores_absence = not all(task.respect_absence for task in tasks)
-    seats = sum(
-        1
-        for pid, person in context.persons.items()
-        if person.load is not Load.PAUSED
-        and (ignores_absence or context.availability[pid].present_in_window(start, end))
-    )
-    if seats >= len(tasks):
-        return tasks
-    last = {task_id: max(times) for task_id, times in assigned_times(recent).items()}
-    ranked = sorted(range(len(tasks)), key=lambda i: (last.get(tasks[i].id, _NEVER), i))
-    keep = sorted(ranked[:seats])
-    return tuple(tasks[i] for i in keep)
+    seats = _seats(tasks, context)
+    return tasks if seats >= len(tasks) else _longest_unassigned(tasks, recent, seats)
 
 
 def build_context(
