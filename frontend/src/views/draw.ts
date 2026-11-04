@@ -3,7 +3,7 @@ import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 
-import type { ApiClient, TaskDrawWire, TaskReplacementWire } from '../api/index.ts';
+import type { ApiClient, TaskDrawWire } from '../api/index.ts';
 import '../components/index.ts';
 import type { TwStage, WheelSegment } from '../components/index.ts';
 import {
@@ -24,7 +24,6 @@ import type { TextKey } from '../i18n/index.ts';
 import {
   DrawSession,
   StoreController,
-  canReplace,
   canSkip,
   drawableSchedules,
   isIdle,
@@ -39,6 +38,7 @@ import {
 import type { AreaNames, DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
 import { roomTags } from './room.ts';
 import { drawSummary } from './draw-summary.ts';
+import { ReplaceFlow } from './draw-replace.ts';
 import { drawStyles } from './draw-styles.ts';
 import { personRows } from './draw-rows.ts';
 import { defineOnce } from '../components/define.ts';
@@ -52,24 +52,23 @@ export class TwDrawView extends LitElement {
   static override properties = {
     language: { type: String },
     _scheduleId: { state: true },
-    _replacing: { state: true },
-    _options: { state: true },
-    _pick: { state: true },
   };
 
   static override styles = drawStyles;
 
   declare language: string;
   declare _scheduleId: string;
-  /** Die Aufgabe, die der Admin gerade austauscht (Dialog offen), sonst leer. */
-  declare _replacing: string;
-  declare _options: readonly TaskReplacementWire[];
-  declare _pick: string;
 
   readonly #store = new StoreController(this);
   /** Räume des laufenden Renders. */
   #areas: AreaNames = new Map();
   readonly #stage = createRef<TwStage>();
+  readonly #replace = new ReplaceFlow({
+    host: this,
+    session: () => this.#session,
+    isAdmin: () => this.#store.client?.isAdmin() === true,
+    text: (key) => this.#text(key),
+  });
   /** Die Animation der laufenden Auslosung; wird bei jedem Start zufällig neu gewählt. */
   #kind: AnimationKind = DEFAULT_ANIMATIONS[0] ?? 'wheel';
   #session: DrawSession | undefined;
@@ -83,9 +82,6 @@ export class TwDrawView extends LitElement {
     super();
     this.language = EMPTY_TEXT;
     this._scheduleId = EMPTY_TEXT;
-    this._replacing = EMPTY_TEXT;
-    this._options = [];
-    this._pick = EMPTY_TEXT;
   }
 
   /**
@@ -161,7 +157,7 @@ export class TwDrawView extends LitElement {
       <div class="layout">
         ${this.#side(state, tasks, persons)} ${this.#stagePanel(state, tasks, persons)}
       </div>
-      ${this._replacing && canReplace(state) ? this.#replaceDialog(tasks) : nothing}
+      ${this.#replace.dialog(state, tasks)}
     `;
   }
 
@@ -366,107 +362,8 @@ export class TwDrawView extends LitElement {
           ${this.#room(task)}
         </span>
         <span class="status">${this.#taskStatus(state, persons, index, shown)}</span>
-        ${task && this.#canReplace(state) ? this.#replaceButton(task) : nothing}
+        ${task ? this.#replace.button(state, task) : nothing}
       </li>
-    `;
-  }
-
-  // ----- Aufgabe vor dem Start austauschen (nur Administratoren) -----
-
-  #canReplace(state: DrawState): boolean {
-    return canReplace(state) && this.#store.client?.isAdmin() === true;
-  }
-
-  #replaceButton(task: TaskInfo): TemplateResult {
-    return html`<button
-      class="button"
-      aria-label="${this.#text('draw.replace')}: ${task.name}"
-      @click=${() => void this.#openReplace(task.id)}
-    >
-      ${this.#text('draw.replace')}
-    </button>`;
-  }
-
-  async #openReplace(taskId: string): Promise<void> {
-    this._options = (await this.#session?.replacements()) ?? [];
-    this._pick = this._options.find((option) => option.doable)?.task_id ?? EMPTY_TEXT;
-    this._replacing = taskId;
-  }
-
-  #closeReplace(): void {
-    this._replacing = EMPTY_TEXT;
-  }
-
-  #replaceDialog(tasks: ReadonlyMap<string, TaskInfo>): TemplateResult {
-    return html`
-      <tw-dialog
-        language=${this.language}
-        label=${this.#text('draw.replace.title')}
-        @tw-cancel=${() => {
-          this.#closeReplace();
-        }}
-      >
-        <p>
-          <strong>${this.#text('draw.replace.out')}</strong>
-          ${tasks.get(this._replacing)?.name ?? EMPTY_TEXT}
-        </p>
-        <fieldset class="options">
-          <legend class="muted">${this.#text('draw.replace.with')}</legend>
-          ${
-            this._options.length === 0
-              ? html`<span class="muted">${this.#text('draw.replace.none')}</span>`
-              : this._options.map((option) => this.#replaceOption(option, tasks))
-          }
-        </fieldset>
-        <p class="muted">${this.#text('draw.replace.hint')}</p>
-        <div class="actions" slot="actions">
-          <button
-            class="button primary"
-            ?disabled=${!this._pick}
-            @click=${() => {
-              const from = this._replacing;
-              this.#closeReplace();
-              void this.#session?.replaceTask(from, this._pick);
-            }}
-          >
-            ${this.#text('draw.replace.apply')}
-          </button>
-          <button
-            class="button"
-            @click=${() => {
-              this.#closeReplace();
-            }}
-          >
-            ${this.#text('form.cancel')}
-          </button>
-        </div>
-      </tw-dialog>
-    `;
-  }
-
-  #replaceOption(
-    option: TaskReplacementWire,
-    tasks: ReadonlyMap<string, TaskInfo>,
-  ): TemplateResult {
-    return html`
-      <label class="option ${option.doable ? '' : 'out'}">
-        <input
-          type="radio"
-          name="replacement"
-          .value=${option.task_id}
-          ?disabled=${!option.doable}
-          .checked=${option.doable && this._pick === option.task_id}
-          @change=${() => {
-            this._pick = option.task_id;
-          }}
-        />
-        <span>
-          <strong>${tasks.get(option.task_id)?.name ?? option.task_id}</strong><br />
-          <span class="muted"
-            >${this.#text(option.doable ? 'draw.replace.doable' : 'draw.replace.infeasible')}</span
-          >
-        </span>
-      </label>
     `;
   }
 
