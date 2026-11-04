@@ -316,7 +316,7 @@ class Schedule(Model):
         ensure_pattern("slug", self.slug, limits.SLUG_PATTERN)
         ensure_size("task_ids", self.task_ids, 1, limits.MAX_TASKS_PER_SCHEDULE)
         ensure_unique("task_ids", self.task_ids)
-        ensure_size("animations", self.animations, 1, len(AnimationKind))
+        ensure_size("animations", self.animations, 0, len(AnimationKind))
         ensure_unique("animations", self.animations)
         ensure(not (self.archived and self.enabled), "archived", ERR_INCONSISTENT)
 
