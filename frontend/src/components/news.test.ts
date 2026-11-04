@@ -59,7 +59,7 @@ describe('tw-news', () => {
     await element.spinTo('b');
     await element.updateComplete;
     expect(text(element, '.head')).toBe('EXTRA: Ben übernimmt Bad putzen!');
-    expect(text(element, '.sub')).toBe('Chance war 30 % – es ist amtlich');
+    expect(text(element, '.sub')).toBe('Es ist amtlich');
     expect(element.stamped).toBe(true);
     expect(stopped).toHaveBeenCalledOnce();
   });

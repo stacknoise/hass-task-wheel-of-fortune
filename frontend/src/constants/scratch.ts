@@ -37,11 +37,9 @@ export const SCRATCH_FOIL_STOPS = [
 export const SCRATCH_FOIL_INK = '#4a525c';
 export const SCRATCH_FOIL_HEAD = 54;
 export const SCRATCH_FOIL_NAME_Y = 40;
-export const SCRATCH_FOIL_CHANCE_Y = 128;
-export const SCRATCH_FOIL_HINT_Y = 175;
+export const SCRATCH_FOIL_HINT_Y = 140;
 export const SCRATCH_FOIL_NAME_FONT = '900 34px Roboto, sans-serif';
-export const SCRATCH_FOIL_CHANCE_FONT = '900 44px Roboto, sans-serif';
-export const SCRATCH_FOIL_HINT_FONT = '500 22px Roboto, sans-serif';
+export const SCRATCH_FOIL_HINT_FONT = '900 38px Roboto, sans-serif';
 export const SCRATCH_FOIL_WHITE = '#ffffff';
 export const SCRATCH_GOLD = '#f5c542';
 /** Zwei: Hälfte der Breite (Mitte) und gerade/ungerade Reihen der Münze. */
