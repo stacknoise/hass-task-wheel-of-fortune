@@ -356,7 +356,7 @@ Präfix `task_wheel/`. Befehle je Bereich in eigenen Modulen; jeder Befehl hat e
 
 | Bereich | Befehle | Recht |
 |---|---|---|
-| Lesen | `snapshot`, `subscribe` (Deltas), `history/list`, `statistics/get`, `availability/preview` (Anwesenheit der nächsten Wochen für ungespeicherte Regeln; einzige Quelle der Regeln ist das Backend) | angemeldeter Benutzer |
+| Lesen | `snapshot`, `subscribe` (Deltas), `history/list`, `statistics/get` (liefert auch `goals`: Erreichungsgrad je Zeitplan, erledigt gegen Soll aus `max_per_period` im aktuellen Fenster), `availability/preview` (Anwesenheit der nächsten Wochen für ungespeicherte Regeln; einzige Quelle der Regeln ist das Backend) | angemeldeter Benutzer |
 | Erledigen/Tauschen | `assignment/complete`, `assignment/swap`, `assignment/skip` | angemeldeter Benutzer |
 | Auslosung löschen | `round/delete` | **Administrator** |
 | Auslosen | `draw/begin`, `draw/spin`, `draw/spin_rest`, `draw/commit`, `draw/cancel` | angemeldeter Benutzer |

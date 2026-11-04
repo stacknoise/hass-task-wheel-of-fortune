@@ -5,6 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Statistik: eigene Box „Erreichungsgrad der Zeitpläne“; für Aufgaben mit „höchstens n× in x Zeiträumen“ zeigt sie je Zeitplan und Aufgabe, wie viel vom Soll im aktuellen Fenster erledigt ist (Fortschrittsbalken und Prozent)
 - Die Auslosungsliste zeigt nur die Aufgaben, die in dieser Runde vergeben werden können: Es gibt höchstens so viele Aufgaben wie mitmachende Personen (je Person eine Aufgabe pro Runde). Bei mehr Aufgaben werden die Aufgaben zufällig gewählt, damit die Runde nicht vorhersehbar ist
 - Aufgaben lassen sich mit „höchstens n× in x Tagen/Wochen/Monaten“ einplanen (z. B. 5× in 2 Monaten, 1× in 2 Wochen); das Fenster umfasst die laufende und die vorherigen Kalenderperioden. Bestehende Aufgaben behalten ihr Verhalten (x = 1)
 - Personen, Aufgaben und Zeitpläne erscheinen im Panel alphabetisch, ohne Beachtung der Groß-/Kleinschreibung und nach der Sprache von Home Assistant (Umlaute, Zahlen nach ihrem Wert); ebenso die Räume in der Auswahl

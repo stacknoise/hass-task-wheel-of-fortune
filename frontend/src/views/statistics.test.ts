@@ -34,6 +34,20 @@ describe('Statistik', () => {
     );
   });
 
+  it('zeigt den Erreichungsgrad der Zeitpläne in einer eigenen Box', async () => {
+    const { view } = await mount();
+    await vi.waitFor(() => {
+      expect(text(view)).toContain('Erreichungsgrad der Zeitpläne');
+    });
+    const content = text(view);
+    expect(content).toContain('Wochenplan');
+    expect(content).toContain('3 von 6 erreicht');
+    expect(content).toContain('Bad putzen: 2 erledigt, 3 zugeteilt, Soll 5');
+    expect(
+      view.shadowRoot?.querySelector('[role=progressbar]')?.getAttribute('aria-valuenow'),
+    ).toBe('50');
+  });
+
   it('zeigt in der Matrix leer, wo eine Person die Aufgabe nicht darf', async () => {
     const { view } = await mount();
     await vi.waitFor(() => {

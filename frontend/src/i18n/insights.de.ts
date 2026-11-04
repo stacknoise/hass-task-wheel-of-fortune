@@ -88,6 +88,11 @@ export const insightsDe = {
   'statistics.pointsHint': 'Strich = fairer Anteil (berücksichtigt halbe Last und Abwesenheit)',
   'statistics.weekly': 'Erledigungsquote pro Woche',
   'statistics.weeklyLabel': 'Erledigungsquote der letzten {weeks} Wochen, zuletzt {last}',
+  'statistics.goals': 'Erreichungsgrad der Zeitpläne',
+  'statistics.goalsHint':
+    'Erledigte Zuteilungen im aktuellen Zeitraum gegen das Soll aus „höchstens n× in x Zeiträumen“',
+  'statistics.goalReached': '{reached} von {target} erreicht',
+  'statistics.goalTask': '{done} erledigt, {assigned} zugeteilt, Soll {target}',
   'statistics.matrix': 'Wer hatte was wie oft?',
   'statistics.matrixHint': 'Anzahl Zuteilungen je Aufgabe und Person · – = nicht erlaubt',
   'statistics.task': 'Aufgabe',

@@ -105,6 +105,22 @@ export interface Highlights {
   readonly reliable: Reliable | null;
 }
 
+export interface TaskGoal {
+  readonly task_id: string;
+  readonly target: number;
+  readonly assigned: number;
+  readonly done: number;
+  readonly reached: number;
+}
+
+export interface ScheduleGoal {
+  readonly schedule_id: string;
+  readonly tasks: readonly TaskGoal[];
+  readonly target: number;
+  readonly reached: number;
+  readonly rate: number;
+}
+
 export type Matrix = Readonly<Record<string, Readonly<Record<string, number>>>>;
 
 export interface StatisticsReport {
@@ -115,6 +131,7 @@ export interface StatisticsReport {
   readonly matrix: Matrix;
   readonly weeks: readonly WeekRate[];
   readonly highlights: Highlights;
+  readonly goals: readonly ScheduleGoal[];
 }
 
 /** Die Objekte der Sammlungen mit ihren bekannten Feldern. */

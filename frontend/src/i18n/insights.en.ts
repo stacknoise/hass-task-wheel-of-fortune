@@ -90,6 +90,11 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'statistics.pointsHint': 'Line = fair share (accounts for half load and absence)',
   'statistics.weekly': 'Completion rate per week',
   'statistics.weeklyLabel': 'Completion rate of the last {weeks} weeks, latest {last}',
+  'statistics.goals': 'Goal progress per schedule',
+  'statistics.goalsHint':
+    'Completed assignments in the current period against the target from "at most n× in x periods"',
+  'statistics.goalReached': '{reached} of {target} reached',
+  'statistics.goalTask': '{done} done, {assigned} assigned, target {target}',
   'statistics.matrix': 'Who had what, how often?',
   'statistics.matrixHint': 'Assignments per task and person · – = not allowed',
   'statistics.task': 'Task',
