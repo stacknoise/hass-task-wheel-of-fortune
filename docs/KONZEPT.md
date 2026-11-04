@@ -1,6 +1,6 @@
-# Technisches Konzept: Aufgaben-Glücksrad für Home Assistant
+# Technisches Konzept: Task Wheel of Fortune für Home Assistant
 
-Stand: 2026-11-03 · Status: **Abgestimmt** (Pattern und Annahmen §11 bestätigt) · Grundlage: UI-Mockups in `mockups/` (PR #1)
+Stand: 2026-11-04 (Version 0.2.0) · Status: **Abgestimmt** (Pattern und Annahmen §11 bestätigt) · Grundlage: UI-Mockups in `mockups/` (PR #1)
 
 Dieses Dokument beschreibt Architektur, Datenmodell, Algorithmen, Schnittstellen und Qualitätsregeln der
 Erweiterung. Die Umsetzung ist in [ARBEITSPAKETE.md](ARBEITSPAKETE.md) geschnitten, der Code selbst wird in
@@ -18,7 +18,7 @@ nachvollziehbar per Glücksrad an Personen verteilt.
 | Personen | Eigene Objekte (keine HA-Benutzer), Farbe im Rad, Belastbarkeit (voll / halb / pausiert), Anwesenheitsregeln, optionaler Benachrichtigungsdienst |
 | Aufgaben | Erlaubte Personen, Punkte (Aufwand), Frist in Tagen, Häufigkeitsregel, Zusatzregeln (keine Wiederholung, Abwesenheit beachten, Tausch erlaubt) |
 | Zeitpläne | Wiederkehrend (Wochentage + Uhrzeit + Rhythmus), einmalig (Datum + Uhrzeit), nur manuell (mit Erinnerung) |
-| Auslosung | Automatisch per Zeitplan oder manuell im Panel mit Animation (Glücksrad, Lostrommel, Slot-Machine, Plinko, Scheinwerfer, je Zeitplan wählbar, bei mehreren zufällig je Auslosung); jede Auslosung gehört zu einem Zeitplan |
+| Auslosung | Automatisch per Zeitplan oder manuell im Panel mit Animation (Glücksrad, Lostrommel, Slot-Machine, Plinko, Scheinwerfer, Rubbellose, Eilmeldung, Oscar-Verleihung, je Zeitplan wählbar (leer = sofort ohne Animation), bei mehreren zufällig je Auslosung); jede Auslosung gehört zu einem Zeitplan |
 | Zuteilungen | Abhaken, Fristen, Status (offen, pünktlich, verspätet, getauscht, verpasst, „Bleibt unerledigt“), Tausch per Joker |
 | Historie | Runden mit Zuteilungen, Chance, Status, Filter, CSV-Export |
 | Statistik | KPIs, Punkte vs. fairer Anteil, Erledigungsquote pro Woche, Matrix Aufgabe × Person, Glückspilz/Pechvogel |
@@ -192,7 +192,7 @@ erDiagram
 | `AbsenceConfig` | `kind` + Felder je Art: `once(start, end)`, `weekly_days(weekdays)`, `week_rhythm(present_weeks, cycle_weeks, change_weekday, anchor)` |
 | `Task` | `id`, `name`, `points`, `due_days`, `allowed: frozenset[PersonId]` (leer = alle Personen), `frequency: FrequencyConfig`, `no_repeat`, `respect_absence`, `swap_allowed`, `min_load: Load` (Mindest-Belastbarkeit, Standard `paused` = egal; `half` = mindestens halbe, `full` = nur volle Last), `area_id: str \| None` (optionaler HA-Bereich/Raum, nur Anzeige; der Name kommt im Panel aus `hass.areas`, ein gelöschter Bereich erscheint als „Unbekannter Raum“) |
 | `FrequencyConfig` | `every_round` · `max_per_period(count, period)` · `interval(days, tolerance)` |
-| `Schedule` | `id`, `name`, `slug`, `trigger: TriggerConfig`, `task_ids: tuple[TaskId, ...]`, `enabled`, `notify`, `skip_absent`, `archived`, `animations: tuple[AnimationKind, ...]` (0 bis 5 verschiedene Arten, Standard `wheel`; leer = ohne Animation sofort auslosen) (archiviert ⇒ nicht aktiv, nie auslösbar) |
+| `Schedule` | `id`, `name`, `slug`, `trigger: TriggerConfig`, `task_ids: tuple[TaskId, ...]`, `enabled`, `notify`, `skip_absent`, `archived`, `animations: tuple[AnimationKind, ...]` (0 bis 8 verschiedene Arten, Standard `wheel`; leer = ohne Animation sofort auslosen) (archiviert ⇒ nicht aktiv, nie auslösbar) |
 | `TriggerConfig` | `recurring(weekdays, time, every_n_weeks \| monthly)` · `once(at, after: keep_manual \| archive \| delete)` · `manual(remind_after_days)` |
 | `Round` | `id`, `schedule_id`, `origin: auto \| manual \| service`, `started_at`, `finished_at`, `assignments` |
 | `Assignment` | `id`, `round_id`, `schedule_id` (auslosender Zeitplan), `task_id`, `person_id`, `chance` (0–1), `points`, `due_at`, `status`, `done_at`, `swap: Swap \| None` |
@@ -381,7 +381,7 @@ Sammlung `{upsert: […], remove: [ids]}` und bei Änderung die gesamten `settin
 
 ### 6.5 Panel
 
-Registrierung über `panel_custom.async_register_panel` (Seitenleiste „Glücksrad“, Symbol `mdi:ferris-wheel`
+Registrierung über `panel_custom.async_register_panel` (Seitenleiste „Aufgaben-Glücksrad“ bei deutscher, „Task Wheel of Fortune“ sonst Systemsprache, Symbol `mdi:ferris-wheel`
 o. ä.), Bundle über `hass.http.async_register_static_paths([StaticPathConfig(..., cache_headers=True)])`.
 Der Dateiname enthält einen Inhalts-Hash, damit Browser-Caches bei Updates sicher erneuert werden.
 `require_admin` für das Panel ist eine Option (Standard: aus, weil Kinder abhaken sollen; Konfiguration ist über

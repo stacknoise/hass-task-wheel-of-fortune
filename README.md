@@ -34,7 +34,7 @@ to `config/custom_components/task_wheel` (the repository itself does not contain
 - **Tasks** with allowed people, points (effort), deadline and frequency: every round,
   at most n× per day/week/month, or a fixed interval with tolerance; optionally assigned to a Home Assistant area (room), shown in the overview, draw, history and statistics
 - **Schedules**: recurring, one-off or manual only
-- **Draws** automatically or in the panel with an animation: wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or an award ceremony; the size (segment, ball, row, slot, tile, card) equals the chance. With the scratch cards you scratch by hand (the draw starts with the first stroke) or let a coin do it; once the winning card is uncovered the draw is over. For each schedule you choose the allowed variants with a multi-select; if there are several, one is picked at random for every draw; with none selected, "Start round" draws everything at once and shows the task list right away
+- **Draws** automatically or in the panel with an animation: wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or an award ceremony; for the first five the size (segment, ball, row, slot, tile) equals the chance; scratch cards, breaking news and the award ceremony deliberately show no chances. With the scratch cards you scratch by hand (the draw starts with the first stroke) or let a coin do it; once the winning card is uncovered the draw is over. For each schedule you choose the allowed variants with a multi-select; if there are several, one is picked at random for every draw; with none selected, "Start round" draws everything at once and shows the task list right away
 - **Fairness**: whoever has had fewer points relative to their fair share gets a bigger slice
 - **Swapping with a joker**, only with people from the same draw who are allowed to get the task
 - **"Stays undone"**: deliberately not doing an assignment; counts like missed in points and statistics
@@ -48,7 +48,7 @@ to `config/custom_components/task_wheel` (the repository itself does not contain
 | ![Overview](docs/screenshots/overview.png) | ![Draw with the wheel](docs/screenshots/draw-wheel.png) |
 | **Overview:** open assignments, points this month, next draw | **Draw:** wheel of fortune, size = chance |
 | ![Draw with the slot machine](docs/screenshots/draw-slot.png) | ![Tasks](docs/screenshots/tasks.png) |
-| **Draw:** the slot machine, one of five animations | **Tasks:** points, deadline, frequency, rules |
+| **Draw:** the slot machine, one of eight animations | **Tasks:** points, deadline, frequency, rules |
 | ![Schedules](docs/screenshots/schedules.png) | ![History](docs/screenshots/history.png) |
 | **Schedules:** recurring, once or manual | **History:** every draw with CSV export |
 | ![Statistics](docs/screenshots/statistics.png) | |
@@ -120,7 +120,7 @@ Without points in the window, everyone's chance is their fair share; people with
 
 1. Raise `version` in `custom_components/task_wheel/manifest.json`, add an entry to `CHANGELOG.md` and to the
    change log of `docs/CODE_DOKU.md`, via pull request to `main`
-2. Set the tag: `git tag v0.1.0 && git push origin v0.1.0`, or enter the tag on GitHub under *Actions → Release → Run workflow* (the workflow creates it at the state of `main`)
+2. Set the tag: `git tag v0.2.0 && git push origin v0.2.0`, or enter the tag on GitHub under *Actions → Release → Run workflow* (the workflow creates it at the state of `main`)
 3. The `Release` workflow checks that the tag and the manifest version match, builds the panel and attaches
    `task_wheel.zip` to the new GitHub release (see `hacs.json`: `zip_release`). Tags with a suffix (`v0.2.0-beta.1`)
    are published as a pre-release.
@@ -158,15 +158,14 @@ Each person can have a target: a `notify` entity (via `notify.send_message`) or 
 
 A target shared by several people (e.g. a family channel) receives each message only once. The texts are in `custom_components/task_wheel/texts/` (de, en; other languages fall back to English). A failed send is logged and blocks neither the draw nor other targets.
 
-## Panel (skeleton)
+## Panel
 
 After setup, the entry "Task Wheel of Fortune" (`/task-wheel`) appears in the sidebar. The panel has the
 tabs Overview, Draw, Tasks, People, Schedules, History and Statistics, loads the state via `snapshot` and
 stays up to date via `subscribe`. The **Draw** tab is finished: choose a schedule, start a round (an open round
 can be resumed), play the schedule's animation for each task (wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or award ceremony, size = chance, "Who takes part?" with reasons; whoever already has a task in the round is no longer on the wheel for the further ones; surplus tasks stay open as "not distributable"; if only one person is left for a task, they are assigned without spinning),
 draw the rest without animation and complete the round. The backend always determines the result; the animation only
-follows it, and with "reduced motion" in the operating system it is skipped. **Overview**, **History** and **Statistics** are also finished (AP-17); Tasks, People and Schedules
-initially show only counters and are extended with AP-15.
+follows it, and with "reduced motion" in the operating system it is skipped. **Overview**, **History**, **Statistics**, **Tasks**, **People** and **Schedules** are finished as well.
 
 - **Overview:** next draw (with paging through the schedules), open assignments per schedule with a filter by person,
   an action menu per assignment with Complete and "Stays undone" (both with a confirmation popup) and Swap (only allowed, non-paused people of the same draw, with a note on the remaining jokers), points this month against the
@@ -187,7 +186,7 @@ Texts are available in German and English (language from Home Assistant). The bu
 trying it out, run `cd frontend && npm ci && npm run build`. If it is missing, the integration stays usable and writes a
 warning to the log.
 
-### People, tasks and schedules in the panel (AP-15)
+### People, tasks and schedules in the panel
 
 The *People*, *Tasks* and *Schedules* tabs create, change and delete objects (administrators only). People and tasks cannot be deleted while they are still in use: a person not while a task allows them or they have open assignments; a task not while a schedule contains it or it is still assigned and open. The cards are laid out
 in a grid; adding and editing open a popup (full screen on a smartphone, close with Escape or ✕), and deleting asks for confirmation in another popup. Backend errors appear at the affected field and as a note in the popup.
