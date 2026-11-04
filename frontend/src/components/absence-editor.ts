@@ -94,15 +94,7 @@ export class TwAbsenceEditor extends LocalizedElement {
       </div>
     `,
     weekly_days: (absence: Extract<AbsenceWire, { kind: 'weekly_days' }>, index) => html`
-      <tw-chip-select
-        .label=${this.text('absence.weekdays')}
-        .options=${weekdayOptions(this.language)}
-        compact
-        .selected=${toIds(absence.weekdays)}
-        @tw-change=${onChange<string[]>((ids) => {
-          this.replaceAt(this.value, index, { weekdays: toNumbers(ids) });
-        })}
-      ></tw-chip-select>
+      ${this.#weekdayChips(absence.weekdays, index)}
     `,
     week_rhythm: (absence: Extract<AbsenceWire, { kind: 'week_rhythm' }>, index) => html`
       <tw-stepper
@@ -143,15 +135,7 @@ export class TwAbsenceEditor extends LocalizedElement {
       ></tw-field>
     `,
     recurring: (absence: Extract<AbsenceWire, { kind: 'recurring' }>, index) => html`
-      <tw-chip-select
-        .label=${this.text('absence.weekdays')}
-        .options=${weekdayOptions(this.language)}
-        compact
-        .selected=${toIds(absence.weekdays)}
-        @tw-change=${onChange<string[]>((ids) => {
-          this.replaceAt(this.value, index, { weekdays: toNumbers(ids) });
-        })}
-      ></tw-chip-select>
+      ${this.#weekdayChips(absence.weekdays, index)}
       <tw-stepper
         .label=${this.text('absence.interval')}
         .value=${absence.interval_weeks}
@@ -242,6 +226,21 @@ export class TwAbsenceEditor extends LocalizedElement {
         </div>
         ${this.#renderers[absence.kind](absence as never, index)}
       </div>
+    `;
+  }
+
+  /** Auswahl der Wochentage, gemeinsam für „Wochentage“ und „Wiederkehrend“. */
+  #weekdayChips(weekdays: readonly number[], index: number): TemplateResult {
+    return html`
+      <tw-chip-select
+        .label=${this.text('absence.weekdays')}
+        .options=${weekdayOptions(this.language)}
+        compact
+        .selected=${toIds(weekdays)}
+        @tw-change=${onChange<string[]>((ids) => {
+          this.replaceAt(this.value, index, { weekdays: toNumbers(ids) });
+        })}
+      ></tw-chip-select>
     `;
   }
 
