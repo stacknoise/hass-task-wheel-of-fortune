@@ -55,7 +55,7 @@ flowchart LR
 | 04 | Häufigkeitsregeln (Factory + Strategien) | 4 | S | 02 |
 | 05 | Anwesenheitsregeln (Factory + Strategien) | 4 | M | 02 |
 | 06 | Fairness-Gewichtung und Ziehungs-Engine | 4 | M | 04, 05 |
-| 07 | Zuteilungen, Fristen, Joker/Tausch | 3, 4 | M | 03 |
+| 07 | Zuteilungen, Fristen, Tausch | 3, 4 | M | 03 |
 | 08 | Runden und Zeitpläne (DrawService, Scheduler, TriggerFactory) | 3, 5 | L | 06, 07 |
 | 09 | Einstieg, Config Flow, Dienste, Events | 1, 2 | M | 08 |
 | 10 | WebSocket-API inkl. Rechte und Subscriptions | 2 | M | 09 |
@@ -136,12 +136,12 @@ Parallelisierbar: AP-04/05 nach AP-02; AP-11/12/13 nach AP-09; AP-15/16/17 nach 
 
 **Fertig, wenn:** Statistischer Test (10 000 Ziehungen) bestätigt Chancen innerhalb einer Toleranz; Laufzeit pro Runde gemessen und dokumentiert.
 
-## AP-07 · Zuteilungen, Fristen, Joker/Tausch (M)
+## AP-07 · Zuteilungen, Fristen, Tausch (M)
 
 - Statusübergangstabelle (`domain/status.py`)
-- `AssignmentService` (erledigen, täglicher Lauf „verpasst“, Punkte mit einstellbaren Faktoren für verspätet/verpasst), `SwapService` (Joker je Monat, Berechtigung der neuen Person)
+- `AssignmentService` (erledigen, täglicher Lauf „verpasst“, Punkte mit einstellbaren Faktoren für verspätet/verpasst), `SwapService` (echter Tausch zweier Zuteilungen einer Runde, Berechtigung beider Personen; Joker entfallen seit 2026-11-04, KONZEPT §5.4)
 
-**Fertig, wenn:** Alle Übergänge inkl. unzulässiger getestet; Joker-Rücksetzung zum Monatswechsel getestet.
+**Fertig, wenn:** Alle Übergänge inkl. unzulässiger getestet; Tausch in beiden Richtungen inkl. Ablehnungen getestet.
 
 ## AP-08 · Runden und Zeitpläne (L)
 
@@ -212,7 +212,7 @@ Parallelisierbar: AP-04/05 nach AP-02; AP-11/12/13 nach AP-09; AP-15/16/17 nach 
 
 ## AP-17 · Übersicht, Historie, Statistik (L)
 
-- Übersicht: nächste Auslosung, Zuteilungen je Zeitplan mit Filter, Abhaken, Tauschen (nur erlaubte Personen, Joker-Hinweis), Punkte, Aktivität
+- Übersicht: nächste Auslosung, Zuteilungen je Zeitplan mit Filter, Abhaken, Tauschen (Person samt ihrer offenen Aufgabe, nur erlaubte Personen), Punkte, Aktivität
 - Historie: Runden aufklappbar, Filter nach Person, CSV-Export mit Entschärfung
 - Statistik: KPIs, Balken mit fairem Anteil, Wochenquote, Matrix, Auszeichnungen (SVG, ohne Diagrammbibliothek)
 

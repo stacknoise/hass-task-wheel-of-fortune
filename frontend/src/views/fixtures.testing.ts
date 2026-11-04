@@ -15,9 +15,9 @@ import { Store, storeContext } from '../state/index.ts';
 
 export const SNAPSHOT: Snapshot = {
   persons: [
-    { id: 'p1', name: 'Anna', color: '#c05600', load: 'full', jokers_left: 2 },
-    { id: 'p2', name: 'Ben', color: '#1a5fd0', load: 'full', jokers_left: 0 },
-    { id: 'p3', name: 'Cara', color: '#137333', load: 'paused', jokers_left: 1 },
+    { id: 'p1', name: 'Anna', color: '#c05600', load: 'full' },
+    { id: 'p2', name: 'Ben', color: '#1a5fd0', load: 'full' },
+    { id: 'p3', name: 'Cara', color: '#137333', load: 'paused' },
   ],
   tasks: [
     {
@@ -28,7 +28,8 @@ export const SNAPSHOT: Snapshot = {
       swap_allowed: true,
       area_ids: ['gone'],
     },
-    { id: 't2', name: 'Müll', allowed: ['p1'], points: 2, swap_allowed: false },
+    { id: 't2', name: 'Müll', allowed: ['p1'], points: 2, swap_allowed: true },
+    { id: 't3', name: 'Küche', allowed: [], points: 3, swap_allowed: true },
   ],
   schedules: [
     {
@@ -52,6 +53,7 @@ export const SNAPSHOT: Snapshot = {
     assignment('a1', 't1', 'p1', 'open'),
     assignment('a2', 't2', 'p1', 'swapped'),
     assignment('a3', 't9', 'p2', 'open', 'r2', 'gone'),
+    assignment('a7', 't3', 'p2', 'open'),
   ],
   rounds: [
     {
@@ -59,9 +61,8 @@ export const SNAPSHOT: Snapshot = {
       schedule_id: 's1',
       origin: 'manual',
       started_at: '2026-11-02T18:00:00+00:00',
-      total: 3,
+      total: 4,
       done: 1,
-      person_ids: ['p1', 'p2'],
     },
     {
       id: 'r2',
@@ -70,7 +71,6 @@ export const SNAPSHOT: Snapshot = {
       started_at: '2026-11-01T18:00:00+00:00',
       total: 1,
       done: 0,
-      person_ids: ['p2'],
     },
   ],
   panel_rounds: [],

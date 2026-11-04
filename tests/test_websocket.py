@@ -7,6 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
 
 from custom_components.task_wheel.const import DOMAIN
+from custom_components.task_wheel.domain.enums import AssignmentStatus
 from custom_components.task_wheel.runtime import TaskWheelData
 
 from .domain import factories as f
@@ -63,11 +64,11 @@ async def test_non_admin_can_read_complete_and_swap(
     hass: HomeAssistant, hass_ws_client: Any, hass_read_only_access_token: str
 ) -> None:
     _, data = await _setup(hass)
-    assignment_id = _open_assignment(data)
+    assignment_id = _open_assignment(data, AssignmentStatus.OPEN)
     client = await hass_ws_client(hass, hass_read_only_access_token)
     snapshot = await _call(client, "task_wheel/snapshot")
     assert snapshot["success"] is True
-    assert [a["id"] for a in snapshot["result"]["assignments"]] == [assignment_id]
+    assert {a["id"] for a in snapshot["result"]["assignments"]} == {assignment_id, "a2"}
     swapped = await _call(
         client, "task_wheel/assignment/swap", assignment_id=assignment_id, to_person_id="p2"
     )

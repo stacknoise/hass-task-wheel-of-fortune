@@ -39,10 +39,10 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'overview.swap': 'Swap',
   'overview.swapWith': 'Swap with',
   'overview.cancel': 'Cancel',
-  'overview.jokers': 'Jokers left: {count}',
-  'overview.noJokers': 'No jokers left this month.',
+  'overview.swapDone': 'This assignment has already been swapped.',
+  'overview.swapTarget': '{person} ({task})',
   'overview.swapDisabled': 'This task may not be swapped.',
-  'overview.noTargets': 'Nobody else in this draw may take this task.',
+  'overview.noTargets': 'Nobody in this draw has an open task that can be swapped.',
   'overview.completeQuestion': 'Mark this assignment as done?',
   'overview.skip': 'Stays undone',
   'overview.skipQuestion':

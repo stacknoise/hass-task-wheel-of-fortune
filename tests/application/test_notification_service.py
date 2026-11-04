@@ -125,9 +125,11 @@ async def test_swap_goes_to_new_owner_only() -> None:
     setup.service.assignment_swapped(swapped)
     await setup.flush()
     assert [(t, title) for t, title, _ in setup.notifier.sent] == [
-        ("notify.p2", "Aufgabe übernommen")
+        ("notify.p2", "Aufgabe getauscht")
     ]
-    assert setup.notifier.sent[0][2] == "Anna hat dir „A“ übergeben (bis 10.11.)."
+    assert (
+        setup.notifier.sent[0][2] == "Anna hat mit dir getauscht: Du übernimmst „A“ (bis 10.11.)."
+    )
 
 
 async def test_reminder_goes_to_everyone_regardless_of_notify_flag() -> None:

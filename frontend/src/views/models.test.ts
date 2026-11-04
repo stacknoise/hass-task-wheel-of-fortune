@@ -148,11 +148,61 @@ describe('swapTargets', () => {
     { id: 'p2', load: 'full' },
     { id: 'p3', load: 'full' },
     { id: 'p4', load: 'paused' },
+    { id: 'p5', load: 'full' },
   ] as never[];
-  const task = { allowed: ['p1', 'p2', 'p3', 'p4'] } as never;
+  const bad = { id: 't1', allowed: ['p1', 'p2', 'p3', 'p4'], swap_allowed: true } as never;
+  const kitchen = { id: 't2', allowed: [], swap_allowed: true } as never;
+  const fixed = { id: 't3', allowed: [], swap_allowed: false } as never;
+  const onlyBen = { id: 't4', allowed: ['p2'], swap_allowed: true } as never;
+  const tasks = new Map<string, never>([
+    ['t1', bad],
+    ['t2', kitchen],
+    ['t3', fixed],
+    ['t4', onlyBen],
+  ]);
+  const mine = { id: 'a1', round_id: 'r1', person_id: 'p1', task_id: 't1', status: 'open' };
+  const open = (id: string, person: string, task: string, due = '2026-11-10') => ({
+    id,
+    round_id: 'r1',
+    person_id: person,
+    task_id: task,
+    status: 'open',
+    due_at: due,
+  });
 
-  it('bietet nur andere, erlaubte, nicht pausierte Personen derselben Auslosung an', () => {
-    const targets = swapTargets({ person_id: 'p1' } as never, task, persons, ['p1', 'p2', 'p4']);
-    expect(targets.map((person) => person.id)).toEqual(['p2']);
+  it('bietet Personen derselben Auslosung mit ihrer offenen Aufgabe an', () => {
+    const round = [mine, open('a2', 'p2', 't2'), open('a3', 'p3', 't2')] as never[];
+    const targets = swapTargets(mine as never, bad, round, persons, tasks);
+    expect(targets.map((target) => [target.person.id, target.task])).toEqual([
+      ['p2', kitchen],
+      ['p3', kitchen],
+    ]);
+  });
+
+  it('lässt pausierte, nicht erlaubte und nicht tauschbare Gegenstücke weg', () => {
+    const round = [
+      mine,
+      open('a2', 'p4', 't2'),
+      open('a3', 'p5', 't2'),
+      open('a4', 'p2', 't3'),
+    ] as never[];
+    expect(swapTargets(mine as never, bad, round, persons, tasks)).toEqual([]);
+    const back = [open('a5', 'p2', 't4')] as never[];
+    expect(swapTargets({ ...mine, person_id: 'p3' } as never, bad, back, persons, tasks)).toEqual(
+      [],
+    );
+  });
+
+  it('nimmt nur offene Zuteilungen derselben Runde und nur die mit der frühesten Frist', () => {
+    const round = [
+      mine,
+      { ...open('a2', 'p2', 't2'), status: 'on_time' },
+      { ...open('a3', 'p3', 't2'), status: 'swapped' },
+      { ...open('a4', 'p2', 't2', '2026-11-12'), round_id: 'r9' },
+      open('a5', 'p2', 't4', '2026-11-20'),
+      open('a6', 'p2', 't2', '2026-11-11'),
+    ] as never[];
+    const targets = swapTargets(mine as never, bad, round, persons, tasks);
+    expect(targets.map((target) => target.assignment.id)).toEqual(['a6']);
   });
 });

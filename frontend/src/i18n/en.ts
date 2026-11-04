@@ -180,6 +180,7 @@ export const en: Record<keyof typeof de, string> = {
   'error.notify_target_invalid': 'Invalid notification target.',
   'error.too_deep': 'Nested too deeply.',
   'error.unauthorized': 'Administrators only.',
+  'error.swap_person_has_no_open_assignment': 'The person has no open task to swap in this draw.',
   'draw.schedule': 'Which schedule should be drawn?',
   'draw.schedule.none': 'There is no schedule that can be drawn.',
   'draw.start': 'Start round',

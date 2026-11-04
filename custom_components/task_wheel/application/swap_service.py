@@ -1,16 +1,13 @@
-"""Tausch einer Zuteilung gegen einen Joker (KONZEPT §5.4); Uhrzeit kommt als Parameter."""
+"""Tausch zweier Zuteilungen einer Runde, Aufgabe gegen Aufgabe (KONZEPT §5.4)."""
 
 import datetime as dt
-from collections.abc import Iterable
 
 from ..const.keys import RESOURCE_PERSON, RESOURCE_TASK
-from ..const.limits import OPEN_ASSIGNMENT_MAX_AGE
 from ..domain import status
-from ..domain.enums import AssignmentAction, Period
+from ..domain.enums import AssignmentAction
 from ..domain.errors import NotFoundError
 from ..domain.models import Assignment
-from ..domain.rules.periods import period_start
-from ..domain.swap import SwapContext, ensure_swap_possible, jokers_left, jokers_used_by_person
+from ..domain.swap import SwapSide, ensure_swap_possible, find_counterpart
 from ..domain.types import AssignmentId, PersonId
 from .protocols import (
     AssignmentRecorder,
@@ -19,11 +16,11 @@ from .protocols import (
     NoEvents,
     RoundEvents,
 )
-from .round_updates import require_assignment, store_assignment
+from .round_updates import require_assignment, store_assignments
 
 
 class SwapService:
-    """Prüft und führt einen Tausch aus; Joker werden je Kalendermonat gezählt."""
+    """Prüft und führt einen Tausch aus; beide Personen behalten je eine Aufgabe."""
 
     def __init__(
         self,
@@ -38,47 +35,48 @@ class SwapService:
         self._recorder = recorder
         self._events = events or NoEvents()
 
-    def jokers_left(self, person_id: PersonId, now: dt.datetime) -> int:
-        """Verbleibende Joker im laufenden Kalendermonat (ohne Rücksetzen, der Monat zählt neu)."""
-        return self.jokers_left_for(frozenset({person_id}), now)[person_id]
-
-    def jokers_left_for(
-        self, person_ids: Iterable[PersonId], now: dt.datetime
-    ) -> dict[PersonId, int]:
-        """Verbleibende Joker mehrerer Personen, ein Durchlauf durch die jüngsten Zuteilungen."""
-        month_start = dt.datetime.combine(
-            period_start(Period.MONTH, now), dt.time.min, tzinfo=now.tzinfo
-        )
-        used = jokers_used_by_person(
-            self._history.assignments_since(month_start - OPEN_ASSIGNMENT_MAX_AGE), now
-        )
-        settings = self._config.settings
-        return {person_id: jokers_left(settings, used[person_id]) for person_id in person_ids}
+    def _side(self, assignment: Assignment) -> SwapSide:
+        """Zuteilung mit Aufgabe und Person, oder `NotFoundError`."""
+        task = self._config.tasks.get(assignment.task_id)
+        person = self._config.persons.get(assignment.person_id)
+        if task is None:
+            raise NotFoundError(RESOURCE_TASK, assignment.task_id)
+        if person is None:
+            raise NotFoundError(RESOURCE_PERSON, assignment.person_id)
+        return SwapSide(assignment, task, person)
 
     def swap(
         self, assignment_id: AssignmentId, to_person_id: PersonId, now: dt.datetime
     ) -> Assignment:
-        """Übergibt die offene Zuteilung an `to_person_id` und verbraucht einen Joker.
+        """Tauscht die offene Zuteilung gegen die offene Zuteilung von `to_person_id`.
+
+        Gegenstück ist die offene Zuteilung der Zielperson in derselben Runde (bei mehreren die
+        mit der frühesten Frist). Beide Zuteilungen werden getauscht und gemeinsam gespeichert.
+
+        Returns:
+            Die getauschte Zuteilung `assignment_id`, die jetzt `to_person_id` gehört.
 
         Raises:
             NotFoundError: Zuteilung, Aufgabe oder Person gibt es nicht.
             InvalidTransitionError: Die Zuteilung ist nicht (mehr) offen oder schon getauscht.
-            SwapRejectedError: Die Aufgabe oder die neue Person lässt den Tausch nicht zu.
+            SwapRejectedError: Es fehlt das Gegenstück oder eine Aufgabe, Person oder Regel
+                lässt den Tausch nicht zu (in beiden Richtungen).
         """
         assignment = require_assignment(self._history, assignment_id)
-        task = self._config.tasks.get(assignment.task_id)
-        receiver = self._config.persons.get(to_person_id)
-        if task is None:
-            raise NotFoundError(RESOURCE_TASK, assignment.task_id)
-        if receiver is None:
+        if to_person_id not in self._config.persons:
             raise NotFoundError(RESOURCE_PERSON, to_person_id)
         status.next_status(assignment.status, AssignmentAction.SWAP)
-        left = self.jokers_left(assignment.person_id, now)
         round_ = self._history.rounds[assignment.round_id]
-        holders = frozenset(item.person_id for item in round_.assignments)
-        ensure_swap_possible(SwapContext(assignment, task, receiver, left, now, holders))
-        swapped = store_assignment(
-            self._history, self._recorder, status.swap(assignment, to_person_id, now)
+        other = find_counterpart(round_.assignments, assignment, to_person_id)
+        ensure_swap_possible(self._side(assignment), self._side(other), now)
+        swapped, swapped_other = store_assignments(
+            self._history,
+            self._recorder,
+            (
+                status.swap(assignment, other.person_id, now),
+                status.swap(other, assignment.person_id, now),
+            ),
         )
         self._events.assignment_swapped(swapped)
+        self._events.assignment_swapped(swapped_other)
         return swapped

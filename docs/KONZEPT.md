@@ -19,7 +19,7 @@ nachvollziehbar per Glücksrad an Personen verteilt.
 | Aufgaben | Erlaubte Personen, Punkte (Aufwand), Frist in Tagen, Häufigkeitsregel, Zusatzregeln (keine Wiederholung, Abwesenheit beachten, Tausch erlaubt) |
 | Zeitpläne | Wiederkehrend (Wochentage + Uhrzeit + Rhythmus), einmalig (Datum + Uhrzeit), nur manuell (mit Erinnerung) |
 | Auslosung | Automatisch per Zeitplan oder manuell im Panel mit Animation (Glücksrad, Lostrommel, Slot-Machine, Plinko, Scheinwerfer, Rubbellose, Eilmeldung, Oscar-Verleihung, je Zeitplan wählbar (leer = sofort ohne Animation), bei mehreren zufällig je Auslosung); jede Auslosung gehört zu einem Zeitplan |
-| Zuteilungen | Abhaken, Fristen, Status (offen, pünktlich, verspätet, getauscht, verpasst, „Bleibt unerledigt“), Tausch per Joker |
+| Zuteilungen | Abhaken, Fristen, Status (offen, pünktlich, verspätet, getauscht, verpasst, „Bleibt unerledigt“), Tausch zweier Aufgaben innerhalb einer Auslosung |
 | Historie | Runden mit Zuteilungen, Chance, Status, Filter, CSV-Export |
 | Statistik | KPIs, Punkte vs. fairer Anteil, Erledigungsquote pro Woche, Matrix Aufgabe × Person, Glückspilz/Pechvogel |
 | HA-Integration | Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen, Frontend-Panel in der Seitenleiste |
@@ -120,7 +120,7 @@ Nur Pakete und Schlüsseldateien; die vollständige Modulliste mit Verantwortung
 custom_components/task_wheel/
 ├── __init__.py              # Einstieg: async_setup_entry / async_unload_entry
 ├── manifest.json
-├── config_flow.py           # Einzelinstanz, Optionen (Joker/Monat, Fairness-Fenster, Aufbewahrung)
+├── config_flow.py           # Einzelinstanz, Optionen (Joker/Monat – für später reserviert –, Fairness-Fenster, Aufbewahrung)
 ├── runtime.py               # TaskWheelData (entry.runtime_data) und compose: Objekte verdrahten
 ├── entry_lookup.py          # geladene Config Entry für Dienste und WebSocket finden
 ├── sensor.py, todo.py, button.py  # Plattform-Einstiege, reichen an entities/ durch
@@ -201,7 +201,7 @@ erDiagram
 | `TriggerConfig` | `recurring(weekdays, time, every_n_weeks \| monthly)` · `once(at, after: keep_manual \| archive \| delete)` · `manual(remind_after_days)` |
 | `Round` | `id`, `schedule_id`, `origin: auto \| manual \| service`, `started_at`, `finished_at`, `assignments` |
 | `Assignment` | `id`, `round_id`, `schedule_id` (auslosender Zeitplan), `task_id`, `person_id`, `chance` (0–1), `points`, `due_at`, `status`, `done_at`, `swap: Swap \| None` |
-| `Settings` | `jokers_per_month`, `fairness_window_days`, `history_retention_days`, `weighting`, `late_points_factor` (0–1, Standard 1,0), `missed_points_factor` (−1–0, Standard 0), `missed_grace_hours`, `panel_admin_only` (Standard aus) |
+| `Settings` | `jokers_per_month` (für später reserviert, derzeit ohne Wirkung), `fairness_window_days`, `history_retention_days`, `weighting`, `late_points_factor` (0–1, Standard 1,0), `missed_points_factor` (−1–0, Standard 0), `missed_grace_hours`, `panel_admin_only` (Standard aus) |
 
 ### 4.1 Speicher
 
@@ -299,18 +299,30 @@ Aufgaben an dieselbe Person verteilt. Aufwand pro Runde: `O(Aufgaben × Personen
 | offen → verspätet | `complete` nach `due_at` | Punkte × `late_points_factor` (einstellbar, Standard 1,0) |
 | offen → verpasst | täglicher Lauf nach `due_at + missed_grace_hours` | Punkte × `missed_points_factor` (einstellbar, Standard 0; negativ = Abzug) |
 | offen/getauscht → bleibt unerledigt | `skip` (Knopf „Bleibt unerledigt“, mit Rückfrage) | Punkte wie verpasst; in der Statistik zählt die Zuteilung als nicht erledigt (Erledigungsquote, Kennzahl „Verpasst“, Zuverlässigkeit), in der Historie bleibt sie als eigener Status sichtbar |
-| offen → getauscht | `swap` mit Joker | neue Person übernimmt, Punkte gehen an sie, Joker −1 |
+| offen → getauscht | `swap` (echter Tausch, beide Zuteilungen) | die beiden Personen tauschen ihre Aufgaben, die Punkte gehen mit der Aufgabe, beide Zuteilungen haben danach den Status getauscht |
 
-Tausch ist nur innerhalb derselben Auslosung möglich (die neue Person hat in der Runde selbst eine Zuteilung, sonst `swap_person_not_in_round`) und nur, wenn die Aufgabe `swap_allowed` hat, die neue Person die Aufgabe laut Regel bekommen
-dürfte (erlaubt, nicht pausiert, mit ausreichender Belastbarkeit, anwesend) und die abgebende Person im laufenden Monat noch Joker hat.
+**Tausch (Entscheidung des Eigentümers, 2026-11-04):** Der Tausch ist ein **echter Tausch Aufgabe gegen Aufgabe** innerhalb einer Auslosung:
+Hat Ana das Bad und Ben die Küche und tauscht Ana mit Ben, hat Ana danach die Küche und Ben das Bad. Jede Person behält je Runde genau
+eine Aufgabe (der frühere Stand, der nur Anas Aufgabe an Ben übergab, sodass Ben zwei hatte, entfällt). `SwapService.swap(assignment_id,
+to_person_id, now)` spricht weiter mit der Zielperson: Die **Gegenzuteilung** ist die offene Zuteilung (Status `open`) der Zielperson in
+derselben Runde; hat sie mehrere (nur mit Altdaten möglich), gilt die mit der frühesten Frist, hat sie keine, lehnt der Dienst mit
+`swap_person_has_no_open_assignment` ab (das gilt auch für Personen, die in der Runde gar keine Zuteilung haben, und für erledigte,
+verpasste, getauschte oder übersprungene Gegenstücke). Geprüft wird **in beiden Richtungen** (eine Funktion, zweimal angewandt): die Aufgabe
+muss `swap_allowed` haben, die Person, die sie bekommt, muss sie laut Regel bekommen dürfen (erlaubt, nicht pausiert, mit ausreichender
+Belastbarkeit, bis zur Frist anwesend), und es muss eine andere Person sein (`swap_same_person`). Beide Zuteilungen bekommen den Status
+`swapped`, wechseln die Person und je einen `Swap`-Vermerk (von, an, wann); sie werden **atomar** gemeinsam gespeichert
+(`store_assignments`), die Aggregate der Statistik folgen beiden Änderungen, und beide Zuteilungen lösen das Event `assignment_swapped`
+(`task_wheel_swapped`, je Zuteilung mit abgebender Person; Entitäten beider Personen aktualisieren sich, jede Person erhält eine
+Benachrichtigung über ihre neue Aufgabe). Eine getauschte Zuteilung lässt sich nicht noch einmal tauschen (Doppeltausch verboten) und zählt
+nicht als Gegenstück. Der Tausch hat **nichts mit Jokern zu tun**: Es gibt weder eine Prüfung noch einen Zähler noch eine Anzeige; die
+Einstellung `jokers_per_month` (Options Flow, `Settings`, Speicherstand) bleibt für später reserviert und wirkt derzeit nicht.
 Ist eine Aufgabe in mehreren Zeitplänen, kann sie mehrfach ausgelost werden (auch an dieselbe Person); jede Zuteilung kennt ihren Zeitplan und wird einzeln erledigt. Die Häufigkeitsregeln zählen Zuteilungen je Aufgabe über alle Zeitpläne.
 Statusübergänge sind eine Tabelle `dict[(Status, Aktion), Status]` – keine Verzweigungsketten.
 
 **Auslosung löschen** (`round/delete`, nur Administratoren): nur solange **keine** Zuteilung der Runde erledigt (pünktlich
 oder verspätet) ist, sonst `round_has_done_assignments`. Die Runde verschwindet mit allen ihren Zuteilungen aus Historie und
 Verlauf; die Monatsaggregate (Anzahl und Punkte) werden um genau diese Zuteilungen verringert, die Statistik sieht die Runde
-danach nicht mehr. Getauschte Zuteilungen zählen ihre Joker nicht mehr mit, weil die Joker aus den Zuteilungen gezählt
-werden. Entitäten der betroffenen Personen und des Zeitplans werden aktualisiert. Das Panel sperrt den Knopf mit Begründung,
+danach nicht mehr. Entitäten der betroffenen Personen und des Zeitplans werden aktualisiert. Das Panel sperrt den Knopf mit Begründung,
 sobald eine Aufgabe erledigt ist, und fragt sonst vor dem Löschen nach.
 
 ### 5.5 Zeitpläne
@@ -336,7 +348,7 @@ Integration vollständig abgemeldet. Zeitzone ist die von HA (`dt_util`).
 |---|---|---|
 | `task_wheel.draw` | `schedule` (Slug oder ID), optional `animate_on` | Runde ohne Panel ziehen; mit `animate_on` wird zusätzlich ein Event für eine Anzeige gefeuert |
 | `task_wheel.complete` | `assignment_id` oder `person` + `task` | Zuteilung erledigen |
-| `task_wheel.swap` | `assignment_id`, `to_person` | Tausch mit Joker |
+| `task_wheel.swap` | `assignment_id`, `to_person` | Tausch gegen die offene Zuteilung von `to_person` |
 | `task_wheel.set_absence` | `person`, `start`, `end` | Einmalige Abwesenheit (z. B. aus Kalender-Automation) |
 
 Alle Dienste haben voluptuous-Schemas, unbekannte Felder werden abgelehnt. Fehler werden als
@@ -389,7 +401,7 @@ letzte Aufgabe eines Zeitplans), bekommt `in_use`; sonst wird es aus den Verweis
 „Auslosen“ und das Abhaken in der To-do-Liste (Aufrufe ohne Benutzer, etwa aus Automationen, bleiben erlaubt). Wird die Einstellung
 aktiviert, werden bestehende Abonnements abgemeldet, und der Seitenleisteneintrag folgt der Einstellung ohne Neustart.
 
-`snapshot` und die Antwort auf `subscribe` enthalten `persons` (mit `jokers_left`), `tasks`, `schedules` (mit
+`snapshot` und die Antwort auf `subscribe` enthalten `persons`, `tasks`, `schedules` (mit
 `next_run`), die offenen `assignments`, die offenen `panel_rounds`, `settings` und `now`. Ein Delta nennt je
 Sammlung `{upsert: […], remove: [ids]}` und bei Änderung die gesamten `settings`.
 
@@ -487,7 +499,7 @@ Befunde der Stufe hoch oder mittel: **keine offen.**
 ## 11. Festgelegte Annahmen (bestätigt von Anton am 2026-11-03)
 
 1. Anwesenheit im Fristfenster: Eine Person ist Kandidat, wenn sie an **mindestens einem Tag** zwischen Auslosung und Frist da ist.
-2. Joker werden **pro Kalendermonat** zurückgesetzt, Anzahl global einstellbar (Standard 2).
+2. ~~Joker werden pro Kalendermonat zurückgesetzt~~ – abgelöst am 2026-11-04: Der Tausch ist ein echter Tausch ohne Joker (§5.4); die Einstellung `jokers_per_month` bleibt für später reserviert.
 3. Punkte für verspätete und verpasste Aufgaben sind **einstellbar** (Options Flow: `late_points_factor`, `missed_points_factor`, `missed_grace_hours`); Standard: verspätet volle Punkte, verpasst keine. Grenzen der Faktoren stehen in `const/limits.py`.
 4. Panel ist für alle angemeldeten Benutzer sichtbar, Konfiguration nur für Admins.
 5. `animate_on` im Dienst feuert ein Event für eine spätere optionale Lovelace-Karte; im ersten Release ohne eigene Karte.

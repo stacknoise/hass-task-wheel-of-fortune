@@ -203,7 +203,7 @@ export class ApiClient {
     });
   }
 
-  /** Tauscht die Zuteilung gegen einen Joker auf eine andere Person. */
+  /** Tauscht die Zuteilung gegen die offene Zuteilung der Zielperson (gleiche Auslosung). */
   swap(assignmentId: string, toPersonId: string): Promise<WireObject> {
     return this.#hass.callWS<WireObject>({
       type: WS_ASSIGNMENT_SWAP,

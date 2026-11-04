@@ -5,15 +5,19 @@ import datetime as dt
 import pytest
 
 from custom_components.task_wheel.application.assignment_service import AssignmentService
+from custom_components.task_wheel.application.protocols import NoEvents
 from custom_components.task_wheel.application.statistics_service import StatisticsService
 from custom_components.task_wheel.application.swap_service import SwapService
 from custom_components.task_wheel.const import keys
 from custom_components.task_wheel.domain.enums import AssignmentStatus as S
+from custom_components.task_wheel.domain.enums import Load
 from custom_components.task_wheel.domain.errors import (
     InvalidTransitionError,
     NotFoundError,
     SwapRejectedError,
 )
+from custom_components.task_wheel.domain.models import Swap
+from custom_components.task_wheel.domain.statistics.aggregate import recompute
 from custom_components.task_wheel.infrastructure.repository.config_store import ConfigStore
 from custom_components.task_wheel.infrastructure.repository.history_store import HistoryStore
 from custom_components.task_wheel.infrastructure.repository.memory import MemoryStore
@@ -104,7 +108,7 @@ def test_daily_run_marks_only_after_grace() -> None:
 
 def test_daily_run_includes_swapped_assignments() -> None:
     world = World(missed_grace_hours=0)
-    world.add_round(_open())
+    world.history.put_round(f.finished_round(assignments=(_open(), _open("a2", person_id="p2"))))
     world.swaps.swap("a1", "p2", f.NOW)
     assert world.assignments.mark_missed(DUE + DAY)[0].status is S.MISSED
 
@@ -117,81 +121,164 @@ def test_points_use_configured_factors() -> None:
     assert world.assignments.points(missed[0]) == -4
 
 
-def test_swap_moves_points_to_receiver_and_uses_joker() -> None:
-    world = World(jokers_per_month=2)
-    world.add_round(_open(points=3))
-    assert world.swaps.jokers_left("p1", f.NOW) == 2
+def _swap_round(world: World, *assignments: object) -> None:
+    """Runde mit Bad (t1, p1) und Küche (t2, p2) als offene Zuteilungen, Aufgaben für alle."""
+    world.config.put_task(f.task(id="t2", allowed=frozenset({"p1", "p2", "p3"})))
+    world.history.put_round(f.finished_round(assignments=assignments))  # type: ignore[arg-type]
+    world.statistics.record_round(world.history.rounds["r1"])
+
+
+def _kitchen(ident: str = "a2", **overrides: object):
+    return _open(ident, person_id="p2", task_id="t2", **overrides)
+
+
+def test_swap_exchanges_both_assignments_and_points() -> None:
+    world = World()
+    _swap_round(world, _open(points=3), _kitchen(points=8))
     swapped = world.swaps.swap("a1", "p2", f.NOW)
     assert (swapped.status, swapped.person_id) == (S.SWAPPED, "p2")
+    other = world.stored("a2")
+    assert (other.status, other.person_id) == (S.SWAPPED, "p1")  # type: ignore[union-attr]
+    assert world.stored("a1").swap == Swap(from_person_id="p1", to_person_id="p2", at=f.NOW)
+    assert other.swap == Swap(from_person_id="p2", to_person_id="p1", at=f.NOW)  # type: ignore[union-attr]
+    assert world.history.open_assignments("p1") == (other,)
     assert world.history.open_assignments("p2") == (swapped,)
-    assert world.history.open_assignments("p1") == ()
-    assert world.swaps.jokers_left("p1", f.NOW) == 1
-    assert world.swaps.jokers_left("p2", f.NOW) == 2
     done = world.assignments.complete("a1", f.NOW)
     assert (done.person_id, world.assignments.points(done)) == ("p2", 3)
+    done_other = world.assignments.complete("a2", f.NOW)
+    assert (done_other.person_id, world.assignments.points(done_other)) == ("p1", 8)
 
 
-def test_swap_fails_without_jokers_and_changes_nothing() -> None:
-    world = World(jokers_per_month=1)
-    world.add_round(_open(), _open("a2"))
+def test_each_person_keeps_exactly_one_task_per_round() -> None:
+    world = World()
+    _swap_round(world, _open(), _kitchen())
     world.swaps.swap("a1", "p2", f.NOW)
+    holders = sorted(item.person_id for item in world.history.rounds["r1"].assignments)
+    assert holders == ["p1", "p2"]
+
+
+def test_swap_keeps_statistics_equal_to_recomputation() -> None:
+    world = World()
+    _swap_round(world, _open(points=3), _kitchen(points=8))
+    world.swaps.swap("a1", "p2", f.NOW)
+    world.assignments.complete("a1", f.NOW)
+    assert dict(world.history.aggregates) == recompute(world.history.rounds.values())
+    assert world.history.aggregates["2026-11"]["p2"]["t1"] == {"on_time": [1, 3]}
+    assert world.history.aggregates["2026-11"]["p1"]["t2"] == {"swapped": [1, 8]}
+
+
+def test_swap_fires_event_for_both_assignments() -> None:
+    world = World()
+    events = _Events()
+    swaps = SwapService(world.config, world.history, world.statistics, events)
+    _swap_round(world, _open(), _kitchen())
+    swaps.swap("a1", "p2", f.NOW)
+    assert [(item.id, item.person_id) for item in events.swapped] == [("a1", "p2"), ("a2", "p1")]
+
+
+class _Events(NoEvents):
+    def __init__(self) -> None:
+        self.swapped: list[object] = []
+
+    def assignment_swapped(self, assignment: object) -> None:
+        self.swapped.append(assignment)
+
+
+def test_swap_with_earliest_open_assignment_of_target() -> None:
+    world = World()
+    _swap_round(world, _open(), _kitchen(due_at=DUE + DAY), _kitchen("a3", due_at=DUE - DAY))
+    world.swaps.swap("a1", "p2", f.NOW)
+    assert world.stored("a3").person_id == "p1"  # type: ignore[union-attr]
+    assert world.stored("a2").person_id == "p2"  # type: ignore[union-attr]
+
+
+@pytest.mark.parametrize("state", [S.ON_TIME, S.MISSED, S.SWAPPED])
+def test_swap_needs_open_counterpart(state: S) -> None:
+    world = World()
+    done_at = f.NOW if state is S.ON_TIME else None
+    _swap_round(world, _open(), _kitchen(status=state, done_at=done_at))
     with pytest.raises(SwapRejectedError) as caught:
-        world.swaps.swap("a2", "p3", f.NOW)
-    assert caught.value.key == keys.ERR_NO_JOKERS
-    assert world.stored("a2").status is S.OPEN  # type: ignore[union-attr]
+        world.swaps.swap("a1", "p2", f.NOW)
+    assert caught.value.key == keys.ERR_SWAP_NO_OPEN_ASSIGNMENT
+    assert world.stored("a1").status is S.OPEN  # type: ignore[union-attr]
 
 
-def test_jokers_reset_at_start_of_next_month() -> None:
-    world = World(jokers_per_month=1)
-    started = dt.datetime(2026, 11, 20, tzinfo=f.TZ)
-    world.add_round(
-        _open(due_at=started + 30 * DAY), _open("a2", due_at=started + 30 * DAY), started=started
+def test_swap_only_within_the_same_round() -> None:
+    world = World()
+    world.config.put_task(f.task(id="t2", allowed=frozenset({"p1", "p2", "p3"})))
+    world.history.put_round(f.finished_round(assignments=(_open(),)))
+    world.history.put_round(
+        f.finished_round(id="r2", assignments=(_kitchen(round_id="r2"),))  # type: ignore[arg-type]
     )
-    world.swaps.swap("a1", "p2", dt.datetime(2026, 11, 28, 12, tzinfo=f.TZ))
-    assert world.swaps.jokers_left("p1", dt.datetime(2026, 11, 30, 23, 59, tzinfo=f.TZ)) == 0
-    december = dt.datetime(2026, 12, 1, 0, 1, tzinfo=f.TZ)
-    assert world.swaps.jokers_left("p1", december) == 1
-    assert world.swaps.swap("a2", "p3", december).person_id == "p3"
+    with pytest.raises(SwapRejectedError) as caught:
+        world.swaps.swap("a1", "p2", f.NOW)
+    assert caught.value.key == keys.ERR_SWAP_NO_OPEN_ASSIGNMENT
+    assert world.stored("a1").status is S.OPEN  # type: ignore[union-attr]
 
 
-def test_swap_rejections_leave_assignment_unchanged() -> None:
+def test_swap_twice_is_forbidden() -> None:
+    world = World()
+    _swap_round(world, _open(), _kitchen(), _open("a3", person_id="p3"))
+    world.swaps.swap("a1", "p2", f.NOW)
+    with pytest.raises(InvalidTransitionError):
+        world.swaps.swap("a1", "p3", f.NOW)
+    with pytest.raises(SwapRejectedError):  # a2 ist getauscht, also kein offenes Gegenstück
+        world.swaps.swap("a3", "p1", f.NOW)
+
+
+def test_swap_rejected_when_counter_task_disallows_requester() -> None:
+    world = World()
+    world.config.put_task(f.task(id="t2", allowed=frozenset({"p2", "p3"})))
+    world.history.put_round(f.finished_round(assignments=(_open(), _kitchen())))
+    with pytest.raises(SwapRejectedError) as caught:
+        world.swaps.swap("a1", "p2", f.NOW)
+    assert caught.value.key == keys.ERR_SWAP_NOT_ALLOWED
+    assert (world.stored("a1").status, world.stored("a2").status) == (S.OPEN, S.OPEN)  # type: ignore[union-attr]
+
+
+def test_swap_rejected_when_counter_task_is_not_swappable() -> None:
+    world = World()
+    world.config.put_task(f.task(id="t2", allowed=frozenset({"p1", "p2"}), swap_allowed=False))
+    world.history.put_round(f.finished_round(assignments=(_open(), _kitchen())))
+    with pytest.raises(SwapRejectedError) as caught:
+        world.swaps.swap("a1", "p2", f.NOW)
+    assert caught.value.key == keys.ERR_SWAP_DISABLED
+
+
+def test_swap_rejected_when_requester_is_paused() -> None:
+    world = World()
+    world.config.put_person(f.person(id="p1", slug="p1", name="p1", absences=(), load=Load.PAUSED))
+    _swap_round(world, _open(), _kitchen())
+    with pytest.raises(SwapRejectedError) as caught:
+        world.swaps.swap("a1", "p2", f.NOW)
+    assert caught.value.key == keys.ERR_SWAP_PAUSED
+    assert world.stored("a2").person_id == "p2"  # type: ignore[union-attr]
+
+
+def test_swap_rejections_leave_assignments_unchanged() -> None:
     world = World()
     world.config.put_task(f.task(id="t2", allowed=frozenset({"p1"}), swap_allowed=False))
-    world.add_round(_open(), _open("a2", task_id="t2"))
+    world.history.put_round(f.finished_round(assignments=(_open(), _kitchen())))
     with pytest.raises(SwapRejectedError) as disabled:
-        world.swaps.swap("a2", "p2", f.NOW)
+        world.swaps.swap("a2", "p1", f.NOW)
     assert disabled.value.key == keys.ERR_SWAP_DISABLED
-    with pytest.raises(SwapRejectedError):
+    with pytest.raises(SwapRejectedError) as same:
         world.swaps.swap("a1", "p1", f.NOW)
+    assert same.value.key == keys.ERR_SWAP_SAME_PERSON
     assert world.stored("a2").status is S.OPEN  # type: ignore[union-attr]
 
 
 def test_swap_validation_errors() -> None:
     world = World()
-    world.add_round(_open(), _open("a2", task_id="gone"))
+    _swap_round(world, _open(), _kitchen(), _open("a3", task_id="gone", person_id="p3"))
     with pytest.raises(NotFoundError):
         world.swaps.swap("nope", "p2", f.NOW)
     with pytest.raises(NotFoundError):
-        world.swaps.swap("a2", "p2", f.NOW)
+        world.swaps.swap("a3", "p2", f.NOW)
     with pytest.raises(NotFoundError):
         world.swaps.swap("a1", "ghost", f.NOW)
-    world.swaps.swap("a1", "p2", f.NOW)
-    with pytest.raises(InvalidTransitionError):
+    with pytest.raises(NotFoundError):  # Aufgabe des Gegenstücks fehlt
         world.swaps.swap("a1", "p3", f.NOW)
-
-
-def test_swap_only_with_persons_of_the_same_round() -> None:
-    world = World()
-    world.history.put_round(
-        f.finished_round(
-            assignments=(_open(), _open("a2", person_id="p2")),
-        )
-    )
-    with pytest.raises(SwapRejectedError) as caught:
-        world.swaps.swap("a1", "p3", f.NOW)
-    assert caught.value.key == keys.ERR_SWAP_NOT_IN_ROUND
-    assert world.stored("a1").status is S.OPEN  # type: ignore[union-attr]
-    assert world.swaps.swap("a1", "p2", f.NOW).person_id == "p2"
 
 
 def test_skip_marks_assignment_and_counts_like_missed() -> None:
@@ -208,7 +295,7 @@ def test_skip_marks_assignment_and_counts_like_missed() -> None:
 
 def test_skip_swapped_assignment_and_rejects_closed_ones() -> None:
     world = World()
-    world.add_round(_open(), _open("a2"))
+    world.history.put_round(f.finished_round(assignments=(_open(), _open("a2", person_id="p2"))))
     world.swaps.swap("a1", "p2", f.NOW)
     assert world.assignments.skip("a1").status is S.SKIPPED
     world.assignments.complete("a2", f.NOW)

@@ -9,13 +9,11 @@ from ..const.keys import (
     WIRE_ASSIGNMENTS,
     WIRE_DONE,
     WIRE_EXPIRES_AT,
-    WIRE_JOKERS_LEFT,
     WIRE_NEXT_RUN,
     WIRE_NOW,
     WIRE_ORIGIN,
     WIRE_PANEL_ROUNDS,
     WIRE_PENDING,
-    WIRE_PERSON_IDS,
     WIRE_PERSONS,
     WIRE_REMOVE,
     WIRE_RESULTS,
@@ -34,7 +32,6 @@ from .draw_service import DrawService, PanelRound
 from .history_service import HistoryEntry
 from .protocols import ConfigRepository, HistoryRepository
 from .schedule_service import ScheduleService
-from .swap_service import SwapService
 from .wire import Json, to_json, to_wire
 
 KEY_ID: Final = "id"
@@ -89,7 +86,6 @@ def round_head(round_: Round) -> Json:
         WIRE_ORIGIN: round_.origin.value,
         WIRE_STARTED_AT: round_.started_at.isoformat(),
         WIRE_TOTAL: len(round_.assignments),
-        WIRE_PERSON_IDS: sorted({item.person_id for item in round_.assignments}),
         WIRE_DONE: sum(item.status in DONE_STATUSES for item in round_.assignments),
     }
 
@@ -102,14 +98,12 @@ class SnapshotBuilder:
         config: ConfigRepository,
         history: HistoryRepository,
         draws: DrawService,
-        swaps: SwapService,
         schedules: ScheduleService,
     ) -> None:
         """Hält die Quellen der Ansicht."""
         self._config = config
         self._history = history
         self._draws = draws
-        self._swaps = swaps
         self._schedules = schedules
 
     def build(self, now: dt.datetime) -> Snapshot:
@@ -117,7 +111,7 @@ class SnapshotBuilder:
         config = self._config
         open_items = self._open_assignments()
         collections = {
-            WIRE_PERSONS: _by_id(self._persons(now)),
+            WIRE_PERSONS: _by_id([to_json(item) for item in config.persons.values()]),
             WIRE_TASKS: _by_id([to_json(item) for item in config.tasks.values()]),
             WIRE_SCHEDULES: _by_id(
                 [self._schedule(item, now) for item in config.schedules.values()]
@@ -142,14 +136,6 @@ class SnapshotBuilder:
         """Kopf der Runden mit offenen Zuteilungen (Zeitplan, Beginn, Zahl der erledigten)."""
         return [
             round_head(round_) for round_ in self._history.rounds.values() if round_.id in open_ids
-        ]
-
-    def _persons(self, now: dt.datetime) -> list[Json]:
-        """Die Personen samt verbleibenden Jokern im laufenden Monat (Zähler einmal für alle)."""
-        persons = self._config.persons
-        left = self._swaps.jokers_left_for(persons, now)
-        return [
-            {**to_json(person), WIRE_JOKERS_LEFT: left[person.id]} for person in persons.values()
         ]
 
     def _schedule(self, schedule: Schedule, now: dt.datetime) -> Json:

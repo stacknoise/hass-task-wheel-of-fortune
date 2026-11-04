@@ -118,7 +118,7 @@ def _complete(data: TaskWheelData, call: Mapping[str, Any], now: dt.datetime) ->
 
 
 def _swap(data: TaskWheelData, call: Mapping[str, Any], now: dt.datetime) -> None:
-    """Tauscht die Zuteilung gegen einen Joker."""
+    """Tauscht die Zuteilung gegen die offene Zuteilung der Zielperson."""
     receiver = _person(data, call[ATTR_TO_PERSON])
     data.swaps.swap(call[ATTR_ASSIGNMENT_ID], receiver.id, now)
 

@@ -1,10 +1,12 @@
 """Aufbau für Tests der Panel-API ohne Home Assistant (echte Dienste, Speicher im RAM)."""
 
 import datetime as dt
+from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
 from custom_components.task_wheel.application.notification_service import NotificationService
+from custom_components.task_wheel.domain.enums import AssignmentStatus
 from custom_components.task_wheel.domain.models import EveryRound, ManualTrigger
 from custom_components.task_wheel.infrastructure.repository.config_store import ConfigStore
 from custom_components.task_wheel.infrastructure.repository.history_store import HistoryStore
@@ -74,3 +76,12 @@ class Api:
     def advance(self, **delta: float) -> None:
         """Schiebt die Uhr vor."""
         self.now += dt.timedelta(**delta)
+
+    def open_partner(self) -> None:
+        """Macht `a2` (p2) zur offenen Zuteilung, damit p1 mit p2 tauschen kann."""
+        round_ = self.history.rounds["r1"]
+        assignments = tuple(
+            replace(item, status=AssignmentStatus.OPEN, swap=None) if item.id == "a2" else item
+            for item in round_.assignments
+        )
+        self.history.put_round(replace(round_, assignments=assignments))

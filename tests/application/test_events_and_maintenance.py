@@ -66,13 +66,22 @@ def test_failed_complete_fires_nothing() -> None:
     assert world.events.completed == []
 
 
-def test_swap_fires_event_with_giver() -> None:
+def _swap_world() -> EventWorld:
     world = EventWorld()
-    world.add_round(_open(person_id="p1"))
+    world.history.put_round(
+        f.finished_round(assignments=(_open(person_id="p1"), _open("a2", person_id="p2")))
+    )
+    return world
+
+
+def test_swap_fires_event_per_assignment_with_giver() -> None:
+    world = _swap_world()
     swapped = world.swaps.swap("a1", "p2", f.NOW)
-    assert world.events.swapped == [swapped]
-    assert swapped.swap is not None
-    assert swapped.swap.from_person_id == "p1"
+    assert world.events.swapped == [swapped, world.history.get_assignment("a2")]
+    assert [(item.person_id, item.swap.from_person_id) for item in world.events.swapped] == [  # type: ignore[union-attr]
+        ("p2", "p1"),
+        ("p1", "p2"),
+    ]
 
 
 def test_mark_missed_fires_event_per_assignment() -> None:
@@ -95,8 +104,7 @@ def test_find_open_unknown_raises() -> None:
 
 
 def test_payloads_contain_names_and_ids_only() -> None:
-    world = EventWorld()
-    world.add_round(_open(person_id="p1"))
+    world = _swap_world()
     swapped = world.swaps.swap("a1", "p2", f.NOW)
     data = payloads.swapped_payload(world.config, swapped)
     assert data[ATTR_FROM_PERSON_ID] == "p1"

@@ -127,14 +127,15 @@ async def test_swap_updates_both_persons(hass: HomeAssistant) -> None:
     round_ = next(iter(data.history.rounds.values()))
     (assignment,) = round_.assignments
     partner = f.assignment(
-        id="partner", round_id=round_.id, person_id=other, status=AssignmentStatus.MISSED
-    )  # getauscht wird nur innerhalb einer Auslosung
+        id="partner", round_id=round_.id, person_id=other, task_id=assignment.task_id
+    )  # Gegenstück: getauscht wird nur innerhalb einer Auslosung
     data.history.put_round(replace(round_, assignments=(assignment, partner)))
     await hass.services.async_call(
         DOMAIN, "swap", {"assignment_id": assignment.id, "to_person": other}, blocking=True
     )
     await hass.async_block_till_done()
-    assert _state(hass, "sensor", owner, KEY_SENSOR_OPEN) == "0"
+    assert data.history.get_assignment(partner.id).person_id == owner  # type: ignore[union-attr]
+    assert _state(hass, "sensor", owner, KEY_SENSOR_OPEN) == "1"
     assert _state(hass, "sensor", other, KEY_SENSOR_OPEN) == "1"
 
 

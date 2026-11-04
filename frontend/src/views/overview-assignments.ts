@@ -13,7 +13,7 @@ import type { AreaNames } from '../state/index.ts';
 import { roomTags } from './room.ts';
 import { canSwap, swapTargets } from './overview-model.ts';
 import { roundDelete } from './round-delete.ts';
-import type { AssignmentGroup } from './overview-model.ts';
+import type { AssignmentGroup, SwapTarget } from './overview-model.ts';
 
 export interface AssignmentHandlers {
   readonly deleteRound: (roundId: string) => void;
@@ -41,25 +41,53 @@ type Translate = (key: TextKey, params?: TextParams) => string;
 
 function swapHint(
   task: TaskObject | undefined,
-  person: PersonObject | undefined,
+  assignment: AssignmentObject,
   text: Translate,
 ): string {
   if (!task?.swap_allowed) {
     return text('overview.swapDisabled');
   }
-  return (person?.jokers_left ?? 0) > 0
-    ? text('overview.jokers', { count: person?.jokers_left ?? 0 })
-    : text('overview.noJokers');
+  return assignment.status === STATUS.open ? '' : text('overview.swapDone');
+}
+
+function swapTargetButton(
+  assignment: AssignmentObject,
+  target: SwapTarget,
+  context: AssignmentsContext,
+  text: Translate,
+): TemplateResult {
+  return html`
+    <button
+      type="button"
+      class="action"
+      ?disabled=${context.busy}
+      @click=${() => {
+        context.handlers.swap(assignment.id, target.person.id);
+      }}
+    >
+      <tw-avatar name=${target.person.name} color=${target.person.color}></tw-avatar>
+      ${text('overview.swapTarget', {
+        person: target.person.name,
+        task: target.task?.name ?? text('common.unknownTask'),
+      })}
+    </button>
+  `;
 }
 
 function swapChoice(
   assignment: AssignmentObject,
   context: AssignmentsContext,
-  roundPersonIds: readonly string[],
+  roundAssignments: readonly AssignmentObject[],
   text: Translate,
 ): TemplateResult {
   const task = context.taskById.get(assignment.task_id);
-  const targets = swapTargets(assignment, task, context.persons, roundPersonIds);
+  const targets = swapTargets(
+    assignment,
+    task,
+    roundAssignments,
+    context.persons,
+    context.taskById,
+  );
   return html`
     <div class="row swap" role="group" aria-label=${text('overview.swapWith')}>
       <span class="muted">${text('overview.swapWith')}</span>
@@ -68,19 +96,8 @@ function swapChoice(
           ? html`<span class="muted">${text('overview.noTargets')}</span>`
           : repeat(
               targets,
-              (target) => target.id,
-              (target) => html`
-                <button
-                  type="button"
-                  class="action"
-                  ?disabled=${context.busy}
-                  @click=${() => {
-                    context.handlers.swap(assignment.id, target.id);
-                  }}
-                >
-                  <tw-avatar name=${target.name} color=${target.color}></tw-avatar> ${target.name}
-                </button>
-              `,
+              (target) => target.person.id,
+              (target) => swapTargetButton(assignment, target, context, text),
             )
       }
       <button
@@ -103,7 +120,6 @@ function rowActions(
   context: AssignmentsContext,
   text: Translate,
 ): TemplateResult {
-  const person = context.personById.get(assignment.person_id);
   const task = context.taskById.get(assignment.task_id);
   const items: readonly ActionItem[] = [
     {
@@ -115,8 +131,8 @@ function rowActions(
     {
       id: ACTION.swap,
       label: text('overview.swap'),
-      title: swapHint(task, person, text),
-      disabled: !canSwap(task, person),
+      title: swapHint(task, assignment, text),
+      disabled: !canSwap(task, assignment),
     },
     {
       id: ACTION.skip,
@@ -162,7 +178,7 @@ function rowMeta(
 function assignmentRow(
   assignment: AssignmentObject,
   context: AssignmentsContext,
-  roundPersonIds: readonly string[],
+  roundAssignments: readonly AssignmentObject[],
   text: Translate,
 ): TemplateResult {
   const person = context.personById.get(assignment.person_id);
@@ -192,7 +208,7 @@ function assignmentRow(
       </div>
       ${
         context.swapOpen === assignment.id
-          ? swapChoice(assignment, context, roundPersonIds, text)
+          ? swapChoice(assignment, context, roundAssignments, text)
           : nothing
       }
     </li>
@@ -246,7 +262,7 @@ export function assignmentGroups(context: AssignmentsContext): TemplateResult {
           ${repeat(
             group.assignments,
             (assignment) => assignment.id,
-            (assignment) => assignmentRow(assignment, context, group.round?.person_ids ?? [], text),
+            (assignment) => assignmentRow(assignment, context, group.assignments, text),
           )}
         </ul>
       </section>

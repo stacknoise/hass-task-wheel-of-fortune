@@ -49,7 +49,7 @@ def _skip(request: Request) -> Reply:
 
 
 def _swap(request: Request) -> Reply:
-    """Tauscht die Zuteilung gegen einen Joker."""
+    """Tauscht die Zuteilung gegen die offene Zuteilung der Zielperson."""
     params = request.params
     swapped = request.data.swaps.swap(
         params[WS_FIELD_ASSIGNMENT_ID], params[WS_FIELD_TO_PERSON_ID], request.now

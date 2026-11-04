@@ -26,7 +26,7 @@
           "panel_admin_only": "Panel for administrators only"
         },
         "data_description": {
-          "jokers_per_month": "How often a person may swap a task per calendar month.",
+          "jokers_per_month": "Reserved for later, currently without effect.",
           "fairness_window_days": "How far back points count for the fair weighting.",
           "history_retention_days": "How long rounds stay in the history; monthly statistics are kept.",
           "late_points_factor": "Share of the points for tasks completed late (0 to 1).",
@@ -96,7 +96,7 @@
     },
     "swap": {
       "name": "Swap",
-      "description": "Hands an open assignment to another person using a swap.",
+      "description": "Swaps an open assignment for the open assignment of another person in the same draw.",
       "fields": {
         "assignment_id": {
           "name": "Assignment",
@@ -153,13 +153,13 @@
       "message": "This task may not be swapped."
     },
     "swap_same_person": {
-      "message": "The task already belongs to this person."
+      "message": "A task cannot be swapped with oneself."
     },
     "swap_person_not_allowed": {
       "message": "The person may not take over this task."
     },
-    "swap_person_not_in_round": {
-      "message": "Swaps are only possible with people from the same draw."
+    "swap_person_has_no_open_assignment": {
+      "message": "The person has no open task to swap in this draw."
     },
     "swap_person_paused": {
       "message": "The person is paused."
@@ -172,9 +172,6 @@
     },
     "round_has_done_assignments": {
       "message": "The draw cannot be deleted: {done} tasks are already done."
-    },
-    "no_jokers_left": {
-      "message": "No swaps are left."
     },
     "schedule_disabled": {
       "message": "The schedule is paused."
