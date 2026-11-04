@@ -65,4 +65,20 @@ describe('tw-stage', () => {
     await stage.spinTo('b');
     expect(stopped).toHaveBeenCalledOnce();
   });
+
+  it('endet auch dann, wenn die Animation abgebrochen wird', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: false }));
+    const stage = await mount('spotlight');
+    const inner = stage.shadowRoot?.firstElementChild as HTMLElement & {
+      spinTo(id: string): Promise<void>;
+      segments: unknown;
+    };
+    const stopped = vi.fn();
+    inner.addEventListener('tw-wheel-stop', stopped);
+    const spin = inner.spinTo('b');
+    await Promise.resolve();
+    inner.segments = [...SEGMENTS];
+    await expect(spin).resolves.toBeUndefined();
+    expect(stopped).not.toHaveBeenCalled();
+  });
 });

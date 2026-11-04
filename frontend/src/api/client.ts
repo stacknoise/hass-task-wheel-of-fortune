@@ -52,9 +52,32 @@ import type {
 
 export type Unsubscribe = () => void;
 
+/** Ein berechneter Wert samt den Quellen (nach Identität) und der Sprache, aus denen er entstand. */
+class Memo<T> {
+  readonly #sources: readonly unknown[];
+  readonly language: string;
+  readonly value: T;
+
+  constructor(language: string, source: unknown, value: T, ...more: readonly unknown[]) {
+    this.language = language;
+    this.#sources = [source, ...more];
+    this.value = value;
+  }
+
+  matches(language: string, ...sources: readonly unknown[]): boolean {
+    return (
+      language === this.language &&
+      sources.length === this.#sources.length &&
+      sources.every((source, index) => source === this.#sources[index])
+    );
+  }
+}
+
 /** Typisierter Zugang zur WebSocket-API des Backends. */
 export class ApiClient {
   #hass: HassApi;
+  #areasCache: Memo<readonly AreaOption[]> | undefined;
+  #targetsCache: Memo<readonly NotifyTarget[]> | undefined;
 
   constructor(hass: HassApi) {
     this.#hass = hass;
@@ -65,12 +88,22 @@ export class ApiClient {
     this.#hass = hass;
   }
 
-  /** Räume aus Home Assistant (Bereiche), nach Name sortiert; ohne Namen gilt die Kennung. */
+  /**
+   * Räume aus Home Assistant (Bereiche), nach Name sortiert; ohne Namen gilt die Kennung. Solange
+   * Home Assistant dieselbe Registratur und Sprache meldet, kommt dieselbe Liste zurück.
+   */
   areas(): readonly AreaOption[] {
-    const compare = compareText(this.language());
-    return Object.entries(this.#hass.areas ?? {})
+    const language = this.language();
+    const source = this.#hass.areas;
+    if (this.#areasCache?.matches(language, source)) {
+      return this.#areasCache.value;
+    }
+    const compare = compareText(language);
+    const value = Object.entries(source ?? {})
       .map(([id, area]) => ({ id, label: typeof area.name === 'string' ? area.name : id }))
       .sort((a, b) => compare(a.label, b.label));
+    this.#areasCache = new Memo(language, source, value);
+    return value;
   }
 
   /** Sprache des Panels (Gebietsschema von Home Assistant, sonst Englisch). */
@@ -80,17 +113,25 @@ export class ApiClient {
 
   /** Benachrichtigungsziele aus Home Assistant: `notify`-Entitäten und -Dienste, sortiert. */
   notifyTargets(): readonly NotifyTarget[] {
-    const entities = Object.entries(this.#hass.states ?? {})
+    const language = this.language();
+    const { states, services } = this.#hass;
+    if (this.#targetsCache?.matches(language, states, services)) {
+      return this.#targetsCache.value;
+    }
+    const entities = Object.entries(states ?? {})
       .filter(([id]) => id.startsWith(NOTIFY_PREFIX))
       .map(([id, state]) => {
         const name = state.attributes?.friendly_name;
         return { id, label: typeof name === 'string' ? name : id };
       });
-    const services = Object.keys(this.#hass.services?.[NOTIFY_DOMAIN] ?? {})
+    const serviceTargets = Object.keys(services?.[NOTIFY_DOMAIN] ?? {})
       .filter((name) => name !== NOTIFY_SEND_MESSAGE)
       .map((name) => ({ id: `${NOTIFY_PREFIX}${name}`, label: name }));
-    const unique = new Map([...services, ...entities].map((target) => [target.id, target]));
-    return [...unique.values()].sort((a, b) => a.id.localeCompare(b.id));
+    const unique = new Map([...serviceTargets, ...entities].map((target) => [target.id, target]));
+    const compare = compareText(language);
+    const value = [...unique.values()].sort((a, b) => compare(a.id, b.id));
+    this.#targetsCache = new Memo(language, states, value, services);
+    return value;
   }
 
   /** Der aktuelle Gesamtstand. */

@@ -26,6 +26,8 @@ export class Store {
   #ready = false;
   #unwatch: Unsubscribe | undefined;
   #unsubscribe: Unsubscribe | undefined;
+  /** Zählt Ladeversuche und Beenden; ein veralteter Ladevorgang gibt sein Abonnement sofort zurück. */
+  #generation = 0;
 
   constructor(client: ApiClient) {
     this.#client = client;
@@ -54,8 +56,14 @@ export class Store {
     await this.#load();
   }
 
+  /** Lädt den Stand erneut (nach einem Fehler); ein laufender Ladevorgang wird abgelöst. */
+  async reload(): Promise<void> {
+    await this.#load();
+  }
+
   /** Beendet Abonnement und Wiederverbindungs-Beobachtung. */
   stop(): void {
+    this.#generation += 1;
     this.#unwatch?.();
     this.#unsubscribe?.();
     this.#unwatch = undefined;
@@ -64,18 +72,30 @@ export class Store {
   }
 
   async #load(): Promise<void> {
+    const generation = ++this.#generation;
     this.#ready = false;
     this.#unsubscribe?.();
+    this.#unsubscribe = undefined;
     this.#set({ status: 'loading', snapshot: this.#state.snapshot });
     try {
-      this.#unsubscribe = await this.#client.subscribe((delta) => {
+      const unsubscribe = await this.#client.subscribe((delta) => {
         this.#apply(delta);
       });
+      if (generation !== this.#generation) {
+        unsubscribe();
+        return;
+      }
+      this.#unsubscribe = unsubscribe;
       const snapshot = await this.#client.snapshot();
+      if (generation !== this.#generation) {
+        return;
+      }
       this.#ready = true;
       this.#set({ status: 'ready', snapshot: this.#sorted(snapshot) });
     } catch {
-      this.#set({ status: 'error', snapshot: this.#state.snapshot });
+      if (generation === this.#generation) {
+        this.#set({ status: 'error', snapshot: this.#state.snapshot });
+      }
     }
   }
 

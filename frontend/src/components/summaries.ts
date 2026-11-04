@@ -1,5 +1,6 @@
 import type { FrequencyKind, TriggerKind } from '../constants/index.ts';
-import { fill, translate } from '../i18n/index.ts';
+import { formatDateTime } from '../i18n/format.ts';
+import { translate } from '../i18n/index.ts';
 import type { FrequencyWire, TriggerWire } from '../state/index.ts';
 import { timeInput } from '../state/index.ts';
 import { toIds, weekdayOptions } from './options.ts';
@@ -21,17 +22,17 @@ const FREQUENCY_SUMMARIES: FrequencySummaries = {
   every_round: (_, language) => translate('frequency.summary_every_round', language),
   max_per_period: (frequency, language) =>
     frequency.every === 1
-      ? fill(translate('frequency.summary_max', language), {
+      ? translate('frequency.summary_max', language, {
           count: frequency.count,
           period: translate(`period.${frequency.period}`, language),
         })
-      : fill(translate('frequency.summary_max_span', language), {
+      : translate('frequency.summary_max_span', language, {
           count: frequency.count,
           every: frequency.every,
           period: translate(`period.${frequency.period}.plural`, language),
         }),
   interval: (frequency, language) =>
-    fill(translate('frequency.summary_interval', language), {
+    translate('frequency.summary_interval', language, {
       days: frequency.days,
       tolerance: frequency.tolerance,
     }),
@@ -40,7 +41,7 @@ const FREQUENCY_SUMMARIES: FrequencySummaries = {
 const TRIGGER_SUMMARIES: TriggerSummaries = {
   recurring: (trigger, language) => {
     const names = new Map(weekdayOptions(language).map((option) => [option.id, option.label]));
-    return fill(translate('summary.recurring', language), {
+    return translate('summary.recurring', language, {
       days: toIds(trigger.weekdays)
         .map((id) => names.get(id) ?? id)
         .join(' '),
@@ -48,8 +49,8 @@ const TRIGGER_SUMMARIES: TriggerSummaries = {
     });
   },
   once: (trigger, language) =>
-    fill(translate('summary.once', language), {
-      at: new Date(trigger.at).toLocaleString(language),
+    translate('summary.once', language, {
+      at: formatDateTime(trigger.at, language),
     }),
   manual: (_, language) => translate('summary.manual', language),
 };

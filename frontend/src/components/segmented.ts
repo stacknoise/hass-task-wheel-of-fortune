@@ -42,7 +42,7 @@ export class TwSegmented extends LitElement {
       }
       button[aria-checked='true'] {
         background: var(--tw-color-primary);
-        color: #fff;
+        color: var(--tw-color-on-primary);
       }
     `,
   ];

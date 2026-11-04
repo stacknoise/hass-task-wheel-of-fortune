@@ -18,6 +18,12 @@ export const TOKENS = {
   '--tw-color-neutral': 'var(--disabled-color, #9e9e9e)',
   '--tw-color-fill': 'var(--secondary-background-color, #e5e5e5)',
   '--tw-color-rim': '#f5c542',
+  /** Feste Farben der Bühnen (unabhängig vom Theme von Home Assistant). */
+  '--tw-color-white': '#ffffff',
+  '--tw-color-black': '#000000',
+  '--tw-color-ink': '#1f2328',
+  '--tw-color-stage': '#0a1624',
+  '--tw-glow-gold': 'rgb(245 197 66 / 70%)',
   '--tw-space-s': '8px',
   /** Einheitlicher Abstand zwischen den Feldern eines Formulars. */
   '--tw-space-field': '16px',

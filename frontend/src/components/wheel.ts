@@ -1,16 +1,15 @@
-import { LitElement, css, html, svg } from 'lit';
-import type { PropertyValues, TemplateResult } from 'lit';
+import { css, html, svg } from 'lit';
+import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
 
 import {
   COMPONENT_TAGS,
-  EVENT_WHEEL_STOP,
   MIN_LABEL_CHANCE,
-  REDUCED_MOTION_QUERY,
   SPIN_DURATION_MS,
   SPIN_EASING,
   SPIN_SETTLE_MS,
+  TRANSITION_NONE,
   WHEEL_CENTER,
   WHEEL_CHANCE_RADIUS,
   WHEEL_NAME_RADIUS,
@@ -21,10 +20,13 @@ import {
   WHEEL_SEGMENT_GAP,
   WHEEL_VIEWBOX,
 } from '../constants/index.ts';
-import { numberText, percentText } from './format.ts';
+import { formatPercent } from '../i18n/format.ts';
+import { numberText } from './format.ts';
+import type { MotionToken } from './motion.ts';
+import { StageElement } from './stage-base.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import { layoutWedges, spinRotation, wedgePath } from './wheel-geometry.ts';
-import type { Wedge, WheelSegment } from './wheel-geometry.ts';
+import type { Wedge } from './wheel-geometry.ts';
 import { defineOnce } from './define.ts';
 
 const ROTOR_CLASS = 'rotor';
@@ -37,10 +39,9 @@ const [LEFT, RIGHT, TIP_X, TIP_Y] = [
 const POINTER = `M${LEFT} 0 L${RIGHT} 0 L${TIP_X} ${TIP_Y} Z`;
 
 /** Glücksrad (SVG). Zeigt Segmente nach Chance und dreht auf Anforderung zu einem vorgegebenen Segment. */
-export class TwWheel extends LitElement {
+export class TwWheel extends StageElement {
   static override properties = {
-    segments: { attribute: false },
-    label: { type: String },
+    ...StageElement.properties,
     _rotation: { state: true },
     _animated: { state: true },
   };
@@ -78,7 +79,7 @@ export class TwWheel extends LitElement {
         opacity: 0.85;
       }
       text {
-        fill: #ffffff;
+        fill: var(--tw-color-white);
         text-anchor: middle;
         pointer-events: none;
       }
@@ -90,8 +91,6 @@ export class TwWheel extends LitElement {
     `,
   ];
 
-  declare segments: readonly WheelSegment[];
-  declare label: string;
   declare _rotation: number;
   declare _animated: boolean;
 
@@ -99,38 +98,40 @@ export class TwWheel extends LitElement {
 
   constructor() {
     super();
-    this.segments = [];
-    this.label = '';
     this._rotation = 0;
     this._animated = false;
   }
 
-  /**
-   * Dreht das Rad so, dass das Segment `id` unter dem Zeiger steht; fertig, wenn es steht.
-   * Bei reduzierter Bewegung springt das Rad ohne Animation.
-   */
-  async spinTo(id: string): Promise<void> {
-    const wedge = this.#wedges.find((candidate) => candidate.id === id);
+  /** Neue Segmente: Stücke neu berechnen, Drehung zurück auf 0. */
+  protected reset(): void {
+    this.#wedges = layoutWedges(this.segments);
+    this._rotation = 0;
+    this._animated = false;
+  }
+
+  /** Springt ohne Übergang zum Gewinner. */
+  protected settle(id: string): void {
+    const wedge = this.#wedgeOf(id);
+    if (wedge) {
+      this._animated = false;
+      this._rotation = spinRotation(this._rotation, wedge.mid);
+    }
+  }
+
+  /** Dreht das Rad so, dass das Segment `id` unter dem Zeiger steht; fertig, wenn es steht. */
+  protected async play(id: string, token: MotionToken): Promise<void> {
+    const wedge = this.#wedgeOf(id);
     if (!wedge) {
       return;
     }
-    await this.updateComplete;
-    const animate = !window.matchMedia(REDUCED_MOTION_QUERY).matches;
     this.#flushStyles();
-    this._animated = animate;
+    this._animated = true;
     this._rotation = spinRotation(this._rotation, wedge.mid);
-    if (animate) {
-      await this.#settled();
-    }
-    this.dispatchEvent(new CustomEvent(EVENT_WHEEL_STOP, { detail: id }));
+    await Promise.race([token.sleep(SPIN_DURATION_MS + SPIN_SETTLE_MS), this.#transitionEnd()]);
   }
 
-  protected override willUpdate(changed: PropertyValues<this>): void {
-    if (changed.has('segments')) {
-      this.#wedges = layoutWedges(this.segments);
-      this._rotation = 0;
-      this._animated = false;
-    }
+  #wedgeOf(id: string): Wedge | undefined {
+    return this.#wedges.find((candidate) => candidate.id === id);
   }
 
   protected override render(): TemplateResult {
@@ -138,7 +139,7 @@ export class TwWheel extends LitElement {
       transform: `rotate(${numberText(this._rotation)}deg)`,
       transition: this._animated
         ? `transform ${numberText(SPIN_DURATION_MS)}ms ${SPIN_EASING}`
-        : 'none',
+        : TRANSITION_NONE,
     });
     return html`
       <svg viewBox="0 0 ${WHEEL_VIEWBOX} ${WHEEL_VIEWBOX}" role="img" aria-label=${this.label}>
@@ -150,7 +151,7 @@ export class TwWheel extends LitElement {
               ${repeat(
                 this.#wedges,
                 (wedge) => wedge.id,
-                (wedge) => this.#wedge(wedge),
+                (wedge) => this.#wedgeShape(wedge),
               )}
             </g>`
         }
@@ -159,7 +160,7 @@ export class TwWheel extends LitElement {
     `;
   }
 
-  #wedge(wedge: Wedge): TemplateResult {
+  #wedgeShape(wedge: Wedge): TemplateResult {
     const shape = wedge.full
       ? svg`<circle class="wedge" cx=${WHEEL_CENTER} cy=${WHEEL_CENTER} r=${WHEEL_RADIUS} fill=${wedge.color}></circle>`
       : svg`<path class="wedge" d=${wedgePath(wedge.start, wedge.end)} fill=${wedge.color}></path>`;
@@ -170,7 +171,7 @@ export class TwWheel extends LitElement {
     const turn = `rotate(${numberText(wedge.mid)} ${centre} ${centre})`;
     return svg`${shape}
       <text class="name" x=${WHEEL_CENTER} y=${WHEEL_CENTER - WHEEL_NAME_RADIUS} transform=${turn}>${wedge.label}</text>
-      <text class="chance" x=${WHEEL_CENTER} y=${WHEEL_CENTER - WHEEL_CHANCE_RADIUS} transform=${turn}>${percentText(wedge.share)}</text>`;
+      <text class="chance" x=${WHEEL_CENTER} y=${WHEEL_CENTER - WHEEL_CHANCE_RADIUS} transform=${turn}>${formatPercent(wedge.share, this.language)}</text>`;
   }
 
   /** Erzwingt, dass der Stand ohne Übergang (Drehung 0) berechnet ist, bevor die Drehung beginnt. */
@@ -178,17 +179,13 @@ export class TwWheel extends LitElement {
     this.renderRoot.querySelector(`.${ROTOR_CLASS}`)?.getBoundingClientRect();
   }
 
-  /** Wartet auf das Ende des Übergangs; ein Zeitgeber fängt den Fall ab, dass er nie gemeldet wird. */
-  #settled(): Promise<void> {
+  /** Wird erfüllt, wenn der Übergang des Rotors endet; der Zeitgeber in `play` fängt den Fall ab, dass er nie gemeldet wird. */
+  #transitionEnd(): Promise<void> {
     const rotor = this.renderRoot.querySelector(`.${ROTOR_CLASS}`);
     return new Promise((resolve) => {
-      const finish = (): void => {
-        clearTimeout(timer);
-        rotor?.removeEventListener('transitionend', finish);
+      rotor?.addEventListener('transitionend', () => {
         resolve();
-      };
-      const timer = setTimeout(finish, SPIN_DURATION_MS + SPIN_SETTLE_MS);
-      rotor?.addEventListener('transitionend', finish);
+      });
     });
   }
 }

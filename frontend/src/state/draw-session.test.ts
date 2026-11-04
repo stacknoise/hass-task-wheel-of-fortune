@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiClient } from '../api/index.ts';
 import type { PanelRoundWire, TaskDrawWire } from '../api/index.ts';
 import { FakeHass } from '../api/fake-hass.testing.ts';
-import { DrawSession } from './draw-session.ts';
+import { DrawSession, canSkip, isIdle, shownCount } from './draw-session.ts';
 
 const draw = (task: string, winner: string | null): TaskDrawWire => ({
   task_id: task,
@@ -156,5 +156,36 @@ describe('DrawSession', () => {
     session.listen(listener)();
     session.resume(round([], ['t1']));
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('verwirft die Antwort einer Anfrage, die einen Neustart überdauert', async () => {
+    hass.replies.set('task_wheel/draw/begin', round([], ['t1']));
+    await session.begin('s1');
+    let answer: (value: unknown) => void = () => undefined;
+    hass.replies.set(
+      'task_wheel/draw/spin',
+      new Promise((resolve) => {
+        answer = resolve;
+      }),
+    );
+    const spinning = session.spin();
+    expect(session.state.phase).toBe('busy');
+    await session.restart();
+    answer({ result: draw('t1', 'p1'), panel_round: round([], []) });
+    await spinning;
+    expect(session.state).toMatchObject({ phase: 'choose', roundId: undefined, results: [] });
+  });
+
+  it('beschreibt Leerlauf, gezeigte Ergebnisse und Überspringen als reine Funktionen', async () => {
+    expect(isIdle(session.state)).toBe(true);
+    hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
+    await session.begin('s1');
+    expect(isIdle(session.state)).toBe(false);
+    expect(canSkip(session.state)).toBe(true);
+    expect(shownCount(session.state)).toBe(0);
+    expect(canSkip({ ...session.state, phase: 'busy' })).toBe(false);
+    expect(shownCount({ ...session.state, phase: 'spinning', results: [draw('t1', 'p1')] })).toBe(
+      0,
+    );
   });
 });

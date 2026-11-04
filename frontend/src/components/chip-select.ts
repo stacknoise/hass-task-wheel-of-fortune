@@ -1,6 +1,7 @@
 import { LitElement, css, html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
+import { styleMap } from 'lit/directives/style-map.js';
 
 import { FORM_TAGS } from '../constants/index.ts';
 import { emitChange } from './change.ts';
@@ -100,7 +101,7 @@ export class TwChipSelect extends LitElement {
             >
               ${
                 option.color
-                  ? html`<span class="dot" style="background:${option.color}"></span>`
+                  ? html`<span class="dot" style=${styleMap({ background: option.color })}></span>`
                   : nothing
               }
               ${option.label}

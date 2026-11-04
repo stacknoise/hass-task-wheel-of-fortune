@@ -32,7 +32,8 @@ export interface Stage extends HTMLElement {
  *
  * `spinTo` ist die Schablone: unbekannte Gewinner werden ignoriert, bei reduzierter Bewegung springt
  * die Animation mit `settle` direkt ans Ziel, sonst läuft `play`. Neue Segmente und Entfernen
- * aus dem Dokument brechen eine laufende Animation ab.
+ * aus dem Dokument brechen eine laufende Animation ab; `spinTo` endet dann trotzdem, ohne
+ * `tw-wheel-stop` zu melden (der Aufrufer hängt nie fest).
  */
 export abstract class StageElement extends LitElement implements Stage {
   static override properties = {
@@ -58,7 +59,7 @@ export abstract class StageElement extends LitElement implements Stage {
   }
 
   async spinTo(id: string): Promise<void> {
-    if (!this.segments.some((segment) => segment.id === id && segment.chance > 0)) {
+    if (!this.#knows(id)) {
       return;
     }
     await this.updateComplete;
@@ -67,11 +68,17 @@ export abstract class StageElement extends LitElement implements Stage {
     if (prefersReducedMotion()) {
       this.settle(id);
     } else {
-      await this.play(id, token);
+      // Ein Abbruch lässt die Schleifen von `play` offen; deshalb nicht allein darauf warten.
+      await Promise.race([this.play(id, token), token.cancelled]);
     }
     if (!token.dead) {
       this.dispatchEvent(new CustomEvent(EVENT_WHEEL_STOP, { detail: id }));
     }
+  }
+
+  /** Ob `id` ein ziehbares Segment der aktuellen Bühne ist. */
+  #knows(id: string): boolean {
+    return this.segments.some((segment) => segment.id === id && segment.chance > 0);
   }
 
   override disconnectedCallback(): void {

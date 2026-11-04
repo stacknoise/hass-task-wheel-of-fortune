@@ -73,6 +73,26 @@ describe('Historie', () => {
     });
   });
 
+  it('holt bei einer Änderung im Hintergrund alle bisher gezeigten Runden neu', async () => {
+    const hass = fakeHass();
+    const [first] = HISTORY.entries;
+    const entries = Array.from({ length: 25 }, (_, index) => ({
+      ...(first as NonNullable<typeof first>),
+      id: `r${String(index)}`,
+    }));
+    hass.replies.set(WS_HISTORY_LIST, { entries, next_offset: 25 });
+    await mount(hass);
+    hass.emit({
+      assignments: {
+        upsert: [{ ...SNAPSHOT.assignments[0], id: 'a1', status: 'done' }],
+        remove: [],
+      },
+    });
+    await vi.waitFor(() => {
+      expect(hass.messages.at(-1)).toMatchObject({ offset: 0, limit: 25 });
+    });
+  });
+
   it('exportiert alle Seiten als CSV', async () => {
     const hass = fakeHass();
     hass.callWS = ((message: { type: string; offset?: number }) => {

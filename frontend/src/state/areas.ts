@@ -3,9 +3,16 @@ import type { AreaOption } from '../api/index.ts';
 /** Anzeigenamen der Räume nach Kennung. */
 export type AreaNames = ReadonlyMap<string, string>;
 
-/** Räume als Nachschlagetabelle Kennung → Name. */
+const tables = new WeakMap<readonly AreaOption[], AreaNames>();
+
+/** Räume als Nachschlagetabelle Kennung → Name; dieselbe Liste ergibt dieselbe Tabelle. */
 export function areaNames(areas: readonly AreaOption[]): AreaNames {
-  return new Map(areas.map((area) => [area.id, area.label]));
+  let table = tables.get(areas);
+  if (table === undefined) {
+    table = new Map(areas.map((area) => [area.id, area.label]));
+    tables.set(areas, table);
+  }
+  return table;
 }
 
 /**

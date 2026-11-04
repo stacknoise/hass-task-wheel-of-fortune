@@ -45,7 +45,7 @@ describe('tw-slot', () => {
     const chances = [...(slot.shadowRoot?.querySelectorAll('text.chance') ?? [])].map(
       (n) => n.textContent,
     );
-    expect(new Set(chances)).toEqual(new Set(['60 %', '38 %']));
+    expect(new Set(chances)).toEqual(new Set(['60%', '38%']));
     expect(slot.shadowRoot?.querySelectorAll('rect.cell').length).toBe(3 * 11);
   });
 

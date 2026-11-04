@@ -3,33 +3,37 @@ import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 
-import type { TaskDrawWire } from '../api/index.ts';
-import { percentText } from '../components/index.ts';
+import type { ApiClient, TaskDrawWire } from '../api/index.ts';
 import '../components/index.ts';
 import type { TwStage, WheelSegment } from '../components/index.ts';
 import {
   CHANCE_FREE_ANIMATIONS,
   DEFAULT_ANIMATIONS,
+  DRAW_PHASE,
   EMPTY_TEXT,
   EVENT_TAB_SELECT,
   FALLBACK_COLOR,
+  ROUTE_HISTORY,
   START_PLACEMENT,
   VIEW_TAGS,
 } from '../constants/index.ts';
 import type { AnimationKind } from '../constants/index.ts';
+import { formatPercent } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import {
   DrawSession,
   StoreController,
+  canSkip,
   drawableSchedules,
+  isIdle,
   openCandidates,
   openRoundFor,
   participantsOf,
   personsById,
   pickAnimation,
+  shownCount,
   tasksById,
-  areaNames,
 } from '../state/index.ts';
 import type { AreaNames, DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
 import { roomTags } from './room.ts';
@@ -37,8 +41,6 @@ import { drawSummary } from './draw-summary.ts';
 import { drawStyles } from './draw-styles.ts';
 import { personRows } from './draw-rows.ts';
 import { defineOnce } from '../components/define.ts';
-
-const HISTORY_ROUTE = 'history';
 
 function nameOf(schedules: readonly ScheduleInfo[], id: string | undefined): string {
   return schedules.find((schedule) => schedule.id === id)?.name ?? EMPTY_TEXT;
@@ -63,6 +65,8 @@ export class TwDrawView extends LitElement {
   /** Die Animation der laufenden Auslosung; wird bei jedem Start zufällig neu gewählt. */
   #kind: AnimationKind = DEFAULT_ANIMATIONS[0] ?? 'wheel';
   #session: DrawSession | undefined;
+  #sessionClient: ApiClient | undefined;
+  #unlisten: (() => void) | undefined;
   #animating: TaskDrawWire | undefined;
   #autoSpun = EMPTY_TEXT;
   #wheelCache: { key: string; segments: readonly WheelSegment[] } | undefined;
@@ -73,16 +77,22 @@ export class TwDrawView extends LitElement {
     this._scheduleId = EMPTY_TEXT;
   }
 
+  /**
+   * Die Sitzung überlebt einen Tabwechsel (das Panel hängt die Ansicht nur aus); eine laufende
+   * Animation wird beim Zurückkehren neu gestartet, ihr Ergebnis steht ja schon fest.
+   */
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#session = undefined;
+    this.#animating = undefined;
   }
 
   protected override willUpdate(): void {
     const client = this.#store.client;
-    if (!this.#session && client) {
+    if (client && client !== this.#sessionClient) {
+      this.#sessionClient = client;
+      this.#unlisten?.();
       this.#session = new DrawSession(client);
-      this.#session.listen(() => {
+      this.#unlisten = this.#session.listen(() => {
         this.requestUpdate();
       });
     }
@@ -93,7 +103,7 @@ export class TwDrawView extends LitElement {
     if (!state) {
       return;
     }
-    const current = state.phase === 'spinning' ? state.current : undefined;
+    const current = state.phase === DRAW_PHASE.spinning ? state.current : undefined;
     if (current && current !== this.#animating) {
       this.#animating = current;
       void this.#animate(current);
@@ -116,7 +126,7 @@ export class TwDrawView extends LitElement {
     const snapshot = this.#store.state?.snapshot;
     const task = this.#nextTask(state);
     const key = `${state.roundId ?? EMPTY_TEXT}:${String(state.results.length)}`;
-    if (!snapshot || state.phase !== 'ready' || !task || key === this.#autoSpun) {
+    if (!snapshot || state.phase !== DRAW_PHASE.ready || !task || key === this.#autoSpun) {
       return;
     }
     const taken = new Set(state.results.map((result) => result.winner_id));
@@ -132,7 +142,7 @@ export class TwDrawView extends LitElement {
     if (!snapshot || !session) {
       return nothing;
     }
-    this.#areas = areaNames(this.#store.client?.areas() ?? []);
+    this.#areas = this.#store.areaNames();
     const state = session.state;
     const tasks = tasksById(snapshot);
     const persons = participantsOf(personsById(snapshot), tasks, state.taskIds);
@@ -151,17 +161,19 @@ export class TwDrawView extends LitElement {
     return translate(key, this.language);
   }
 
-  #idle(state: DrawState): boolean {
-    return state.phase === 'choose' || state.phase === 'error';
-  }
-
   async #animate(result: TaskDrawWire): Promise<void> {
     const stage = this.#stage.value;
-    if (stage && result.winner_id && result.segments.length > 1) {
-      await stage.updateComplete;
-      await stage.spinTo(result.winner_id);
+    try {
+      if (stage && result.winner_id && result.segments.length > 1) {
+        await stage.updateComplete;
+        await stage.spinTo(result.winner_id);
+      }
+    } finally {
+      // Ohne Dokument (Tabwechsel) bleibt die Phase stehen; die Animation startet beim Zurückkehren neu.
+      if (this.isConnected) {
+        this.#session?.landed();
+      }
     }
-    this.#session?.landed();
   }
 
   // ----- linke Karte: Zeitplan, Runde, Aufgabenliste -----
@@ -175,7 +187,7 @@ export class TwDrawView extends LitElement {
     const schedules = snapshot ? drawableSchedules(snapshot) : [];
     const scheduleId = this.#selected(schedules.map((schedule) => schedule.id));
     const open = snapshot && scheduleId ? openRoundFor(snapshot, scheduleId) : undefined;
-    const idle = this.#idle(state);
+    const idle = isIdle(state);
     return html`
       <section class="card">
         <div>
@@ -205,7 +217,7 @@ export class TwDrawView extends LitElement {
             ? this.#start(scheduleId, open)
             : this.#round(state, nameOf(schedules, state.scheduleId), tasks, persons)
         }
-        ${state.phase === 'error' ? this.#failure(state) : nothing}
+        ${state.phase === DRAW_PHASE.error ? this.#failure(state) : nothing}
       </section>
     `;
   }
@@ -276,9 +288,7 @@ export class TwDrawView extends LitElement {
     tasks: ReadonlyMap<string, TaskInfo>,
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
-    const shown = this.#shownCount(state);
-    const canSkip =
-      (state.phase === 'ready' || state.phase === 'revealed') && shown < state.taskIds.length;
+    const shown = shownCount(state);
     return html`
       <div>
         <h2>${this.#text('draw.round')} „${scheduleName}“</h2>
@@ -291,22 +301,21 @@ export class TwDrawView extends LitElement {
       </ul>
       <div class="actions">
         ${
-          canSkip
+          canSkip(state)
             ? html`<button class="button" @click=${() => void this.#session?.drawRest()}>
                 ${this.#text('draw.rest')}
               </button>`
             : nothing
         }
-        <button class="button" @click=${() => void this.#session?.restart()}>
+        <button
+          class="button"
+          ?disabled=${state.phase === DRAW_PHASE.busy}
+          @click=${() => void this.#session?.restart()}
+        >
           ${this.#text('draw.restart')}
         </button>
       </div>
     `;
-  }
-
-  /** Wie viele Ergebnisse schon gezeigt werden dürfen: das gerade drehende bleibt verborgen. */
-  #shownCount(state: DrawState): number {
-    return state.phase === 'spinning' ? state.results.length - 1 : state.results.length;
   }
 
   /** Was in der Aufgabenliste rechts steht: der Gewinner, „nicht verteilbar“, „ist dran“ oder „wartet“. */
@@ -324,7 +333,7 @@ export class TwDrawView extends LitElement {
   }
 
   #isCurrent(state: DrawState, index: number, shown: number): boolean {
-    return index === shown && state.phase !== 'done';
+    return index === shown && state.phase !== DRAW_PHASE.done;
   }
 
   #taskRow(
@@ -356,12 +365,12 @@ export class TwDrawView extends LitElement {
     tasks: ReadonlyMap<string, TaskInfo>,
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
-    if (this.#idle(state)) {
+    if (isIdle(state)) {
       return html`<section class="stage idle">
         <p class="heading">${this.#text('draw.choose')}</p>
       </section>`;
     }
-    if (state.phase === 'done') {
+    if (state.phase === DRAW_PHASE.done) {
       return html`<section class="stage">
         ${drawSummary({
           state,
@@ -387,7 +396,7 @@ export class TwDrawView extends LitElement {
           ${this.#room(task)}
         </div>
         ${this.#wheelBox(state, task, persons)} ${this.#people(state, task, persons)}
-        ${state.phase === 'revealed' ? this.#result(state, task, persons) : nothing}
+        ${state.phase === DRAW_PHASE.revealed ? this.#result(state, task, persons) : nothing}
       </section>
     `;
   }
@@ -436,10 +445,10 @@ export class TwDrawView extends LitElement {
         <button
           class="hub ${START_PLACEMENT[this.#kind]}"
           aria-label=${this.#text('draw.spin.label')}
-          ?disabled=${state.phase !== 'ready'}
+          ?disabled=${state.phase !== DRAW_PHASE.ready}
           @click=${() => void this.#session?.spin()}
         >
-          ${this.#text(state.phase === 'busy' ? 'draw.busy' : 'draw.spin')}
+          ${this.#text(state.phase === DRAW_PHASE.busy ? 'draw.busy' : 'draw.spin')}
         </button>
       </div>
     `;
@@ -451,8 +460,12 @@ export class TwDrawView extends LitElement {
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
     const showChance = !CHANCE_FREE_ANIMATIONS.includes(this.#kind);
-    const rows = personRows(state.current ?? state.preview, task, persons, showChance, (key) =>
-      this.#text(key),
+    const rows = personRows(
+      state.current ?? state.preview,
+      task,
+      persons,
+      showChance,
+      this.language,
     );
     return html`
       <div class="people">
@@ -462,9 +475,7 @@ export class TwDrawView extends LitElement {
           (row) => row.person.id,
           (row) => html`
             <div class="person ${row.inWheel ? '' : 'out'}">
-              <div class="avatar" style="background:${row.person.color}">
-                ${row.person.name.slice(0, 1)}
-              </div>
+              <tw-avatar name=${row.person.name} color=${row.person.color}></tw-avatar>
               <div>${row.person.name}<br /><span class="muted">${row.note}</span></div>
             </div>
           `,
@@ -486,14 +497,13 @@ export class TwDrawView extends LitElement {
       <div class="result" role="status">
         ${
           winner
-            ? html`<div class="avatar" style="background:${winner.color}">
-                  ${winner.name.slice(0, 1)}
-                </div>
+            ? html`<tw-avatar name=${winner.name} color=${winner.color}></tw-avatar>
                 <div class="text">
                   <strong>${winner.name} ${this.#text('draw.takes')} ${task?.name}</strong><br />
                   ${this.#room(task)}
                   <span class="muted"
-                    >${this.#text('draw.chance')} ${percentText(state.current?.chance ?? 0)}</span
+                    >${this.#text('draw.chance')}
+                    ${formatPercent(state.current?.chance ?? 0, this.language)}</span
                   >
                 </div>`
             : html`<div class="text">
@@ -511,7 +521,7 @@ export class TwDrawView extends LitElement {
 
   #toHistory(): void {
     this.dispatchEvent(
-      new CustomEvent(EVENT_TAB_SELECT, { detail: HISTORY_ROUTE, bubbles: true, composed: true }),
+      new CustomEvent(EVENT_TAB_SELECT, { detail: ROUTE_HISTORY, bubbles: true, composed: true }),
     );
   }
 }

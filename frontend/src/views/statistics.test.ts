@@ -96,6 +96,10 @@ describe('Statistik', () => {
     await vi.waitFor(() => {
       expect(hass.messages.at(-1)).toMatchObject({ type: WS_STATISTICS_GET, months: 12, weeks: 8 });
     });
+    // Solange die Antwort aussteht, gilt die Ansicht als beschäftigt; danach nicht mehr.
+    await vi.waitFor(() => {
+      expect(view.getAttribute('aria-busy')).toBe('false');
+    });
   });
 
   it('zeigt leeren Zustand und Ladefehler', async () => {

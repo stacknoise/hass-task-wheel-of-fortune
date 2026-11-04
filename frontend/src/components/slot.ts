@@ -29,7 +29,8 @@ import {
   SLOT_WIN_CLASS,
   STAGE_TAGS,
 } from '../constants/index.ts';
-import { numberText, percentText } from './format.ts';
+import { formatPercent } from '../i18n/format.ts';
+import { numberText } from './format.ts';
 import { lerp } from './motion.ts';
 import type { MotionToken } from './motion.ts';
 import {
@@ -99,7 +100,7 @@ export class TwSlot extends StageElement {
         opacity: 0.85;
       }
       text {
-        fill: #ffffff;
+        fill: var(--tw-color-white);
         dominant-baseline: central;
         pointer-events: none;
       }
@@ -117,7 +118,7 @@ export class TwSlot extends StageElement {
         fill: var(--tw-color-rim);
       }
       .fade {
-        fill: #000000;
+        fill: var(--tw-color-black);
         pointer-events: none;
       }
     `,
@@ -249,7 +250,7 @@ export class TwSlot extends StageElement {
     const centre = SLOT_REEL_WIDTH * SLOT_HALF;
     return svg`${rect}
       <text class="name" x=${centre - SLOT_LABEL_GAP * SLOT_HALF} y=${middle}>${cell.label}</text>
-      <text class="chance" x=${centre + SLOT_LABEL_GAP} y=${middle}>${percentText(cell.share)}</text>`;
+      <text class="chance" x=${centre + SLOT_LABEL_GAP} y=${middle}>${formatPercent(cell.share, this.language)}</text>`;
   }
 
   /** Verlauf an Ober- und Unterkante und die Gewinnlinie mit Pfeilen. */

@@ -17,9 +17,10 @@ export type {
 export { areaNames, roomsOf } from './areas.ts';
 export type { AreaNames } from './areas.ts';
 export { animationsOf, isAnimationKind, pickAnimation } from './animation.ts';
+export { safeColor } from './color.ts';
 export { AsyncValue } from './async-value.ts';
 export type { AsyncStatus } from './async-value.ts';
-export { DrawSession } from './draw-session.ts';
+export { DrawSession, canSkip, isIdle, shownCount } from './draw-session.ts';
 export type { DrawPhase, DrawState } from './draw-session.ts';
 export {
   allowsPerson,

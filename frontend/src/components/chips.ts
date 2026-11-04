@@ -1,6 +1,7 @@
 import { LitElement, css, html } from 'lit';
 import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
+import { styleMap } from 'lit/directives/style-map.js';
 
 import { COMPONENT_TAGS, EVENT_CHIP_SELECT } from '../constants/index.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
@@ -82,7 +83,7 @@ export class TwChips extends LitElement {
                 this.#select(item.id);
               }}
             >
-              ${item.color ? html`<span class="dot" style="--dot: ${item.color}"></span>` : ''}
+              ${item.color ? html`<span class="dot" style=${styleMap({ '--dot': item.color })}></span>` : ''}
               ${item.label}
             </button>
           `,

@@ -14,13 +14,14 @@ import {
   EXPORT_PAGE_SIZE,
   FILTER_ALL,
   HISTORY_PAGE_SIZE,
+  HISTORY_PAGE_SIZE_MAX,
   STATUS_TONES,
   VIEW_TAGS,
 } from '../constants/index.ts';
 import { formatDateTime, formatPercent } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
-import { AsyncValue, LiveLoad, StoreController, areaNames, indexById } from '../state/index.ts';
+import { AsyncValue, LiveLoad, StoreController, indexById } from '../state/index.ts';
 import { roomTags } from './room.ts';
 import { personChips } from './person-chips.ts';
 import { buildCsv } from './csv.ts';
@@ -29,6 +30,9 @@ import { downloadText } from './download.ts';
 import { csvRows, doneCount, originText } from './history-model.ts';
 import type { HistoryLookups } from './history-model.ts';
 import { defineOnce } from '../components/define.ts';
+
+const [LOAD_FIRST, LOAD_MORE, LOAD_KEEP] = ['first', 'more', 'keep'] as const;
+type LoadMode = typeof LOAD_FIRST | typeof LOAD_MORE | typeof LOAD_KEEP;
 
 interface Loaded {
   readonly rounds: readonly RoundObject[];
@@ -120,13 +124,13 @@ export class TwHistoryView extends LitElement {
     this._deleteFailed = false;
     this.addEventListener(EVENT_CHIP_SELECT, (event) => {
       this._filter = (event as CustomEvent<string>).detail;
-      this.#load(false);
+      this.#load(LOAD_FIRST);
     });
   }
 
   protected override willUpdate(): void {
     if (this.#live.due(this.#store.state?.snapshot, this.#store.client !== undefined)) {
-      this.#load(false);
+      this.#load(this.#data.value ? LOAD_KEEP : LOAD_FIRST);
     }
   }
 
@@ -140,7 +144,7 @@ export class TwHistoryView extends LitElement {
       persons: indexById(persons),
       tasks: indexById(modelsOf(snapshot, 'tasks')),
       schedules: indexById(modelsOf(snapshot, 'schedules')),
-      areas: areaNames(this.#store.client?.areas() ?? []),
+      areas: this.#store.areaNames(),
     };
     const chips = personChips(persons, this.#text('overview.filterAll'));
     return html`
@@ -206,7 +210,7 @@ export class TwHistoryView extends LitElement {
               class="action"
               ?disabled=${status === 'loading'}
               @click=${() => {
-                this.#load(true);
+                this.#load(LOAD_MORE);
               }}
             >
               ${this.#text('history.more')}
@@ -244,7 +248,7 @@ export class TwHistoryView extends LitElement {
           >
           <span class="chevron" aria-hidden="true">▾</span>
         </button>
-        ${open ? this.#table(round, lookups) : nothing}
+        ${open ? this.#table(round, lookups, schedule ?? this.#text('common.unknownSchedule')) : nothing}
         ${roundDelete({
           language: this.language,
           total: round.assignments.length,
@@ -258,17 +262,20 @@ export class TwHistoryView extends LitElement {
     `;
   }
 
-  #table(round: RoundObject, lookups: HistoryLookups): TemplateResult {
+  #table(round: RoundObject, lookups: HistoryLookups, caption: string): TemplateResult {
     return html`
       <div class="scroll table">
         <table>
+          <caption class="visually-hidden">
+            ${caption}
+          </caption>
           <thead>
             <tr>
-              <th>${this.#text('history.task')}</th>
-              <th>${this.#text('history.person')}</th>
-              <th>${this.#text('history.chance')}</th>
-              <th>${this.#text('history.status')}</th>
-              <th>${this.#text('history.doneAt')}</th>
+              <th scope="col">${this.#text('history.task')}</th>
+              <th scope="col">${this.#text('history.person')}</th>
+              <th scope="col">${this.#text('history.chance')}</th>
+              <th scope="col">${this.#text('history.status')}</th>
+              <th scope="col">${this.#text('history.doneAt')}</th>
             </tr>
           </thead>
           <tbody>
@@ -330,14 +337,20 @@ export class TwHistoryView extends LitElement {
       : { person_id: this._filter, offset, limit };
   }
 
-  #load(more: boolean): void {
+  /**
+   * Lädt die erste Seite, hängt die nächste an oder holt alle bisher gezeigten Runden neu (nach einer
+   * Änderung im Hintergrund), damit „Mehr laden“ und die Bildlaufposition erhalten bleiben.
+   */
+  #load(mode: LoadMode): void {
     const client = this.#store.client;
     if (!client) {
       return;
     }
-    const before = more ? this.#data.value : undefined;
+    const before = mode === LOAD_MORE ? this.#data.value : undefined;
+    const shown = mode === LOAD_KEEP ? (this.#data.value?.rounds.length ?? 0) : 0;
+    const limit = Math.min(Math.max(HISTORY_PAGE_SIZE, shown), HISTORY_PAGE_SIZE_MAX);
     void this.#data.run(async () => {
-      const page = await client.history(this.#query(before?.next ?? 0, HISTORY_PAGE_SIZE));
+      const page = await client.history(this.#query(before?.next ?? 0, limit));
       return { rounds: [...(before?.rounds ?? []), ...page.entries], next: page.next_offset };
     });
   }
@@ -352,7 +365,7 @@ export class TwHistoryView extends LitElement {
     client
       .deleteRound(roundId)
       .then(() => {
-        this.#load(false);
+        this.#load(LOAD_KEEP);
       })
       .catch(() => {
         this._deleteFailed = true;

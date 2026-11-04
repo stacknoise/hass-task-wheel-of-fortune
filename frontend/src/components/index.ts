@@ -44,6 +44,6 @@ export type { Share, Stage } from './stage-base.ts';
 export { MotionToken, easeInOut, lerp, prefersReducedMotion, randomBetween } from './motion.ts';
 export { layoutWedges, pointAt, spinRotation, wedgePath } from './wheel-geometry.ts';
 export type { Wedge, WheelSegment } from './wheel-geometry.ts';
-export { numberText, percentText } from './format.ts';
+export { initialOf, numberText } from './format.ts';
 export { TwStat } from './stat.ts';
 export { baseStyles, phoneQuery, stackedQuery, tokenStyles, viewStyles } from './styles.ts';

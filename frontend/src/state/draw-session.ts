@@ -1,6 +1,8 @@
 import type { ApiClient, PanelRoundWire, TaskDrawWire } from '../api/index.ts';
+import { DRAW_PHASE, DRAW_UNKNOWN_ERROR } from '../constants/index.ts';
+import type { DrawPhase } from '../constants/index.ts';
 
-export type DrawPhase = 'choose' | 'busy' | 'ready' | 'spinning' | 'revealed' | 'done' | 'error';
+export type { DrawPhase } from '../constants/index.ts';
 
 export interface DrawState {
   readonly phase: DrawPhase;
@@ -19,8 +21,11 @@ export interface DrawState {
 
 type Listener = () => void;
 
+/** Fragt, ob der laufende Schritt noch gilt (nach „Neu starten“ gilt er nicht mehr). */
+type Alive = () => boolean;
+
 const INITIAL: DrawState = {
-  phase: 'choose',
+  phase: DRAW_PHASE.choose,
   scheduleId: undefined,
   roundId: undefined,
   taskIds: [],
@@ -29,18 +34,35 @@ const INITIAL: DrawState = {
   preview: undefined,
   errorCode: undefined,
 };
-const UNKNOWN_ERROR = 'unknown';
+
+/** Wartet die Auslosung auf eine Wahl (noch keine Runde oder ein Fehler)? */
+export const isIdle = (state: DrawState): boolean =>
+  state.phase === DRAW_PHASE.choose || state.phase === DRAW_PHASE.error;
+
+/** Wie viele Ergebnisse schon gezeigt werden dürfen: das gerade drehende bleibt verborgen. */
+export const shownCount = (state: DrawState): number =>
+  state.phase === DRAW_PHASE.spinning ? state.results.length - 1 : state.results.length;
+
+const isPausedInRound = (state: DrawState): boolean =>
+  state.phase === DRAW_PHASE.ready || state.phase === DRAW_PHASE.revealed;
+
+/** Bietet die Ansicht „Rest ohne Animation ziehen“ an? */
+export const canSkip = (state: DrawState): boolean =>
+  isPausedInRound(state) && shownCount(state) < state.taskIds.length;
 
 /**
  * Ablauf einer manuellen Auslosung: Runde beginnen, je Aufgabe drehen, abschließen.
  *
  * Das Ergebnis jeder Ziehung kommt vom Backend; die Sitzung merkt es sich nur und führt die
  * Ansicht durch die Schritte. Aktionen außerhalb ihrer Phase werden ignoriert (Doppelklick).
+ * Antworten, die nach „Neu starten“ eintreffen, werden verworfen.
  */
 export class DrawSession {
   readonly #client: ApiClient;
   readonly #listeners = new Set<Listener>();
   #state: DrawState = INITIAL;
+  /** Wächst mit jedem Neustart; Schritte aus einer älteren Generation schreiben nichts mehr. */
+  #generation = 0;
 
   constructor(client: ApiClient) {
     this.#client = client;
@@ -62,23 +84,27 @@ export class DrawSession {
    * Ohne Animation (`animated` falsch) wird sofort alles gezogen und die Runde abgeschlossen.
    */
   async begin(scheduleId: string, animated = true): Promise<void> {
-    if (!this.#idle()) {
+    if (!isIdle(this.#state)) {
       return;
     }
-    await this.#run(async () => {
-      this.#open(scheduleId, await this.#client.beginDraw(scheduleId));
-      await this.#finishIfNothingPending();
+    await this.#run(async (alive) => {
+      const round = await this.#client.beginDraw(scheduleId);
+      if (!alive()) {
+        return;
+      }
+      this.#open(scheduleId, round);
+      await this.#finishIfNothingPending(alive);
       if (animated) {
         await this.#loadPreview();
       } else {
-        await this.#drawRemaining();
+        await this.#drawRemaining(alive);
       }
     });
   }
 
   /** Setzt eine offene Panel-Runde fort. */
   resume(round: PanelRoundWire): void {
-    if (this.#idle()) {
+    if (isIdle(this.#state)) {
       this.#open(round.schedule_id, round);
       void this.#loadPreview();
     }
@@ -87,33 +113,35 @@ export class DrawSession {
   /** Zieht die nächste Aufgabe; die Ansicht dreht das Rad danach zum Gewinner. */
   async spin(): Promise<void> {
     const roundId = this.#state.roundId;
-    if (this.#state.phase !== 'ready' || !roundId) {
+    if (this.#state.phase !== DRAW_PHASE.ready || !roundId) {
       return;
     }
-    await this.#run(async () => {
+    await this.#run(async (alive) => {
       const { result } = await this.#client.spin(roundId);
-      this.#set({
-        phase: 'spinning',
-        results: [...this.#state.results, result],
-        current: result,
-      });
+      if (alive()) {
+        this.#set({
+          phase: DRAW_PHASE.spinning,
+          results: [...this.#state.results, result],
+          current: result,
+        });
+      }
     });
   }
 
   /** Das Rad steht: das Ergebnis wird angezeigt. */
   landed(): void {
-    if (this.#state.phase === 'spinning') {
-      this.#set({ phase: 'revealed' });
+    if (this.#state.phase === DRAW_PHASE.spinning) {
+      this.#set({ phase: DRAW_PHASE.revealed });
     }
   }
 
   /** Weiter zur nächsten Aufgabe oder, nach der letzten, die Runde abschließen. */
   async next(): Promise<void> {
-    if (this.#state.phase !== 'revealed') {
+    if (this.#state.phase !== DRAW_PHASE.revealed) {
       return;
     }
     if (this.#pending() > 0) {
-      this.#set({ phase: 'ready', current: undefined, preview: undefined });
+      this.#set({ phase: DRAW_PHASE.ready, current: undefined, preview: undefined });
       await this.#loadPreview();
       return;
     }
@@ -122,40 +150,38 @@ export class DrawSession {
 
   /** Zieht alle übrigen Aufgaben ohne Animation und schließt die Runde ab. */
   async drawRest(): Promise<void> {
-    const roundId = this.#state.roundId;
-    if ((this.#state.phase !== 'ready' && this.#state.phase !== 'revealed') || !roundId) {
+    if (!isPausedInRound(this.#state) || !this.#state.roundId) {
       return;
     }
-    await this.#run(() => this.#drawRemaining());
-  }
-
-  /** Zieht alle übrigen Aufgaben der offenen Runde und schließt sie ab (nichts mehr offen: nichts tun). */
-  async #drawRemaining(): Promise<void> {
-    const { roundId, phase } = this.#state;
-    if (!roundId || phase === 'done') {
-      return;
-    }
-    const { results } = await this.#client.spinRest(roundId);
-    this.#set({ results: [...this.#state.results, ...results], current: undefined });
-    await this.#commitRound(roundId);
+    await this.#run((alive) => this.#drawRemaining(alive));
   }
 
   /** Verwirft eine offene Runde und beginnt wieder bei der Wahl des Zeitplans. */
   async restart(): Promise<void> {
     const { roundId, phase } = this.#state;
+    this.#generation += 1;
     this.#set({ ...INITIAL });
-    if (roundId && phase !== 'done') {
+    if (roundId && phase !== DRAW_PHASE.done) {
       await this.#client.cancel(roundId).catch(() => undefined);
+    }
+  }
+
+  /** Zieht alle übrigen Aufgaben der offenen Runde und schließt sie ab (nichts mehr offen: nichts tun). */
+  async #drawRemaining(alive: Alive): Promise<void> {
+    const { roundId, phase } = this.#state;
+    if (!roundId || phase === DRAW_PHASE.done) {
+      return;
+    }
+    const { results } = await this.#client.spinRest(roundId);
+    if (alive()) {
+      this.#set({ results: [...this.#state.results, ...results], current: undefined });
+      await this.#commitRound(roundId, alive);
     }
   }
 
   /** Die aktuelle Phase, frisch gelesen (sie kann sich während eines Aufrufs ändern). */
   #phase(): DrawPhase {
     return this.#state.phase;
-  }
-
-  #idle(): boolean {
-    return this.#state.phase === 'choose' || this.#state.phase === 'error';
   }
 
   #pending(): number {
@@ -165,7 +191,7 @@ export class DrawSession {
   #open(scheduleId: string, round: PanelRoundWire): void {
     this.#set({
       ...INITIAL,
-      phase: 'ready',
+      phase: DRAW_PHASE.ready,
       scheduleId,
       roundId: round.id,
       taskIds: [...round.results.map((result) => result.task_id), ...round.pending_task_ids],
@@ -176,12 +202,12 @@ export class DrawSession {
   /** Holt das Rad der nächsten Aufgabe; schlägt es fehl, bleibt das Rad vor dem Drehen leer. */
   async #loadPreview(): Promise<void> {
     const { roundId } = this.#state;
-    if (this.#state.phase !== 'ready' || !roundId) {
+    if (this.#state.phase !== DRAW_PHASE.ready || !roundId) {
       return;
     }
     try {
       const { result } = await this.#client.previewDraw(roundId);
-      if (this.#state.roundId === roundId && this.#phase() === 'ready') {
+      if (this.#state.roundId === roundId && this.#phase() === DRAW_PHASE.ready) {
         this.#set({ preview: result });
       }
     } catch {
@@ -189,31 +215,37 @@ export class DrawSession {
     }
   }
 
-  async #finishIfNothingPending(): Promise<void> {
+  async #finishIfNothingPending(alive: Alive): Promise<void> {
     if (this.#pending() === 0 && this.#state.roundId) {
-      await this.#commitRound(this.#state.roundId);
+      await this.#commitRound(this.#state.roundId, alive);
     }
   }
 
   async #commit(): Promise<void> {
     const roundId = this.#state.roundId;
     if (roundId) {
-      await this.#run(() => this.#commitRound(roundId));
+      await this.#run((alive) => this.#commitRound(roundId, alive));
     }
   }
 
-  async #commitRound(roundId: string): Promise<void> {
+  async #commitRound(roundId: string, alive: Alive): Promise<void> {
     await this.#client.commit(roundId);
-    this.#set({ phase: 'done', current: undefined });
+    if (alive()) {
+      this.#set({ phase: DRAW_PHASE.done, current: undefined });
+    }
   }
 
   /** Führt einen Schritt aus, der die Phase selbst weiterschaltet; ein Fehler beendet ihn. */
-  async #run(step: () => Promise<void>): Promise<void> {
-    this.#set({ phase: 'busy' });
+  async #run(step: (alive: Alive) => Promise<void>): Promise<void> {
+    const generation = this.#generation;
+    const alive: Alive = () => generation === this.#generation;
+    this.#set({ phase: DRAW_PHASE.busy });
     try {
-      await step();
+      await step(alive);
     } catch (error) {
-      this.#set({ phase: 'error', errorCode: errorCode(error) });
+      if (alive()) {
+        this.#set({ phase: DRAW_PHASE.error, errorCode: errorCode(error) });
+      }
     }
   }
 
@@ -232,5 +264,5 @@ function errorCode(error: unknown): string {
       return code;
     }
   }
-  return UNKNOWN_ERROR;
+  return DRAW_UNKNOWN_ERROR;
 }

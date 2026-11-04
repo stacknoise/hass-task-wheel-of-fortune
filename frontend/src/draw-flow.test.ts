@@ -12,8 +12,22 @@ const PERSONS = [
   { id: 'p3', name: 'Clara', color: '#137333' },
 ];
 const TASKS = [
-  { id: 't1', name: 'Bad putzen', points: 3, due_days: 2, allowed: ['p1', 'p2', 'p3'] },
-  { id: 't2', name: 'Müll', points: 1, due_days: 1, allowed: ['p1'] },
+  {
+    id: 't1',
+    name: 'Bad putzen',
+    points: 3,
+    due_days: 2,
+    allowed: ['p1', 'p2', 'p3'],
+    frequency: { kind: 'every_round' },
+  },
+  {
+    id: 't2',
+    name: 'Müll',
+    points: 1,
+    due_days: 1,
+    allowed: ['p1'],
+    frequency: { kind: 'every_round' },
+  },
 ];
 
 const result = (task: string, winner: string | null): TaskDrawWire => ({
@@ -232,5 +246,28 @@ describe('Auslosung', () => {
       expect(stage?.shadowRoot?.querySelector('tw-drum')).not.toBeNull();
     });
     expect(view().querySelector('.wheel-box.below .hub.below')).not.toBeNull();
+  });
+
+  it('behält die laufende Runde beim Wechsel des Tabs', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    const hass = hassWith();
+    hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
+    const { panel, view } = await mount(hass);
+    await click(view, '.button.primary');
+    await vi.waitFor(() => {
+      expect(text(view)).toContain('0 / 2 verlost');
+    });
+
+    panel.route = { prefix: '/task-wheel', path: ROUTES.tasks };
+    await vi.waitFor(() => {
+      expect(panel.shadowRoot?.querySelector('tw-draw-view')).toBeNull();
+    });
+    panel.route = { prefix: '/task-wheel', path: ROUTES.draw };
+    await vi.waitFor(() => {
+      expect(panel.shadowRoot?.querySelector('tw-draw-view')).not.toBeNull();
+    });
+    await vi.waitFor(() => {
+      expect(text(view)).toContain('0 / 2 verlost');
+    });
   });
 });

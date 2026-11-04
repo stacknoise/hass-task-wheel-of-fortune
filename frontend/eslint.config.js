@@ -2,6 +2,8 @@ import js from '@eslint/js';
 import boundaries from 'eslint-plugin-boundaries';
 import tseslint from 'typescript-eslint';
 
+// Hexfarben (#rgb, #rrggbb, #rrggbbaa) und rgb()/rgba()/hsl()/hsla() als Muster für Selektoren.
+const COLOR_LITERAL = '#[0-9a-fA-F]{3,8}\\b|\\b(?:rgba?|hsla?)\\(';
 const LAYERS = ['views', 'components', 'state', 'api', 'i18n', 'constants'];
 // Erlaubte Importrichtung: views -> components -> state/api -> constants/i18n
 const ALLOWED = {
@@ -53,6 +55,26 @@ export default tseslint.config(
     // Konstanten sind der Ort für Literale
     files: ['src/constants/**/*.ts'],
     rules: { 'no-magic-numbers': 'off' },
+  },
+  {
+    // Farben (Hex, rgb, hsl) gehören als Konstanten nach constants/ oder als Token nach tokens.ts,
+    // auch innerhalb der css-Vorlagen, die `no-magic-numbers` nicht prüft.
+    files: ['src/**/*.ts'],
+    ignores: ['src/constants/**', '**/*.test.ts', '**/*.testing.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: `TemplateElement[value.raw=/${COLOR_LITERAL}/]`,
+          message:
+            'Farbwerte gehören nach src/constants (colors.ts, tokens.ts), nicht in die Vorlage.',
+        },
+        {
+          selector: `Literal[value=/^${COLOR_LITERAL}$/]`,
+          message: 'Farbwerte gehören nach src/constants (colors.ts, tokens.ts).',
+        },
+      ],
+    },
   },
   {
     files: ['**/*.test.ts', '**/*.testing.ts'],

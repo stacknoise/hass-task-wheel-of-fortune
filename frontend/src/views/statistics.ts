@@ -1,4 +1,4 @@
-import { LitElement, css, html, nothing } from 'lit';
+import { LitElement, css, html, nothing, unsafeCSS } from 'lit';
 import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 
@@ -14,6 +14,8 @@ import { baseStyles, tokenStyles, viewStyles } from '../components/index.ts';
 import type { ChipItem } from '../components/index.ts';
 import '../components/index.ts';
 import {
+  ATTRIBUTE_BUSY,
+  BUSY_OPACITY,
   DEFAULT_RANGE,
   EVENT_CHIP_SELECT,
   STATISTICS_RANGES,
@@ -24,7 +26,7 @@ import type { StatisticsRangeId } from '../constants/index.ts';
 import { formatNumber, formatPercent, formatShortDate } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
-import { AsyncValue, LiveLoad, StoreController, areaNames, indexById } from '../state/index.ts';
+import { AsyncValue, LiveLoad, StoreController, indexById } from '../state/index.ts';
 import type { AreaNames, FrequencyWire } from '../state/index.ts';
 import { describeFrequency } from '../components/summaries.ts';
 import { roomTags } from './room.ts';
@@ -50,6 +52,11 @@ export class TwStatisticsView extends LitElement {
       :host {
         display: grid;
         gap: var(--tw-space-field);
+      }
+      :host([aria-busy='true']) .kpis,
+      :host([aria-busy='true']) .pair,
+      :host([aria-busy='true']) .card {
+        opacity: ${unsafeCSS(BUSY_OPACITY)};
       }
       .card {
         margin: 0;
@@ -171,6 +178,8 @@ export class TwStatisticsView extends LitElement {
     if (this.#live.due(this.#store.state?.snapshot, this.#store.client !== undefined)) {
       this.#load();
     }
+    // Beim Wechsel des Zeitraums bleiben die alten Zahlen stehen, gelten aber als „in Arbeit“.
+    this.setAttribute(ATTRIBUTE_BUSY, String(this.#report.status === 'loading'));
   }
 
   protected override render(): TemplateResult | typeof nothing {
@@ -263,21 +272,24 @@ export class TwStatisticsView extends LitElement {
   /** Eigene Box: Soll gegen tatsächlich verloste Anzahl je Aufgabe im Fenster ihrer Regel. */
   #goalsCard(report: StatisticsReport, tasks: readonly TaskObject[]): TemplateResult {
     const taskById = indexById(tasks);
-    const areas = areaNames(this.#store.client?.areas() ?? []);
+    const areas = this.#store.areaNames();
     const windows = Math.max(...report.goals.map((goal) => goal.windows.length));
     return html`<section class="card">
       <h2>${this.#text('statistics.goals')}</h2>
       <p class="muted">${this.#text('statistics.goalsHint')}</p>
       <div class="scroll">
         <table>
+          <caption class="visually-hidden">
+            ${this.#text('statistics.goals')}
+          </caption>
           <thead>
             <tr>
-              <th>${this.#text('statistics.task')}</th>
-              <th>${this.#text('statistics.goalRule')}</th>
+              <th scope="col">${this.#text('statistics.task')}</th>
+              <th scope="col">${this.#text('statistics.goalRule')}</th>
               ${Array.from(
                 { length: windows },
                 (_, index) =>
-                  html`<th>
+                  html`<th scope="col">
                     ${this.#text(index === 0 ? 'statistics.goalCurrent' : 'statistics.goalPast')}
                   </th>`,
               )}
@@ -354,16 +366,19 @@ export class TwStatisticsView extends LitElement {
     tasks: readonly TaskObject[],
     persons: readonly PersonObject[],
   ): TemplateResult {
-    const areas = areaNames(this.#store.client?.areas() ?? []);
+    const areas = this.#store.areaNames();
     return html`<section class="card">
       <h2>${this.#text('statistics.matrix')}</h2>
       <p class="muted">${this.#text('statistics.matrixHint')}</p>
       <div class="scroll">
         <table>
+          <caption class="visually-hidden">
+            ${this.#text('statistics.matrix')}
+          </caption>
           <thead>
             <tr>
-              <th>${this.#text('statistics.task')}</th>
-              ${persons.map((person) => html`<th>${person.name}</th>`)}
+              <th scope="col">${this.#text('statistics.task')}</th>
+              ${persons.map((person) => html`<th scope="col">${person.name}</th>`)}
             </tr>
           </thead>
           <tbody>

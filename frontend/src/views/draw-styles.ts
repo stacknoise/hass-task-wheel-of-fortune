@@ -1,10 +1,11 @@
 import { css, unsafeCSS } from 'lit';
 import type { CSSResult } from 'lit';
 
+import { DRAW_CARD_MAX, DRAW_CARD_MIN } from '../constants/index.ts';
 import { baseStyles, phoneQuery, stackedQuery, tokenStyles } from '../components/index.ts';
 
-const CARD_MIN = unsafeCSS('260px');
-const CARD_MAX = unsafeCSS('340px');
+const CARD_MIN = unsafeCSS(DRAW_CARD_MIN);
+const CARD_MAX = unsafeCSS(DRAW_CARD_MAX);
 
 /** Gestaltung der Auslosung (Karte links, Bühne rechts). */
 export const drawStyles: CSSResult[] = [
@@ -184,17 +185,10 @@ export const drawStyles: CSSResult[] = [
     .person.out {
       opacity: 0.45;
     }
-    .avatar {
-      flex: none;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid var(--tw-color-surface);
-      border-radius: 50%;
-      color: #ffffff;
-      font-weight: 700;
+    tw-avatar {
+      --tw-avatar-size: 32px;
+      --tw-avatar-border: 2px solid var(--tw-color-surface);
+      --tw-avatar-font: 1em;
     }
     .result {
       flex: 1 1 100%;
@@ -209,11 +203,9 @@ export const drawStyles: CSSResult[] = [
       color: var(--tw-color-text);
       position: relative;
     }
-    .result .avatar {
-      width: 56px;
-      height: 56px;
-      font-size: 1.5em;
-      color: #ffffff;
+    .result tw-avatar {
+      --tw-avatar-size: 56px;
+      --tw-avatar-font: 1.5em;
     }
     .result .text {
       flex: 1 1 200px;

@@ -1,6 +1,7 @@
 import type { TaskDrawWire } from '../api/index.ts';
-import { percentText } from '../components/index.ts';
 import { EMPTY_TEXT } from '../constants/index.ts';
+import { formatPercent } from '../i18n/format.ts';
+import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import { allowsPerson } from '../state/index.ts';
 import type { PersonInfo, TaskInfo } from '../state/index.ts';
@@ -19,21 +20,25 @@ export function personRows(
   task: TaskInfo | undefined,
   persons: ReadonlyMap<string, PersonInfo>,
   showChance: boolean,
-  text: (key: TextKey) => string,
+  language: string,
 ): readonly Row[] {
   const chances = new Map(result?.segments.map((segment) => [segment.person_id, segment.chance]));
   const reasons = new Map(result?.exclusions.map((item) => [item.person_id, item.reason]));
   return [...persons.values()].map((person) => {
     const chance = chances.get(person.id);
     if (chance !== undefined) {
-      return { person, inWheel: true, note: showChance ? percentText(chance) : EMPTY_TEXT };
+      return {
+        person,
+        inWheel: true,
+        note: showChance ? formatPercent(chance, language) : EMPTY_TEXT,
+      };
     }
     const allowed = task ? allowsPerson(task.allowed, person.id) : false;
     const reason = allowed ? reasons.get(person.id) : NOT_ALLOWED;
     return {
       person,
       inWheel: !result && allowed,
-      note: reason ? text(`draw.reason.${reason}` as TextKey) : EMPTY_TEXT,
+      note: reason ? translate(`draw.reason.${reason}` as TextKey, language) : EMPTY_TEXT,
     };
   });
 }

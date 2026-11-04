@@ -15,7 +15,7 @@ import {
   VIEW_TAGS,
 } from '../constants/index.ts';
 import type { Load } from '../constants/index.ts';
-import { FREQUENCY_BUILDERS, areaNames } from '../state/index.ts';
+import { FREQUENCY_BUILDERS } from '../state/index.ts';
 import type { FrequencyWire } from '../state/index.ts';
 import { ConfigView } from './config-view.ts';
 import { roomTags } from './room.ts';
@@ -134,7 +134,7 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
   }
 
   #room(areaIds: readonly string[]): TemplateResult | typeof nothing {
-    return roomTags(areaNames(this.#areas()), areaIds, this.text('common.unknownArea'));
+    return roomTags(this.store.areaNames(), areaIds, this.text('common.unknownArea'));
   }
 
   /** Alle Räume; ein vergebener, inzwischen gelöschter Raum bleibt wählbar, damit nichts still verfällt. */

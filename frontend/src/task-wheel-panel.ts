@@ -1,6 +1,7 @@
 import { ContextProvider } from '@lit/context';
 import { LitElement, css, html, nothing } from 'lit';
 import type { PropertyValues, TemplateResult } from 'lit';
+import { createRef, ref } from 'lit/directives/ref.js';
 
 import { ApiClient } from './api/index.ts';
 import type { HassApi } from './api/index.ts';
@@ -23,7 +24,7 @@ import { translate } from './i18n/index.ts';
 import type { TextKey } from './i18n/index.ts';
 import { Store, storeContext } from './state/index.ts';
 import { VIEW_LOADERS, routeFromPath } from './views/index.ts';
-import type { SectionView } from './views/index.ts';
+import type { SectionViewElement } from './views/index.ts';
 import { defineOnce } from './components/define.ts';
 
 interface PanelRoute {
@@ -31,10 +32,24 @@ interface PanelRoute {
   readonly path: string;
 }
 
+/**
+ * Home Assistant ersetzt `hass` bei jeder Zustandsänderung irgendeiner Entität. Das Panel zeichnet
+ * nur neu, wenn sich etwas ändert, das es anzeigt: die Sprache, die Räume oder die Dienste.
+ */
+function hassChanged(next: HassApi | undefined, prev: HassApi | undefined): boolean {
+  return (
+    next?.language !== prev?.language ||
+    next?.locale?.language !== prev?.locale?.language ||
+    next?.areas !== prev?.areas ||
+    next?.services !== prev?.services ||
+    (next === undefined) !== (prev === undefined)
+  );
+}
+
 /** Einstieg des Panels: Tab-Leiste, Store im Kontext und die nachgeladene Ansicht des gewählten Tabs. */
 export class TaskWheelPanel extends LitElement {
   static override properties = {
-    hass: { attribute: false },
+    hass: { attribute: false, noAccessor: true, hasChanged: hassChanged },
     route: { attribute: false },
     language: { type: String },
     narrow: { type: Boolean },
@@ -79,15 +94,18 @@ export class TaskWheelPanel extends LitElement {
     `,
   ];
 
-  declare hass: HassApi | undefined;
   declare route: PanelRoute | undefined;
   declare language: string;
   declare narrow: boolean;
   declare _selected: RouteId;
 
   readonly #provider = new ContextProvider(this, { context: storeContext });
-  readonly #views = new Map<RouteId, SectionView>();
+  readonly #views = new Map<RouteId, SectionViewElement>();
   readonly #loading = new Set<RouteId>();
+  /** Ansichten, deren Code sich nicht laden ließ (Netz, Neustart); „Erneut versuchen“ leert die Liste. */
+  readonly #failed = new Set<RouteId>();
+  readonly #menu = createRef<HTMLElement & { hass?: HassApi }>();
+  #hass: HassApi | undefined;
   #store: Store | undefined;
   #unlisten: (() => void) | undefined;
 
@@ -99,6 +117,23 @@ export class TaskWheelPanel extends LitElement {
     this.addEventListener(EVENT_TAB_SELECT, (event) => {
       this.#onSelect(event as CustomEvent<RouteId>);
     });
+  }
+
+  get hass(): HassApi | undefined {
+    return this.#hass;
+  }
+
+  /** Gibt das neueste `hass` an Client und Menü-Knopf weiter, zeichnet aber nur bei `hassChanged` neu. */
+  set hass(value: HassApi | undefined) {
+    const previous = this.#hass;
+    this.#hass = value;
+    if (value) {
+      this.#store?.client.useHass(value);
+      if (this.#menu.value) {
+        this.#menu.value.hass = value;
+      }
+    }
+    this.requestUpdate('hass', previous);
   }
 
   override connectedCallback(): void {
@@ -129,7 +164,11 @@ export class TaskWheelPanel extends LitElement {
       <header>
         ${
           this.narrow
-            ? html`<ha-menu-button .hass=${this.hass} .narrow=${this.narrow}></ha-menu-button>`
+            ? html`<ha-menu-button
+                ${ref(this.#menu)}
+                .hass=${this.hass}
+                .narrow=${this.narrow}
+              ></ha-menu-button>`
             : nothing
         }
         <h1 class=${PANEL_HEADING_CLASS}>${text('panel.title')}</h1>
@@ -145,18 +184,35 @@ export class TaskWheelPanel extends LitElement {
 
   #body(language: string, text: (key: TextKey) => string): TemplateResult | typeof nothing {
     const state = this.#store?.state;
-    if (state?.status === 'error') {
-      return html`<p>${text('panel.error')}</p>`;
-    }
     if (!state?.snapshot) {
-      return html`<p>${text('panel.loading')}</p>`;
+      return state?.status === 'error'
+        ? this.#problem(text('panel.error'), text, () => void this.#store?.reload())
+        : html`<p>${text('panel.loading')}</p>`;
     }
     const view = this.#views.get(this.#current());
+    const notice =
+      state.status === 'error'
+        ? this.#problem(text('panel.stale'), text, () => void this.#store?.reload())
+        : nothing;
+    if (this.#failed.has(this.#current())) {
+      return this.#problem(text('panel.view_error'), text, () => {
+        this.#failed.clear();
+        this.requestUpdate();
+      });
+    }
     if (!view) {
-      return nothing;
+      return notice;
     }
     view.language = language;
-    return html`${view}`;
+    return html`${notice}${view}`;
+  }
+
+  /** Eine Fehlermeldung mit „Erneut versuchen“. */
+  #problem(message: string, text: (key: TextKey) => string, retry: () => void): TemplateResult {
+    return html`<p role="alert">
+      ${message}
+      <button type="button" class="action" @click=${retry}>${text('panel.retry')}</button>
+    </p>`;
   }
 
   #language(): string {
@@ -180,7 +236,6 @@ export class TaskWheelPanel extends LitElement {
 
   #startStore(hass: HassApi): void {
     if (this.#store) {
-      this.#store.client.useHass(hass);
       return;
     }
     const store = new Store(new ApiClient(hass));
@@ -193,15 +248,19 @@ export class TaskWheelPanel extends LitElement {
   }
 
   async #ensureView(id: RouteId): Promise<void> {
-    if (this.#views.has(id) || this.#loading.has(id)) {
+    if (this.#views.has(id) || this.#loading.has(id) || this.#failed.has(id)) {
       return;
     }
     this.#loading.add(id);
-    await VIEW_LOADERS[id]();
-    this.#loading.delete(id);
-    const view = document.createElement(VIEW_TAGS[id]) as SectionView;
-    this.#views.set(id, view);
-    this.requestUpdate();
+    try {
+      await VIEW_LOADERS[id]();
+      this.#views.set(id, document.createElement(VIEW_TAGS[id]) as SectionViewElement);
+    } catch {
+      this.#failed.add(id);
+    } finally {
+      this.#loading.delete(id);
+      this.requestUpdate();
+    }
   }
 
   #onSelect(event: CustomEvent<RouteId>): void {
