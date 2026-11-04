@@ -65,15 +65,14 @@ def due_tasks(
 
 
 def _seats(tasks: tuple[Task, ...], context: DrawContext) -> int:
-    """Personen, die in dieser Runde eine Aufgabe übernehmen können (nicht pausiert, anwesend)."""
-    start = context.now.date()
-    end = start + max(task.due_days for task in tasks) * ONE_DAY
+    """Personen, die in dieser Runde eine Aufgabe übernehmen können (nicht pausiert, heute da)."""
+    today = context.now.date()
     ignores_absence = not all(task.respect_absence for task in tasks)
     return sum(
         1
         for pid, person in context.persons.items()
         if person.load is not Load.PAUSED
-        and (ignores_absence or context.availability[pid].present_in_window(start, end))
+        and (ignores_absence or context.availability[pid].is_present(today))
     )
 
 
