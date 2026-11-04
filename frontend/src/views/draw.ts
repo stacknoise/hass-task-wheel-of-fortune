@@ -38,6 +38,7 @@ import {
 import type { AreaNames, DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
 import { roomTags } from './room.ts';
 import { drawSummary } from './draw-summary.ts';
+import { ReplaceFlow } from './draw-replace.ts';
 import { drawStyles } from './draw-styles.ts';
 import { personRows } from './draw-rows.ts';
 import { defineOnce } from '../components/define.ts';
@@ -62,6 +63,12 @@ export class TwDrawView extends LitElement {
   /** Räume des laufenden Renders. */
   #areas: AreaNames = new Map();
   readonly #stage = createRef<TwStage>();
+  readonly #replace = new ReplaceFlow({
+    host: this,
+    session: () => this.#session,
+    isAdmin: () => this.#store.client?.isAdmin() === true,
+    text: (key) => this.#text(key),
+  });
   /** Die Animation der laufenden Auslosung; wird bei jedem Start zufällig neu gewählt. */
   #kind: AnimationKind = DEFAULT_ANIMATIONS[0] ?? 'wheel';
   #session: DrawSession | undefined;
@@ -150,6 +157,7 @@ export class TwDrawView extends LitElement {
       <div class="layout">
         ${this.#side(state, tasks, persons)} ${this.#stagePanel(state, tasks, persons)}
       </div>
+      ${this.#replace.dialog(state, tasks)}
     `;
   }
 
@@ -354,6 +362,7 @@ export class TwDrawView extends LitElement {
           ${this.#room(task)}
         </span>
         <span class="status">${this.#taskStatus(state, persons, index, shown)}</span>
+        ${task ? this.#replace.button(state, task) : nothing}
       </li>
     `;
   }

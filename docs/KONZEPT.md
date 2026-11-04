@@ -383,7 +383,7 @@ Präfix `task_wheel/`. Befehle je Bereich in eigenen Modulen; jeder Befehl hat e
 | Lesen | `snapshot`, `subscribe` (Deltas), `history/list`, `statistics/get` (liefert auch `goals`: je Zeitplan und Aufgabe mit `max_per_period` (`schedule_id`) das Soll gegen die vom Zeitplan verlosten Zuteilungen im laufenden und in den drei vorherigen Fenstern aus je `every` Perioden), `availability/preview` (Anwesenheit der nächsten Wochen für ungespeicherte Regeln; einzige Quelle der Regeln ist das Backend) | angemeldeter Benutzer |
 | Erledigen/Tauschen | `assignment/complete`, `assignment/swap`, `assignment/skip` | angemeldeter Benutzer |
 | Auslosung löschen | `round/delete` | **Administrator** |
-| Auslosen | `draw/begin`, `draw/preview` (Rad und Kandidaten einer Aufgabe vorab), `draw/spin`, `draw/spin_rest`, `draw/commit`, `draw/cancel` | angemeldeter Benutzer; `draw/cancel` und ein erneutes `draw/begin` über eine schon gezogene Runde nur Administrator |
+| Auslosen | `draw/begin`, `draw/preview` (Rad und Kandidaten einer Aufgabe vorab), `draw/spin`, `draw/spin_rest`, `draw/commit`, `draw/cancel`, `draw/replacements`, `draw/replace_task` | angemeldeter Benutzer; `draw/cancel` und ein erneutes `draw/begin` über eine schon gezogene Runde sowie `draw/replacements`/`draw/replace_task` (Aufgabe der Runde vor dem ersten Dreh gegen eine machbare Aufgabe desselben Zeitplans tauschen) nur Administrator |
 | Konfiguration | `person/*`, `task/*`, `schedule/*`, `settings/update` | **Administrator** (`@websocket_api.require_admin`) |
 
 `subscribe` schickt nach dem ersten Snapshot nur noch Änderungen (Delta je Objekt-ID). Das hält die Datenmenge

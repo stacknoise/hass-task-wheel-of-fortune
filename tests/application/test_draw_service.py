@@ -277,3 +277,56 @@ def test_commit_rejects_and_drops_a_round_whose_winner_was_deleted(gone: str):
         world.draws.commit(panel.id, NOW)
     assert world.history.rounds == {} and world.events.drawn == []
     assert world.draws.open_rounds(NOW) == ()
+
+
+def _with_spare_tasks(world: World) -> None:
+    """Zeitplan s1 mit vier Aufgaben: t3 machbar, t4 nur für eine unbekannte Person erlaubt."""
+    every = f.task(id="t3").frequency
+    both = frozenset({"p1", "p2"})
+    world.config.put_task(f.task(id="t3", name="C", allowed=both, frequency=every))
+    world.config.put_task(f.task(id="t4", name="D", allowed=frozenset({"p9"}), frequency=every))
+    world.put_schedule(task_ids=("t1", "t2", "t3", "t4"))
+
+
+def test_replacements_list_tasks_outside_the_round_with_feasibility():
+    world = World()
+    _with_spare_tasks(world)
+    panel = world.draws.begin("s1", NOW)
+    assert [t.id for t in panel.draft.tasks] == ["t1", "t2"]
+    options = world.draws.replacements(panel.id, NOW)
+    assert [(o.task_id, o.doable) for o in options] == [("t3", True), ("t4", False)]
+
+
+def test_replace_task_swaps_in_place_before_the_start():
+    world = World()
+    _with_spare_tasks(world)
+    panel = world.draws.begin("s1", NOW)
+    replaced = world.draws.replace_task(panel.id, "t1", "t3", NOW)
+    assert [t.id for t in replaced.draft.tasks] == ["t3", "t2"]
+    assert world.draws.get(panel.id, NOW).draft.tasks == replaced.draft.tasks
+    assert [o.task_id for o in world.draws.replacements(panel.id, NOW)] == ["t1", "t4"]
+
+
+def test_replace_task_is_locked_after_the_first_spin():
+    world = World()
+    _with_spare_tasks(world)
+    panel = world.draws.begin("s1", NOW)
+    world.draws.spin(panel.id, NOW)
+    assert world.draws.replacements(panel.id, NOW) == ()
+    with pytest.raises(DrawRejectedError, match="draw_already_started"):
+        world.draws.replace_task(panel.id, "t2", "t3", NOW)
+
+
+def test_replace_task_rejects_infeasible_and_foreign_tasks():
+    world = World()
+    _with_spare_tasks(world)
+    world.config.put_task(f.task(id="t5", allowed=frozenset({"p1"})))
+    panel = world.draws.begin("s1", NOW)
+    with pytest.raises(DrawRejectedError, match="draw_replacement_infeasible"):
+        world.draws.replace_task(panel.id, "t1", "t4", NOW)
+    for new_id in ("t5", "t2", "fehlt"):  # nicht im Zeitplan, schon in der Runde, unbekannt
+        with pytest.raises(DrawRejectedError, match="draw_replacement_invalid"):
+            world.draws.replace_task(panel.id, "t1", new_id, NOW)
+    with pytest.raises(DrawRejectedError, match="draw_replacement_invalid"):
+        world.draws.replace_task(panel.id, "t4", "t3", NOW)
+    assert [t.id for t in world.draws.get(panel.id, NOW).draft.tasks] == ["t1", "t2"]

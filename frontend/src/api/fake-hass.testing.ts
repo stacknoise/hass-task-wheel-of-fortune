@@ -40,6 +40,7 @@ export const EMPTY_SNAPSHOT: Snapshot = {
 /** Ein `hass`-Ersatz, der Snapshot und Deltas kontrolliert liefert. */
 export class FakeHass implements HassApi {
   readonly language = 'de';
+  readonly user: { is_admin: boolean } = { is_admin: true };
   readonly calls: string[] = [];
   readonly states = {
     'notify.handy_anna': { attributes: { friendly_name: 'Handy Anna' } },

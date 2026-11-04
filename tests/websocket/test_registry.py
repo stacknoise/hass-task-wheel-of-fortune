@@ -10,6 +10,8 @@ ADMIN_PREFIXES = (
     events.WS_SCHEDULE_PREFIX,
     events.WS_SETTINGS_UPDATE,
     events.WS_ROUND_DELETE,
+    events.WS_DRAW_REPLACEMENTS,
+    events.WS_DRAW_REPLACE_TASK,
 )
 EXPECTED = {
     events.WS_SNAPSHOT,
@@ -57,6 +59,7 @@ def test_reads_do_not_mutate() -> None:
         events.WS_STATISTICS_GET,
         events.WS_AVAILABILITY_PREVIEW,
         events.WS_DRAW_PREVIEW,
+        events.WS_DRAW_REPLACEMENTS,
     }
     for command in COMMANDS:
         assert command.mutates is (command.name not in reads), command.name

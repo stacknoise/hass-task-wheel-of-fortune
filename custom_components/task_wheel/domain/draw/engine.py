@@ -94,6 +94,10 @@ class DrawEngine:
         selection, segments, _weights = self._wheel(task, context, rest, capacity, reach)
         return TaskDraw(task.id, None, 0.0, segments, selection.exclusions)
 
+    def is_doable(self, task: Task, context: DrawContext) -> bool:
+        """Mindestens eine Person, die heute mitlosen darf, könnte die Aufgabe übernehmen."""
+        return bool(self._selector.eligible(task, context))
+
     def _wheel(
         self,
         task: Task,
