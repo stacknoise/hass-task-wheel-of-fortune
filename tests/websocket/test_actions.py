@@ -7,6 +7,7 @@ from custom_components.task_wheel.domain.errors import (
     InvalidTransitionError,
     NotFoundError,
     RoundHasDoneError,
+    SwapRejectedError,
 )
 
 from ..domain import factories as f
@@ -36,11 +37,20 @@ def test_complete_unknown_assignment(api: Api) -> None:
         api.run("assignment/complete", assignment_id="nope")
 
 
-def test_swap_passes_assignment_to_other_person(api: Api) -> None:
+def test_swap_exchanges_assignments_of_both_persons(api: Api) -> None:
+    api.open_partner()
     swapped = api.result("assignment/swap", assignment_id="a1", to_person_id="p2")
     assert swapped["person_id"] == "p2"
     assert swapped["status"] == "swapped"
     assert swapped["swap"]["from_person_id"] == "p1"
+    other = api.history.get_assignment("a2")
+    assert (other.person_id, other.status.value) == ("p1", "swapped")  # type: ignore[union-attr]
+
+
+def test_swap_without_open_counterpart_is_rejected(api: Api) -> None:
+    with pytest.raises(SwapRejectedError) as caught:
+        api.run("assignment/swap", assignment_id="a1", to_person_id="p2")
+    assert caught.value.key == "swap_person_has_no_open_assignment"
 
 
 def test_swap_to_unknown_person(api: Api) -> None:
@@ -154,8 +164,3 @@ def test_skip_twice_is_rejected(api: Api) -> None:
     api.run("assignment/skip", assignment_id="a1")
     with pytest.raises(InvalidTransitionError):
         api.run("assignment/skip", assignment_id="a1")
-
-
-def test_round_head_lists_all_holders_for_the_swap_choice(api: Api) -> None:
-    head = api.data.live.snapshot().collections["rounds"]["r1"]
-    assert head["person_ids"] == ["p1", "p2"]

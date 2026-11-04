@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- **Geändert:** Der Tausch ist ein echter Tausch Aufgabe gegen Aufgabe innerhalb einer Auslosung: Ana (Bad) und Ben (Küche) haben danach Küche und Bad, jede Person behält genau eine Aufgabe (bisher bekam Ben Anas Aufgabe zusätzlich). Das Panel zeigt je Zielperson auch deren Aufgabe („Ben (Küche)“); ohne offene Gegenaufgabe lehnt der Dienst mit `swap_person_has_no_open_assignment` ab. Die Regeln (Aufgabe tauschbar, erlaubt, nicht pausiert, Belastbarkeit, Anwesenheit) gelten für beide Richtungen, beide Zuteilungen werden gemeinsam gespeichert und lösen je ein Event `task_wheel_swapped` aus; jede Person bekommt eine Benachrichtigung
+- **Entfernt:** Der Tausch hat nichts mehr mit Jokern zu tun (keine Jokerprüfung `no_jokers_left`, kein Zähler, kein `jokers_left` in Snapshot und Panel); die Einstellung `jokers_per_month` bleibt für später reserviert und ohne Wirkung. Das Feld `person_ids` der Runden im Snapshot entfällt
 - Geändert: Eine Auslosung im Panel dürfen nach dem ersten Ergebnis nur noch Administratoren abbrechen oder durch einen Neustart ersetzen; vor dem ersten Ergebnis kann sie jeder schließen
 - Geändert: Der Dienst `complete` ohne eindeutiges Ziel meldet einen übersetzten Dienstfehler statt einer Schema-Ausnahme
 - Behoben: Ein monatlicher Zeitplan mit mehreren Wochentagen (z. B. Montag und Donnerstag) löst nur noch einmal im Monat aus, am ersten gewählten Wochentag; bisher löste er an jedem gewählten Wochentag der ersten sieben Tage aus

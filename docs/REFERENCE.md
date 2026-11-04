@@ -14,14 +14,14 @@ data:
 |---|---|
 | `task_wheel.draw` | Draw a round of a schedule |
 | `task_wheel.complete` | Complete an assignment |
-| `task_wheel.swap` | Swap an assignment with a joker |
+| `task_wheel.swap` | Swap an assignment for the open assignment of another person in the same draw |
 | `task_wheel.set_absence` | Enter an absence for a person |
 
 Events: `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_wheel_missed`, `task_wheel_reminder`. With `animate_on`, `task_wheel.draw` additionally fires `task_wheel_animate` (a hint for a display). The payloads contain only identifiers, names and numbers. "Stays undone" and deleting a draw fire no event.
 
 A schedule and a person can be addressed by identifier or short name, a task by identifier or name. `task_wheel.complete` takes either `assignment_id` or `person` together with `task`.
 
-Settings (jokers, fairness window, retention, points factors, grace period, panel for administrators only) are changed under *Settings → Devices & services → Task Wheel of Fortune → Configure*. Every night at 03:00, missed assignments are marked and rounds older than the retention period (at least 373 days) are deleted; rounds that still hold open assignments are kept.
+Settings (jokers per month, reserved for later and currently without effect; fairness window, retention, points factors, grace period, panel for administrators only) are changed under *Settings → Devices & services → Task Wheel of Fortune → Configure*. Every night at 03:00, missed assignments are marked and rounds older than the retention period (at least 373 days) are deleted; rounds that still hold open assignments are kept.
 
 ## Notifications
 
@@ -59,7 +59,7 @@ draw the rest without animation and complete the round. The backend always deter
 follows it, and with "reduced motion" in the operating system it is skipped. **Overview**, **History**, **Statistics**, **Tasks**, **People** and **Schedules** are finished as well.
 
 - **Overview:** next draw (with paging through the schedules), open assignments per schedule with a filter by person,
-  an action menu per assignment with Complete and "Stays undone" (both with a confirmation popup) and Swap (only allowed, non-paused people of the same draw, with a note on the remaining jokers), points this month against the
+  an action menu per assignment with Complete and "Stays undone" (both with a confirmation popup) and Swap (choose a person of the same draw together with their open task, e.g. "Ben (Kitchen)"; only allowed, non-paused people), points this month against the
   fair share, and the latest activity. The open assignments are grouped by **draw** (most recent first, with
   schedule and time); a draw without open assignments disappears from the list. A whole draw can be
   **deleted** after confirmation as long as none of its tasks is completed; it then also disappears from history and statistics.

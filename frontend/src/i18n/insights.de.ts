@@ -37,10 +37,11 @@ export const insightsDe = {
   'overview.swap': 'Tauschen',
   'overview.swapWith': 'Tauschen mit',
   'overview.cancel': 'Abbrechen',
-  'overview.jokers': 'Joker übrig: {count}',
-  'overview.noJokers': 'Kein Joker mehr in diesem Monat.',
+  'overview.swapDone': 'Diese Zuteilung wurde schon getauscht.',
+  'overview.swapTarget': '{person} ({task})',
   'overview.swapDisabled': 'Diese Aufgabe darf nicht getauscht werden.',
-  'overview.noTargets': 'Niemand aus dieser Auslosung darf diese Aufgabe übernehmen.',
+  'overview.noTargets':
+    'Niemand aus dieser Auslosung hat eine offene Aufgabe, die sich tauschen lässt.',
   'overview.completeQuestion': 'Diese Zuteilung als erledigt markieren?',
   'overview.skip': 'Bleibt unerledigt',
   'overview.skipQuestion':

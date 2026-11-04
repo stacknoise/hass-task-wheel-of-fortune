@@ -76,7 +76,7 @@ describe('task-wheel-panel', () => {
     const view = element.shadowRoot?.querySelector('tw-overview-view');
     const content = (): string => text(view as Element);
     await vi.waitFor(() => {
-      expect(content()).toContain('3 offen');
+      expect(content()).toContain('4 offen');
     });
     hass.emit({ assignments: { upsert: [assignment('a9', 't2', 'p1', 'open')], remove: [] } });
     await vi.waitFor(() => {

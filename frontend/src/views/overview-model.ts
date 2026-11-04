@@ -6,7 +6,7 @@ import type {
   ScheduleObject,
   TaskObject,
 } from '../api/index.ts';
-import { FILTER_ALL, LOAD_PAUSED } from '../constants/index.ts';
+import { FILTER_ALL, LOAD_PAUSED, STATUS } from '../constants/index.ts';
 import { allowsPerson } from '../state/index.ts';
 
 export interface AssignmentGroup {
@@ -58,30 +58,65 @@ export function groupByRound(
     .filter((group) => group.assignments.length > 0);
 }
 
+/** Ein möglicher Tauschpartner: die Person und ihre offene Zuteilung (samt Aufgabe). */
+export interface SwapTarget {
+  readonly person: PersonObject;
+  readonly assignment: AssignmentObject;
+  readonly task: TaskObject | undefined;
+}
+
+/** Vorfilter je Richtung: Aufgaben erlauben den Tausch, die Zielperson ist nicht pausiert. */
+function swapPossible(
+  assignment: AssignmentObject,
+  task: TaskObject | undefined,
+  person: PersonObject,
+  other: TaskObject | undefined,
+): boolean {
+  return (
+    person.load !== LOAD_PAUSED &&
+    (other?.swap_allowed ?? false) &&
+    allowsPerson(new Set(task?.allowed ?? []), person.id) &&
+    allowsPerson(new Set(other?.allowed ?? []), assignment.person_id)
+  );
+}
+
 /**
- * Personen, auf die getauscht werden darf: in derselben Auslosung, erlaubt für die Aufgabe, nicht
- * die jetzige, nicht pausiert.
+ * Tauschpartner: Personen derselben Auslosung mit einer offenen Zuteilung (bei mehreren die mit
+ * der frühesten Frist, wie im Backend). Beide Aufgaben müssen den Tausch erlauben und die jeweils
+ * andere Person zulassen; nicht man selbst, die Zielperson nicht pausiert.
  */
 export function swapTargets(
   assignment: AssignmentObject,
   task: TaskObject | undefined,
+  roundAssignments: readonly AssignmentObject[],
   persons: readonly PersonObject[],
-  roundPersonIds: readonly string[],
-): readonly PersonObject[] {
-  const allowed = new Set(task?.allowed ?? []);
-  const inRound = new Set(roundPersonIds);
-  return persons.filter(
-    (person) =>
-      inRound.has(person.id) &&
-      allowsPerson(allowed, person.id) &&
-      person.id !== assignment.person_id &&
-      person.load !== LOAD_PAUSED,
-  );
+  taskById: ReadonlyMap<string, TaskObject>,
+): readonly SwapTarget[] {
+  const personById = new Map(persons.map((person) => [person.id, person]));
+  const earliestFirst = roundAssignments
+    .filter(
+      (item) =>
+        item.round_id === assignment.round_id &&
+        item.status === STATUS.open &&
+        item.person_id !== assignment.person_id,
+    )
+    .sort((a, b) => a.due_at.localeCompare(b.due_at));
+  const seen = new Set<string>();
+  const targets: SwapTarget[] = [];
+  for (const item of earliestFirst) {
+    const person = personById.get(item.person_id);
+    const other = taskById.get(item.task_id);
+    if (person && !seen.has(person.id) && swapPossible(assignment, task, person, other)) {
+      targets.push({ person, assignment: item, task: other });
+    }
+    seen.add(item.person_id);
+  }
+  return targets;
 }
 
-/** Ob getauscht werden kann: Aufgabe erlaubt es, die Person hat noch einen Joker. */
-export function canSwap(task: TaskObject | undefined, person: PersonObject | undefined): boolean {
-  return (task?.swap_allowed ?? false) && (person?.jokers_left ?? 0) > 0;
+/** Ob getauscht werden kann: die Aufgabe erlaubt es und die Zuteilung ist noch offen (nicht schon getauscht). */
+export function canSwap(task: TaskObject | undefined, assignment: AssignmentObject): boolean {
+  return (task?.swap_allowed ?? false) && assignment.status === STATUS.open;
 }
 
 export interface ActivityItem {

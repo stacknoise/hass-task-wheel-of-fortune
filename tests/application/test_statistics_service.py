@@ -72,8 +72,9 @@ def test_record_follows_complete_swap_and_miss() -> None:
     world.assignments.complete("a1", f.NOW + DAY)
     world.assignments.mark_missed(f.NOW + 30 * DAY)
     assert world.history.aggregates["2026-11"] == {
-        "p3": {"t1": {"on_time": [1, 3], "missed": [1, 3]}},
+        "p3": {"t1": {"on_time": [1, 3]}},
         "p2": {"t1": {"missed": [1, 3]}},
+        "p1": {"t1": {"missed": [1, 3]}},
     }
 
 

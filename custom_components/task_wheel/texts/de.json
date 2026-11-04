@@ -11,8 +11,8 @@
     "task_item": "{task} (bis {due})"
   },
   "swapped": {
-    "title": "Aufgabe übernommen",
-    "message": "{from_person} hat dir „{task}“ übergeben (bis {due})."
+    "title": "Aufgabe getauscht",
+    "message": "{from_person} hat mit dir getauscht: Du übernimmst „{task}“ (bis {due})."
   },
   "reminder": {
     "title": "Erinnerung: {schedule}",

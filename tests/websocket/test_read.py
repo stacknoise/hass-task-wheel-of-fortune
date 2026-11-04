@@ -20,8 +20,7 @@ def api() -> Api:
 def test_snapshot_lists_everything_the_panel_shows(api: Api) -> None:
     snap = api.result("snapshot")
     assert [p["id"] for p in snap["persons"]] == ["p1", "p2"]
-    # p1 hat in Runde r1 schon einen Joker verbraucht (a2 wurde an p2 getauscht)
-    assert [p["jokers_left"] for p in snap["persons"]] == [1, 2]
+    assert all("jokers_left" not in p for p in snap["persons"])
     assert [t["id"] for t in snap["tasks"]] == ["t1", "t2"]
     assert snap["schedules"][0]["next_run"] is None
     assert {a["id"] for a in snap["assignments"]} == {"a1", "a2"}

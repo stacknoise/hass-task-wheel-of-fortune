@@ -182,6 +182,8 @@ export const de = {
   'error.notify_target_invalid': 'Ungültiges Benachrichtigungsziel.',
   'error.too_deep': 'Zu tief verschachtelt.',
   'error.unauthorized': 'Nur für Administratoren.',
+  'error.swap_person_has_no_open_assignment':
+    'Die Person hat in dieser Auslosung keine offene Aufgabe zum Tauschen.',
   'draw.schedule': 'Welcher Zeitplan wird ausgelöst?',
   'draw.schedule.none': 'Es gibt keinen Zeitplan, der sich auslosen lässt.',
   'draw.start': 'Runde starten',

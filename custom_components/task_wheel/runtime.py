@@ -71,7 +71,7 @@ def compose(
     assignments = AssignmentService(config, history, statistics, events)
     swaps = SwapService(config, history, statistics, events)
     schedules = ScheduleService(config, history, draws, observed, events)
-    live = LiveView(SnapshotBuilder(config, history, draws, swaps, schedules), clock)
+    live = LiveView(SnapshotBuilder(config, history, draws, schedules), clock)
     observed.listen(live.publish)
     config.subscribe(AccessWatch(live, lambda: config.settings.panel_admin_only).check)
     config.subscribe(live.publish)

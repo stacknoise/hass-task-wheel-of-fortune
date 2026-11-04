@@ -7,7 +7,6 @@ export interface PersonObject extends WireObject {
   readonly name: string;
   readonly color: string;
   readonly load: string;
-  readonly jokers_left: number;
 }
 
 export interface TaskObject extends WireObject {
@@ -48,8 +47,6 @@ export interface RoundHead extends WireObject {
   readonly total: number;
   /** Erledigte (pünktlich oder verspätet) Zuteilungen; dann ist Löschen gesperrt. */
   readonly done: number;
-  /** Alle Personen, die in der Auslosung eine Zuteilung haben (Tauschpartner). */
-  readonly person_ids: readonly string[];
 }
 
 export interface RoundObject extends WireObject {

@@ -34,13 +34,14 @@ def test_changes_arrive_as_deltas_per_object(api: Api) -> None:
     assert delta["rounds"]["upsert"][0]["done"] == 2
 
 
-def test_swap_moves_assignment_between_persons(api: Api) -> None:
+def test_swap_exchanges_assignments_between_persons(api: Api) -> None:
+    api.open_partner()
     api.run("subscribe")
     api.run("assignment/swap", assignment_id="a1", to_person_id="p2")
     delta = api.pushed[0]
-    assert delta["assignments"]["upsert"][0]["person_id"] == "p2"
-    assert [p["id"] for p in delta["persons"]["upsert"]] == ["p1"]
-    assert delta["persons"]["upsert"][0]["jokers_left"] == 0
+    upserted = {item["id"]: item["person_id"] for item in delta["assignments"]["upsert"]}
+    assert upserted == {"a1": "p2", "a2": "p1"}
+    assert "persons" not in delta
 
 
 def test_config_changes_show_up_and_removals_are_listed(api: Api) -> None:

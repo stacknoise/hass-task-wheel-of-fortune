@@ -52,12 +52,14 @@ async def _setup(hass: HomeAssistant) -> tuple[ConfigEntry, TaskWheelData]:
     return entry, data
 
 
-def _open_assignment(data: TaskWheelData) -> str:
-    """Eine offene Zuteilung für p1 mit Frist in einer Woche."""
+def _open_assignment(
+    data: TaskWheelData, partner_status: AssignmentStatus = AssignmentStatus.MISSED
+) -> str:
+    """Eine offene Zuteilung für p1 mit Frist in einer Woche; p2 hat das Gegenstück `a2`."""
     now = data.clock()
     item = f.assignment(id="a1", round_id="r1", person_id="p1", due_at=now + 7 * DAY)
     partner = f.assignment(
-        id="a2", round_id="r1", person_id="p2", due_at=now, status=AssignmentStatus.MISSED
+        id="a2", round_id="r1", person_id="p2", due_at=now, status=partner_status
     )  # getauscht wird nur innerhalb einer Auslosung
     data.history.put_round(
         f.finished_round(id="r1", started_at=now, finished_at=now, assignments=(item, partner))
@@ -145,16 +147,17 @@ async def test_complete_needs_exactly_one_target(hass: HomeAssistant) -> None:
         assert raised.value.translation_key == "target_required"
 
 
-async def test_swap_service_hands_over_and_fires_event(hass: HomeAssistant) -> None:
+async def test_swap_service_exchanges_tasks_and_fires_event_for_both(hass: HomeAssistant) -> None:
     _, data = await _setup(hass)
     swapped = async_capture_events(hass, EVENT_SWAPPED)
-    assignment_id = _open_assignment(data)
+    assignment_id = _open_assignment(data, AssignmentStatus.OPEN)
     await hass.services.async_call(
         DOMAIN, "swap", {"assignment_id": assignment_id, "to_person": "ben"}, blocking=True
     )
     await hass.async_block_till_done()
     assert data.history.get_assignment(assignment_id).person_id == "p2"  # type: ignore[union-attr]
-    assert swapped[0].data["from_person_name"] == "Anna"
+    assert data.history.get_assignment("a2").person_id == "p1"  # type: ignore[union-attr]
+    assert [event.data["from_person_name"] for event in swapped] == ["Anna", "Ben"]
 
 
 async def test_swap_to_unknown_person_is_a_translated_error(hass: HomeAssistant) -> None:

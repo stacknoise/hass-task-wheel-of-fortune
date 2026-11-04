@@ -31,7 +31,7 @@ And because chores are more fun with a little suspense, every draw comes with an
 - ⚖️ **Fair by design.** Chances follow each person's fair share, based on points, presence and capacity. A person on half load, on holiday or on a weekly rota is taken into account automatically. [How fairness works →](docs/FAIRNESS.md)
 - 🗓️ **Schedules.** Draw every Monday, once, or by hand. Each round hands every person at most one chore.
 - 🏠 **Rooms and rules.** Assign chores to your Home Assistant areas. Say who may do what, how often, how much effort it is (points) and how much load a person needs to take it.
-- 🃏 **Jokers and "stays undone".** Swap a chore with someone else from the same draw, or openly skip it. Everything is counted.
+- 🔄 **Swapping and "stays undone".** Swap chores with someone else from the same draw (a real swap: each takes the other's chore), or openly skip one. Everything is counted.
 - 📊 **History and statistics.** Every draw, completion rate, task × person matrix, lucky and unlucky ones, plus CSV export.
 - 📱 **Looks good everywhere.** The panel is made for desktop, tablet and phone, in English and German.
 - 🔔 **Fits into Home Assistant.** Services, events, sensors, a to-do list per person and a draw button per schedule. Use it in automations, dashboards and notifications.

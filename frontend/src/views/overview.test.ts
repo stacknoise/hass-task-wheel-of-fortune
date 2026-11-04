@@ -61,7 +61,7 @@ describe('Übersicht', () => {
     expect(content).toContain('Zeitplan 1 von 2');
     expect(content).toContain('Ohne Zeitplan');
     expect(content).toContain('Gelöschte Aufgabe');
-    expect(content).toContain('3 offen');
+    expect(content).toContain('4 offen');
     expect(content).toContain('Getauscht');
     expect(content).toContain('fair: 8');
   });
@@ -84,8 +84,10 @@ describe('Übersicht', () => {
     );
     ben?.click();
     await view.updateComplete;
-    expect(text(view)).toContain('1 offen');
-    expect(view.shadowRoot?.querySelector('.assignments')?.textContent).not.toContain('Wochenplan');
+    const shown = view.shadowRoot?.querySelector('.assignments')?.textContent ?? '';
+    expect(shown).toContain('Küche');
+    expect(shown).toContain('Gelöschte Aufgabe');
+    expect(shown).not.toContain('Bad putzen');
   });
 
   it('erledigt eine Zuteilung und lädt Punkte und Aktivität neu', async () => {
@@ -115,12 +117,12 @@ describe('Übersicht', () => {
     });
   });
 
-  it('bietet nur erlaubte, nicht pausierte Personen zum Tausch an', async () => {
+  it('bietet Personen der Auslosung mit ihrer offenen Aufgabe zum Tausch an', async () => {
     const { view, hass } = await mount();
     await choose(view, 'Tauschen');
     await view.updateComplete;
     const choice = view.shadowRoot?.querySelector('.swap');
-    expect(choice?.textContent).toContain('Ben');
+    expect(choice?.textContent).toContain('Ben (Küche)');
     expect(choice?.textContent).not.toContain('Cara');
     expect(choice?.textContent).not.toContain('Anna');
     const ben = [...(choice?.querySelectorAll('button') ?? [])].find((b) =>
@@ -152,10 +154,10 @@ describe('Übersicht', () => {
     });
   });
 
-  it('sperrt das Tauschen ohne Joker oder wenn die Aufgabe es nicht erlaubt', async () => {
+  it('sperrt das Tauschen, wenn die Aufgabe es nicht erlaubt oder die Zuteilung schon getauscht ist', async () => {
     const { view } = await mount();
     const swap: HTMLButtonElement[] = [];
-    for (const index of [0, 1, 2]) {
+    for (const index of [0, 1, 3]) {
       const menu = await openMenu(view, index);
       const item = [...(menu.shadowRoot?.querySelectorAll('button') ?? [])].find((button) =>
         button.textContent.includes('Tauschen'),
@@ -163,10 +165,22 @@ describe('Übersicht', () => {
       swap.push(item as HTMLButtonElement);
     }
     expect(swap[0]?.disabled).toBe(false);
-    expect(swap[0]?.title).toBe('Joker übrig: 2');
+    expect(swap[0]?.title).toBe('');
     expect(swap[1]?.disabled).toBe(true);
-    expect(swap[1]?.title).toBe('Diese Aufgabe darf nicht getauscht werden.');
+    expect(swap[1]?.title).toBe('Diese Zuteilung wurde schon getauscht.');
     expect(swap[2]?.disabled).toBe(true);
+    expect(swap[2]?.title).toBe('Diese Aufgabe darf nicht getauscht werden.');
+  });
+
+  it('weist ohne Gegenstück darauf hin', async () => {
+    const { view, hass } = await mount();
+    hass.emit({ assignments: { upsert: [], remove: ['a7'] } });
+    await view.updateComplete;
+    await choose(view, 'Tauschen');
+    await view.updateComplete;
+    expect(view.shadowRoot?.querySelector('.swap')?.textContent).toContain(
+      'Niemand aus dieser Auslosung hat eine offene Aufgabe',
+    );
   });
 
   it('klappt die Tauschauswahl wieder zu', async () => {
@@ -192,7 +206,7 @@ describe('Übersicht', () => {
     const sections = [...(view.shadowRoot?.querySelectorAll('.assignments section') ?? [])];
     expect(sections).toHaveLength(2);
     expect(sections[0]?.textContent).toContain('Wochenplan');
-    expect(sections[0]?.textContent).toContain('3 offen');
+    expect(sections[0]?.textContent).toContain('4 offen');
     expect(sections[1]?.textContent).toContain('Ohne Zeitplan');
   });
 

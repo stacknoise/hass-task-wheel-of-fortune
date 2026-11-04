@@ -26,7 +26,7 @@
           "panel_admin_only": "Panel nur für Administratoren"
         },
         "data_description": {
-          "jokers_per_month": "Wie oft eine Person im Monat eine Aufgabe tauschen darf.",
+          "jokers_per_month": "Reserviert für später, derzeit ohne Wirkung.",
           "fairness_window_days": "So weit zurück zählen Punkte für die faire Gewichtung.",
           "history_retention_days": "So lange bleiben Runden im Verlauf; die Monatsstatistik bleibt erhalten.",
           "late_points_factor": "Anteil der Punkte für verspätet erledigte Aufgaben (0 bis 1).",
@@ -96,7 +96,7 @@
     },
     "swap": {
       "name": "Tauschen",
-      "description": "Übergibt eine offene Zuteilung gegen einen Joker an eine andere Person.",
+      "description": "Tauscht eine offene Zuteilung gegen die offene Zuteilung einer anderen Person derselben Auslosung.",
       "fields": {
         "assignment_id": {
           "name": "Zuteilung",
@@ -159,13 +159,13 @@
       "message": "Diese Aufgabe darf nicht getauscht werden."
     },
     "swap_same_person": {
-      "message": "Die Aufgabe gehört der Person bereits."
+      "message": "Mit sich selbst lässt sich nicht tauschen."
     },
     "swap_person_not_allowed": {
       "message": "Die Person darf diese Aufgabe nicht übernehmen."
     },
-    "swap_person_not_in_round": {
-      "message": "Getauscht wird nur mit Personen derselben Auslosung."
+    "swap_person_has_no_open_assignment": {
+      "message": "Die Person hat in dieser Auslosung keine offene Aufgabe zum Tauschen."
     },
     "swap_person_paused": {
       "message": "Die Person pausiert."
@@ -178,9 +178,6 @@
     },
     "round_has_done_assignments": {
       "message": "Die Auslosung kann nicht gelöscht werden: {done} Aufgaben sind schon erledigt."
-    },
-    "no_jokers_left": {
-      "message": "Es ist kein Joker mehr übrig."
     },
     "schedule_disabled": {
       "message": "Der Zeitplan ist pausiert."
