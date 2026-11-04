@@ -59,6 +59,24 @@ class Period(StrEnum):
     MONTH = "month"
 
 
+class DeadlineUnit(StrEnum):
+    """Einheit einer Frist-Dauer oder eines Versatzes."""
+
+    HOUR = "hour"
+    DAY = "day"
+    WEEK = "week"
+    MONTH = "month"
+
+
+class DeadlineStart(StrEnum):
+    """Ab wann die Zeit für die Aufgaben eines Zeitplans läuft."""
+
+    NOW = "now"
+    OFFSET = "offset"
+    NEXT_DAY = "next_day"
+    WEEKDAY = "weekday"
+
+
 class TriggerKind(StrEnum):
     """Art eines Zeitplan-Auslösers."""
 

@@ -14,6 +14,9 @@ export const FORM_TAGS = {
   absenceEditor: 'tw-absence-editor',
   frequencyEditor: 'tw-frequency-editor',
   triggerEditor: 'tw-trigger-editor',
+  deadlineEditor: 'tw-deadline-editor',
+  durationInput: 'tw-duration-input',
+  drawStartDialog: 'tw-draw-start-dialog',
 } as const;
 
 export const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
@@ -51,7 +54,6 @@ export const FORM_LIMITS = {
   nameMax: 60,
   notifyMax: 255,
   points: { min: 1, max: 100 },
-  dueDays: { min: 1, max: 365 },
   periodCount: { min: 1, max: 50 },
   periodEvery: { min: 1, max: 12 },
   intervalDays: { min: 1, max: 365 },
@@ -73,6 +75,31 @@ export type Period = (typeof PERIODS)[number];
 export const TRIGGER_KINDS = ['recurring', 'once', 'manual'] as const;
 export type TriggerKind = (typeof TRIGGER_KINDS)[number];
 
+/** Ab wann die Zeit für die Aufgaben eines Zeitplans läuft (Frist, wie `DeadlineStart` im Backend). */
+export const DEADLINE_STARTS = ['now', 'offset', 'next_day', 'weekday'] as const;
+export type DeadlineStart = (typeof DEADLINE_STARTS)[number];
+
+export const DEADLINE_UNITS = ['hour', 'day', 'week', 'month'] as const;
+export type DeadlineUnit = (typeof DEADLINE_UNITS)[number];
+
+/** Größte Dauer je Einheit (das Backend begrenzt das ganze Fenster auf ein Jahr). */
+export const DEADLINE_AMOUNT_MAX: Readonly<Record<DeadlineUnit, number>> = {
+  hour: 8760,
+  day: 365,
+  week: 52,
+  month: 12,
+};
+export const DEADLINE_OFFSET_MIN = 0;
+export const DEADLINE_DURATION_MIN = 1;
+export const DEFAULT_DEADLINE_DURATION = 7;
+export const DEFAULT_DEADLINE_TIME = '10:00';
+/** Beim manuellen Auslösen: Beginn „morgen“ um diese Uhrzeit (Stunde). */
+export const MANUAL_TOMORROW_HOUR = 10;
+
+/** Wann die Aufgaben einer manuellen Auslosung gelten. */
+export const MANUAL_STARTS = ['now', 'tomorrow', 'custom'] as const;
+export type ManualStart = (typeof MANUAL_STARTS)[number];
+
 export const AFTER_ONCE = ['keep_manual', 'archive', 'delete'] as const;
 export type AfterOnce = (typeof AFTER_ONCE)[number];
 
@@ -85,7 +112,6 @@ export const MIN_LOADS = ['paused', 'half', 'full'] as const satisfies readonly 
 export const DEFAULT_MIN_LOAD: Load = 'paused';
 export const DEFAULT_TIME = '18:00';
 export const DEFAULT_TASK_POINTS = 1;
-export const DEFAULT_TASK_DUE_DAYS = 7;
 export const DEFAULT_INTERVAL_DAYS = 7;
 export const DEFAULT_PERIOD_COUNT = 1;
 export const DEFAULT_PERIOD_EVERY = 1;

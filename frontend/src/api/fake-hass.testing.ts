@@ -21,7 +21,6 @@ export const EMPTY_SNAPSHOT: Snapshot = {
       allowed: ['p1', 'p2'],
       frequency: { kind: 'every_round' },
       points: 1,
-      due_days: 7,
       no_repeat: false,
       respect_absence: true,
       swap_allowed: true,

@@ -11,6 +11,7 @@ from custom_components.task_wheel.application.draw_inputs import (
     window_points,
 )
 from custom_components.task_wheel.const.limits import RECENT_HISTORY_DAYS
+from custom_components.task_wheel.domain.deadline import DeadlineWindow
 from custom_components.task_wheel.domain.enums import AssignmentStatus as S
 from custom_components.task_wheel.domain.enums import Period
 from custom_components.task_wheel.domain.models import MaxPerPeriod
@@ -20,6 +21,7 @@ from ..domain.draw.helpers import FixedRandom
 from .world import DAY, World
 
 NOW = f.NOW
+WINDOW = DeadlineWindow(NOW, NOW + 7 * DAY)
 
 
 def add_round(
@@ -74,7 +76,7 @@ def test_context_holds_last_holder_availability_and_a_copy_of_the_persons():
     world = World()
     add_round(world, "r1", NOW - DAY, item("a1", "r1", person_id="p2"))
     recent = recent_assignments(world.history, NOW)
-    context = build_context(world.config, world.history, recent, NOW)
+    context = build_context(world.config, world.history, recent, NOW, WINDOW)
     assert context.last_holders == {"t1": "p2"}
     assert set(context.availability) == {"p1", "p2"}
     world.config.remove_person("p2")
@@ -93,7 +95,7 @@ def test_round_is_limited_to_as_many_randomly_picked_tasks_as_persons_take_part(
     world = World()
     world.config.put_task(f.task(id="t3", name="t3"))
     schedule = world.put_schedule(task_ids=("t1", "t2", "t3"))
-    context = build_context(world.config, world.history, (), NOW)
+    context = build_context(world.config, world.history, (), NOW, WINDOW)
     tasks = due_tasks(world.config, schedule, (), NOW)
     # zwei Personen, drei Aufgaben: die beiden kleinsten Zufallszahlen (t3, t1) bleiben,
     # in Zeitplanreihenfolge
@@ -104,7 +106,7 @@ def test_round_is_limited_to_as_many_randomly_picked_tasks_as_persons_take_part(
 def test_round_keeps_all_tasks_when_enough_persons_take_part():
     world = World()
     schedule = world.put_schedule(task_ids=("t1", "t2"))
-    context = build_context(world.config, world.history, (), NOW)
+    context = build_context(world.config, world.history, (), NOW, WINDOW)
     tasks = due_tasks(world.config, schedule, (), NOW)
     assert limit_to_participants(tasks, context, FixedRandom(0.5)) == tasks
 
@@ -118,7 +120,7 @@ def test_daily_tasks_are_always_part_of_a_limited_round():
     world.config.put_task(_daily("t3"))
     world.config.put_task(f.task(id="t4", name="t4"))
     schedule = world.put_schedule(task_ids=("t1", "t2", "t3", "t4"))
-    context = build_context(world.config, world.history, (), NOW)
+    context = build_context(world.config, world.history, (), NOW, WINDOW)
     tasks = due_tasks(world.config, schedule, (), NOW)
     # zwei Personen: t3 (täglich) ist gesetzt, t2 hat unter den übrigen die kleinste Zufallszahl
     picked = limit_to_participants(tasks, context, FixedRandom(0.9, 0.1, 0.5, 0.7))
@@ -131,7 +133,7 @@ def test_more_daily_tasks_than_persons_are_picked_randomly_among_themselves():
         world.config.put_task(_daily(ident))
     world.config.put_task(_daily("t5"))
     schedule = world.put_schedule(task_ids=("t3", "t4", "t5", "t1"))
-    context = build_context(world.config, world.history, (), NOW)
+    context = build_context(world.config, world.history, (), NOW, WINDOW)
     tasks = due_tasks(world.config, schedule, (), NOW)
     picked = limit_to_participants(tasks, context, FixedRandom(0.5, 0.9, 0.1))
     assert [t.id for t in picked] == ["t3", "t5"]

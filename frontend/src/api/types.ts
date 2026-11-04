@@ -8,6 +8,15 @@ export interface WireObject {
   readonly [field: string]: unknown;
 }
 
+/** Wann die Aufgaben einer manuellen Auslosung gelten und wie lange sie Zeit haben (Pflicht). */
+export interface DrawWindowRequest {
+  readonly starts_at: string;
+  readonly duration: number;
+  readonly duration_unit: string;
+  /** Bestätigt, dass der nächste reguläre Lauf des Zeitplans entfällt. */
+  readonly replace_next: boolean;
+}
+
 export type Settings = Readonly<Record<string, unknown>>;
 
 export type Collections = { readonly [name in CollectionName]: readonly WireObject[] };

@@ -22,5 +22,5 @@ def test_retention_covers_rules_and_open_assignments():
 
 
 def test_open_assignment_window_has_a_safety_day():
-    longest = limits.DUE_DAYS_MAX + limits.GRACE_HOURS_MAX // limits.HOURS_PER_DAY
+    longest = limits.DEADLINE_MAX_DAYS + limits.GRACE_HOURS_MAX // limits.HOURS_PER_DAY
     assert longest < limits.OPEN_ASSIGNMENT_MAX_AGE_DAYS

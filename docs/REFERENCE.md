@@ -85,8 +85,8 @@ in a grid; adding and editing open a popup (full screen on a smartphone, close w
 - **People:** color on the wheel, load capacity (full, half, paused), presence (one-off, weekdays, weekly rhythm, recurring) with a
   preview of the next four weeks, and optionally a notification entity (`notify.…`, with a search across the entities and services of Home Assistant, checked when saving).
 - **Tasks:** allowed people, frequency (every round, at most n× per period, fixed interval with a timeline),
-  points, deadline, minimum load capacity (any, at least half or full load only; whoever is below it does not get onto the wheel for the task and cannot take it over by swapping) and the extra rules "no repetition", "respect absence", "swap allowed". A task can optionally be assigned to a **room** (a Home Assistant area); the room is shown on the task card, in the overview, the draw, the history (also as a column in the CSV export) and the statistics. If an area is deleted in Home Assistant, the task keeps the assignment and shows "Unknown room" until you pick another one.
-- **Schedules:** recurring, one-off or manual only, task selection, options and an example for `task_wheel.draw`
+  points, minimum load capacity (any, at least half or full load only; whoever is below it does not get onto the wheel for the task and cannot take it over by swapping) and the extra rules "no repetition", "respect absence", "swap allowed". A task can optionally be assigned to a **room** (a Home Assistant area); the room is shown on the task card, in the overview, the draw, the history (also as a column in the CSV export) and the statistics. If an area is deleted in Home Assistant, the task keeps the assignment and shows "Unknown room" until you pick another one.
+- **Schedules:** recurring, one-off or manual only, the **deadline** (valid from: right away, after an offset, the next day or next weekday at a time; duration in hours, days, weeks or months; for manual-only schedules it is asked at each draw), task selection, options and an example for `task_wheel.draw`
   and the event `task_wheel_drawn`.
 
 ## Panel API (WebSocket)

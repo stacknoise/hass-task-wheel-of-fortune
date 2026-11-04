@@ -40,6 +40,7 @@ import type { HistoryPage, HistoryQuery, StatisticsReport } from './models.ts';
 import type {
   Delta,
   AreaOption,
+  DrawWindowRequest,
   HassApi,
   NotifyTarget,
   PanelRoundWire,
@@ -226,9 +227,13 @@ export class ApiClient {
     };
   }
 
-  /** Beginnt eine Panel-Runde für den Zeitplan; eine frühere desselben Plans entfällt. */
-  beginDraw(scheduleId: string): Promise<PanelRoundWire> {
-    return this.#call(WS_DRAW_BEGIN, FIELD_SCHEDULE_ID, scheduleId);
+  /** Beginnt eine Panel-Runde für den Zeitplan (Gilt-ab und Frist sind Pflicht); eine frühere desselben Plans entfällt. */
+  beginDraw(scheduleId: string, window: DrawWindowRequest): Promise<PanelRoundWire> {
+    return this.#hass.callWS<PanelRoundWire>({
+      type: WS_DRAW_BEGIN,
+      [FIELD_SCHEDULE_ID]: scheduleId,
+      ...window,
+    });
   }
 
   /** Das Rad der nächsten Aufgabe (Segmente, Ausschlüsse) ohne Ziehung. */

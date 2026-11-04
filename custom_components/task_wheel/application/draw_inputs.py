@@ -6,6 +6,7 @@ from dataclasses import replace
 
 from ..const.limits import ONE_DAY, RECENT_HISTORY
 from ..domain.availability.calendar import PersonAvailability
+from ..domain.deadline import DeadlineWindow
 from ..domain.draw.types import DrawContext, RandomSource
 from ..domain.enums import Load
 from ..domain.models import Assignment, Schedule, Settings, Task
@@ -65,14 +66,17 @@ def due_tasks(
 
 
 def _seats(tasks: tuple[Task, ...], context: DrawContext) -> int:
-    """Personen, die in dieser Runde eine Aufgabe übernehmen können (nicht pausiert, heute da)."""
-    today = context.now.date()
+    """Personen, die in dieser Runde eine Aufgabe übernehmen können (nicht pausiert, da)."""
+    window = context.window
     ignores_absence = not all(task.respect_absence for task in tasks)
     return sum(
         1
         for pid, person in context.persons.items()
         if person.load is not Load.PAUSED
-        and (ignores_absence or context.availability[pid].is_present(today))
+        and (
+            ignores_absence
+            or context.availability[pid].present_in_window(window.first_day, window.last_day)
+        )
     )
 
 
@@ -103,9 +107,13 @@ def limit_to_participants(
 
 
 def build_context(
-    config: ConfigRepository, history: HistoryRepository, recent: Recent, now: dt.datetime
+    config: ConfigRepository,
+    history: HistoryRepository,
+    recent: Recent,
+    now: dt.datetime,
+    window: DeadlineWindow,
 ) -> DrawContext:
-    """Schnappschuss von Personen, Anwesenheit, Punkten und letzten Inhabern."""
+    """Schnappschuss von Personen, Anwesenheit, Punkten, letzten Inhabern und Frist-Fenster."""
     persons = dict(config.persons)
     holders = {
         task_id: last.person_id
@@ -119,4 +127,5 @@ def build_context(
         points=window_points(recent, config.settings, now),
         last_holders=holders,
         fairness_window_days=config.settings.fairness_window_days,
+        window=window,
     )

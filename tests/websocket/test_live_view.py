@@ -8,7 +8,7 @@ from custom_components.task_wheel.domain.errors import LimitReachedError
 from custom_components.task_wheel.domain.statistics.report import Standing, WeekRate
 
 from ..domain import factories as f
-from .harness import Api
+from .harness import BEGIN, Api
 from .test_config import RECURRING
 
 
@@ -56,7 +56,7 @@ def test_config_changes_show_up_and_removals_are_listed(api: Api) -> None:
 
 def test_panel_round_steps_are_pushed(api: Api) -> None:
     api.run("subscribe")
-    rid = api.result("draw/begin", schedule_id="s1")["id"]
+    rid = api.result("draw/begin", schedule_id="s1", **BEGIN)["id"]
     assert [r["id"] for r in api.pushed[-1]["panel_rounds"]["upsert"]] == [rid]
     api.run("draw/cancel", panel_round_id=rid)
     assert api.pushed[-1]["panel_rounds"]["remove"] == [rid]

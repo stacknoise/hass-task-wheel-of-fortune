@@ -9,8 +9,11 @@ from custom_components.task_wheel.const.limits import (
     DRAW_MIN_INTERVAL_SECONDS,
     MAX_OPEN_PANEL_ROUNDS,
 )
+from custom_components.task_wheel.domain.deadline import Deadline, DeadlineWindow
 from custom_components.task_wheel.domain.enums import (
     AssignmentStatus,
+    DeadlineStart,
+    DeadlineUnit,
     Period,
     RoundOrigin,
     WeightingKind,
@@ -20,7 +23,12 @@ from custom_components.task_wheel.domain.errors import (
     LimitReachedError,
     NotFoundError,
 )
-from custom_components.task_wheel.domain.models import MaxPerPeriod, WeeklyDaysAbsence
+from custom_components.task_wheel.domain.models import (
+    MaxPerPeriod,
+    OnceAbsence,
+    Recurring,
+    WeeklyDaysAbsence,
+)
 from custom_components.task_wheel.domain.statistics import aggregate
 
 from ..domain import factories as f
@@ -29,6 +37,14 @@ from .world import DAY, World
 NOW = f.NOW
 AUTO, MANUAL = RoundOrigin.AUTO, RoundOrigin.MANUAL
 SECOND = dt.timedelta(seconds=1)
+HOUR = DeadlineUnit.HOUR
+HOUR_DELTA = dt.timedelta(hours=1)
+WINDOW = DeadlineWindow(NOW, NOW + 3 * DAY)
+
+
+def begin(world: World, schedule_id: str, now: dt.datetime = NOW, **kwargs):
+    """Panel-Runde mit Frist und bestätigtem Vorziehen des nächsten Laufs."""
+    return world.draws.begin(schedule_id, now, WINDOW, replace_next=True, **kwargs)
 
 
 def test_automatic_round_is_drawn_stored_and_reported():
@@ -119,7 +135,7 @@ def test_absence_is_ignored_when_the_schedule_does_not_skip_absent():
 
 def test_panel_round_runs_step_by_step_and_is_stored_on_commit():
     world = World(0.1, 0.9)
-    panel = world.draws.begin("s1", NOW)
+    panel = begin(world, "s1", NOW)
     assert world.history.rounds == {}
     first = world.draws.spin(panel.id, NOW)
     assert (first.task_id, first.winner_id) == ("t1", "p1")
@@ -133,7 +149,7 @@ def test_panel_round_runs_step_by_step_and_is_stored_on_commit():
 
 def test_commit_before_the_last_spin_is_rejected_and_keeps_the_round_open():
     world = World()
-    panel = world.draws.begin("s1", NOW)
+    panel = begin(world, "s1", NOW)
     world.draws.spin(panel.id, NOW)
     with pytest.raises(DrawRejectedError):
         world.draws.commit(panel.id, NOW)
@@ -142,7 +158,7 @@ def test_commit_before_the_last_spin_is_rejected_and_keeps_the_round_open():
 
 def test_spin_after_the_last_task_is_rejected():
     world = World()
-    panel = world.draws.begin("s1", NOW)
+    panel = begin(world, "s1", NOW)
     world.draws.spin_rest(panel.id, NOW)
     with pytest.raises(DrawRejectedError):
         world.draws.spin(panel.id, NOW)
@@ -150,7 +166,7 @@ def test_spin_after_the_last_task_is_rejected():
 
 def test_cancel_discards_without_trace():
     world = World()
-    panel = world.draws.begin("s1", NOW)
+    panel = begin(world, "s1", NOW)
     world.draws.cancel(panel.id, NOW)
     assert world.history.rounds == {} and world.events.drawn == []
     with pytest.raises(NotFoundError):
@@ -159,9 +175,9 @@ def test_cancel_discards_without_trace():
 
 def test_non_admin_may_cancel_only_before_the_first_spin():
     world = World()
-    panel = world.draws.begin("s1", NOW)
+    panel = begin(world, "s1", NOW)
     world.draws.cancel(panel.id, NOW, is_admin=False)
-    panel = world.draws.begin("s1", NOW)
+    panel = begin(world, "s1", NOW)
     world.draws.spin(panel.id, NOW)
     with pytest.raises(DrawRejectedError):
         world.draws.cancel(panel.id, NOW, is_admin=False)
@@ -171,17 +187,17 @@ def test_non_admin_may_cancel_only_before_the_first_spin():
 
 def test_non_admin_cannot_replace_a_drawn_round_by_restarting():
     world = World()
-    panel = world.draws.begin("s1", NOW)
+    panel = begin(world, "s1", NOW)
     world.draws.spin(panel.id, NOW)
     with pytest.raises(DrawRejectedError):
-        world.draws.begin("s1", NOW, is_admin=False)
+        begin(world, "s1", NOW, is_admin=False)
     assert world.draws.get(panel.id, NOW).draft.results
-    assert world.draws.begin("s1", NOW, is_admin=True).id != panel.id
+    assert begin(world, "s1", NOW, is_admin=True).id != panel.id
 
 
 def test_panel_round_expires_after_the_time_limit():
     world = World()
-    panel = world.draws.begin("s1", NOW)
+    panel = begin(world, "s1", NOW)
     assert world.draws.get(panel.id, panel.expires_at - dt.timedelta(seconds=1))
     with pytest.raises(NotFoundError):
         world.draws.spin(panel.id, panel.expires_at)
@@ -191,8 +207,8 @@ def test_panel_round_expires_after_the_time_limit():
 
 def test_begin_replaces_an_open_round_of_the_same_schedule():
     world = World()
-    first = world.draws.begin("s1", NOW)
-    second = world.draws.begin("s1", NOW)
+    first = begin(world, "s1", NOW)
+    second = begin(world, "s1", NOW)
     assert [p.id for p in world.draws.open_rounds(NOW)] == [second.id]
     with pytest.raises(NotFoundError):
         world.draws.get(first.id, NOW)
@@ -200,7 +216,7 @@ def test_begin_replaces_an_open_round_of_the_same_schedule():
 
 def test_automatic_round_does_not_wait_for_an_open_panel_round():
     world = World()
-    panel = world.draws.begin("s1", NOW)
+    panel = begin(world, "s1", NOW)
     world.draws.draw("s1", AUTO, NOW)
     with pytest.raises(NotFoundError):
         world.draws.get(panel.id, NOW)
@@ -210,9 +226,9 @@ def test_number_of_open_panel_rounds_is_limited():
     world = World()
     for number in range(MAX_OPEN_PANEL_ROUNDS):
         world.put_schedule(id=f"s{number + 2}", slug=f"plan{number}", name=f"Plan {number}")
-        world.draws.begin(f"s{number + 2}", NOW)
+        begin(world, f"s{number + 2}", NOW)
     with pytest.raises(LimitReachedError):
-        world.draws.begin("s1", NOW)
+        begin(world, "s1", NOW)
     assert len(world.draws.open_rounds(NOW)) == MAX_OPEN_PANEL_ROUNDS
     assert world.draws.open_rounds(NOW + dt.timedelta(hours=1)) == ()
 
@@ -255,7 +271,7 @@ def test_automatic_draws_and_other_schedules_ignore_the_minimum_interval():
 def test_commit_keeps_the_minimum_interval_and_the_round_open():
     world = World()
     world.draws.draw("s1", MANUAL, NOW)
-    panel = world.draws.begin("s1", NOW + DRAW_MIN_INTERVAL / 3)
+    panel = begin(world, "s1", NOW + DRAW_MIN_INTERVAL / 3)
     world.draws.spin_rest(panel.id, NOW)
     with pytest.raises(DrawRejectedError):
         world.draws.commit(panel.id, NOW + DRAW_MIN_INTERVAL / 2)
@@ -266,7 +282,7 @@ def test_commit_keeps_the_minimum_interval_and_the_round_open():
 @pytest.mark.parametrize("gone", ["person", "task", "schedule"])
 def test_commit_rejects_and_drops_a_round_whose_winner_was_deleted(gone: str):
     world = World()
-    panel = world.draws.begin("s1", NOW)
+    panel = begin(world, "s1", NOW)
     world.draws.spin_rest(panel.id, NOW)
     {
         "person": lambda: world.config.remove_person("p1"),
@@ -277,3 +293,58 @@ def test_commit_rejects_and_drops_a_round_whose_winner_was_deleted(gone: str):
         world.draws.commit(panel.id, NOW)
     assert world.history.rounds == {} and world.events.drawn == []
     assert world.draws.open_rounds(NOW) == ()
+
+
+# --- Gilt-ab, Frist und Bestätigung beim manuellen Auslösen ------------------------------------
+
+
+def test_panel_round_uses_the_given_window_for_every_assignment():
+    world = World(0.1, 0.9)
+    panel = begin(world, "s1")
+    world.draws.spin_rest(panel.id, NOW)
+    round_ = world.draws.commit(panel.id, NOW)
+    assert {(a.starts_at, a.due_at) for a in round_.assignments} == {(WINDOW.start, WINDOW.end)}
+
+
+def test_scheduled_draw_uses_the_deadline_of_the_schedule():
+    world = World(0.1, 0.9)
+    world.put_schedule(
+        deadline=Deadline(start=DeadlineStart.NEXT_DAY, duration=4, duration_unit=HOUR)
+    )
+    round_ = world.draws.draw("s1", AUTO, NOW)
+    expected = dt.datetime(2026, 11, 4, 10, tzinfo=dt.UTC)
+    assert {(a.starts_at, a.due_at) for a in round_.assignments} == {
+        (expected, expected + 4 * HOUR_DELTA)
+    }
+
+
+def test_person_absent_during_the_whole_window_gets_nothing():
+    wednesday = dt.date(2026, 11, 4)
+    world = World(0.1, 0.9)
+    world.config.put_person(
+        f.person(
+            id="p1", slug="p1", name="p1", absences=(OnceAbsence(start=wednesday, end=wednesday),)
+        )
+    )
+    world.put_schedule(
+        deadline=Deadline(start=DeadlineStart.NEXT_DAY, duration=4, duration_unit=HOUR)
+    )
+    round_ = world.draws.draw("s1", AUTO, NOW)
+    assert {a.person_id for a in round_.assignments} == {"p2"}
+
+
+def test_scheduled_schedule_needs_confirmation_that_the_next_run_is_replaced():
+    world = World()
+    world.put_schedule(trigger=Recurring(weekdays=frozenset({0}), time=dt.time(7)))
+    with pytest.raises(DrawRejectedError) as caught:
+        world.draws.begin("s1", NOW, WINDOW)
+    assert caught.value.key == "draw_replace_unconfirmed"
+    assert world.draws.open_rounds(NOW) == ()
+    panel = world.draws.begin("s1", NOW, WINDOW, replace_next=True)
+    assert panel.draft.replaces == dt.datetime(2026, 11, 9, 7, tzinfo=dt.UTC)
+
+
+def test_paused_scheduled_schedule_has_no_run_to_replace():
+    world = World()
+    world.put_schedule(trigger=Recurring(weekdays=frozenset({0}), time=dt.time(7)), enabled=False)
+    assert world.draws.begin("s1", NOW, WINDOW).draft.replaces is None

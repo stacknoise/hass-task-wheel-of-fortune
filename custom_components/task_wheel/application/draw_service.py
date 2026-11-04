@@ -7,6 +7,7 @@ from ..const.defaults import PANEL_ROUND_TIMEOUT_MINUTES
 from ..const.keys import (
     ERR_CANCEL_ADMIN_ONLY,
     ERR_DRAW_TOO_SOON,
+    ERR_REPLACE_UNCONFIRMED,
     ERR_SCHEDULE_ARCHIVED,
     ERR_SCHEDULE_DISABLED,
     PH_SECONDS,
@@ -16,6 +17,7 @@ from ..const.keys import (
     RESOURCE_TASK,
 )
 from ..const.limits import DRAW_MIN_INTERVAL, DRAW_MIN_INTERVAL_SECONDS, MAX_OPEN_PANEL_ROUNDS
+from ..domain.deadline import DeadlineWindow
 from ..domain.draw.draft import RoundDraft
 from ..domain.draw.engine import DrawEngine
 from ..domain.draw.types import RandomSource, TaskDraw
@@ -34,6 +36,7 @@ from .protocols import (
     NoEvents,
     RoundEvents,
 )
+from .runs import next_regular_run
 
 _PANEL_TIMEOUT = dt.timedelta(minutes=PANEL_ROUND_TIMEOUT_MINUTES)
 
@@ -69,8 +72,16 @@ class DrawService:
         self._new_id = id_factory
         self._panel_rounds: dict[str, PanelRound] = {}
 
-    def draw(self, schedule_id: ScheduleId, origin: RoundOrigin, now: dt.datetime) -> Round:
+    def draw(
+        self,
+        schedule_id: ScheduleId,
+        origin: RoundOrigin,
+        now: dt.datetime,
+        window: DeadlineWindow | None = None,
+    ) -> Round:
         """Löst eine Runde in einem Schritt aus und speichert sie.
+
+        Ohne `window` gilt die Frist des Zeitplans, gerechnet ab `now`.
 
         Eine offene Panel-Runde desselben Zeitplans wird dabei verworfen, damit keine Runde
         doppelt entsteht.
@@ -80,25 +91,40 @@ class DrawService:
             DrawRejectedError: Der Zeitplan ist archiviert, (automatisch) pausiert, oder die letzte
                 Auslosung von Hand liegt noch keine `DRAW_MIN_INTERVAL` zurück.
         """
-        draft = self._start(schedule_id, origin, now)
+        draft = self._start(schedule_id, origin, now, window)
         self.discard_for(schedule_id)
         return self._finish(draft.spin_rest(self._engine()), now)
 
     def begin(
-        self, schedule_id: ScheduleId, now: dt.datetime, *, is_admin: bool = True
+        self,
+        schedule_id: ScheduleId,
+        now: dt.datetime,
+        window: DeadlineWindow,
+        *,
+        replace_next: bool = False,
+        is_admin: bool = True,
     ) -> PanelRound:
         """Beginnt eine Panel-Runde (Herkunft „manuell“); eine frühere desselben Plans entfällt.
+
+        `window` ist Pflicht: ab wann die Aufgaben gelten und bis wann sie erledigt sein müssen.
+        Hat der Zeitplan einen nächsten regulären Lauf, zieht die Runde ihn vor (er entfällt);
+        das muss `replace_next` bestätigen.
 
         Eine schon gezogene Panel-Runde ersetzen nur Administratoren (kein Neuziehen nach Sicht).
 
         Raises:
             NotFoundError: Den Zeitplan gibt es nicht.
-            DrawRejectedError: Der Zeitplan ist archiviert, oder eine schon gezogene Panel-Runde
-                würde ersetzt und der Benutzer ist kein Administrator.
+            DrawRejectedError: Der Zeitplan ist archiviert, der vorgezogene reguläre Lauf ist nicht
+                bestätigt, oder eine schon gezogene Panel-Runde würde ersetzt und der Benutzer ist
+                kein Administrator.
             LimitReachedError: Es sind schon zu viele Panel-Runden offen.
         """
         self._purge(now)
-        draft = self._start(schedule_id, RoundOrigin.MANUAL, now)
+        draft = self._start(schedule_id, RoundOrigin.MANUAL, now, window)
+        upcoming = self._upcoming(schedule_id, now)
+        if upcoming is not None and not replace_next:
+            raise DrawRejectedError(ERR_REPLACE_UNCONFIRMED)
+        draft = replace(draft, replaces=upcoming)
         if not is_admin and self._has_results(schedule_id):
             raise DrawRejectedError(ERR_CANCEL_ADMIN_ONLY)
         self.discard_for(schedule_id)
@@ -187,11 +213,23 @@ class DrawService:
             raise DrawRejectedError(ERR_SCHEDULE_DISABLED)
         return schedule
 
-    def _start(self, schedule_id: ScheduleId, origin: RoundOrigin, now: dt.datetime) -> RoundDraft:
+    def _upcoming(self, schedule_id: ScheduleId, now: dt.datetime) -> dt.datetime | None:
+        """Der nächste reguläre Lauf des Zeitplans, den eine manuelle Auslosung vorziehen würde."""
+        return next_regular_run(self._history, self._config.schedules[schedule_id], now)
+
+    def _start(
+        self,
+        schedule_id: ScheduleId,
+        origin: RoundOrigin,
+        now: dt.datetime,
+        window: DeadlineWindow | None,
+    ) -> RoundDraft:
         """Liest Konfiguration und Verlauf einmal und bildet den Ausgangsstand der Runde."""
         schedule = self._schedule(schedule_id, origin)
         recent = recent_assignments(self._history, now)
-        context = build_context(self._config, self._history, recent, now)
+        context = build_context(
+            self._config, self._history, recent, now, window or schedule.deadline.window(now)
+        )
         tasks = limit_to_participants(
             due_tasks(self._config, schedule, recent, now), context, self._rng
         )

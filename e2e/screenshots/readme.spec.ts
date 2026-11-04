@@ -22,12 +22,12 @@ const PEOPLE = [
   { name: "Emma", color: "#f59f00" },
 ];
 
-const TASKS: readonly [string, number, number][] = [
-  ["Take out the trash", 2, 1],
-  ["Empty the dishwasher", 1, 1],
-  ["Vacuum the living room", 3, 7],
-  ["Clean the bathroom", 4, 7],
-  ["Water the plants", 1, 3],
+const TASKS: readonly [string, number][] = [
+  ["Take out the trash", 2],
+  ["Empty the dishwasher", 1],
+  ["Vacuum the living room", 3],
+  ["Clean the bathroom", 4],
+  ["Water the plants", 1],
 ];
 
 async function shot(page: Page, name: string): Promise<void> {
@@ -72,13 +72,12 @@ test("README screenshots", async ({ page, baseURL }) => {
     );
   }
   const taskIds: string[] = [];
-  for (const [name, points, dueDays] of TASKS) {
+  for (const [name, points] of TASKS) {
     const task = await callWS<Created>(page, {
       type: "task_wheel/task/create",
       task: {
         name,
         points,
-        due_days: dueDays,
         allowed: [],
         frequency: { kind: "every_round" },
       },
@@ -154,6 +153,7 @@ test("README screenshots", async ({ page, baseURL }) => {
     await page.locator("tw-draw-view").waitFor({ timeout: READY_MS });
     await page.getByRole("combobox").selectOption({ label: schedule });
     await page.getByRole("button", { name: "Start round" }).click();
+    await page.getByRole("button", { name: "Continue" }).click();
     await page.getByRole("button", { name: "Start the draw" }).click();
     await page.waitForTimeout(SPIN_MS);
     await shot(page, file);

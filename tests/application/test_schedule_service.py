@@ -10,6 +10,7 @@ from custom_components.task_wheel.application.schedule_service import (
     timer_key,
 )
 from custom_components.task_wheel.const import limits
+from custom_components.task_wheel.domain.deadline import DeadlineWindow
 from custom_components.task_wheel.domain.enums import AfterOnce, RoundOrigin
 from custom_components.task_wheel.domain.models import ManualTrigger, OnceTrigger, Recurring
 
@@ -260,3 +261,62 @@ def test_start_ignores_future_and_paused_once_schedules() -> None:
     )
     world.schedules.arm_all(START)
     assert not world.history.rounds
+
+
+# --- Manuelle Auslosung zieht den nächsten regulären Lauf vor ----------------------------------
+
+WINDOW = DeadlineWindow(START, START + 2 * DAY)
+
+
+def _commit_manual(world: World, now: dt.datetime = START):
+    panel = world.draws.begin("s1", now, WINDOW, replace_next=True)
+    world.draws.spin_rest(panel.id, now)
+    round_ = world.draws.commit(panel.id, now)
+    world.schedules.round_committed(round_, now)
+    return round_
+
+
+def test_manual_draw_replaces_the_next_regular_run_and_the_schedule_continues_after_it():
+    world = World()
+    world.put_schedule(trigger=weekly(MON))
+    assert world.schedules.arm("s1", START) == dt.datetime(2026, 11, 9, 7, tzinfo=BERLIN)
+    round_ = _commit_manual(world)
+    assert round_.replaces == dt.datetime(2026, 11, 9, 7, tzinfo=BERLIN)
+    assert world.timers.timers[KEY][0] == dt.datetime(2026, 11, 16, 7, tzinfo=BERLIN)
+
+
+def test_a_second_manual_draw_replaces_the_following_run():
+    world = World()
+    world.put_schedule(trigger=weekly(MON))
+    _commit_manual(world)
+    later = START + dt.timedelta(minutes=5)
+    assert _commit_manual(world, later).replaces == dt.datetime(2026, 11, 16, 7, tzinfo=BERLIN)
+    assert world.schedules.next_run(world.config.schedules["s1"], later) == dt.datetime(
+        2026, 11, 23, 7, tzinfo=BERLIN
+    )
+
+
+def test_replaced_run_stays_skipped_after_a_restart():
+    world = World()
+    world.put_schedule(trigger=weekly(MON))
+    _commit_manual(world)
+    world.timers.cancel_all()
+    world.schedules.arm_all(START + DAY)
+    assert world.timers.timers[KEY][0] == dt.datetime(2026, 11, 16, 7, tzinfo=BERLIN)
+
+
+def test_manual_draw_of_a_once_schedule_finishes_it():
+    world = World()
+    at = dt.datetime(2026, 11, 20, 7, tzinfo=BERLIN)
+    world.put_schedule(trigger=OnceTrigger(at=at, after=AfterOnce.ARCHIVE))
+    world.schedules.arm("s1", START)
+    _commit_manual(world)
+    assert world.config.schedules["s1"].archived
+    assert KEY not in world.timers.timers
+
+
+def test_manual_only_schedule_needs_no_confirmation_and_replaces_nothing():
+    world = World()
+    panel = world.draws.begin("s1", START, WINDOW)
+    world.draws.spin_rest(panel.id, START)
+    assert world.draws.commit(panel.id, START).replaces is None

@@ -66,8 +66,10 @@ def _present_until_due(context: SwapContext) -> bool:
     if not context.task.respect_absence:
         return True
     today = context.now.date()
-    due = max(today, local_date(context.assignment.due_at, context.now))
-    return PersonAvailability.of(context.receiver).present_in_window(today, due)
+    starts_at = context.assignment.starts_at
+    begin = today if starts_at is None else max(today, local_date(starts_at, context.now))
+    due = max(begin, local_date(context.assignment.due_at, context.now))
+    return PersonAvailability.of(context.receiver).present_in_window(begin, due)
 
 
 # Reihenfolge = Reihenfolge der Prüfung; die erste verletzte Regel nennt den Grund.

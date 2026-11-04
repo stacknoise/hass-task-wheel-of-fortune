@@ -61,7 +61,7 @@ class MinLoadFilter:
 
 
 class AbsenceFilter:
-    """Personen, die heute abwesend sind und deshalb nicht mitlosen."""
+    """Personen, die im ganzen Zeitraum der Frist abwesend sind (irgendwann da genügt)."""
 
     reason: ClassVar[ExclusionReason] = ExclusionReason.ABSENT
     soft: ClassVar[bool] = False
@@ -72,10 +72,12 @@ class AbsenceFilter:
         candidates: Sequence[Person],
         context: DrawContext,
     ) -> frozenset[str]:
-        """Personen, die am heutigen Tag nicht anwesend sind."""
-        today = context.now.date()
+        """Personen, die an keinem Tag von „gilt ab“ bis zur Frist anwesend sind."""
+        window = context.window
         return frozenset(
-            p.id for p in candidates if not context.availability[p.id].is_present(today)
+            p.id
+            for p in candidates
+            if not context.availability[p.id].present_in_window(window.first_day, window.last_day)
         )
 
 

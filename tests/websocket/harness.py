@@ -24,6 +24,8 @@ if TYPE_CHECKING:
     from custom_components.task_wheel.application.wire import Json
 
 PREFIX = "task_wheel/"
+# Pflichtangaben beim Beginnen einer Panel-Runde: gilt ab jetzt, drei Tage lang
+BEGIN = {"starts_at": f.NOW.isoformat(), "duration": 3, "duration_unit": "day"}
 BY_NAME = {command.name: command for command in COMMANDS}
 
 

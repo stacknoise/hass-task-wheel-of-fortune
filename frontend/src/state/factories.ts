@@ -1,8 +1,11 @@
 /** Fabriken der Standardwerte je Art (Abwesenheit, Häufigkeit, Auslöser); die Tabellen ersetzen Verzweigungen. */
 
-import type { AbsenceWire, FrequencyWire, TriggerWire } from '../api/index.ts';
+import type { AbsenceWire, DeadlineWire, FrequencyWire, TriggerWire } from '../api/index.ts';
 import {
+  DEADLINE_OFFSET_MIN,
   DEFAULT_ABSENT_WEEKDAYS,
+  DEFAULT_DEADLINE_DURATION,
+  DEFAULT_DEADLINE_TIME,
   DEFAULT_EVERY_N_WEEKS,
   DEFAULT_INTERVAL_DAYS,
   DEFAULT_PERIOD_COUNT,
@@ -67,4 +70,15 @@ export const TRIGGER_BUILDERS: Readonly<Record<TriggerKind, (now: string) => Tri
     after: 'keep_manual',
   }),
   manual: () => ({ kind: 'manual', remind_after_days: null }),
+};
+
+/** Frist neuer Zeitpläne: ab der Auslosung, eine Woche lang (wie im Backend). */
+export const DEADLINE_DEFAULT: DeadlineWire = {
+  start: 'now',
+  offset: DEADLINE_OFFSET_MIN,
+  offset_unit: 'hour',
+  time: DEFAULT_DEADLINE_TIME,
+  weekday: 0,
+  duration: DEFAULT_DEADLINE_DURATION,
+  duration_unit: 'day',
 };

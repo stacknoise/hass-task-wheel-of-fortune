@@ -7,6 +7,7 @@ from typing import ClassVar, Final, cast
 
 from ..const import defaults, limits
 from ..const.keys import ERR_INCONSISTENT, ERR_ORDER, ERR_REQUIRED
+from .deadline import DEFAULT_DEADLINE, Deadline
 from .enums import (
     DONE_STATUSES,
     WITHOUT_DONE_AT_STATUSES,
@@ -289,7 +290,7 @@ class Person(Model):
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class Task(Model):
-    """Aufgabe mit Aufwand, Frist, erlaubten Personen und Regeln.
+    """Aufgabe mit Aufwand, erlaubten Personen und Regeln (die Frist gibt der Zeitplan vor).
 
     Ohne erlaubte Personen (leere Menge) gilt die Aufgabe für alle.
     """
@@ -299,7 +300,6 @@ class Task(Model):
     allowed: frozenset[PersonId] = spec(frozenset_of(to_str), default=frozenset())
     frequency: FrequencyConfig = spec(decode_frequency, default=DEFAULT_FREQUENCY)
     points: int = spec(to_int, default=defaults.DEFAULT_TASK_POINTS)
-    due_days: int = spec(to_int, default=defaults.DEFAULT_TASK_DUE_DAYS)
     no_repeat: bool = spec(to_bool, default=False)
     respect_absence: bool = spec(to_bool, default=True)
     swap_allowed: bool = spec(to_bool, default=True)
@@ -312,11 +312,10 @@ class Task(Model):
         return isinstance(self.frequency, MaxPerPeriod) and self.frequency.is_daily
 
     def __post_init__(self) -> None:
-        """Prüft Kennung, Namen, Punkte, Frist, erlaubte Personen und Räume."""
+        """Prüft Kennung, Namen, Punkte, erlaubte Personen und Räume."""
         ensure_id("id", self.id)
         ensure_name("name", self.name)
         ensure_range("points", self.points, limits.POINTS_MIN, limits.POINTS_MAX)
-        ensure_range("due_days", self.due_days, limits.DUE_DAYS_MIN, limits.DUE_DAYS_MAX)
         ensure_size("allowed", self.allowed, 0, limits.MAX_PERSONS)
         for person_id in self.allowed:
             ensure_id("allowed", person_id)
@@ -338,13 +337,18 @@ DEFAULT_ANIMATIONS: Final = (AnimationKind.WHEEL,)
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class Schedule(Model):
-    """Zeitplan: Auslöser und die Aufgaben, die er verteilt."""
+    """Zeitplan: Auslöser, Frist und die Aufgaben, die er verteilt.
+
+    Die Frist gilt für alle Aufgaben einer Auslosung; bei einem nur manuellen Zeitplan wird sie
+    stattdessen bei jeder Auslosung angegeben.
+    """
 
     id: ScheduleId = spec(to_str)
     name: str = spec(to_str)
     slug: str = spec(to_str)
     trigger: TriggerConfig = spec(decode_trigger)
     task_ids: tuple[TaskId, ...] = spec(tuple_of(to_str))
+    deadline: Deadline = spec(model_of(Deadline), default=DEFAULT_DEADLINE)
     enabled: bool = spec(to_bool, default=True)
     notify: bool = spec(to_bool, default=True)
     skip_absent: bool = spec(to_bool, default=True)
@@ -395,6 +399,7 @@ class Assignment(Model):
     chance: float = spec(to_float)
     points: int = spec(to_int)
     due_at: dt.datetime = spec(to_datetime)
+    starts_at: dt.datetime | None = spec(optional(to_datetime), default=None)
     status: AssignmentStatus = spec(enum_of(AssignmentStatus), default=AssignmentStatus.OPEN)
     done_at: dt.datetime | None = spec(optional(to_datetime), default=None)
     swap: Swap | None = spec(optional(model_of(Swap)), default=None)
@@ -405,6 +410,9 @@ class Assignment(Model):
             ensure_id(name, getattr(self, name))
         ensure_range("chance", self.chance, limits.CHANCE_MIN, limits.CHANCE_MAX)
         ensure_aware("due_at", self.due_at)
+        if self.starts_at is not None:
+            ensure_aware("starts_at", self.starts_at)
+            ensure(self.starts_at <= self.due_at, "starts_at", ERR_ORDER)
         if self.done_at is not None:
             ensure_aware("done_at", self.done_at)
         ensure(
@@ -419,13 +427,18 @@ class Assignment(Model):
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class Round(Model):
-    """Eine Auslosung eines Zeitplans mit ihren Zuteilungen."""
+    """Eine Auslosung eines Zeitplans mit ihren Zuteilungen.
+
+    `replaces` ist der reguläre Lauf des Zeitplans, den eine manuelle Auslosung vorgezogen hat
+    (er entfällt).
+    """
 
     id: RoundId = spec(to_str)
     schedule_id: ScheduleId = spec(to_str)
     origin: RoundOrigin = spec(enum_of(RoundOrigin))
     started_at: dt.datetime = spec(to_datetime)
     finished_at: dt.datetime | None = spec(optional(to_datetime), default=None)
+    replaces: dt.datetime | None = spec(optional(to_datetime), default=None)
     assignments: tuple[Assignment, ...] = spec(tuple_of(model_of(Assignment)), default=())
 
     def __post_init__(self) -> None:
@@ -436,6 +449,8 @@ class Round(Model):
         if self.finished_at is not None:
             ensure_aware("finished_at", self.finished_at)
             ensure(self.started_at <= self.finished_at, "finished_at", ERR_ORDER)
+        if self.replaces is not None:
+            ensure_aware("replaces", self.replaces)
         ensure_size("assignments", self.assignments, 0, limits.MAX_ASSIGNMENTS_PER_ROUND)
         ensure_unique("assignments", (item.id for item in self.assignments))
         ensure(

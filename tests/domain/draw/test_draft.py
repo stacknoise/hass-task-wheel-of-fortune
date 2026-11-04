@@ -2,10 +2,10 @@
 
 import datetime as dt
 from itertools import count
-from zoneinfo import ZoneInfo
 
 import pytest
 
+from custom_components.task_wheel.domain.deadline import DeadlineWindow
 from custom_components.task_wheel.domain.draw import draft as draft_module
 from custom_components.task_wheel.domain.draw.candidates import CandidateSelector
 from custom_components.task_wheel.domain.draw.draft import RoundDraft
@@ -85,14 +85,19 @@ def test_task_without_candidates_gets_no_assignment():
     assert round_.assignments == ()
 
 
-def test_due_date_keeps_local_wall_clock_across_dst_change():
-    berlin = ZoneInfo("Europe/Berlin")
-    start = dt.datetime(2026, 10, 20, 10, tzinfo=berlin)
-    context = make_context([make_person("p1")], now=start)
-    one = RoundDraft("s1", RoundOrigin.AUTO, start, context, (task(id="t1", due_days=7),))
-    assignment = one.spin_rest(engine(0.1)).to_round("r1", ids(), start).assignments[0]
-    assert assignment.due_at == dt.datetime(2026, 10, 27, 10, tzinfo=berlin)
-    assert assignment.due_at.utcoffset() == dt.timedelta(hours=1)
+def test_assignment_carries_the_window_of_the_round():
+    window = DeadlineWindow(NOW + dt.timedelta(hours=18), NOW + dt.timedelta(hours=22))
+    context = make_context([make_person("p1")], window=window)
+    one = RoundDraft("s1", RoundOrigin.AUTO, NOW, context, (task(id="t1"),))
+    assignment = one.spin_rest(engine(0.1)).to_round("r1", ids(), NOW).assignments[0]
+    assert (assignment.starts_at, assignment.due_at) == (window.start, window.end)
+
+
+def test_round_remembers_the_regular_run_it_replaces():
+    context = make_context([make_person("p1")])
+    run = NOW + dt.timedelta(days=3)
+    one = RoundDraft("s1", RoundOrigin.MANUAL, NOW, context, (task(id="t1"),), replaces=run)
+    assert one.spin_rest(engine(0.1)).to_round("r1", ids(), NOW).replaces == run
 
 
 def test_capacity_and_reach_are_computed_once_and_shared_by_every_step(monkeypatch):

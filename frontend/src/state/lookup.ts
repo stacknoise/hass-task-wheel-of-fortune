@@ -14,7 +14,6 @@ export interface TaskInfo {
   readonly id: string;
   readonly name: string;
   readonly points: number;
-  readonly dueDays: number;
   readonly allowed: ReadonlySet<string>;
   /** Kennungen der Räume; leer = kein Raum. */
   readonly areaIds: readonly string[];
@@ -24,6 +23,8 @@ export interface ScheduleInfo {
   readonly id: string;
   readonly name: string;
   readonly archived: boolean;
+  /** Der nächste reguläre Lauf (ISO) oder `null` (nur manuell, pausiert, kein Termin mehr). */
+  readonly nextRun: string | null;
   /** Erlaubte Animationen; bei jeder Auslosung wird zufällig eine gewählt. */
   readonly animations: readonly AnimationKind[];
 }
@@ -66,7 +67,6 @@ export function tasksById(snapshot: Snapshot): ReadonlyMap<string, TaskInfo> {
       id: item.id,
       name: text(item, 'name', item.id),
       points: count(item, 'points'),
-      dueDays: count(item, 'due_days'),
       allowed: new Set(texts(item, 'allowed')),
       areaIds: texts(item, 'area_ids'),
     })),
@@ -80,6 +80,7 @@ export function drawableSchedules(snapshot: Snapshot): readonly ScheduleInfo[] {
       id: item.id,
       name: text(item, 'name', item.id),
       archived: item['archived'] === true,
+      nextRun: typeof item['next_run'] === 'string' ? item['next_run'] : null,
       animations: animationsOf(item['animations']),
     }))
     .filter((schedule) => !schedule.archived);

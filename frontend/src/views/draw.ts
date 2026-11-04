@@ -3,7 +3,7 @@ import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 
-import type { ApiClient, TaskDrawWire } from '../api/index.ts';
+import type { ApiClient, DrawWindowRequest, TaskDrawWire } from '../api/index.ts';
 import '../components/index.ts';
 import type { TwStage, WheelSegment } from '../components/index.ts';
 import {
@@ -51,12 +51,15 @@ export class TwDrawView extends LitElement {
   static override properties = {
     language: { type: String },
     _scheduleId: { state: true },
+    _starting: { state: true },
   };
 
   static override styles = drawStyles;
 
   declare language: string;
   declare _scheduleId: string;
+  /** Die Zeitplan-Kennung, für die der Dialog „ab wann, bis wann“ offen ist. */
+  declare _starting: string;
 
   readonly #store = new StoreController(this);
   /** Räume des laufenden Renders. */
@@ -75,6 +78,7 @@ export class TwDrawView extends LitElement {
     super();
     this.language = EMPTY_TEXT;
     this._scheduleId = EMPTY_TEXT;
+    this._starting = EMPTY_TEXT;
   }
 
   /**
@@ -234,9 +238,7 @@ export class TwDrawView extends LitElement {
           class="button primary"
           ?disabled=${!scheduleId}
           @click=${() => {
-            const kind = this.#pick(scheduleId);
-            this.#kind = kind ?? this.#kind;
-            void session?.begin(scheduleId, kind !== undefined);
+            this._starting = scheduleId;
           }}
         >
           ${this.#text('draw.start')}
@@ -264,7 +266,36 @@ export class TwDrawView extends LitElement {
         }
       </div>
       <p class="muted">${this.#text('draw.choose')}</p>
+      ${this._starting === scheduleId ? this.#windowDialog(scheduleId) : nothing}
     `;
+  }
+
+  /** Fragt Gilt-ab und Frist ab (Pflicht) und beginnt danach die Runde. */
+  #windowDialog(scheduleId: string): TemplateResult {
+    const snapshot = this.#store.state?.snapshot;
+    const schedule = snapshot
+      ? drawableSchedules(snapshot).find((candidate) => candidate.id === scheduleId)
+      : undefined;
+    return html`<tw-draw-start-dialog
+      language=${this.language}
+      scheduleName=${schedule?.name ?? EMPTY_TEXT}
+      nextRun=${schedule?.nextRun ?? EMPTY_TEXT}
+      now=${snapshot?.now ?? EMPTY_TEXT}
+      @tw-confirm=${(event: Event) => {
+        event.stopPropagation();
+        const kind = this.#pick(scheduleId);
+        this.#kind = kind ?? this.#kind;
+        this._starting = EMPTY_TEXT;
+        void this.#session?.begin(
+          scheduleId,
+          (event as CustomEvent<DrawWindowRequest>).detail,
+          kind !== undefined,
+        );
+      }}
+      @tw-cancel=${() => {
+        this._starting = EMPTY_TEXT;
+      }}
+    ></tw-draw-start-dialog>`;
   }
 
   /** Wählt zufällig eine der Animationen, die der Zeitplan erlaubt; ohne Auswahl keine. */
@@ -347,10 +378,7 @@ export class TwDrawView extends LitElement {
       <li class="task ${this.#isCurrent(state, index, shown) ? 'current' : ''}">
         <span>
           ${task?.name ?? EMPTY_TEXT}<br />
-          <span class="muted"
-            >${task?.points ?? 0} ${this.#text('draw.points')} · ${task?.dueDays ?? 0}
-            ${this.#text('draw.due')}</span
-          >
+          <span class="muted">${task?.points ?? 0} ${this.#text('draw.points')}</span>
           ${this.#room(task)}
         </span>
         <span class="status">${this.#taskStatus(state, persons, index, shown)}</span>

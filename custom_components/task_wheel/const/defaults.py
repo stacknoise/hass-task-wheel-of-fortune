@@ -1,5 +1,6 @@
 """Standardwerte und Bezeichner der Integration."""
 
+import datetime as dt
 from typing import Final
 
 from .limits import RETENTION_MIN
@@ -21,7 +22,8 @@ DEFAULT_PANEL_ADMIN_ONLY: Final = False
 # Personen, Aufgaben, Zeitpläne
 DEFAULT_PERSON_COLOR: Final = "#4f8cff"
 DEFAULT_TASK_POINTS: Final = 1
-DEFAULT_TASK_DUE_DAYS: Final = 7
+DEFAULT_DEADLINE_DAYS: Final = 7
+DEFAULT_DEADLINE_TIME: Final = dt.time(10, 0)
 DEFAULT_EVERY_N_WEEKS: Final = 1
 DEFAULT_INTERVAL_TOLERANCE: Final = 0
 DEFAULT_PERIOD_EVERY: Final = 1
