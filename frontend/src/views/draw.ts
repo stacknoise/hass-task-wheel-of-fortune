@@ -221,18 +221,16 @@ export class TwDrawView extends LitElement {
               (schedule) => html`<option value=${schedule.id}>${schedule.name}</option>`,
             )}
           </select>
-          ${
-            schedules.length === 0
-              ? html`<span class="muted">${this.#text('draw.schedule.none')}</span>`
-              : nothing
-          }
+          ${schedules.length === 0
+            ? html`<span class="muted">${this.#text('draw.schedule.none')}</span>`
+            : nothing}
         </div>
-        ${
-          idle
-            ? this.#start(scheduleId, open)
-            : this.#round(state, nameOf(schedules, state.scheduleId), tasks, persons)
-        }
-        ${state.phase === DRAW_PHASE.error ? drawFailure(this.#text('draw.error'), this.#text('draw.error.code'), state.errorCode) : nothing}
+        ${idle
+          ? this.#start(scheduleId, open)
+          : this.#round(state, nameOf(schedules, state.scheduleId), tasks, persons)}
+        ${state.phase === DRAW_PHASE.error
+          ? drawFailure(this.#text('draw.error'), this.#text('draw.error.code'), state.errorCode)
+          : nothing}
       </section>
     `;
   }
@@ -328,13 +326,11 @@ export class TwDrawView extends LitElement {
         )}
       </ul>
       <div class="actions">
-        ${
-          canSkip(state)
-            ? html`<button class="button" @click=${() => void this.#session?.drawRest()}>
-                ${this.#text('draw.rest')}
-              </button>`
-            : nothing
-        }
+        ${canSkip(state)
+          ? html`<button class="button" @click=${() => void this.#session?.drawRest()}>
+              ${this.#text('draw.rest')}
+            </button>`
+          : nothing}
         <button
           class="button"
           ?disabled=${state.phase === DRAW_PHASE.busy}
@@ -374,11 +370,13 @@ export class TwDrawView extends LitElement {
     return html`
       <li class="task ${this.#isCurrent(state, index, shown) ? 'current' : ''}">
         <span class="info">
-          ${task?.name ?? EMPTY_TEXT}<br />
-          <span class="muted">${task?.points ?? 0} ${this.#text('draw.points')}</span>
-          ${this.#room(task)}
+          <span class="name">${task?.name ?? EMPTY_TEXT}</span>
+          <span class="line">
+            <span class="status">${this.#taskStatus(state, persons, index, shown)}</span>
+            <span class="muted points">${task?.points ?? 0} ${this.#text('draw.points')}</span>
+          </span>
+          <span class="rooms">${this.#room(task)}</span>
         </span>
-        <span class="status">${this.#taskStatus(state, persons, index, shown)}</span>
         ${task ? this.#replace.button(state, task) : nothing}
       </li>
     `;
@@ -506,7 +504,9 @@ export class TwDrawView extends LitElement {
             </div>
           `,
         )}
-        ${showChance ? html`<span class="muted hint">${this.#text('draw.who.hint')}</span>` : nothing}
+        ${showChance
+          ? html`<span class="muted hint">${this.#text('draw.who.hint')}</span>`
+          : nothing}
       </div>
     `;
   }
@@ -521,23 +521,21 @@ export class TwDrawView extends LitElement {
     return html`
       ${winner ? html`<tw-confetti></tw-confetti>` : nothing}
       <div class="result" role="status">
-        ${
-          winner
-            ? html`<tw-avatar name=${winner.name} color=${winner.color}></tw-avatar>
-                <div class="text">
-                  <strong>${winner.name} ${this.#text('draw.takes')} ${task?.name}</strong><br />
-                  ${this.#room(task)}
-                  <span class="muted"
-                    >${this.#text('draw.chance')}
-                    ${formatPercent(state.current?.chance ?? 0, this.language)}</span
-                  >
-                </div>`
-            : html`<div class="text">
-                <strong>${this.#text('draw.nobody')} ${task?.name}</strong><br />
+        ${winner
+          ? html`<tw-avatar name=${winner.name} color=${winner.color}></tw-avatar>
+              <div class="text">
+                <strong>${winner.name} ${this.#text('draw.takes')} ${task?.name}</strong><br />
                 ${this.#room(task)}
-                <span class="muted">${this.#text('draw.nobody.hint')}</span>
+                <span class="muted"
+                  >${this.#text('draw.chance')}
+                  ${formatPercent(state.current?.chance ?? 0, this.language)}</span
+                >
               </div>`
-        }
+          : html`<div class="text">
+              <strong>${this.#text('draw.nobody')} ${task?.name}</strong><br />
+              ${this.#room(task)}
+              <span class="muted">${this.#text('draw.nobody.hint')}</span>
+            </div>`}
         <button class="button primary" @click=${() => void this.#session?.next()}>
           ${this.#text(last ? 'draw.finish' : 'draw.next')}
         </button>

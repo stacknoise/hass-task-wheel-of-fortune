@@ -8,6 +8,9 @@ import type { TextKey } from '../i18n/index.ts';
 import { canReplace } from '../state/index.ts';
 import type { DrawSession, DrawState, TaskInfo } from '../state/index.ts';
 
+/** Symbol des Knopfs „Austauschen“ (der Text steht als Beschriftung für Screenreader und Tooltip). */
+const REPLACE_ICON = '⇄';
+
 export interface ReplaceDialogContext {
   readonly language: string;
   /** Die Aufgabe, die aus der Runde genommen wird. */
@@ -57,11 +60,9 @@ export function replaceDialog(context: ReplaceDialogContext): TemplateResult {
       <p><strong>${text('draw.replace.out')}</strong> ${context.task?.name ?? EMPTY_TEXT}</p>
       <fieldset class="options">
         <legend class="muted">${text('draw.replace.with')}</legend>
-        ${
-          context.options.length === 0
-            ? html`<span class="muted">${text('draw.replace.none')}</span>`
-            : context.options.map((item) => option(item, context))
-        }
+        ${context.options.length === 0
+          ? html`<span class="muted">${text('draw.replace.none')}</span>`
+          : context.options.map((item) => option(item, context))}
       </fieldset>
       <p class="muted">${text('draw.replace.hint')}</p>
       <div class="actions" slot="actions">
@@ -105,11 +106,12 @@ export class ReplaceFlow {
     }
     const label = this.#deps.text('draw.replace');
     return html`<button
-      class="button"
+      class="button icon"
+      title=${label}
       aria-label="${label}: ${task.name}"
       @click=${() => void this.#open(task.id)}
     >
-      ${label}
+      ${REPLACE_ICON}
     </button>`;
   }
 
