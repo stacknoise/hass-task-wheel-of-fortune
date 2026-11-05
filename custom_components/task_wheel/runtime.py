@@ -105,7 +105,7 @@ def compose(
         statistics=statistics,
         draws=draws,
         assignments=assignments,
-        rounds=RoundService(history, statistics, events),
+        rounds=RoundService(history, statistics, events, decisions),
         swaps=swaps,
         schedules=schedules,
         maintenance=MaintenanceService(

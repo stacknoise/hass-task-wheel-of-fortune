@@ -174,6 +174,10 @@ class DecisionRepository(Protocol):
         """Entfernt Einträge, die vor `cutoff` entstanden; liefert die Anzahl."""
         ...
 
+    def forget_round(self, round_id: RoundId) -> int:
+        """Entfernt alle Einträge der Runde `round_id`; liefert die Anzahl."""
+        ...
+
 
 class DecisionRecorder(Protocol):
     """Nimmt Entscheidungen entgegen (Auslosung, Tausch, Austausch)."""
@@ -192,6 +196,10 @@ class DecisionRecorder(Protocol):
         """Hält fest, dass ein Admin vor dem Start eine Aufgabe der Runde austauschte."""
         ...
 
+    def forget_round(self, round_id: RoundId) -> None:
+        """Entfernt die Einträge einer gelöschten Runde."""
+        ...
+
 
 class NoDecisions:
     """Standard ohne Log (Tests)."""
@@ -205,6 +213,9 @@ class NoDecisions:
         """Tut nichts."""
 
     def record_swap(self, first: Assignment, second: Assignment, now: dt.datetime) -> None:
+        """Tut nichts."""
+
+    def forget_round(self, round_id: RoundId) -> None:
         """Tut nichts."""
 
 
