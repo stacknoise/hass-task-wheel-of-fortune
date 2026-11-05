@@ -42,7 +42,8 @@ import { drawSummary, stageNotice } from './draw-summary.ts';
 import { ReplaceFlow } from './draw-replace.ts';
 import { drawFailure, drawWindowDialog } from './draw-window.ts';
 import { drawStyles } from './draw-styles.ts';
-import { isCurrentTask, nameOf, personRows, taskStatus } from './draw-rows.ts';
+import { isCurrentTask, nameOf, personRows, taskStatus, winnerOf } from './draw-rows.ts';
+import { taskRow } from './task-row.ts';
 import { defineOnce } from '../components/define.ts';
 
 /** Auslosung: Zeitplan wählen, je Aufgabe das Rad drehen (Ergebnis vom Backend), Runde abschließen. */
@@ -357,19 +358,16 @@ export class TwDrawView extends LitElement {
     index: number,
     shown: number,
   ): TemplateResult {
-    return html`
-      <li class="task ${isCurrentTask(state, index, shown) ? 'current' : ''}">
-        <span class="info">
-          <span class="name">${task?.name ?? EMPTY_TEXT}</span>
-          <span class="line">
-            <span class="status">${taskStatus(state, persons, index, shown, this.language)}</span>
-            <span class="muted points">${task?.points ?? 0} ${this.#text('draw.points')}</span>
-          </span>
-          <span class="rooms">${this.#room(task)}</span>
-        </span>
-        ${task ? this.#replace.button(state, task) : nothing}
-      </li>
-    `;
+    return taskRow({
+      state,
+      task,
+      winner: winnerOf(state, persons, index, shown),
+      current: isCurrentTask(state, index, shown),
+      status: taskStatus(state, index, shown, this.language),
+      points: `${String(task?.points ?? 0)} ${this.#text('draw.points')}`,
+      rooms: this.#room(task),
+      action: task ? this.#replace.button(state, task) : nothing,
+    });
   }
 
   // ----- Bühne: Rad, Wer ist im Rad?, Ergebnis, Abschluss -----
