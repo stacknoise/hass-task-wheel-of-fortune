@@ -48,7 +48,7 @@ point; for "missed" (default 0) they get 0.
 
 **Effect on the draw**
 
-Whoever is below their fair share gets a bigger slice on the wheel. The weight is
+Whoever is below their fair share gets a bigger chance in the draw. Only people who are not absent for the whole deadline window, may do the task and have enough load capacity take part. The backend computes the chance as follows (the animations show all people in equal slices and no percentages, so nobody can tell the winner beforehand; the chances are visible in the history). The weight is
 `w = f × exp((f − a) ÷ f)` with the fair share `f` and the actual share `a` (the person's points ÷ points of
 everyone), then limited to at least 0.5 % and at most 100 % and normalized to chances. Example: Anna and Ben are
 both fully capable and always present (`f` = 50 %), Anna has 3 and Ben 1 point in the window (`a` = 75 % and 25 %). Then

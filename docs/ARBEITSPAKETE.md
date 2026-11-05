@@ -1,6 +1,6 @@
 # Arbeitspakete: Task Wheel of Fortune
 
-Stand: 2026-11-04 (AP-00 bis AP-19 umgesetzt, Nachträge bis Version 0.4.0 unten) · Grundlage: [KONZEPT.md](KONZEPT.md)
+Stand: 2026-11-05 (AP-00 bis AP-19 umgesetzt, Nachträge bis Version 0.6.0 unten) · Grundlage: [KONZEPT.md](KONZEPT.md)
 
 Größen: **S** ≈ bis 1 Tag · **M** ≈ 2–3 Tage · **L** ≈ 4–5 Tage (Richtwerte für eine Person).
 Jedes Paket gilt erst als fertig, wenn die **gemeinsame Definition of Done** erfüllt ist.
@@ -236,7 +236,7 @@ Parallelisierbar: AP-04/05 nach AP-02; AP-11/12/13 nach AP-09; AP-15/16/17 nach 
 
 ---
 
-## Nachträge nach AP-19 (Version 0.4.0 ergänzt)
+## Nachträge nach AP-19 (Version 0.6.0 ergänzt)
 
 Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. Details je Änderung stehen im Änderungsprotokoll in [CODE_DOKU.md](CODE_DOKU.md) §4.
 
@@ -280,3 +280,31 @@ Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. 
 | #84 | Statistik aktualisiert sich nach jeder Aktion |
 | #85 | Wiederkehrende Abwesenheiten (Wochentage, Abstand in Wochen) |
 | #86 | Version 0.4.0 |
+
+### Version 0.5.0
+
+| PR | Inhalt |
+|---|---|
+| #87, #88, #89 | Review-Befunde: Dokumentation und CI, Backend, Frontend |
+| #90 | Monatlicher Auslöser nur einmal im Monat |
+| #91 | README für Endnutzer überarbeitet |
+| #92 | Auslosung nur für Admins abbrechbar; `complete` mit übersetztem Dienstfehler |
+| #93 | Tausch als echter Tausch Aufgabe gegen Aufgabe, ohne Joker |
+| #94 | Version 0.5.0 |
+
+### Version 0.6.0
+
+| PR | Inhalt |
+|---|---|
+| #95, #96 | Tägliche Aufgaben immer dabei; abwesende Personen nehmen nicht teil |
+| #97 | Soll/Ist-Statistik je Zeitplan |
+| #98, #101, #105 | Admin-Austausch einer Aufgabe vor dem Start der Auslosung (auch ohne Animation), Vergebbarkeit bleibt gewahrt |
+| #99, #104 | Entscheidungslog als Tab; Bereinigung beim Löschen einer Auslosung |
+| #100 | Frist am Zeitplan, Machbarkeit im Fristfenster, manuelles Auslösen mit „Gilt ab“ und Frist |
+| #102 | Keine leere Runde, wenn nichts fällig ist |
+| #103 | Alte Speicherstände mit `due_days` laden |
+| #106, #108, #109 | Vergebbarkeit: Warnung vor dem Start, Auswahl nur aus vergebbaren Aufgaben, Prüfung beim Speichern des Zeitplans |
+| #107, #110, #111 | Rundenliste: Layout ohne Umbrüche, Person als Chip |
+| #112, #113, #114 | Animationen mit allen Personen in gleichen Segmenten, ohne Prozentzahlen, bei jeder Aufgabe außer der letzten |
+| #115 | „Neue Auslosung starten“, Abbrechen nur vor dem Abschluss |
+| #116 | Version 0.6.0 |

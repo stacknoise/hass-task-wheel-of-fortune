@@ -21,7 +21,7 @@ Events: `task_wheel_drawn`, `task_wheel_completed`, `task_wheel_swapped`, `task_
 
 A schedule and a person can be addressed by identifier or short name, a task by identifier or name. `task_wheel.complete` takes either `assignment_id` or `person` together with `task`.
 
-Settings (jokers per month, reserved for later and currently without effect; fairness window, retention, points factors, grace period, panel for administrators only) are changed under *Settings → Devices & services → Task Wheel of Fortune → Configure*. Every night at 03:00, missed assignments are marked and rounds older than the retention period (at least 373 days) are deleted; rounds that still hold open assignments are kept.
+Settings (jokers per month, reserved for later and currently without effect; fairness window, retention, decision log retention (default 7 days), points factors, grace period, panel for administrators only) are changed under *Settings → Devices & services → Task Wheel of Fortune → Configure*. Every night at 03:00, missed assignments are marked and rounds older than the retention period (at least 373 days) are deleted (rounds that still hold open assignments are kept), and decision log entries older than the decision log retention are removed.
 
 ## Notifications
 
@@ -52,10 +52,10 @@ The entities do not poll; they update as soon as something changes for them (dra
 ## Panel
 
 After setup, the entry "Task Wheel of Fortune" (`/task-wheel`) appears in the sidebar. The panel has the
-tabs Overview, Draw, Tasks, People, Schedules, History and Statistics, loads the state via `snapshot` and
+tabs Overview, Draw, Tasks, People, Schedules, History, Statistics and Decision log, loads the state via `snapshot` and
 stays up to date via `subscribe`. The **Draw** tab is finished: choose a schedule, start a round (an open round
-can be resumed), play the schedule's animation for each task (wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or award ceremony; the slices are all the same size and no percentages are shown; "Who is in?" lists everyone in the round who has no task yet, all shown as active, so viewers cannot tell who may actually get the task (only an eligible person can win; the reasons are in the decision log); whoever already has a task is removed from the list and the wheel; a round contains only as many due tasks as people can take part, and if there are more, the tasks are chosen at random (the schedule's order is kept); only the very last task of a round is assigned without spinning if just one person is left; for the others the animation always plays),
-draw the rest without animation and complete the round. The backend always determines the result; the animation only
+can be resumed; a manual start asks from when the tasks apply and how long people have, and for a scheduled plan you confirm that this draw replaces its next regular run), play the schedule's animation for each task (wheel of fortune, lottery drum, slot machine, Plinko, spotlight, scratch cards, breaking news or award ceremony; the slices are all the same size and no percentages are shown; "Who is in?" lists everyone in the round who has no task yet, all shown as active, so viewers cannot tell who may actually get the task (only an eligible person can win; the reasons are in the decision log); whoever already has a task is removed from the list and the wheel; a round contains only as many due tasks as people can take part, and if there are more, the tasks are chosen at random (the schedule's order is kept); only the very last task of a round is assigned without spinning if just one person is left; for the others the animation always plays),
+draw the rest without animation and complete the round. Before the first spin, administrators can **exchange** a task of the round for another task of the same schedule (only feasible tasks; the round must stay at least as assignable as before); for schedules without animation the preparation is shown to administrators before drawing. If not all tasks of the round can be assigned (one task per person at most, allowed, capable, present in the deadline window), a warning names them and asks "Draw anyway" or "Cancel". The draw never starts by itself: the first task needs a click. After a completed draw, "Start new draw" begins the next one; during a round the button reads "Cancel round". The backend always determines the result; the animation only
 follows it, and with "reduced motion" in the operating system it is skipped. **Overview**, **History**, **Statistics**, **Tasks**, **People** and **Schedules** are finished as well.
 
 - **Overview:** next draw (with paging through the schedules), open assignments per schedule with a filter by person,
@@ -68,8 +68,9 @@ follows it, and with "reduced motion" in the operating system it is skipped. **O
   pages and **CSV export** (semicolon, UTF-8 with BOM; fields that begin with `=`, `+`, `-`, `@`, a tab or a line break
   are defused with an apostrophe so that spreadsheet programs do not execute them as a formula).
 - **Statistics:** period (month, 3 or 12 months), indicators, points against fair share, completion rate per week
-  (SVG line chart without a charting library), task × person matrix and awards (lucky one, unlucky one,
-  most reliable person). Empty periods show a note instead of empty charts.
+  (SVG line chart without a charting library), task × person matrix, awards (lucky one, unlucky one,
+  most reliable person) and "Draws per task: target and actual", grouped by schedule (scrollable, schedules can be collapsed; a task in several schedules appears in each). Empty periods show a note instead of empty charts.
+- **Decision log:** visible to everyone, after the statistics. For each draw and task it shows who was on the wheel, who was left out and why (absent, not allowed, load capacity, already has a task …) and who was drawn; swaps and administrator exchanges are marked. Entries are kept for the decision log retention (default 7 days, settable in the integration options); deleting a draw removes its entries.
 
 **Tablet and smartphone:** the panel adapts to its own width. On a tablet in portrait mode and on a smartphone, the stage (wheel, result, "Next task") sits at the top of the draw and the round list below it; on a smartphone everything is single-column and compact, controls have touch size (44 px), and in narrow mode the Home Assistant menu button for the sidebar appears.
 
@@ -84,17 +85,17 @@ in a grid; adding and editing open a popup (full screen on a smartphone, close w
 
 - **People:** color on the wheel, load capacity (full, half, paused), presence (one-off, weekdays, weekly rhythm, recurring) with a
   preview of the next four weeks, and optionally a notification entity (`notify.…`, with a search across the entities and services of Home Assistant, checked when saving).
-- **Tasks:** allowed people, frequency (every round, at most n× per period, fixed interval with a timeline),
+- **Tasks:** allowed people, frequency (every round, at most n× per period, fixed interval with a timeline; tasks that come up daily, "at most n× in 1 day", are in every draw),
   points, minimum load capacity (any, at least half or full load only; whoever is below it does not get onto the wheel for the task and cannot take it over by swapping) and the extra rules "no repetition", "respect absence", "swap allowed". A task can optionally be assigned to a **room** (a Home Assistant area); the room is shown on the task card, in the overview, the draw, the history (also as a column in the CSV export) and the statistics. If an area is deleted in Home Assistant, the task keeps the assignment and shows "Unknown room" until you pick another one.
-- **Schedules:** recurring, one-off or manual only, the **deadline** (valid from: right away, after an offset, the next day or next weekday at a time; duration in hours, days, weeks or months; for manual-only schedules it is asked at each draw), task selection, options and an example for `task_wheel.draw`
-  and the event `task_wheel_drawn`.
+- **Schedules:** recurring, one-off or manual only, the **deadline** (valid from: right away, after an offset, the next day or next weekday at a time; duration in hours, days, weeks or months; for manual-only schedules it is asked at each draw), task selection, options and an example for `task_wheel.draw`.
+  and the event `task_wheel_drawn`. A schedule is only saved if its "every round" tasks can be assigned to different people (allowed and capable; absences do not count).
 
 ## Panel API (WebSocket)
 
 The panel talks to the backend through WebSocket commands with the prefix `task_wheel/`: `snapshot`, `subscribe`
 (first the full state, then only changes per object), `history/list`, `decisions/list` (decision log: which persons were in the wheel, which were excluded and why; visible to every signed-in user), `statistics/get`, `availability/preview` (presence preview),
 `assignment/complete`, `assignment/swap`, `assignment/skip`, `draw/begin|preview|spin|spin_rest|commit|cancel` for every signed-in
-user, and `round/delete`, `person/*`, `task/*`, `schedule/*` and `settings/update` for administrators only. All inputs
+user (cancelling or restarting a round after its first result and the pre-start exchange `draw/replacements|replace_task` are for administrators only), and `round/delete`, `person/*`, `task/*`, `schedule/*` and `settings/update` for administrators only. All inputs
 are validated against strict schemas (no unknown fields, limited lengths). If "Panel for administrators only" is set in the settings,
 the read commands are also reserved for administrators. Details:
 [docs/KONZEPT.md](KONZEPT.md) §6.4 (in German).
