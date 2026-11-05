@@ -21,7 +21,7 @@ import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import {
   DrawSession,
-  awaitsSpin,
+  awaitsLastSpin,
   StoreController,
   canSkip,
   drawableSchedules,
@@ -133,14 +133,7 @@ export class TwDrawView extends LitElement {
     const snapshot = this.#store.state?.snapshot;
     const task = this.#nextTask(state);
     const key = `${state.roundId ?? EMPTY_TEXT}:${String(state.results.length)}`;
-    if (
-      !snapshot ||
-      !task ||
-      !awaitsSpin(state) ||
-      state.taskIds.length - state.results.length !== 1 ||
-      state.results.length === 0 ||
-      key === this.#autoSpun
-    ) {
+    if (!snapshot || !task || !awaitsLastSpin(state) || key === this.#autoSpun) {
       return;
     }
     const taken = new Set(state.results.map((result) => result.winner_id));
