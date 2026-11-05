@@ -109,6 +109,7 @@ ERR_DRAW_STARTED: Final = "draw_already_started"
 ERR_REPLACEMENT_INVALID: Final = "draw_replacement_invalid"
 ERR_REPLACEMENT_INFEASIBLE: Final = "draw_replacement_infeasible"
 ERR_NOTHING_DUE: Final = "draw_nothing_due"
+ERR_SCHEDULE_UNASSIGNABLE: Final = "schedule_tasks_unassignable"
 
 # Fehlerschlüssel der Dienste
 ERR_NOT_LOADED: Final = "not_loaded"
@@ -185,6 +186,7 @@ RESOURCE_SUBSCRIPTION: Final = "subscription"
 
 # Platzhalter in Fehlermeldungen
 PH_SECONDS: Final = "seconds"
+PH_TASKS: Final = "tasks"
 
 # Fehlerschlüssel der Benachrichtigung
 ERR_NOTIFY_TARGET: Final = "notify_target_invalid"

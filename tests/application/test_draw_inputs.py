@@ -93,14 +93,26 @@ def test_due_tasks_keep_the_order_of_the_schedule():
 
 def test_round_is_limited_to_as_many_randomly_picked_tasks_as_persons_take_part():
     world = World()
-    world.config.put_task(f.task(id="t3", name="t3"))
-    schedule = world.put_schedule(task_ids=("t1", "t2", "t3"))
+    for ident in ("t3", "t4", "t5"):
+        world.config.put_task(f.task(id=ident, name=ident))
+    schedule = world.put_schedule(task_ids=("t3", "t4", "t5"))
     context = build_context(world.config, world.history, (), NOW, WINDOW)
     tasks = due_tasks(world.config, schedule, (), NOW)
-    # zwei Personen, drei Aufgaben: die beiden kleinsten Zufallszahlen (t3, t1) bleiben,
+    # zwei Personen, drei Aufgaben: die beiden kleinsten Zufallszahlen (t5, t3) bleiben,
     # in Zeitplanreihenfolge
     picked = select_assignable(tasks, context, FixedRandom(0.5, 0.9, 0.1))
-    assert [t.id for t in picked] == ["t1", "t3"]
+    assert [t.id for t in picked] == ["t3", "t5"]
+
+
+def test_every_round_tasks_come_first_and_chance_decides_between_them():
+    world = World()
+    world.config.put_task(f.task(id="t3", name="t3"))
+    schedule = world.put_schedule(task_ids=("t3", "t1", "t2"))
+    context = build_context(world.config, world.history, (), NOW, WINDOW)
+    tasks = due_tasks(world.config, schedule, (), NOW)
+    # t1 und t2 gelten „in jeder Runde“ und gehen vor der Aufgabe mit Häufigkeitsgrenze
+    picked = select_assignable(tasks, context, FixedRandom(0.1, 0.5, 0.9))
+    assert [t.id for t in picked] == ["t1", "t2"]
 
 
 def test_round_keeps_all_tasks_when_enough_persons_take_part():

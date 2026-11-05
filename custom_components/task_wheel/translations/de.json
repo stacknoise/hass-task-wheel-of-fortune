@@ -205,6 +205,9 @@
     "draw_nothing_due": {
       "message": "Es ist keine Aufgabe fällig: Alle Aufgaben des Zeitplans haben ihre Höchstzahl im Zeitraum erreicht oder niemand ist verfügbar."
     },
+    "schedule_tasks_unassignable": {
+      "message": "Die Aufgaben „in jeder Runde“ lassen sich nicht an verschiedene Personen vergeben (betroffen: {tasks}): Es gibt weniger passende Personen als solche Aufgaben."
+    },
     "draw_too_soon": {
       "message": "Zwischen zwei Auslosungen desselben Zeitplans müssen mindestens {seconds} Sekunden liegen."
     },
