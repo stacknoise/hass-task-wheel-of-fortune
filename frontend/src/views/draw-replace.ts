@@ -60,9 +60,11 @@ export function replaceDialog(context: ReplaceDialogContext): TemplateResult {
       <p><strong>${text('draw.replace.out')}</strong> ${context.task?.name ?? EMPTY_TEXT}</p>
       <fieldset class="options">
         <legend class="muted">${text('draw.replace.with')}</legend>
-        ${context.options.length === 0
-          ? html`<span class="muted">${text('draw.replace.none')}</span>`
-          : context.options.map((item) => option(item, context))}
+        ${
+          context.options.length === 0
+            ? html`<span class="muted">${text('draw.replace.none')}</span>`
+            : context.options.map((item) => option(item, context))
+        }
       </fieldset>
       <p class="muted">${text('draw.replace.hint')}</p>
       <div class="actions" slot="actions">
