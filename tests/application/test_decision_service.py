@@ -2,6 +2,7 @@
 
 import pytest
 
+from custom_components.task_wheel.application.round_service import RoundService
 from custom_components.task_wheel.application.statistics_service import StatisticsService
 from custom_components.task_wheel.application.swap_service import SwapService
 from custom_components.task_wheel.domain.decisions import DecisionFilter
@@ -148,3 +149,13 @@ def test_store_drops_the_oldest_over_the_limit(monkeypatch):
     for step in range(3):
         world.draws.draw("s1", RoundOrigin.AUTO, NOW + step * DAY)
     assert [r.at for r in world.decision_store.records.values()] == [NOW + DAY, NOW + 2 * DAY]
+
+
+def test_deleting_a_round_removes_its_log_entries_only():
+    world = World(0.1, 0.9)
+    first = world.draws.draw("s1", RoundOrigin.AUTO, NOW)
+    second = world.draws.draw("s1", RoundOrigin.MANUAL, NOW + DAY)
+    assert len(world.decision_store.records) == 2
+    RoundService(world.history, world.statistics, decisions=world.decisions).delete(first.id)
+    (left,) = world.decision_store.records.values()
+    assert left.round_id == second.id

@@ -19,7 +19,7 @@ from ..domain.draw.draft import RoundDraft
 from ..domain.draw.types import TaskDraw
 from ..domain.enums import DecisionKind
 from ..domain.models import Assignment, Round
-from ..domain.types import PersonId, TaskId
+from ..domain.types import PersonId, RoundId, TaskId
 from ..domain.validation import ensure_range
 from .ids import new_id
 from .protocols import ConfigRepository, DecisionRepository, IdFactory
@@ -149,6 +149,10 @@ class DecisionService:
         """Löscht Einträge außerhalb der Aufbewahrung (Einstellung in Tagen)."""
         retention = dt.timedelta(days=self._config.settings.decision_retention_days)
         return self._decisions.purge(now - retention)
+
+    def forget_round(self, round_id: RoundId) -> None:
+        """Entfernt die Einträge einer gelöschten Runde (Auslosung und Tausch)."""
+        self._decisions.forget_round(round_id)
 
     def _add(self, record: DecisionRecord) -> None:
         self._decisions.add(record)
