@@ -156,7 +156,7 @@ describe('Auslosung', () => {
       view().querySelector('tw-stage')?.shadowRoot?.querySelector('tw-wheel')
         ?.shadowRoot as ShadowRoot;
     await vi.waitFor(() => {
-      expect(wheel().querySelectorAll('path.wedge')).toHaveLength(2);
+      expect(wheel().querySelectorAll('path.wedge')).toHaveLength(3);
     });
     expect(text(view)).not.toContain('60 %');
 
@@ -168,7 +168,8 @@ describe('Auslosung', () => {
     const rotor = wheel().querySelector<SVGGElement>('.rotor');
     expect(rotor?.style.transform).not.toBe('rotate(0deg)');
     expect(text(view)).not.toContain('Chance');
-    expect(text(view)).toContain('Abwesend');
+    expect(text(view)).not.toContain('Abwesend');
+    expect(text(view)).not.toContain('Nicht erlaubt');
     expect(view().querySelector('tw-confetti')).not.toBeNull();
     expect(text(view)).toContain('Aufgabe 1 / 2');
 
@@ -180,7 +181,7 @@ describe('Auslosung', () => {
     // Für „Müll“ bleibt nur Anna übrig: die Ziehung läuft ohne Klick auf „Drehen“.
     await vi.waitFor(() => {
       expect(text(view)).toContain('Niemand verfügbar für Müll');
-      expect(text(view)).toContain('Nicht erlaubt');
+      expect(text(view)).not.toContain('Nicht erlaubt');
     });
     expect(text(view)).toContain('Runde abschließen');
 

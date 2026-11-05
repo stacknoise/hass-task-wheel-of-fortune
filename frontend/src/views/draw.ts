@@ -40,7 +40,7 @@ import { drawSummary, stageNotice } from './draw-summary.ts';
 import { ReplaceFlow } from './draw-replace.ts';
 import { drawFailure, drawWindowDialog } from './draw-window.ts';
 import { drawStyles } from './draw-styles.ts';
-import { isCurrentTask, nameOf, personRows, taskStatus, winnerOf } from './draw-rows.ts';
+import { isCurrentTask, nameOf, taskStatus, waitingPersons, winnerOf } from './draw-rows.ts';
 import { taskRow } from './task-row.ts';
 import { defineOnce } from '../components/define.ts';
 
@@ -400,29 +400,24 @@ export class TwDrawView extends LitElement {
           <span class="title">${task?.name ?? EMPTY_TEXT}</span>
           ${this.#room(task)}
         </div>
-        ${this.#wheelBox(state, task, persons)} ${this.#people(state, task, persons)}
+        ${this.#wheelBox(state, task, persons)} ${this.#people(state, persons)}
         ${state.phase === DRAW_PHASE.revealed ? this.#result(state, task, persons) : nothing}
       </section>
     `;
   }
 
   /**
-   * Die Segmente des Rads: vor dem Drehen aus der Vorschau, danach aus dem Ergebnis. Gleicher
-   * Inhalt ergibt dieselbe Liste, damit das Rad bei jedem Neuzeichnen seine Drehung behält.
+   * Die Segmente des Rads: alle, die noch auf eine Aufgabe warten, gleich groß (so verrät die
+   * Größe nichts). Gleicher Inhalt ergibt dieselbe Liste, damit das Rad bei jedem Neuzeichnen
+   * seine Drehung behält.
    */
-  #wheelSegments(
-    result: TaskDrawWire | undefined,
-    persons: ReadonlyMap<string, PersonInfo>,
-  ): readonly WheelSegment[] {
-    const segments = (result?.segments ?? []).map((segment) => {
-      const person = persons.get(segment.person_id);
-      return {
-        id: segment.person_id,
-        label: person?.name ?? segment.person_id,
-        color: person?.color ?? FALLBACK_COLOR,
-        chance: segment.chance,
-      };
-    });
+  #wheelSegments(waiting: readonly PersonInfo[]): readonly WheelSegment[] {
+    const segments = waiting.map((person) => ({
+      id: person.id,
+      label: person.name,
+      color: person.color || FALLBACK_COLOR,
+      chance: 1 / waiting.length,
+    }));
     const key = JSON.stringify(segments);
     if (this.#wheelCache?.key !== key) {
       this.#wheelCache = { key, segments };
@@ -435,7 +430,7 @@ export class TwDrawView extends LitElement {
     task: TaskInfo | undefined,
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
-    const segments = this.#wheelSegments(state.current ?? state.preview, persons);
+    const segments = this.#wheelSegments(waitingPersons(state, persons));
     return html`
       <div class="wheel-box ${START_PLACEMENT[this.#kind]}">
         <tw-stage
@@ -459,22 +454,17 @@ export class TwDrawView extends LitElement {
     `;
   }
 
-  #people(
-    state: DrawState,
-    task: TaskInfo | undefined,
-    persons: ReadonlyMap<string, PersonInfo>,
-  ): TemplateResult {
-    const rows = personRows(state.current ?? state.preview, task, persons, this.language);
+  #people(state: DrawState, persons: ReadonlyMap<string, PersonInfo>): TemplateResult {
     return html`
       <div class="people">
         <span class="eyebrow">${this.#text('draw.who')}</span>
         ${repeat(
-          rows,
-          (row) => row.person.id,
-          (row) => html`
-            <div class="person ${row.inWheel ? '' : 'out'}">
-              <tw-avatar name=${row.person.name} color=${row.person.color}></tw-avatar>
-              <div>${row.person.name}<br /><span class="muted">${row.note}</span></div>
+          waitingPersons(state, persons),
+          (person) => person.id,
+          (person) => html`
+            <div class="person">
+              <tw-avatar name=${person.name} color=${person.color}></tw-avatar>
+              <div>${person.name}</div>
             </div>
           `,
         )}

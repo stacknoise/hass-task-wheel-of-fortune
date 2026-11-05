@@ -57,16 +57,10 @@ class TaskReplacement:
 
 @dataclass(slots=True, frozen=True)
 class CandidateSelection:
-    """Ergebnis der Filterkette: Kandidaten, Personen im Rad und Ausschlüsse.
-
-    Gewinnen darf nur, wer Kandidat ist (der Rest der Runde bleibt vergebbar). Im Rad stehen
-    alle, die die Aufgabe grundsätzlich bekommen könnten; so dreht es auch dann mit allen,
-    wenn der Ausgang durch die Runde schon feststeht.
-    """
+    """Ergebnis der Filterkette: verbleibende Kandidaten und Ausschlüsse."""
 
     candidates: Sequence[Person]
     exclusions: Sequence[Exclusion]
-    wheel: Sequence[Person] = ()
 
 
 @dataclass(slots=True, frozen=True)
