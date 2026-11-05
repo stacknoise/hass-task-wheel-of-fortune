@@ -13,6 +13,8 @@ from typing import Final, Protocol
 
 from ..const.keys import (
     ERR_DUPLICATE,
+    ERR_SCHEDULE_UNASSIGNABLE,
+    PH_TASKS,
     RESOURCE_ASSIGNMENT,
     RESOURCE_PERSON,
     RESOURCE_SCHEDULE,
@@ -22,6 +24,7 @@ from ..const.limits import SLUG_MAX_LENGTH
 from ..domain.errors import InUseError, NotFoundError, ValidationError
 from ..domain.models import OnceAbsence, Person, Schedule, Settings, Task
 from ..domain.types import PersonId, ScheduleId, TaskId
+from .draw_inputs import unassignable_every_round
 from .draw_service import DrawService
 from .ids import new_id
 from .protocols import ConfigRepository, HistoryRepository, IdFactory
@@ -196,6 +199,7 @@ class ConfigService:
         schedule = Schedule.from_dict(self._with_identity(fields, self._config.schedules.values()))
         self._ensure_slug_free(schedule, self._config.schedules.values())
         self._ensure_known(schedule.task_ids, self._config.tasks, RESOURCE_TASK)
+        self._ensure_every_round_assignable(schedule, now)
         self._schedules.save(schedule, now)
         return schedule
 
@@ -207,6 +211,7 @@ class ConfigService:
         schedule = Schedule.from_dict({**current.to_dict(), **fields})
         self._ensure_slug_free(schedule, self._config.schedules.values())
         self._ensure_known(schedule.task_ids, self._config.tasks, RESOURCE_TASK)
+        self._ensure_every_round_assignable(schedule, now)
         self._schedules.save(schedule, now)
         return schedule
 
@@ -232,6 +237,17 @@ class ConfigService:
             slugify(fields.get(FIELD_NAME)), (item.slug for item in existing)
         )
         return {**fields, FIELD_ID: self._new_id(), FIELD_SLUG: slug}
+
+    def _ensure_every_round_assignable(self, schedule: Schedule, now: dt.datetime) -> None:
+        """Die Aufgaben „in jeder Runde“ lassen sich an verschiedene Personen vergeben.
+
+        Raises:
+            ValidationError: Es gibt weniger passende Personen als solche Aufgaben.
+        """
+        stuck = unassignable_every_round(self._config, self._history, schedule, now)
+        if stuck:
+            names = ", ".join(task.name for task in stuck)
+            raise ValidationError(FIELD_TASK_IDS, ERR_SCHEDULE_UNASSIGNABLE, {PH_TASKS: names})
 
     @staticmethod
     def _ensure_slug_free(item: Sluggable, existing: Iterable[Sluggable]) -> None:

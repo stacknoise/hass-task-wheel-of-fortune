@@ -7,7 +7,7 @@ from dataclasses import replace
 from ..const.limits import ONE_DAY, RECENT_HISTORY
 from ..domain.availability.calendar import PersonAvailability
 from ..domain.deadline import DeadlineWindow
-from ..domain.draw.feasibility import pick_assignable
+from ..domain.draw.feasibility import pick_assignable, unassignable_tasks
 from ..domain.draw.types import DrawContext, RandomSource
 from ..domain.models import Assignment, Schedule, Settings, Task
 from ..domain.rules.factory import FrequencyRuleFactory
@@ -69,9 +69,9 @@ def respecting_schedule(schedule: Schedule, task: Task) -> Task:
 
 
 def _priority(tasks: tuple[Task, ...], rng: RandomSource) -> list[int]:
-    """Reihenfolge der Auswahl: tägliche Aufgaben zuerst, innerhalb der Gruppen zufällig."""
+    """Reihenfolge der Auswahl: Aufgaben „in jeder Runde“ und tägliche zuerst, dann zufällig."""
     keys = [rng.random() for _ in tasks]
-    return sorted(range(len(tasks)), key=lambda i: (not tasks[i].is_daily, keys[i]))
+    return sorted(range(len(tasks)), key=lambda i: (not tasks[i].is_mandatory, keys[i]))
 
 
 def select_assignable(
@@ -81,12 +81,27 @@ def select_assignable(
 
     Jede Person bekommt je Runde höchstens eine Aufgabe, und nicht jede darf, kann oder ist da
     (erlaubt, belastbar, im Fristfenster anwesend). Gewählt wird eine größtmögliche Menge, die
-    sich vollständig an verschiedene Personen vergeben lässt: Täglich anfallende Aufgaben sind
-    zuerst dabei, der Rest wird zufällig gefüllt (nicht vorhersehbar). Aufgaben, die niemand
-    übernehmen kann, und solche, die um dieselben Personen konkurrieren und leer ausgingen,
-    bleiben draußen. Die Reihenfolge der Auswahl bleibt die des Zeitplans.
+    sich vollständig an verschiedene Personen vergeben lässt. Aufgaben „in jeder Runde“ und täglich
+    anfallende sind zuerst dabei, der Rest wird zufällig gefüllt (nicht vorhersehbar). Gibt es etwa
+    wegen Abwesenheit weniger Personen als solche Aufgaben, entscheidet der Zufall unter ihnen.
+    Aufgaben, die niemand übernehmen kann, und solche, die um dieselben Personen konkurrieren und
+    leer ausgingen, bleiben draußen. Die Reihenfolge der Auswahl bleibt die des Zeitplans.
     """
     return pick_assignable(tasks, context, _priority(tasks, rng)) if tasks else tasks
+
+
+def unassignable_every_round(
+    config: ConfigRepository, history: HistoryRepository, schedule: Schedule, now: dt.datetime
+) -> tuple[Task, ...]:
+    """Aufgaben „in jeder Runde“ des Zeitplans, die sich nicht alle verteilen lassen.
+
+    Geprüft wird die Konfiguration: erlaubte Personen und Belastbarkeit, jede Person höchstens
+    eine Aufgabe. Abwesenheit zählt nicht (vorübergehend; die Auslosung wählt dann zufällig).
+    """
+    found = (config.tasks.get(task_id) for task_id in schedule.task_ids)
+    tasks = [replace(task, respect_absence=False) for task in found if task and task.every_round]
+    context = build_context(config, history, (), now, schedule.deadline.window(now))
+    return unassignable_tasks(tasks, context)
 
 
 def build_context(

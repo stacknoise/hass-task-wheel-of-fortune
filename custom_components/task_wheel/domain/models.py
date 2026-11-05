@@ -311,6 +311,16 @@ class Task(Model):
         """Die Aufgabe fällt täglich an und ist deshalb in jeder Runde dabei."""
         return isinstance(self.frequency, MaxPerPeriod) and self.frequency.is_daily
 
+    @property
+    def every_round(self) -> bool:
+        """Die Aufgabe ist in jeder Runde fällig (Häufigkeit „in jeder Runde“)."""
+        return isinstance(self.frequency, EveryRound)
+
+    @property
+    def is_mandatory(self) -> bool:
+        """Die Aufgabe soll in jeder Runde dabei sein: „in jeder Runde“ oder täglich."""
+        return self.every_round or self.is_daily
+
     def __post_init__(self) -> None:
         """Prüft Kennung, Namen, Punkte, erlaubte Personen und Räume."""
         ensure_id("id", self.id)

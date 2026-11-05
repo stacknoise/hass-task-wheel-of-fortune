@@ -223,6 +223,8 @@ export const de = {
   'error.ambiguous_reference': 'Mehrere Einträge passen, bitte die ID verwenden.',
   'error.draw_nothing_due':
     'Keine Aufgabe fällig: Alle haben ihre Höchstzahl im Zeitraum erreicht oder niemand ist verfügbar.',
+  'error.schedule_tasks_unassignable':
+    'Die Aufgaben „in jeder Runde“ lassen sich nicht an verschiedene Personen vergeben: Es gibt weniger passende Personen (erlaubt, belastbar) als solche Aufgaben.',
   'error.draw_too_soon': 'Es gibt schon eine neuere Auslosung, bitte kurz warten.',
   'error.in_use': 'Wird noch verwendet (Zeitplan, erlaubte Person oder offene Zuteilung).',
   'error.notify_target_invalid': 'Ungültiges Benachrichtigungsziel.',
