@@ -175,7 +175,7 @@ def _spare_task(api: Api) -> None:
 def test_replace_task_swaps_before_the_start_and_is_admin_only(api: Api) -> None:
     rid = api.result("draw/begin", schedule_id="s1", **BEGIN)["id"]
     _spare_task(api)
-    options = api.result("draw/replacements", panel_round_id=rid)["replacements"]
+    options = api.result("draw/replacements", panel_round_id=rid, task_id="t1")["replacements"]
     assert options == [{"task_id": "t3", "doable": True}]
     view = api.result("draw/replace_task", panel_round_id=rid, task_id="t1", new_task_id="t3")
     assert "t3" in view["panel_round"]["pending_task_ids"]

@@ -56,6 +56,10 @@ export const shownCount = (state: DrawState): number =>
 export const canReplace = (state: DrawState): boolean =>
   state.phase === DRAW_PHASE.ready && state.results.length === 0 && state.roundId !== undefined;
 
+/** Wartet die animierte Runde auf den nächsten Dreh (nicht die Vorbereitung ohne Animation)? */
+export const awaitsSpin = (state: DrawState): boolean =>
+  state.phase === DRAW_PHASE.ready && !state.direct;
+
 const isPausedInRound = (state: DrawState): boolean =>
   state.phase === DRAW_PHASE.ready || state.phase === DRAW_PHASE.revealed;
 
@@ -133,13 +137,13 @@ export class DrawSession {
     }
   }
 
-  /** Aufgaben, die statt einer der Runde dienen könnten (leer, wenn der Tausch gesperrt ist). */
-  async replacements(): Promise<readonly TaskReplacementWire[]> {
+  /** Aufgaben, die statt `taskId` dienen könnten (leer, wenn der Tausch gesperrt ist). */
+  async replacements(taskId: string): Promise<readonly TaskReplacementWire[]> {
     const roundId = this.#state.roundId;
     if (!canReplace(this.#state) || !roundId) {
       return [];
     }
-    return (await this.#client.replacements(roundId)).replacements;
+    return (await this.#client.replacements(roundId, taskId)).replacements;
   }
 
   /** Tauscht vor dem Start eine Aufgabe der Runde; Fehler des Backends werden angezeigt. */

@@ -23,6 +23,7 @@ import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import {
   DrawSession,
+  awaitsSpin,
   StoreController,
   canSkip,
   drawableSchedules,
@@ -123,16 +124,15 @@ export class TwDrawView extends LitElement {
     this.#autoSpin(state);
   }
 
-  /** Die Aufgabe, die als Nächstes gezogen wird. */
+  /** Die nächste Aufgabe der Ziehung. */
   #nextTask(state: DrawState): TaskInfo | undefined {
     const snapshot = this.#store.state?.snapshot;
-    const taskId = state.taskIds[state.results.length];
-    return snapshot && taskId ? tasksById(snapshot).get(taskId) : undefined;
+    return snapshot && tasksById(snapshot).get(state.taskIds[state.results.length] ?? EMPTY_TEXT);
   }
 
   /**
-   * Bleibt für die nächste Aufgabe höchstens eine Person übrig, gibt es nichts zu drehen: die
-   * Ziehung läuft ohne Klick, das Backend entscheidet weiterhin (es prüft auch Pause und Abwesenheit).
+   * Bleibt für eine folgende Aufgabe höchstens eine Person übrig, gibt es nichts zu drehen: die
+   * Ziehung läuft ohne Klick. Die erste Aufgabe startet nie von allein. Das Backend entscheidet weiterhin (es prüft auch Pause und Abwesenheit).
    */
   #autoSpin(state: DrawState): void {
     const snapshot = this.#store.state?.snapshot;
@@ -140,9 +140,9 @@ export class TwDrawView extends LitElement {
     const key = `${state.roundId ?? EMPTY_TEXT}:${String(state.results.length)}`;
     if (
       !snapshot ||
-      state.direct ||
-      state.phase !== DRAW_PHASE.ready ||
       !task ||
+      !awaitsSpin(state) ||
+      state.results.length === 0 ||
       key === this.#autoSpun
     ) {
       return;
@@ -377,7 +377,7 @@ export class TwDrawView extends LitElement {
   ): TemplateResult {
     return html`
       <li class="task ${this.#isCurrent(state, index, shown) ? 'current' : ''}">
-        <span>
+        <span class="info">
           ${task?.name ?? EMPTY_TEXT}<br />
           <span class="muted">${task?.points ?? 0} ${this.#text('draw.points')}</span>
           ${this.#room(task)}

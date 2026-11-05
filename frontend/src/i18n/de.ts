@@ -190,7 +190,6 @@ export const de = {
   'draw.window.title': 'Auslosung starten',
   'draw.window.start': 'Aufgaben gelten ab',
   'draw.window.start.now': 'sofort',
-  'draw.window.start.tomorrow': 'morgen um 10:00',
   'draw.window.start.custom': 'Datum und Uhrzeit wählen',
   'draw.window.custom': 'Datum und Uhrzeit',
   'draw.window.duration': 'Aufgaben erledigen innerhalb von',

@@ -67,3 +67,8 @@ def safe_winners(candidates: frozenset[PersonId], rest: Options) -> frozenset[Pe
         return candidates
     universe = candidates.union(*rest)
     return candidates & _free_persons(rest, owner, universe)
+
+
+def assignable_count(options: Options) -> int:
+    """Wie viele Aufgaben gleichzeitig an verschiedene Personen gehen können (je Person eine)."""
+    return len(_match(options))

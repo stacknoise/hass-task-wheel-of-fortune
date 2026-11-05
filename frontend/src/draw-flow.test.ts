@@ -222,6 +222,23 @@ describe('Auslosung', () => {
     });
   });
 
+  it('startet die erste Auslosung nie von allein, auch nicht nach einem Austausch', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    const hass = hassWith();
+    // „Müll“ (t2) hat nur eine mögliche Person; der Admin muss dennoch selbst drehen.
+    hass.replies.set('task_wheel/draw/begin', round([], ['t2', 't1']));
+    hass.replies.set('task_wheel/draw/preview', { result: result('t2', null) });
+    const { view } = await mount(hass);
+    await start(view);
+    await vi.waitFor(() => {
+      expect(text(view)).toContain('0 / 2 verlost');
+    });
+    await vi.waitFor(() => {
+      expect(view().querySelector('.task .button')).not.toBeNull();
+    });
+    expect(hass.messages.some((m) => m.type === 'task_wheel/draw/spin')).toBe(false);
+  });
+
   it('bietet Nicht-Admins keinen Austausch an', async () => {
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
     const hass = hassWith();

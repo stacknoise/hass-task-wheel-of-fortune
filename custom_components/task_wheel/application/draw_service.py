@@ -24,12 +24,12 @@ from ..const.limits import DRAW_MIN_INTERVAL, DRAW_MIN_INTERVAL_SECONDS, MAX_OPE
 from ..domain.deadline import DeadlineWindow
 from ..domain.draw.draft import RoundDraft
 from ..domain.draw.engine import DrawEngine
-from ..domain.draw.feasibility import is_feasible
+from ..domain.draw.feasibility import assignable_tasks, is_feasible
 from ..domain.draw.types import RandomSource, TaskDraw, TaskReplacement
 from ..domain.draw.weighting import WeightingFactory
 from ..domain.enums import RoundOrigin
 from ..domain.errors import DrawRejectedError, LimitReachedError, NotFoundError
-from ..domain.models import Round, Schedule
+from ..domain.models import Round, Schedule, Task
 from ..domain.types import ScheduleId
 from .draw_inputs import (
     build_context,
@@ -160,27 +160,45 @@ class DrawService:
             raise NotFoundError(RESOURCE_PANEL_ROUND, panel_round_id)
         return panel_round
 
-    def replacements(self, panel_round_id: str, now: dt.datetime) -> tuple[TaskReplacement, ...]:
-        """Aufgaben des Zeitplans, die nicht in der Runde sind, und ob sie machbar wären.
+    def replacements(
+        self, panel_round_id: str, task_id: str, now: dt.datetime
+    ) -> tuple[TaskReplacement, ...]:
+        """Aufgaben des Zeitplans außerhalb der Runde und ob sie `task_id` ersetzen können.
 
-        Machbar heißt: mindestens eine Person, die heute mitlosen darf, könnte sie übernehmen.
-        Nach dem Start der Auslosung gibt es keine (der Tausch ist gesperrt).
+        Machbar heißt: mindestens eine Person, die im Fenster mitlosen darf, könnte sie übernehmen,
+        und die Runde bleibt danach mindestens so vollständig vergebbar wie vorher (je Person
+        höchstens eine Aufgabe). Nach dem Start der Auslosung gibt es keine (Tausch gesperrt).
 
         Raises:
             NotFoundError: Die Panel-Runde oder der Zeitplan gibt es nicht (mehr).
+            DrawRejectedError: `task_id` gehört nicht zur Runde.
         """
-        panel_round = self.get(panel_round_id, now)
-        if panel_round.draft.started:
-            return ()
-        draft = panel_round.draft
-        schedule = self._known_schedule(draft.schedule_id)
+        draft = self.get(panel_round_id, now).draft
         taken = {task.id for task in draft.tasks}
-        found = (self._config.tasks.get(task_id) for task_id in schedule.task_ids)
+        if task_id not in taken:
+            raise DrawRejectedError(ERR_REPLACEMENT_INVALID)
+        if draft.started:
+            return ()
+        schedule = self._known_schedule(draft.schedule_id)
+        kept = assignable_tasks(draft.tasks, draft.context)
         return tuple(
-            TaskReplacement(task.id, is_feasible(task, draft.context))
-            for task in (respecting_schedule(schedule, t) for t in found if t is not None)
+            TaskReplacement(task.id, self._keeps_round(draft, task_id, task, kept))
+            for task in self._schedule_tasks(schedule)
             if task.id not in taken
         )
+
+    def _schedule_tasks(self, schedule: Schedule) -> tuple[Task, ...]:
+        """Die Aufgaben des Zeitplans (bekannte, mit den Vorgaben des Zeitplans)."""
+        found = (self._config.tasks.get(task_id) for task_id in schedule.task_ids)
+        return tuple(respecting_schedule(schedule, task) for task in found if task is not None)
+
+    @staticmethod
+    def _keeps_round(draft: RoundDraft, task_id: str, new_task: Task, kept: int) -> bool:
+        """Ob `new_task` statt `task_id` machbar ist und die Runde nicht schlechter vergibt."""
+        if not is_feasible(new_task, draft.context):
+            return False
+        swapped = [new_task if task.id == task_id else task for task in draft.tasks]
+        return assignable_tasks(swapped, draft.context) >= kept
 
     def replace_task(
         self, panel_round_id: str, task_id: str, new_task_id: str, now: dt.datetime
@@ -195,7 +213,7 @@ class DrawService:
         panel_round = self.get(panel_round_id, now)
         if panel_round.draft.started:
             raise DrawRejectedError(ERR_DRAW_STARTED)
-        options = {item.task_id: item for item in self.replacements(panel_round_id, now)}
+        options = {item.task_id: item for item in self.replacements(panel_round_id, task_id, now)}
         option = options.get(new_task_id)
         if option is None:
             raise DrawRejectedError(ERR_REPLACEMENT_INVALID)

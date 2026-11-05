@@ -259,9 +259,13 @@ export class ApiClient {
     return this.#hass.user?.is_admin === true;
   }
 
-  /** Aufgaben des Zeitplans, die vor dem Start gegen eine der Runde getauscht werden könnten. */
-  replacements(panelRoundId: string): Promise<ReplacementsReply> {
-    return this.#call(WS_DRAW_REPLACEMENTS, FIELD_PANEL_ROUND_ID, panelRoundId);
+  /** Aufgaben des Zeitplans, die vor dem Start die angegebene Aufgabe der Runde ersetzen könnten. */
+  replacements(panelRoundId: string, taskId: string): Promise<ReplacementsReply> {
+    return this.#hass.callWS<ReplacementsReply>({
+      type: WS_DRAW_REPLACEMENTS,
+      [FIELD_PANEL_ROUND_ID]: panelRoundId,
+      [FIELD_TASK_ID]: taskId,
+    });
   }
 
   /** Tauscht vor dem Start (nur Administratoren) eine Aufgabe der Runde gegen eine andere. */

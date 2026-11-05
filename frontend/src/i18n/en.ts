@@ -190,7 +190,6 @@ export const en: Record<keyof typeof de, string> = {
   'draw.window.title': 'Start draw',
   'draw.window.start': 'Tasks are valid from',
   'draw.window.start.now': 'now',
-  'draw.window.start.tomorrow': 'tomorrow at 10:00',
   'draw.window.start.custom': 'Choose date and time',
   'draw.window.custom': 'Date and time',
   'draw.window.duration': 'Complete the tasks within',

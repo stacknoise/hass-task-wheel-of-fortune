@@ -93,11 +93,8 @@ export const DEADLINE_OFFSET_MIN = 0;
 export const DEADLINE_DURATION_MIN = 1;
 export const DEFAULT_DEADLINE_DURATION = 7;
 export const DEFAULT_DEADLINE_TIME = '10:00';
-/** Beim manuellen Auslösen: Beginn „morgen“ um diese Uhrzeit (Stunde). */
-export const MANUAL_TOMORROW_HOUR = 10;
-
 /** Wann die Aufgaben einer manuellen Auslosung gelten. */
-export const MANUAL_STARTS = ['now', 'tomorrow', 'custom'] as const;
+export const MANUAL_STARTS = ['now', 'custom'] as const;
 export type ManualStart = (typeof MANUAL_STARTS)[number];
 
 export const AFTER_ONCE = ['keep_manual', 'archive', 'delete'] as const;

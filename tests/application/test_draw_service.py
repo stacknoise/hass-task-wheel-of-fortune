@@ -403,7 +403,7 @@ def test_replacements_list_tasks_outside_the_round_with_feasibility():
     _with_spare_tasks(world)
     panel = begin(world, "s1")
     assert [t.id for t in panel.draft.tasks] == ["t1", "t2"]
-    options = world.draws.replacements(panel.id, NOW)
+    options = world.draws.replacements(panel.id, "t1", NOW)
     assert [(o.task_id, o.doable) for o in options] == [("t3", True), ("t4", False)]
 
 
@@ -414,7 +414,27 @@ def test_replace_task_swaps_in_place_before_the_start():
     replaced = world.draws.replace_task(panel.id, "t1", "t3", NOW)
     assert [t.id for t in replaced.draft.tasks] == ["t3", "t2"]
     assert world.draws.get(panel.id, NOW).draft.tasks == replaced.draft.tasks
-    assert [o.task_id for o in world.draws.replacements(panel.id, NOW)] == ["t1", "t4"]
+    assert [o.task_id for o in world.draws.replacements(panel.id, "t3", NOW)] == ["t1", "t4"]
+
+
+def test_replacement_must_keep_the_round_assignable():
+    world = World()
+    every = f.task(id="t3").frequency
+    world.config.put_task(f.task(id="t1", allowed=frozenset({"p1"})))
+    world.config.put_task(f.task(id="t2", allowed=frozenset({"p2"})))
+    world.config.put_task(f.task(id="t3", name="C", allowed=frozenset({"p1"}), frequency=every))
+    world.put_schedule(task_ids=("t1", "t2", "t3"))
+    panel = begin(world, "s1")
+    assert [t.id for t in panel.draft.tasks] == ["t1", "t2"]
+    # t3 darf nur t1 ersetzen: gegen t2 getauscht hätten beide nur p1 zur Auswahl
+    assert [(o.task_id, o.doable) for o in world.draws.replacements(panel.id, "t1", NOW)] == [
+        ("t3", True)
+    ]
+    assert [(o.task_id, o.doable) for o in world.draws.replacements(panel.id, "t2", NOW)] == [
+        ("t3", False)
+    ]
+    with pytest.raises(DrawRejectedError, match="draw_replacement_infeasible"):
+        world.draws.replace_task(panel.id, "t2", "t3", NOW)
 
 
 def test_replace_task_is_logged_as_exchange_before_the_start():
@@ -442,7 +462,7 @@ def test_replace_task_is_locked_after_the_first_spin():
     _with_spare_tasks(world)
     panel = begin(world, "s1")
     world.draws.spin(panel.id, NOW)
-    assert world.draws.replacements(panel.id, NOW) == ()
+    assert world.draws.replacements(panel.id, "t1", NOW) == ()
     with pytest.raises(DrawRejectedError, match="draw_already_started"):
         world.draws.replace_task(panel.id, "t2", "t3", NOW)
 
