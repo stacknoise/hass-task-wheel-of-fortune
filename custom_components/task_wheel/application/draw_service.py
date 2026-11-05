@@ -34,9 +34,9 @@ from ..domain.types import ScheduleId
 from .draw_inputs import (
     build_context,
     due_tasks,
-    limit_to_participants,
     recent_assignments,
     respecting_schedule,
+    select_assignable,
 )
 from .ids import new_id
 from .protocols import (
@@ -318,7 +318,7 @@ class DrawService:
         context = build_context(
             self._config, self._history, recent, now, window or schedule.deadline.window(now)
         )
-        tasks = limit_to_participants(
+        tasks = select_assignable(
             due_tasks(self._config, schedule, recent, now), context, self._rng
         )
         if not tasks:

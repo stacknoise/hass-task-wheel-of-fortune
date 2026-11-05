@@ -7,6 +7,7 @@ from custom_components.task_wheel.domain.draw.feasibility import (
     feasible_persons,
     feasible_tasks,
     is_feasible,
+    pick_assignable,
     unassignable_tasks,
 )
 from custom_components.task_wheel.domain.enums import Load
@@ -68,3 +69,13 @@ def test_unassignable_tasks_use_a_shared_memo():
     memo = {}
     unassignable_tasks([task(id="t1", allowed=frozenset({"a"}))], context, memo)
     assert memo == {"t1": frozenset({"a"})}
+
+
+def test_pick_assignable_keeps_the_largest_assignable_set_by_priority():
+    context = _context(DeadlineWindow(NOW, NOW + DAY))
+    only_a = [task(id=f"a{i}", allowed=frozenset({"a"})) for i in (1, 2)]
+    anyone = task(id="x", allowed=frozenset())
+    nobody = task(id="n", allowed=frozenset({"gone"}))
+    tasks = [only_a[0], only_a[1], anyone, nobody]
+    assert [t.id for t in pick_assignable(tasks, context, [0, 1, 2, 3])] == ["a1", "x"]
+    assert [t.id for t in pick_assignable(tasks, context, [1, 3, 0, 2])] == ["a2", "x"]

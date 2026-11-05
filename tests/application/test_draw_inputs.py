@@ -6,8 +6,8 @@ from custom_components.task_wheel.application.draw_inputs import (
     assigned_times,
     build_context,
     due_tasks,
-    limit_to_participants,
     recent_assignments,
+    select_assignable,
     window_points,
 )
 from custom_components.task_wheel.const.limits import RECENT_HISTORY_DAYS
@@ -99,7 +99,7 @@ def test_round_is_limited_to_as_many_randomly_picked_tasks_as_persons_take_part(
     tasks = due_tasks(world.config, schedule, (), NOW)
     # zwei Personen, drei Aufgaben: die beiden kleinsten Zufallszahlen (t3, t1) bleiben,
     # in Zeitplanreihenfolge
-    picked = limit_to_participants(tasks, context, FixedRandom(0.5, 0.9, 0.1))
+    picked = select_assignable(tasks, context, FixedRandom(0.5, 0.9, 0.1))
     assert [t.id for t in picked] == ["t1", "t3"]
 
 
@@ -108,7 +108,44 @@ def test_round_keeps_all_tasks_when_enough_persons_take_part():
     schedule = world.put_schedule(task_ids=("t1", "t2"))
     context = build_context(world.config, world.history, (), NOW, WINDOW)
     tasks = due_tasks(world.config, schedule, (), NOW)
-    assert limit_to_participants(tasks, context, FixedRandom(0.5)) == tasks
+    assert select_assignable(tasks, context, FixedRandom(0.5)) == tasks
+
+
+def _only(ident: str, *persons: str, **overrides: object):
+    return f.task(id=ident, name=ident, allowed=frozenset(persons), **overrides)
+
+
+def test_tasks_that_only_one_person_may_do_never_land_in_a_round_together():
+    world = World()
+    for task in (_only("t3", "p1"), _only("t4", "p1")):
+        world.config.put_task(task)
+    schedule = world.put_schedule(task_ids=("t3", "t4", "t2"))
+    context = build_context(world.config, world.history, (), NOW, WINDOW)
+    tasks = due_tasks(world.config, schedule, (), NOW)
+    # t3 und t4 gehören beide nur p1: eine von beiden fällt weg (hier die mit der größeren Zahl)
+    picked = select_assignable(tasks, context, FixedRandom(0.1, 0.9, 0.5))
+    assert [t.id for t in picked] == ["t3", "t2"]
+    picked = select_assignable(tasks, context, FixedRandom(0.9, 0.1, 0.5))
+    assert [t.id for t in picked] == ["t4", "t2"]
+
+
+def test_tasks_nobody_can_do_are_not_part_of_the_round():
+    world = World()
+    world.config.put_task(_only("t3", "gone"))
+    schedule = world.put_schedule(task_ids=("t3", "t1"))
+    context = build_context(world.config, world.history, (), NOW, WINDOW)
+    tasks = due_tasks(world.config, schedule, (), NOW)
+    assert [t.id for t in select_assignable(tasks, context, FixedRandom(0.1))] == ["t1"]
+
+
+def test_daily_task_wins_the_conflict_for_the_only_person():
+    world = World()
+    world.config.put_task(_only("t3", "p1"))
+    world.config.put_task(_only("t4", "p1", frequency=MaxPerPeriod(count=1, period=Period.DAY)))
+    schedule = world.put_schedule(task_ids=("t3", "t4"))
+    context = build_context(world.config, world.history, (), NOW, WINDOW)
+    tasks = due_tasks(world.config, schedule, (), NOW)
+    assert [t.id for t in select_assignable(tasks, context, FixedRandom(0.1, 0.9))] == ["t4"]
 
 
 def _daily(ident: str):
@@ -123,7 +160,7 @@ def test_daily_tasks_are_always_part_of_a_limited_round():
     context = build_context(world.config, world.history, (), NOW, WINDOW)
     tasks = due_tasks(world.config, schedule, (), NOW)
     # zwei Personen: t3 (täglich) ist gesetzt, t2 hat unter den übrigen die kleinste Zufallszahl
-    picked = limit_to_participants(tasks, context, FixedRandom(0.9, 0.1, 0.5, 0.7))
+    picked = select_assignable(tasks, context, FixedRandom(0.9, 0.1, 0.5, 0.7))
     assert [t.id for t in picked] == ["t2", "t3"]
 
 
@@ -135,7 +172,7 @@ def test_more_daily_tasks_than_persons_are_picked_randomly_among_themselves():
     schedule = world.put_schedule(task_ids=("t3", "t4", "t5", "t1"))
     context = build_context(world.config, world.history, (), NOW, WINDOW)
     tasks = due_tasks(world.config, schedule, (), NOW)
-    picked = limit_to_participants(tasks, context, FixedRandom(0.5, 0.9, 0.1))
+    picked = select_assignable(tasks, context, FixedRandom(0.5, 0.9, 0.1))
     assert [t.id for t in picked] == ["t3", "t5"]
 
 

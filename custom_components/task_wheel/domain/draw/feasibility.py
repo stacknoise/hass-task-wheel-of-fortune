@@ -6,7 +6,7 @@ und belastbar genug ist und (sofern die Aufgabe Abwesenheit beachtet) irgendwann
 nutzen die Auslosung, der Entscheidungslog und der Austausch von Aufgaben.
 """
 
-from collections.abc import Iterable, MutableMapping
+from collections.abc import Iterable, MutableMapping, Sequence
 
 from ..models import Task
 from ..types import PersonId, TaskId
@@ -52,3 +52,23 @@ def unassignable_tasks(
     cache = {} if memo is None else memo
     options = [cache.setdefault(t.id, feasible_persons(t, context)) for t in items]
     return tuple(items[index] for index in sorted(unplaceable(options)))
+
+
+def pick_assignable(
+    tasks: Sequence[Task], context: DrawContext, priority: Sequence[int]
+) -> tuple[Task, ...]:
+    """Die größte Auswahl, die sich vollständig vergeben lässt (je Person höchstens eine Aufgabe).
+
+    `priority` sind die Indizes von `tasks`, wichtigste zuerst. Jede Aufgabe kommt dazu, wenn die
+    Auswahl danach noch vollständig vergebbar bleibt (Greedy über die Zuordnung Personen ↔
+    Aufgaben, die dafür eine Matroid-Struktur hat: das Ergebnis ist größtmöglich und bevorzugt
+    die frühen Prioritäten). Aufgaben, die niemand übernehmen kann, kommen nie dazu. Die
+    Reihenfolge der Auswahl bleibt die von `tasks`.
+    """
+    options = [feasible_persons(task, context) for task in tasks]
+    chosen: list[int] = []
+    for index in priority:
+        trial = [*chosen, index]
+        if assignable_count([options[i] for i in trial]) == len(trial):
+            chosen = trial
+    return tuple(tasks[i] for i in sorted(chosen))
