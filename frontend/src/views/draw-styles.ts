@@ -86,7 +86,6 @@ export const drawStyles: CSSResult[] = [
       display: inline-flex;
       align-items: center;
       gap: var(--tw-space-s);
-      max-width: 50%;
       padding: 2px var(--tw-space-s) 2px 2px;
       border: 2px solid var(--tw-person-color, var(--tw-color-neutral));
       border-radius: 999px;
@@ -96,7 +95,12 @@ export const drawStyles: CSSResult[] = [
         transparent
       );
       font-size: 1.05em;
-      overflow-wrap: anywhere;
+      white-space: nowrap;
+    }
+    .task .winner strong {
+      max-width: 10em;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .task .winner tw-avatar {
       --tw-avatar-size: 28px;
