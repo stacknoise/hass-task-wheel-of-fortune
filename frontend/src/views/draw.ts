@@ -7,7 +7,6 @@ import type { ApiClient, TaskDrawWire } from '../api/index.ts';
 import '../components/index.ts';
 import type { TwStage, WheelSegment } from '../components/index.ts';
 import {
-  CHANCE_FREE_ANIMATIONS,
   DEFAULT_ANIMATIONS,
   DRAW_PHASE,
   EMPTY_TEXT,
@@ -18,12 +17,11 @@ import {
   VIEW_TAGS,
 } from '../constants/index.ts';
 import type { AnimationKind } from '../constants/index.ts';
-import { formatPercent } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import {
   DrawSession,
-  awaitsSpin,
+  awaitsLastSpin,
   StoreController,
   canSkip,
   drawableSchedules,
@@ -116,7 +114,7 @@ export class TwDrawView extends LitElement {
     const current = state.phase === DRAW_PHASE.spinning ? state.current : undefined;
     if (current && current !== this.#animating) {
       this.#animating = current;
-      void this.#animate(current);
+      void this.#animate(current, state.results.length >= state.taskIds.length);
     }
     this.#autoSpin(state);
   }
@@ -128,20 +126,14 @@ export class TwDrawView extends LitElement {
   }
 
   /**
-   * Bleibt für eine folgende Aufgabe höchstens eine Person übrig, gibt es nichts zu drehen: die
-   * Ziehung läuft ohne Klick. Die erste Aufgabe startet nie von allein. Das Backend entscheidet weiterhin (es prüft auch Pause und Abwesenheit).
+   * Bleibt für die allerletzte Aufgabe höchstens eine Person übrig, gibt es nichts zu drehen: die
+   * Ziehung läuft ohne Klick. Alle anderen Aufgaben starten nur per Klick auf „Los“. Das Backend entscheidet weiterhin (es prüft auch Pause und Abwesenheit).
    */
   #autoSpin(state: DrawState): void {
     const snapshot = this.#store.state?.snapshot;
     const task = this.#nextTask(state);
     const key = `${state.roundId ?? EMPTY_TEXT}:${String(state.results.length)}`;
-    if (
-      !snapshot ||
-      !task ||
-      !awaitsSpin(state) ||
-      state.results.length === 0 ||
-      key === this.#autoSpun
-    ) {
+    if (!snapshot || !task || !awaitsLastSpin(state) || key === this.#autoSpun) {
       return;
     }
     const taken = new Set(state.results.map((result) => result.winner_id));
@@ -177,10 +169,11 @@ export class TwDrawView extends LitElement {
     return translate(key, this.language);
   }
 
-  async #animate(result: TaskDrawWire): Promise<void> {
+  async #animate(result: TaskDrawWire, last: boolean): Promise<void> {
     const stage = this.#stage.value;
     try {
-      if (stage && result.winner_id && result.segments.length > 1) {
+      // Nur die allerletzte Aufgabe wird ohne Animation zugewiesen; sonst dreht das Rad immer.
+      if (stage && result.winner_id && (!last || result.segments.length > 1)) {
         await stage.updateComplete;
         await stage.spinTo(result.winner_id);
       }
@@ -471,14 +464,7 @@ export class TwDrawView extends LitElement {
     task: TaskInfo | undefined,
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
-    const showChance = !CHANCE_FREE_ANIMATIONS.includes(this.#kind);
-    const rows = personRows(
-      state.current ?? state.preview,
-      task,
-      persons,
-      showChance,
-      this.language,
-    );
+    const rows = personRows(state.current ?? state.preview, task, persons, this.language);
     return html`
       <div class="people">
         <span class="eyebrow">${this.#text('draw.who')}</span>
@@ -492,11 +478,6 @@ export class TwDrawView extends LitElement {
             </div>
           `,
         )}
-        ${
-          showChance
-            ? html`<span class="muted hint">${this.#text('draw.who.hint')}</span>`
-            : nothing
-        }
       </div>
     `;
   }
@@ -517,10 +498,6 @@ export class TwDrawView extends LitElement {
                 <div class="text">
                   <strong>${winner.name} ${this.#text('draw.takes')} ${task?.name}</strong><br />
                   ${this.#room(task)}
-                  <span class="muted"
-                    >${this.#text('draw.chance')}
-                    ${formatPercent(state.current?.chance ?? 0, this.language)}</span
-                  >
                 </div>`
             : html`<div class="text">
                 <strong>${this.#text('draw.nobody')} ${task?.name}</strong><br />

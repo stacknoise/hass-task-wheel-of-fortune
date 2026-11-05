@@ -66,6 +66,12 @@ export const canReplace = (state: DrawState): boolean =>
 export const awaitsSpin = (state: DrawState): boolean =>
   state.phase === DRAW_PHASE.ready && !state.direct;
 
+/** Wartet die allerletzte Aufgabe einer begonnenen Runde auf ihren Dreh (nur sie wird ohne Klick gezogen)? */
+export const awaitsLastSpin = (state: DrawState): boolean =>
+  awaitsSpin(state) &&
+  state.results.length > 0 &&
+  state.taskIds.length - state.results.length === 1;
+
 /** Wartet die Runde vor dem Start auf die Entscheidung, trotz nicht vergebbarer Aufgaben auszulosen? */
 export const needsConfirmation = (state: DrawState): boolean =>
   state.phase === DRAW_PHASE.ready &&

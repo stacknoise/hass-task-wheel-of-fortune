@@ -49,13 +49,13 @@ afterEach(() => {
 });
 
 describe('tw-drum', () => {
-  it('zeigt drei Kugeln je Person und die Chancen als Prozent', async () => {
+  it('zeigt drei Kugeln je Person und die Namen ohne Prozent', async () => {
     const drum = await mount();
     expect(balls(drum)).toHaveLength(9);
     const legend = [...(drum.shadowRoot?.querySelectorAll('.legend') ?? [])].map(
       (node) => node.textContent,
     );
-    expect(legend).toEqual(['Anna 60%', 'Ben 38%', 'Clara 2%']);
+    expect(legend).toEqual(['Anna', 'Ben', 'Clara']);
     expect(svgOf(drum)?.getAttribute('role')).toBe('img');
     expect(svgOf(drum)?.getAttribute('aria-label')).toBe('');
     drum.label = 'Lostrommel';

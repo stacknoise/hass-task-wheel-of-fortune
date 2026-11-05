@@ -29,7 +29,6 @@ import {
   SLOT_WIN_CLASS,
   STAGE_TAGS,
 } from '../constants/index.ts';
-import { formatPercent } from '../i18n/format.ts';
 import { numberText } from './format.ts';
 import { lerp } from './motion.ts';
 import type { MotionToken } from './motion.ts';
@@ -249,8 +248,7 @@ export class TwSlot extends StageElement {
     const middle = y + cell.height * SLOT_HALF;
     const centre = SLOT_REEL_WIDTH * SLOT_HALF;
     return svg`${rect}
-      <text class="name" x=${centre - SLOT_LABEL_GAP * SLOT_HALF} y=${middle}>${cell.label}</text>
-      <text class="chance" x=${centre + SLOT_LABEL_GAP} y=${middle}>${formatPercent(cell.share, this.language)}</text>`;
+      <text class="name" x=${centre - SLOT_LABEL_GAP * SLOT_HALF} y=${middle}>${cell.label}</text>`;
   }
 
   /** Verlauf an Ober- und Unterkante und die Gewinnlinie mit Pfeilen. */

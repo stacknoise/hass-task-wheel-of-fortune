@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import type { TaskDrawWire } from '../api/index.ts';
-import { CHANCE_FREE_ANIMATIONS } from '../constants/index.ts';
 import type { PersonInfo, TaskInfo } from '../state/index.ts';
 import { personRows } from './draw-rows.ts';
 
@@ -26,15 +25,8 @@ const RESULT: TaskDrawWire = {
 const LANGUAGE = 'de';
 
 describe('personRows', () => {
-  it('zeigt die Chance und den Ausschlussgrund', () => {
-    const [anna, ben] = personRows(RESULT, TASK, PERSONS, true, LANGUAGE);
-    expect(anna?.note).toBe('60\u00A0%');
-    expect(ben?.note).toBe('Abwesend');
-  });
-
-  it('lässt die Chance bei Animationen ohne Chance-Anzeige weg', () => {
-    expect(CHANCE_FREE_ANIMATIONS).toContain('scratch');
-    const [anna, ben] = personRows(RESULT, TASK, PERSONS, false, LANGUAGE);
+  it('zeigt keine Chance, aber den Ausschlussgrund', () => {
+    const [anna, ben] = personRows(RESULT, TASK, PERSONS, LANGUAGE);
     expect(anna?.note).toBe('');
     expect(anna?.inWheel).toBe(true);
     expect(ben?.note).toBe('Abwesend');

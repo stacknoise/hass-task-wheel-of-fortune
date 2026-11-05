@@ -29,6 +29,7 @@ export { AsyncValue } from './async-value.ts';
 export type { AsyncStatus } from './async-value.ts';
 export {
   DrawSession,
+  awaitsLastSpin,
   awaitsSpin,
   canReplace,
   canSkip,

@@ -13,7 +13,6 @@ import {
   SPOTLIGHT_WIDTH,
   STAGE_TAGS,
 } from '../constants/index.ts';
-import { formatPercent } from '../i18n/format.ts';
 import { numberText } from './format.ts';
 import type { MotionToken } from './motion.ts';
 import { StageElement, sharesOf } from './stage-base.ts';
@@ -206,7 +205,6 @@ export class TwSpotlight extends StageElement {
     return html`<div class="tile ${state}" data-id=${tile.id} style=${place}>
       <div class="face" style=${face}>
         <span class="name">${tile.label}</span>
-        <span class="chance">${formatPercent(tile.share, this.language)}</span>
       </div>
     </div>`;
   }

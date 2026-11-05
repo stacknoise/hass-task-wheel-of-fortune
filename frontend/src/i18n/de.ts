@@ -274,8 +274,6 @@ export const de = {
   'draw.spin': 'Los',
   'draw.spin.label': 'Auslosung starten',
   'draw.who': 'Wer ist dabei?',
-  'draw.who.hint':
-    'Größe = Chance. Wer im letzten Monat weniger Punkte gesammelt hat, bekommt ein größeres Stück.',
   'draw.reason.paused': 'Pausiert',
   'draw.reason.load_too_low': 'Belastbarkeit zu gering',
   'draw.reason.absent': 'Abwesend',
@@ -283,7 +281,6 @@ export const de = {
   'draw.reason.taken': 'Hat in dieser Runde schon eine Aufgabe',
   'draw.reason.needed': 'Wird für eine andere Aufgabe gebraucht',
   'draw.reason.not_allowed': 'Nicht erlaubt',
-  'draw.chance': 'Chance',
   'draw.takes': 'übernimmt',
   'draw.nobody': 'Niemand verfügbar für',
   'draw.nobody.hint':

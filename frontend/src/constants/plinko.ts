@@ -27,9 +27,7 @@ export const PLINKO_LANDING_OFFSET = 20;
 export const PLINKO_SEPARATOR_WIDTH = 4;
 export const PLINKO_SEPARATOR_RISE = 6;
 export const PLINKO_NAME_Y = 28;
-export const PLINKO_CHANCE_Y = 48;
 /** Ab dieser Fachbreite stehen Prozent, ab der größeren auch der Name im Fach. */
-export const PLINKO_MIN_CHANCE_WIDTH = 30;
 export const PLINKO_MIN_NAME_WIDTH = 56;
 
 export const PLINKO_BALL_RADIUS = 9;
