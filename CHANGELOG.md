@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+## [0.6.0] – 2026-11-05
+
 - **Geändert:** Beim Anlegen und Ändern eines Zeitplans wird geprüft, ob sich die Aufgaben „in jeder Runde“ an verschiedene Personen vergeben lassen (erlaubte Personen und Belastbarkeit, je Person höchstens eine Aufgabe; Abwesenheit zählt nicht). Gibt es weniger passende Personen als solche Aufgaben, wird der Zeitplan nicht gespeichert (`schedule_tasks_unassignable`, mit Nennung der Aufgaben). Fehlen bei der Auslosung wegen Abwesenheit Personen, ist das in Ordnung: Aufgaben „in jeder Runde“ und tägliche gehen zuerst in die Runde, unter ihnen entscheidet der Zufall; der Admin kann sie vor dem Start wie bisher austauschen
 - **Geändert:** Die Aufgabenauswahl der Runde berücksichtigt die Machbarkeit: Gewählt wird eine größtmögliche Menge, die sich vollständig an verschiedene Personen vergeben lässt (tägliche Aufgaben zuerst, Rest zufällig). Zwei Aufgaben, die nur dieselbe Person darf (z. B. „Test 1“ und „Test 2“ nur für Andrea), landen nicht mehr zusammen in einer Runde; Aufgaben, die niemand übernehmen kann, bleiben draußen (kein „Niemand verfügbar“ mehr mitten in der Runde)
 - **Geändert:** Vor dem Start einer Auslosung im Panel prüft das Backend, ob sich alle Aufgaben der Runde vergeben lassen (je Person höchstens eine; erlaubt, belastbar, im Fristfenster anwesend). Wenn nicht, nennt eine Warnung die betroffenen Aufgaben, und der Benutzer entscheidet: „Trotzdem auslosen“ oder „Abbrechen“ (Admins können vorher Aufgaben austauschen). Das gilt auch ohne Animation. Die Panel-Runde liefert dafür `unplaceable_task_ids`; Auslosungen per Dienst, Button und Zeitplan laufen wie bisher
@@ -106,7 +108,8 @@ Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.
 - Fairness-Gewichtung, Tausch mit Joker, „Bleibt unerledigt“, Historie mit CSV-Export und Statistiken
 - Home-Assistant-Anbindung: Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen
 
-[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.5.0...HEAD
+[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.3.0...v0.3.1
