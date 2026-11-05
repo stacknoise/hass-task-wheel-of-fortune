@@ -156,6 +156,8 @@ def test_deleting_a_round_removes_its_log_entries_only():
     first = world.draws.draw("s1", RoundOrigin.AUTO, NOW)
     second = world.draws.draw("s1", RoundOrigin.MANUAL, NOW + DAY)
     assert len(world.decision_store.records) == 2
-    RoundService(world.history, world.statistics, decisions=world.decisions).delete(first.id)
+    RoundService(
+        world.history, StatisticsService(world.config, world.history), decisions=world.decisions
+    ).delete(first.id)
     (left,) = world.decision_store.records.values()
     assert left.round_id == second.id
