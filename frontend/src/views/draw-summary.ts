@@ -4,7 +4,8 @@ import type { TemplateResult } from 'lit';
 import '../components/index.ts';
 import { DRAW_PHASE, EMPTY_TEXT } from '../constants/index.ts';
 import type { TextKey } from '../i18n/index.ts';
-import { isIdle } from '../state/index.ts';
+import { isIdle, needsConfirmation } from '../state/index.ts';
+import type { DrawSession } from '../state/index.ts';
 import type { DrawState, PersonInfo, TaskInfo } from '../state/index.ts';
 
 export interface DrawSummaryContext {
@@ -50,16 +51,16 @@ export function drawSummary(context: DrawSummaryContext): TemplateResult {
   `;
 }
 
-export interface UnplaceableContext {
+export interface StageNoticeContext {
   readonly state: DrawState;
   readonly tasks: ReadonlyMap<string, TaskInfo>;
   readonly text: (key: TextKey) => string;
-  readonly onConfirm: () => void;
-  readonly onCancel: () => void;
+  /** Die Sitzung, die der Benutzer mit „Trotzdem auslosen“ bestätigt oder mit „Abbrechen“ neu startet. */
+  readonly session: DrawSession | undefined;
 }
 
 /** Warnung vor dem Start: diese Aufgaben lassen sich nicht vergeben; der Benutzer entscheidet. */
-export function unplaceableNotice(context: UnplaceableContext): TemplateResult {
+function unplaceableNotice(context: StageNoticeContext): TemplateResult {
   const { state, tasks, text } = context;
   return html`<section class="stage warning" role="alertdialog" aria-labelledby="unplaceable-title">
     <div class="heading">
@@ -71,19 +72,25 @@ export function unplaceableNotice(context: UnplaceableContext): TemplateResult {
       <p class="muted">${text('draw.unplaceable.ask')}</p>
     </div>
     <div class="actions">
-      <button class="button primary" @click=${context.onConfirm}>
+      <button class="button primary" @click=${() => context.session?.confirmUnplaceable()}>
         ${text('draw.unplaceable.confirm')}
       </button>
-      <button class="button" @click=${context.onCancel}>${text('draw.unplaceable.cancel')}</button>
+      <button class="button" @click=${() => void context.session?.restart()}>
+        ${text('draw.unplaceable.cancel')}
+      </button>
     </div>
   </section>`;
 }
 
-/** Bühne ohne Rad: Wahl des Zeitplans oder (ohne Animation) die Vorbereitung der Runde. */
-export function stageNotice(
-  state: DrawState,
-  text: (key: TextKey) => string,
-): TemplateResult | undefined {
+/**
+ * Bühne ohne Rad: Wahl des Zeitplans, die Vorbereitung ohne Animation oder die Warnung vor nicht
+ * vergebbaren Aufgaben (sonst `undefined`).
+ */
+export function stageNotice(context: StageNoticeContext): TemplateResult | undefined {
+  const { state, text } = context;
+  if (needsConfirmation(state)) {
+    return unplaceableNotice(context);
+  }
   if (isIdle(state)) {
     return html`<section class="stage idle">
       <p class="heading">${text('draw.choose')}</p>

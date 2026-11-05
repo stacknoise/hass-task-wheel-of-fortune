@@ -4,9 +4,14 @@ import { formatPercent } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import { allowsPerson } from '../state/index.ts';
-import type { PersonInfo, TaskInfo } from '../state/index.ts';
+import type { PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
 
 const NOT_ALLOWED = 'not_allowed';
+
+/** Name des Zeitplans, sonst leer. */
+export function nameOf(schedules: readonly ScheduleInfo[], id: string | undefined): string {
+  return schedules.find((schedule) => schedule.id === id)?.name ?? EMPTY_TEXT;
+}
 
 export interface Row {
   readonly person: PersonInfo;
