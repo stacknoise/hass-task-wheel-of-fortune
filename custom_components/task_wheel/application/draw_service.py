@@ -173,21 +173,24 @@ class DrawService:
             NotFoundError: Die Panel-Runde oder der Zeitplan gibt es nicht (mehr).
             DrawRejectedError: `task_id` gehört nicht zur Runde.
         """
-        panel_round = self.get(panel_round_id, now)
-        if panel_round.draft.started:
-            return ()
-        draft = panel_round.draft
-        if task_id not in {task.id for task in draft.tasks}:
-            raise DrawRejectedError(ERR_REPLACEMENT_INVALID)
-        schedule = self._known_schedule(draft.schedule_id)
+        draft = self.get(panel_round_id, now).draft
         taken = {task.id for task in draft.tasks}
-        found = (self._config.tasks.get(other_id) for other_id in schedule.task_ids)
+        if task_id not in taken:
+            raise DrawRejectedError(ERR_REPLACEMENT_INVALID)
+        if draft.started:
+            return ()
+        schedule = self._known_schedule(draft.schedule_id)
         kept = assignable_tasks(draft.tasks, draft.context)
         return tuple(
             TaskReplacement(task.id, self._keeps_round(draft, task_id, task, kept))
-            for task in (respecting_schedule(schedule, t) for t in found if t is not None)
+            for task in self._schedule_tasks(schedule)
             if task.id not in taken
         )
+
+    def _schedule_tasks(self, schedule: Schedule) -> tuple[Task, ...]:
+        """Die Aufgaben des Zeitplans (bekannte, mit den Vorgaben des Zeitplans)."""
+        found = (self._config.tasks.get(task_id) for task_id in schedule.task_ids)
+        return tuple(respecting_schedule(schedule, task) for task in found if task is not None)
 
     @staticmethod
     def _keeps_round(draft: RoundDraft, task_id: str, new_task: Task, kept: int) -> bool:

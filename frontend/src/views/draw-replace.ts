@@ -93,9 +93,14 @@ export class ReplaceFlow {
     this.#deps = deps;
   }
 
+  /** Kann der Admin jetzt noch tauschen (Admin, vor dem ersten Dreh)? */
+  available(state: DrawState): boolean {
+    return canReplace(state) && this.#deps.isAdmin();
+  }
+
   /** Der Knopf „Austauschen“ (nur Admin, nur vor dem Start). */
   button(state: DrawState, task: TaskInfo): TemplateResult | typeof nothing {
-    if (!canReplace(state) || !this.#deps.isAdmin()) {
+    if (!this.available(state)) {
       return nothing;
     }
     const label = this.#deps.text('draw.replace');

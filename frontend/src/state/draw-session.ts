@@ -56,6 +56,10 @@ export const shownCount = (state: DrawState): number =>
 export const canReplace = (state: DrawState): boolean =>
   state.phase === DRAW_PHASE.ready && state.results.length === 0 && state.roundId !== undefined;
 
+/** Wartet die animierte Runde auf den nächsten Dreh (nicht die Vorbereitung ohne Animation)? */
+export const awaitsSpin = (state: DrawState): boolean =>
+  state.phase === DRAW_PHASE.ready && !state.direct;
+
 const isPausedInRound = (state: DrawState): boolean =>
   state.phase === DRAW_PHASE.ready || state.phase === DRAW_PHASE.revealed;
 

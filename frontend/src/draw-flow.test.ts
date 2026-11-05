@@ -222,7 +222,7 @@ describe('Auslosung', () => {
     });
   });
 
-  it('startet die Auslosung nicht von allein, solange der Admin noch tauschen kann', async () => {
+  it('startet die erste Auslosung nie von allein, auch nicht nach einem Austausch', async () => {
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
     const hass = hassWith();
     // „Müll“ (t2) hat nur eine mögliche Person; der Admin muss dennoch selbst drehen.
