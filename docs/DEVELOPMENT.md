@@ -48,9 +48,9 @@ Please report security vulnerabilities confidentially, see [SECURITY.md](../SECU
    and top-level `version`), and the "Code-Version" in the header of `docs/CODE_DOKU.md`; add an entry to `CHANGELOG.md`
    and to the change log of `docs/CODE_DOKU.md`. `python3 tools/check_docs_consistency.py` (CI job `docs-check`) fails if
    the versions differ.
-2. Wait until the CI of the merge commit on `main` is green, then set the tag: `git tag v0.6.0 && git push origin v0.6.0`,
+2. Wait until the CI of the merge commit on `main` is green, then set the tag: `git tag v0.6.1 && git push origin v0.6.1`,
    or enter the tag on GitHub under *Actions → Release → Run workflow* (the workflow creates it at the state of `main`)
 3. The `Release` workflow checks that the tag and the manifest version match, that the commit is part of `main` and that
    all CI jobs are green on it (it waits for running jobs), builds the panel without write permissions on
    the repository and attaches `task_wheel.zip` and its checksum `SHA256SUMS` to the new GitHub release (see `hacs.json`:
-   `zip_release`). Tags with a suffix (`v0.6.0-beta.1`) are published as a pre-release.
+   `zip_release`). Tags with a suffix (`v0.6.1-beta.1`) are published as a pre-release.
