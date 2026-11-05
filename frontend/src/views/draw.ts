@@ -42,7 +42,7 @@ import { drawSummary, stageNotice } from './draw-summary.ts';
 import { ReplaceFlow } from './draw-replace.ts';
 import { drawFailure, drawWindowDialog } from './draw-window.ts';
 import { drawStyles } from './draw-styles.ts';
-import { nameOf, personRows } from './draw-rows.ts';
+import { isCurrentTask, nameOf, personRows, taskStatus } from './draw-rows.ts';
 import { defineOnce } from '../components/define.ts';
 
 /** Auslosung: Zeitplan wählen, je Aufgabe das Rad drehen (Ergebnis vom Backend), Runde abschließen. */
@@ -350,24 +350,6 @@ export class TwDrawView extends LitElement {
     `;
   }
 
-  /** Was in der Aufgabenliste rechts steht: der Gewinner, „nicht verteilbar“, „ist dran“ oder „wartet“. */
-  #taskStatus(
-    state: DrawState,
-    persons: ReadonlyMap<string, PersonInfo>,
-    index: number,
-    shown: number,
-  ): string {
-    if (index < shown) {
-      const winner = persons.get(state.results[index]?.winner_id ?? EMPTY_TEXT);
-      return winner?.name ?? this.#text('draw.undistributable');
-    }
-    return this.#text(this.#isCurrent(state, index, shown) ? 'draw.current' : 'draw.waiting');
-  }
-
-  #isCurrent(state: DrawState, index: number, shown: number): boolean {
-    return index === shown && state.phase !== DRAW_PHASE.done;
-  }
-
   #taskRow(
     state: DrawState,
     task: TaskInfo | undefined,
@@ -376,11 +358,11 @@ export class TwDrawView extends LitElement {
     shown: number,
   ): TemplateResult {
     return html`
-      <li class="task ${this.#isCurrent(state, index, shown) ? 'current' : ''}">
+      <li class="task ${isCurrentTask(state, index, shown) ? 'current' : ''}">
         <span class="info">
           <span class="name">${task?.name ?? EMPTY_TEXT}</span>
           <span class="line">
-            <span class="status">${this.#taskStatus(state, persons, index, shown)}</span>
+            <span class="status">${taskStatus(state, persons, index, shown, this.language)}</span>
             <span class="muted points">${task?.points ?? 0} ${this.#text('draw.points')}</span>
           </span>
           <span class="rooms">${this.#room(task)}</span>

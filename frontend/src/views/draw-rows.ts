@@ -1,10 +1,10 @@
 import type { TaskDrawWire } from '../api/index.ts';
-import { EMPTY_TEXT } from '../constants/index.ts';
+import { DRAW_PHASE, EMPTY_TEXT } from '../constants/index.ts';
 import { formatPercent } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import { allowsPerson } from '../state/index.ts';
-import type { PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
+import type { DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
 
 const NOT_ALLOWED = 'not_allowed';
 
@@ -46,4 +46,24 @@ export function personRows(
       note: reason ? translate(`draw.reason.${reason}` as TextKey, language) : EMPTY_TEXT,
     };
   });
+}
+
+/** Ist die Aufgabe an dieser Stelle der Runde gerade dran? */
+export function isCurrentTask(state: DrawState, index: number, shown: number): boolean {
+  return index === shown && state.phase !== DRAW_PHASE.done;
+}
+
+/** Was in der Aufgabenliste steht: der Gewinner, „nicht verteilbar“, „ist dran“ oder „wartet“. */
+export function taskStatus(
+  state: DrawState,
+  persons: ReadonlyMap<string, PersonInfo>,
+  index: number,
+  shown: number,
+  language: string,
+): string {
+  if (index < shown) {
+    const winner = persons.get(state.results[index]?.winner_id ?? EMPTY_TEXT);
+    return winner?.name ?? translate('draw.undistributable', language);
+  }
+  return translate(isCurrentTask(state, index, shown) ? 'draw.current' : 'draw.waiting', language);
 }
