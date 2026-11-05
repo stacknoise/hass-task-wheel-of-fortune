@@ -162,24 +162,9 @@ class CandidateSelector:
         hard = tuple(f for f in chain if not f.soft)
         soft = tuple(f for f in chain if f.soft)
         remaining = self._apply(hard, task, context, self._allowed(task, context), exclusions)
-        shown = self._apply(soft, task, context, remaining, [])
         remaining = self._reserve(remaining, rest, context, exclusions, reach)
         remaining = self._apply(soft, task, context, remaining, exclusions)
-        return self._selection(remaining, shown, exclusions)
-
-    @staticmethod
-    def _selection(
-        candidates: list[Person], shown: list[Person], exclusions: list[Exclusion]
-    ) -> CandidateSelection:
-        """Kandidaten, Rad (Kandidaten und alle weiter möglichen Personen) und Ausschlüsse.
-
-        Wer im Rad steht, gilt nicht als ausgeschlossen.
-        """
-        if not candidates:
-            return CandidateSelection((), tuple(exclusions))
-        wheel = {p.id: p for p in (*shown, *candidates)}
-        kept = tuple(e for e in exclusions if e.person_id not in wheel)
-        return CandidateSelection(tuple(candidates), kept, tuple(wheel[i] for i in sorted(wheel)))
+        return CandidateSelection(tuple(remaining), tuple(exclusions))
 
     def eligible(self, task: Task, context: DrawContext) -> frozenset[str]:
         """Personen, die `task` bekommen dürfen (harte Filter), ohne die Besetzung der Runde."""

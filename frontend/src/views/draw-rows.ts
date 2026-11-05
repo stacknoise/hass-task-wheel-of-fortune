@@ -1,44 +1,24 @@
-import type { TaskDrawWire } from '../api/index.ts';
 import { DRAW_PHASE, EMPTY_TEXT } from '../constants/index.ts';
 import { translate } from '../i18n/index.ts';
-import type { TextKey } from '../i18n/index.ts';
-import { allowsPerson } from '../state/index.ts';
-import type { DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
-
-const NOT_ALLOWED = 'not_allowed';
+import type { DrawState, PersonInfo, ScheduleInfo } from '../state/index.ts';
 
 /** Name des Zeitplans, sonst leer. */
 export function nameOf(schedules: readonly ScheduleInfo[], id: string | undefined): string {
   return schedules.find((schedule) => schedule.id === id)?.name ?? EMPTY_TEXT;
 }
 
-export interface Row {
-  readonly person: PersonInfo;
-  readonly note: string;
-  readonly inWheel: boolean;
-}
-
-/** Jede Person mit dem Grund, warum sie nicht im Rad ist (Chancen werden nicht angezeigt). */
-export function personRows(
-  result: TaskDrawWire | undefined,
-  task: TaskInfo | undefined,
+/**
+ * Wer noch auf eine Aufgabe wartet: alle Personen der Runde ohne Aufgabe. Wer sie tatsächlich
+ * bekommen darf, bleibt für die Zuseher verdeckt; das Ergebnis des laufenden Dreh zählt noch nicht.
+ */
+export function waitingPersons(
+  state: DrawState,
   persons: ReadonlyMap<string, PersonInfo>,
-  language: string,
-): readonly Row[] {
-  const inWheel = new Set(result?.segments.map((segment) => segment.person_id));
-  const reasons = new Map(result?.exclusions.map((item) => [item.person_id, item.reason]));
-  return [...persons.values()].map((person) => {
-    if (inWheel.has(person.id)) {
-      return { person, inWheel: true, note: EMPTY_TEXT };
-    }
-    const allowed = task ? allowsPerson(task.allowed, person.id) : false;
-    const reason = allowed ? reasons.get(person.id) : NOT_ALLOWED;
-    return {
-      person,
-      inWheel: !result && allowed,
-      note: reason ? translate(`draw.reason.${reason}` as TextKey, language) : EMPTY_TEXT,
-    };
-  });
+): readonly PersonInfo[] {
+  const taken = new Set(
+    state.results.filter((result) => result !== state.current).map((result) => result.winner_id),
+  );
+  return [...persons.values()].filter((person) => !taken.has(person.id));
 }
 
 /** Ist die Aufgabe an dieser Stelle der Runde gerade dran? */

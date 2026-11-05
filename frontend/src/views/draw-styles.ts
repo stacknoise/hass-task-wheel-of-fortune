@@ -268,9 +268,6 @@ export const drawStyles: CSSResult[] = [
       gap: var(--tw-space-s);
       margin-top: var(--tw-space-s);
     }
-    .person.out {
-      opacity: 0.45;
-    }
     tw-avatar {
       --tw-avatar-size: 32px;
       --tw-avatar-border: 2px solid var(--tw-color-surface);

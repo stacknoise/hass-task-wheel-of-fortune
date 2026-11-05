@@ -2,6 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import { REASON_PREFIX } from '../constants/index.ts';
 import { de } from './de.ts';
 import { en } from './en.ts';
 import { insightsDe } from './insights.de.ts';
@@ -37,6 +38,7 @@ describe('Übersetzungsschlüssel', () => {
       .join('\n');
     const prefixes = [
       ERROR_PREFIX,
+      REASON_PREFIX,
       ...[...code.matchAll(DYNAMIC_PREFIX)].flatMap((match) => match[1] ?? []),
     ];
     const unused = Object.keys(de).filter(
