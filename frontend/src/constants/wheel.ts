@@ -5,7 +5,6 @@ export const WHEEL_CENTER = 180;
 export const WHEEL_RIM_RADIUS = 176;
 export const WHEEL_RADIUS = 168;
 export const WHEEL_NAME_RADIUS = 112;
-export const WHEEL_CHANCE_RADIUS = 86;
 export const WHEEL_POINTER_HALF_WIDTH = 16;
 export const WHEEL_POINTER_DEPTH = 36;
 export const WHEEL_SEGMENT_GAP = 3;

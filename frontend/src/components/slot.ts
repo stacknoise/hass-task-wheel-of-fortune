@@ -94,10 +94,6 @@ export class TwSlot extends StageElement {
       .name {
         font: 900 20px sans-serif;
       }
-      .chance {
-        font: 500 13px sans-serif;
-        opacity: 0.85;
-      }
       text {
         fill: var(--tw-color-white);
         dominant-baseline: central;
@@ -105,9 +101,6 @@ export class TwSlot extends StageElement {
       }
       .name {
         text-anchor: end;
-      }
-      .chance {
-        text-anchor: start;
       }
       .payline {
         stroke: var(--tw-color-rim);

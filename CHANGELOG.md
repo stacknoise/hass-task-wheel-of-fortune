@@ -5,6 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Behoben: Das Rad zeigte in seinen Segmenten noch Prozentzahlen; sie sind entfernt (samt ungenutzter Chance-Stile in den übrigen Animationen). Keine Animation zeigt mehr Chancen an
 - **Geändert:** Der Dialog „Aufgabe austauschen“ zeigt bei der Aufgabe, die ersetzt wird, und bei jeder Ersatzaufgabe die Räume (⌂ Küche ⌂ Wohnzimmer), wie in der Rundenliste
 
 ## [0.6.0] – 2026-11-05
