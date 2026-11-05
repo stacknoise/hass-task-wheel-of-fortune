@@ -82,7 +82,28 @@ export const drawStyles: CSSResult[] = [
       gap: 0 var(--tw-space-s);
       font-size: 0.875em;
     }
-    .task .points::before {
+    .task .winner {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--tw-space-s);
+      max-width: 50%;
+      padding: 2px var(--tw-space-s) 2px 2px;
+      border: 2px solid var(--tw-person-color, var(--tw-color-neutral));
+      border-radius: 999px;
+      background: color-mix(
+        in srgb,
+        var(--tw-person-color, var(--tw-color-neutral)) 22%,
+        transparent
+      );
+      font-size: 1.05em;
+      overflow-wrap: anywhere;
+    }
+    .task .winner tw-avatar {
+      --tw-avatar-size: 28px;
+      --tw-avatar-border: none;
+      --tw-avatar-font: 0.9em;
+    }
+    .task .status + .points::before {
       content: '·';
       margin-right: var(--tw-space-s);
     }
