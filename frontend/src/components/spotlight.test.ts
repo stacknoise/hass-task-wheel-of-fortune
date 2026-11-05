@@ -45,11 +45,11 @@ afterEach(() => {
 });
 
 describe('tw-spotlight', () => {
-  it('zeigt je Person eine Kachel mit Prozent und beschriftet die Grafik', async () => {
+  it('zeigt je Person eine Kachel ohne Prozent und beschriftet die Grafik', async () => {
     const element = await mount();
     expect(tiles(element)).toHaveLength(3);
     const texts = tiles(element).map((tile) => tile.textContent.replace(/\s+/g, ' ').trim());
-    expect(texts).toEqual(['Anna 60%', 'Ben 38%', 'Clara 2%']);
+    expect(texts).toEqual(['Anna', 'Ben', 'Clara']);
     expect(root(element)?.getAttribute('role')).toBe('img');
     expect(root(element)?.getAttribute('aria-label')).toBe('');
     element.label = 'Scheinwerfer';

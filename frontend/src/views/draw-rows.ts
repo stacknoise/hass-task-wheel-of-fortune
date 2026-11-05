@@ -1,6 +1,5 @@
 import type { TaskDrawWire } from '../api/index.ts';
 import { DRAW_PHASE, EMPTY_TEXT } from '../constants/index.ts';
-import { formatPercent } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import { allowsPerson } from '../state/index.ts';
@@ -19,24 +18,18 @@ export interface Row {
   readonly inWheel: boolean;
 }
 
-/** Jede Person mit ihrer Chance oder dem Grund, warum sie nicht im Rad ist. */
+/** Jede Person mit dem Grund, warum sie nicht im Rad ist (Chancen werden nicht angezeigt). */
 export function personRows(
   result: TaskDrawWire | undefined,
   task: TaskInfo | undefined,
   persons: ReadonlyMap<string, PersonInfo>,
-  showChance: boolean,
   language: string,
 ): readonly Row[] {
-  const chances = new Map(result?.segments.map((segment) => [segment.person_id, segment.chance]));
+  const inWheel = new Set(result?.segments.map((segment) => segment.person_id));
   const reasons = new Map(result?.exclusions.map((item) => [item.person_id, item.reason]));
   return [...persons.values()].map((person) => {
-    const chance = chances.get(person.id);
-    if (chance !== undefined) {
-      return {
-        person,
-        inWheel: true,
-        note: showChance ? formatPercent(chance, language) : EMPTY_TEXT,
-      };
+    if (inWheel.has(person.id)) {
+      return { person, inWheel: true, note: EMPTY_TEXT };
     }
     const allowed = task ? allowsPerson(task.allowed, person.id) : false;
     const reason = allowed ? reasons.get(person.id) : NOT_ALLOWED;

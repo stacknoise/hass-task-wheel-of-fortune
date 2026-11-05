@@ -158,7 +158,7 @@ describe('Auslosung', () => {
     await vi.waitFor(() => {
       expect(wheel().querySelectorAll('path.wedge')).toHaveLength(2);
     });
-    expect(text(view)).toContain('60 %');
+    expect(text(view)).not.toContain('60 %');
 
     await click(view, '.hub');
     await vi.waitFor(() => {
@@ -167,7 +167,7 @@ describe('Auslosung', () => {
     // Nach dem Anhalten bleibt die Drehung erhalten (kein Zurückspringen beim Neuzeichnen).
     const rotor = wheel().querySelector<SVGGElement>('.rotor');
     expect(rotor?.style.transform).not.toBe('rotate(0deg)');
-    expect(text(view)).toContain('Chance 60 %');
+    expect(text(view)).not.toContain('Chance');
     expect(text(view)).toContain('Abwesend');
     expect(view().querySelector('tw-confetti')).not.toBeNull();
     expect(text(view)).toContain('Aufgabe 1 / 2');
@@ -202,6 +202,30 @@ describe('Auslosung', () => {
       expect(view().querySelector('.stage .heading')).not.toBeNull();
     });
   });
+
+  it('spielt die Animation auch ab, wenn nur eine Person möglich ist (außer bei der letzten Aufgabe)', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: false }));
+    const single = (task: string): TaskDrawWire => ({
+      ...result(task, 'p1'),
+      segments: [{ person_id: 'p1', weight: 1, chance: 1 }],
+    });
+    const hass = hassWith();
+    hass.replies.set('task_wheel/draw/begin', round([], ['t2', 't1']));
+    hass.replies.set('task_wheel/draw/preview', { result: { ...single('t2'), winner_id: null } });
+    hass.replies.set('task_wheel/draw/spin', {
+      result: single('t2'),
+      panel_round: round([single('t2')], ['t1']),
+    });
+    const { view } = await mount(hass);
+    await start(view);
+    await vi.waitFor(() => {
+      expect(text(view)).toContain('0 / 2 verlost');
+    });
+    await click(view, '.hub');
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(text(view)).not.toContain('übernimmt');
+    expect(view().querySelector('.result')).toBeNull();
+  }, 15_000);
 
   it('tauscht als Admin vor dem Start eine Aufgabe gegen eine machbare', async () => {
     vi.stubGlobal('matchMedia', () => ({ matches: true }));

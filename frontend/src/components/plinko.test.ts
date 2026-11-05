@@ -52,13 +52,13 @@ afterEach(() => {
 });
 
 describe('tw-plinko', () => {
-  it('zeigt je Fach Prozent (schmale ohne Namen) und beschriftet die Grafik', async () => {
+  it('zeigt je Fach den Namen ohne Prozent (schmale ohne Namen) und beschriftet die Grafik', async () => {
     const plinko = await mount();
     const svg = plinko.shadowRoot?.querySelector('svg');
     expect(svg?.getAttribute('role')).toBe('img');
     expect(svg?.getAttribute('aria-label')).toBe('Plinko');
     expect(texts(plinko, 'text.name')).toEqual(['Anna', 'Ben']);
-    expect(texts(plinko, 'text.chance')).toEqual(['60%', '38%']);
+    expect(texts(plinko, 'text.chance')).toEqual([]);
     expect(plinko.shadowRoot?.querySelectorAll('rect.bin')).toHaveLength(3);
     expect(plinko.shadowRoot?.querySelectorAll('circle.peg').length).toBeGreaterThan(50);
   });
@@ -153,7 +153,7 @@ describe('tw-plinko', () => {
     await single.spinTo('a');
     await single.updateComplete;
     expect(single.landedId).toBe('a');
-    expect(texts(single, 'text.chance')).toEqual(['100%']);
+    expect(texts(single, 'text.chance')).toEqual([]);
     const empty = await mount([]);
     await empty.spinTo('a');
     expect(empty.landedId).toBeUndefined();

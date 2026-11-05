@@ -267,7 +267,6 @@ export const en: Record<keyof typeof de, string> = {
   'draw.spin': 'Go',
   'draw.spin.label': 'Start the draw',
   'draw.who': 'Who is in?',
-  'draw.who.hint': 'Size = chance. Whoever collected fewer points last month gets a bigger slice.',
   'draw.reason.paused': 'Paused',
   'draw.reason.load_too_low': 'Capacity too low',
   'draw.reason.absent': 'Absent',
@@ -275,7 +274,6 @@ export const en: Record<keyof typeof de, string> = {
   'draw.reason.taken': 'Already has a task in this round',
   'draw.reason.needed': 'Needed for another task',
   'draw.reason.not_allowed': 'Not allowed',
-  'draw.chance': 'Chance',
   'draw.takes': 'takes over',
   'draw.nobody': 'Nobody available for',
   'draw.nobody.hint':

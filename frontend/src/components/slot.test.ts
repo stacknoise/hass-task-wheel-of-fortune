@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 describe('tw-slot', () => {
-  it('zeigt je Person Name und Prozent, kleine Zeilen ohne Text, und beschriftet die Grafik', async () => {
+  it('zeigt je Person Name ohne Prozent, kleine Zeilen ohne Text, und beschriftet die Grafik', async () => {
     const slot = await mount();
     expect(slot.shadowRoot?.querySelector('svg')?.getAttribute('role')).toBe('img');
     expect(slot.shadowRoot?.querySelector('svg')?.getAttribute('aria-label')).toBe('Walze');
@@ -45,7 +45,7 @@ describe('tw-slot', () => {
     const chances = [...(slot.shadowRoot?.querySelectorAll('text.chance') ?? [])].map(
       (n) => n.textContent,
     );
-    expect(new Set(chances)).toEqual(new Set(['60%', '38%']));
+    expect(chances).toEqual([]);
     expect(slot.shadowRoot?.querySelectorAll('rect.cell').length).toBe(3 * 11);
   });
 
