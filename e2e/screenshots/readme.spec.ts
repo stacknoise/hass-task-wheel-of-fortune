@@ -158,7 +158,7 @@ test("README screenshots", async ({ page, baseURL }) => {
     await page.waitForTimeout(SPIN_MS);
     await shot(page, file);
     await page
-      .getByRole("button", { name: "Restart round" })
+      .getByRole("button", { name: "Cancel round" })
       .click({ timeout: READY_MS })
       .catch(() => undefined);
   }

@@ -333,13 +333,17 @@ export class TwDrawView extends LitElement {
               </button>`
             : nothing
         }
-        <button
-          class="button"
-          ?disabled=${state.phase === DRAW_PHASE.busy}
-          @click=${() => void this.#session?.restart()}
-        >
-          ${this.#text('draw.restart')}
-        </button>
+        ${
+          state.phase === DRAW_PHASE.done
+            ? nothing
+            : html`<button
+                class="button"
+                ?disabled=${state.phase === DRAW_PHASE.busy}
+                @click=${() => void this.#session?.restart()}
+              >
+                ${this.#text('draw.restart')}
+              </button>`
+        }
       </div>
     `;
   }
