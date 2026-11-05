@@ -195,6 +195,8 @@ describe('Auslosung', () => {
     expect(text(view)).toContain('Nicht verteilbar');
     expect(hass.calls).toContain('task_wheel/draw/commit');
 
+    // Nach dem Abschluss gibt es kein „Abbrechen“ mehr, nur „Neue Auslosung starten“.
+    expect(view().querySelector('.card .actions .button')).toBeNull();
     const buttons = view().querySelectorAll<HTMLButtonElement>('.done .button');
     buttons[0]?.click();
     expect(navigated).toHaveBeenCalledOnce();
