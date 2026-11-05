@@ -10,6 +10,7 @@ from ...const.keys import ERR_LIMIT_REACHED, KEY_DECISIONS, STORE_DECISIONS
 from ...domain.decisions import DecisionFilter, DecisionRecord
 from ...domain.errors import StorageCorruptError
 from ...domain.serialization import model_of, tuple_of
+from ...domain.types import RoundId
 from .storage import StoreLike, models_by_id, read_root, read_section
 
 _LOGGER = logging.getLogger(__name__)
@@ -81,6 +82,15 @@ class DecisionStore:
         if expired:
             self._changed()
         return len(expired)
+
+    def forget_round(self, round_id: RoundId) -> int:
+        """Entfernt alle Einträge der Runde `round_id`."""
+        gone = [key for key, record in self._records.items() if record.round_id == round_id]
+        for key in gone:
+            self._forget(key)
+        if gone:
+            self._changed()
+        return len(gone)
 
     def _forget(self, record_id: str) -> None:
         del self._records[record_id]
