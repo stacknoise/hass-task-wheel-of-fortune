@@ -151,3 +151,21 @@ def test_draw_round_gives_nobody_a_second_task():
     ]
     first, second = draw_round(uniform(FixedRandom(0.0)), same, ctx)
     assert first.winner_id != second.winner_id
+
+
+def test_forced_draw_in_the_middle_still_shows_everyone_on_the_wheel():
+    ctx = make_context([make_person("a"), make_person("b"), make_person("c")])
+    first = task(id="t1", allowed=frozenset({"a", "b", "c"}))
+    strict = task(id="t2", allowed=frozenset({"a"}))
+    for roll in (0.0, 0.5, 0.99):
+        result = uniform(FixedRandom(roll)).draw_task(first, ctx, (strict,))
+        assert [s.person_id for s in result.segments] == ["a", "b", "c"]
+        assert result.winner_id in {"b", "c"}
+        assert sum(s.chance for s in result.segments) == pytest.approx(1.0)
+
+
+def test_last_task_with_one_possible_person_has_a_single_segment():
+    ctx = make_context([make_person("a"), make_person("b")], round_holders=frozenset({"a"}))
+    result = uniform(FixedRandom(0.1)).draw_task(task(allowed=frozenset({"a", "b"})), ctx)
+    assert [s.person_id for s in result.segments] == ["b"]
+    assert result.winner_id == "b"

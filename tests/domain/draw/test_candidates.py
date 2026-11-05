@@ -164,12 +164,13 @@ def test_last_person_gets_the_task_even_if_they_held_it_before():
     assert not selection.exclusions or ("b", ExclusionReason.REPEAT) not in reasons(selection)
 
 
-def test_person_needed_for_a_stricter_task_is_not_on_the_wheel():
+def test_person_needed_for_a_stricter_task_stays_on_the_wheel_but_cannot_win():
     ctx = make_context([make_person("a"), make_person("b")])
     strict = task(id="t2", allowed=frozenset({"a"}))
     selection = CandidateSelector().select(task(allowed=AB), ctx, (strict,))
     assert [p.id for p in selection.candidates] == ["b"]
-    assert reasons(selection) == {("a", ExclusionReason.NEEDED)}
+    assert [p.id for p in selection.wheel] == ["a", "b"]
+    assert not selection.exclusions
 
 
 def test_nobody_is_held_back_when_the_rest_cannot_use_them():

@@ -75,7 +75,7 @@ class DrawEngine:
         selection, segments, weights = self._wheel(task, context, rest, capacity, reach)
         if not segments:
             return TaskDraw(task.id, None, 0.0, (), selection.exclusions)
-        winner = self._pick(segments, weights)
+        winner = self._pick(segments, weights, {p.id for p in selection.candidates})
         return self._result(task, selection, segments, winner)
 
     def preview_task(
@@ -108,18 +108,19 @@ class DrawEngine:
             return selection, (), ()
         shares = capacities(context) if capacity is None else capacity
         inputs = [
-            WeightInput(p.id, shares[p.id], context.points.get(p.id, 0))
-            for p in selection.candidates
+            WeightInput(p.id, shares[p.id], context.points.get(p.id, 0)) for p in selection.wheel
         ]
         weights = self._weighting.weigh(inputs)
-        return selection, build_segments(weights, selection.candidates), weights
+        return selection, build_segments(weights, selection.wheel), weights
 
-    def _pick(self, segments: Sequence[Segment], weights: Sequence[float]) -> Segment:
-        """Wählt ein Segment anteilig zum Gewicht (kumulierte Summen, binäre Suche)."""
-        cumulative = list(accumulate(weights))
+    def _pick(
+        self, segments: Sequence[Segment], weights: Sequence[float], allowed: set[PersonId]
+    ) -> Segment:
+        """Wählt unter den erlaubten Segmenten eines anteilig zum Gewicht (kumulierte Summen)."""
+        pool = [(s, w) for s, w in zip(segments, weights, strict=True) if s.person_id in allowed]
+        cumulative = list(accumulate(w for _s, w in pool))
         target = self._rng.random() * cumulative[-1]
-        index = min(bisect_right(cumulative, target), len(segments) - 1)
-        return segments[index]
+        return pool[min(bisect_right(cumulative, target), len(pool) - 1)][0]
 
     @staticmethod
     def _result(
