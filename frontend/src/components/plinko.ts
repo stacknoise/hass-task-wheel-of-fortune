@@ -105,9 +105,6 @@ export class TwPlinko extends StageElement {
       .name {
         font: 900 16px sans-serif;
       }
-      .chance {
-        font: 500 14px sans-serif;
-      }
     `,
   ];
 

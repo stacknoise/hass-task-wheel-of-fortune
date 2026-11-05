@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Behoben: Das Rad zeigte in seinen Segmenten noch Prozentzahlen; sie sind entfernt (samt ungenutzter Chance-Stile in den übrigen Animationen). Keine Animation zeigt mehr Chancen an
+
 ## [0.6.0] – 2026-11-05
 
 - **Geändert:** Beim Anlegen und Ändern eines Zeitplans wird geprüft, ob sich die Aufgaben „in jeder Runde“ an verschiedene Personen vergeben lassen (erlaubte Personen und Belastbarkeit, je Person höchstens eine Aufgabe; Abwesenheit zählt nicht). Gibt es weniger passende Personen als solche Aufgaben, wird der Zeitplan nicht gespeichert (`schedule_tasks_unassignable`, mit Nennung der Aufgaben). Fehlen bei der Auslosung wegen Abwesenheit Personen, ist das in Ordnung: Aufgaben „in jeder Runde“ und tägliche gehen zuerst in die Runde, unter ihnen entscheidet der Zufall; der Admin kann sie vor dem Start wie bisher austauschen

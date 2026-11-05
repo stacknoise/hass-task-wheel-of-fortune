@@ -80,10 +80,6 @@ export class TwSpotlight extends StageElement {
         overflow-wrap: anywhere;
         text-align: center;
       }
-      .chance {
-        font-size: clamp(12px, 13cqmin, 17px);
-        font-weight: 500;
-      }
       .tile.on {
         z-index: 2;
       }

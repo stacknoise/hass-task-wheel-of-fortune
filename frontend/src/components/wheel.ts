@@ -11,7 +11,6 @@ import {
   SPIN_SETTLE_MS,
   TRANSITION_NONE,
   WHEEL_CENTER,
-  WHEEL_CHANCE_RADIUS,
   WHEEL_NAME_RADIUS,
   WHEEL_POINTER_DEPTH,
   WHEEL_POINTER_HALF_WIDTH,
@@ -20,7 +19,6 @@ import {
   WHEEL_SEGMENT_GAP,
   WHEEL_VIEWBOX,
 } from '../constants/index.ts';
-import { formatPercent } from '../i18n/format.ts';
 import { numberText } from './format.ts';
 import type { MotionToken } from './motion.ts';
 import { StageElement } from './stage-base.ts';
@@ -73,10 +71,6 @@ export class TwWheel extends StageElement {
       }
       .name {
         font: 700 20px sans-serif;
-      }
-      .chance {
-        font: 500 13px sans-serif;
-        opacity: 0.85;
       }
       text {
         fill: var(--tw-color-white);
@@ -170,8 +164,7 @@ export class TwWheel extends StageElement {
     const centre = numberText(WHEEL_CENTER);
     const turn = `rotate(${numberText(wedge.mid)} ${centre} ${centre})`;
     return svg`${shape}
-      <text class="name" x=${WHEEL_CENTER} y=${WHEEL_CENTER - WHEEL_NAME_RADIUS} transform=${turn}>${wedge.label}</text>
-      <text class="chance" x=${WHEEL_CENTER} y=${WHEEL_CENTER - WHEEL_CHANCE_RADIUS} transform=${turn}>${formatPercent(wedge.share, this.language)}</text>`;
+      <text class="name" x=${WHEEL_CENTER} y=${WHEEL_CENTER - WHEEL_NAME_RADIUS} transform=${turn}>${wedge.label}</text>`;
   }
 
   /** Erzwingt, dass der Stand ohne Übergang (Drehung 0) berechnet ist, bevor die Drehung beginnt. */

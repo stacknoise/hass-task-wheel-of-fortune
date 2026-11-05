@@ -25,6 +25,14 @@ async function mount(segments = SEGMENTS): Promise<TwWheel> {
 const rotation = (wheel: TwWheel): string =>
   wheel.shadowRoot?.querySelector<SVGGElement>('.rotor')?.style.transform ?? '';
 
+describe('tw-wheel Beschriftung', () => {
+  it('zeigt nur Namen, keine Prozentzahlen', async () => {
+    const wheel = await mount();
+    expect(wheel.shadowRoot?.querySelector('svg')?.textContent).not.toContain('%');
+    expect(wheel.shadowRoot?.querySelector('.chance')).toBeNull();
+  });
+});
+
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
