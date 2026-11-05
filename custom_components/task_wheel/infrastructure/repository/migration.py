@@ -8,6 +8,7 @@ from ...const.keys import (
     KEY_AREA_ID,
     KEY_AREA_IDS,
     KEY_ASSIGNMENTS,
+    KEY_DUE_DAYS,
     KEY_ROUNDS,
     KEY_SCHEDULE_ID,
     KEY_SETTINGS,
@@ -83,12 +84,28 @@ def _retention_floor(data: dict[str, object]) -> dict[str, object]:
     return {**data, KEY_SETTINGS: {**settings, OPT_RETENTION: RETENTION_MIN}}
 
 
+def _drop_task_due_days(data: dict[str, object]) -> dict[str, object]:
+    """1.4 -> 1.5: die Frist liegt am Zeitplan, `due_days` an der Aufgabe entfällt."""
+    tasks = data.get(KEY_TASKS)
+    if not isinstance(tasks, list):
+        return data
+    return {**data, KEY_TASKS: [_without_due_days(item) for item in tasks]}
+
+
+def _without_due_days(task: object) -> object:
+    """Aufgabe ohne `due_days`; Unlesbares bleibt für das Laden stehen."""
+    if not isinstance(task, dict):
+        return task
+    return {key: value for key, value in task.items() if key != KEY_DUE_DAYS}
+
+
 # `von-Version -> (nach-Version, Funktion)`; bei Schemaänderungen hier ergänzen.
 CONFIG_MIGRATIONS: Final[Migrations] = MappingProxyType(
     {
         (1, 1): ((1, 2), _unchanged),
         (1, 2): ((1, 3), _task_areas),
         (1, 3): ((1, 4), _retention_floor),
+        (1, 4): ((1, 5), _drop_task_due_days),
     }
 )
 HISTORY_MIGRATIONS: Final[Migrations] = MappingProxyType(
@@ -96,10 +113,11 @@ HISTORY_MIGRATIONS: Final[Migrations] = MappingProxyType(
         (1, 1): ((1, 2), _assignment_schedule),
         (1, 2): ((1, 3), _unchanged),
         (1, 3): ((1, 4), _unchanged),
+        (1, 4): ((1, 5), _unchanged),
     }
 )
 # Das Entscheidungslog entstand mit Version 1.4 und kennt keine älteren Stände
-DECISION_MIGRATIONS: Final[Migrations] = MappingProxyType({})
+DECISION_MIGRATIONS: Final[Migrations] = MappingProxyType({(1, 4): ((1, 5), _unchanged)})
 
 
 def migrate(

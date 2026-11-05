@@ -49,7 +49,7 @@ async def test_decision_store_rejects_corrupt_data():
         await DecisionStore(MemoryStore([])).async_load()
 
 
-def test_decision_migrations_are_empty():
+def test_decision_migrations_only_step_to_the_current_version():
     assert migrate("task_wheel.decisions", {"decisions": []}, CURRENT_VERSION, DECISION_MIGRATIONS)
     with pytest.raises(StorageVersionError):
         migrate("task_wheel.decisions", {}, (1, 1), DECISION_MIGRATIONS)

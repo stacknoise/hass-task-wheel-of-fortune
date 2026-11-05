@@ -9,7 +9,7 @@ STORE_CONFIG: Final = f"{DOMAIN}.config"
 STORE_HISTORY: Final = f"{DOMAIN}.history"
 STORE_DECISIONS: Final = f"{DOMAIN}.decisions"
 STORE_VERSION: Final = 1
-STORE_MINOR_VERSION: Final = 4
+STORE_MINOR_VERSION: Final = 5
 
 KEY_PERSONS: Final = "persons"
 KEY_TASKS: Final = "tasks"
@@ -20,6 +20,7 @@ KEY_ASSIGNMENTS: Final = "assignments"
 KEY_SCHEDULE_ID: Final = "schedule_id"
 KEY_AREA_ID: Final = "area_id"
 KEY_AREA_IDS: Final = "area_ids"
+KEY_DUE_DAYS: Final = "due_days"
 KEY_AGGREGATES: Final = "aggregates"
 KEY_DECISIONS: Final = "decisions"
 

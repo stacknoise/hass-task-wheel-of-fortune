@@ -415,3 +415,27 @@ async def test_history_saves_encode_only_the_changed_rounds() -> None:
     loaded = HistoryStore(MemoryStore(memory.data))
     await loaded.async_load()
     assert loaded.rounds["r1"].assignments[0].status is AssignmentStatus.MISSED
+
+
+def test_config_migration_drops_the_task_due_days_of_a_1_4_store() -> None:
+    old = {"tasks": [{"id": "t", "name": "A", "due_days": 3}, {"id": "u", "name": "B"}, "x"]}
+    new = migrate(STORE_CONFIG, old, (1, 4), CONFIG_MIGRATIONS)
+    assert new["tasks"] == [{"id": "t", "name": "A"}, {"id": "u", "name": "B"}, "x"]
+    assert old["tasks"][0]["due_days"] == 3
+
+
+@pytest.mark.parametrize("data", [{}, {"tasks": "x"}])
+def test_task_due_days_migration_leaves_unreadable_tasks_alone(data: dict[str, object]) -> None:
+    assert migrate(STORE_CONFIG, data, (1, 4), CONFIG_MIGRATIONS) == data
+
+
+async def test_a_1_4_store_with_task_due_days_loads() -> None:
+    memory = MemoryStore()
+    repo = ConfigStore(memory)
+    repo.put_task(f.task())
+    await repo.async_flush()
+    stored = dict(memory.data)
+    stored["tasks"] = [{**item, "due_days": 3} for item in stored["tasks"]]
+    migrated = migrate(STORE_CONFIG, stored, (1, 4), CONFIG_MIGRATIONS)
+    loaded = await _reload_config(MemoryStore(migrated))
+    assert loaded.tasks == {"t1": f.task()}
