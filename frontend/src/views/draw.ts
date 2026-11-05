@@ -37,6 +37,7 @@ import {
 import type { AreaNames, DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
 import { roomTags } from './room.ts';
 import { drawSummary, stageNotice } from './draw-summary.ts';
+import { peopleList } from './draw-people.ts';
 import { ReplaceFlow } from './draw-replace.ts';
 import { drawFailure, drawWindowDialog } from './draw-window.ts';
 import { drawStyles } from './draw-styles.ts';
@@ -68,6 +69,7 @@ export class TwDrawView extends LitElement {
     session: () => this.#session,
     isAdmin: () => this.#store.client?.isAdmin() === true,
     text: (key) => this.#text(key),
+    room: (task) => this.#room(task),
   });
   /** Die Animation der laufenden Auslosung; wird bei jedem Start zufällig neu gewählt. */
   #kind: AnimationKind = DEFAULT_ANIMATIONS[0] ?? 'wheel';
@@ -184,8 +186,6 @@ export class TwDrawView extends LitElement {
       }
     }
   }
-
-  // ----- linke Karte: Zeitplan, Runde, Aufgabenliste -----
 
   #side(
     state: DrawState,
@@ -404,7 +404,8 @@ export class TwDrawView extends LitElement {
           <span class="title">${task?.name ?? EMPTY_TEXT}</span>
           ${this.#room(task)}
         </div>
-        ${this.#wheelBox(state, task, persons)} ${this.#people(state, persons)}
+        ${this.#wheelBox(state, task, persons)}
+        ${peopleList(this.#text('draw.who'), state, persons)}
         ${state.phase === DRAW_PHASE.revealed ? this.#result(state, task, persons) : nothing}
       </section>
     `;
@@ -454,24 +455,6 @@ export class TwDrawView extends LitElement {
         >
           ${this.#text(state.phase === DRAW_PHASE.busy ? 'draw.busy' : 'draw.spin')}
         </button>
-      </div>
-    `;
-  }
-
-  #people(state: DrawState, persons: ReadonlyMap<string, PersonInfo>): TemplateResult {
-    return html`
-      <div class="people">
-        <span class="eyebrow">${this.#text('draw.who')}</span>
-        ${repeat(
-          waitingPersons(state, persons),
-          (person) => person.id,
-          (person) => html`
-            <div class="person">
-              <tw-avatar name=${person.name} color=${person.color}></tw-avatar>
-              <div>${person.name}</div>
-            </div>
-          `,
-        )}
       </div>
     `;
   }
