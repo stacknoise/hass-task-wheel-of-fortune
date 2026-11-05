@@ -33,6 +33,7 @@ export {
   canReplace,
   canSkip,
   isIdle,
+  needsConfirmation,
   shownCount,
 } from './draw-session.ts';
 export type { DrawPhase, DrawState } from './draw-session.ts';

@@ -261,6 +261,13 @@ export const de = {
     'Mit den anwesenden Personen ist diese Aufgabe nicht machbar.',
   'draw.prepare':
     'Die Runde steht bereit. Tausche bei Bedarf Aufgaben aus, danach verteile die Aufgaben direkt.',
+  'draw.unplaceable.title': 'Nicht alle Aufgaben lassen sich verteilen',
+  'draw.unplaceable.body':
+    'Für diese Aufgaben findet sich niemand mehr: Jede Person bekommt pro Runde nur eine Aufgabe, und erlaubt, belastbar und anwesend ist nicht jede.',
+  'draw.unplaceable.ask':
+    'Als Admin kannst du vorher Aufgaben austauschen. Soll die Auslosung trotzdem stattfinden?',
+  'draw.unplaceable.confirm': 'Trotzdem auslosen',
+  'draw.unplaceable.cancel': 'Abbrechen',
   'draw.restart': 'Runde neu starten',
   'draw.spin': 'Los',
   'draw.spin.label': 'Auslosung starten',

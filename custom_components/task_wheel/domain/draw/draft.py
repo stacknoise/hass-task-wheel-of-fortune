@@ -15,6 +15,7 @@ from ..errors import DrawRejectedError
 from ..models import Assignment, Round, Task
 from ..types import PersonId, RoundId, ScheduleId, TaskId
 from .engine import DrawEngine, capacities
+from .feasibility import unassignable_tasks
 from .types import DrawContext, TaskDraw
 
 
@@ -59,6 +60,14 @@ class RoundDraft:
     def started(self) -> bool:
         """Es wurde schon eine Aufgabe gezogen (der Tausch von Aufgaben ist dann gesperrt)."""
         return bool(self.results)
+
+    @property
+    def unplaceable(self) -> tuple[Task, ...]:
+        """Aufgaben, die nicht alle vergeben werden können; nur vor dem Start von Belang.
+
+        Der Benutzer soll davor entscheiden, ob die Auslosung trotzdem stattfindet.
+        """
+        return () if self.started else unassignable_tasks(self.tasks, self.context, self.reach)
 
     def replace_task(self, task_id: TaskId, new_task: Task) -> "RoundDraft":
         """Ersetzt eine Aufgabe der Runde an derselben Stelle durch eine andere.

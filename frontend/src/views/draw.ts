@@ -42,12 +42,8 @@ import { drawSummary, stageNotice } from './draw-summary.ts';
 import { ReplaceFlow } from './draw-replace.ts';
 import { drawFailure, drawWindowDialog } from './draw-window.ts';
 import { drawStyles } from './draw-styles.ts';
-import { personRows } from './draw-rows.ts';
+import { nameOf, personRows } from './draw-rows.ts';
 import { defineOnce } from '../components/define.ts';
-
-function nameOf(schedules: readonly ScheduleInfo[], id: string | undefined): string {
-  return schedules.find((schedule) => schedule.id === id)?.name ?? EMPTY_TEXT;
-}
 
 /** Auslosung: Zeitplan wählen, je Aufgabe das Rad drehen (Ergebnis vom Backend), Runde abschließen. */
 export class TwDrawView extends LitElement {
@@ -395,7 +391,8 @@ export class TwDrawView extends LitElement {
     tasks: ReadonlyMap<string, TaskInfo>,
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
-    const notice = stageNotice(state, (key) => this.#text(key));
+    const text = (key: TextKey): string => this.#text(key);
+    const notice = stageNotice({ state, tasks, text, session: this.#session });
     if (notice) {
       return notice;
     }

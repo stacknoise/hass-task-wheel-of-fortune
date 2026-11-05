@@ -118,3 +118,17 @@ def test_reach_is_not_recomputed_for_known_tasks():
     assert selector._reach(memo, task(id="t1"), ctx) == frozenset({"p1"})
     memo["t1"] = frozenset({"cached"})
     assert selector._reach(memo, task(id="t1"), ctx) == frozenset({"cached"})
+
+
+def test_unplaceable_lists_tasks_that_cannot_all_be_assigned_before_the_start():
+    only_p1 = frozenset({"p1"})
+    start = draft(
+        [
+            task(id="t1", allowed=only_p1),
+            task(id="t2", allowed=only_p1),
+            task(id="t3", allowed=frozenset()),
+        ]
+    )
+    assert [t.id for t in start.unplaceable] == ["t1", "t2"]
+    assert start.spin(engine(0.1)).unplaceable == ()
+    assert draft(tasks_ab()).unplaceable == ()

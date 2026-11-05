@@ -106,6 +106,8 @@ export interface PanelRoundWire {
   readonly expires_at: string;
   readonly results: readonly TaskDrawWire[];
   readonly pending_task_ids: readonly string[];
+  /** Vor dem Start: Aufgaben, die sich nicht alle vergeben lassen (je Person höchstens eine). */
+  readonly unplaceable_task_ids: readonly string[];
 }
 
 /** Eine Aufgabe, die der Admin vor dem Start gegen eine der Runde tauschen könnte. */

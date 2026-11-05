@@ -297,6 +297,10 @@ export const drawStyles: CSSResult[] = [
     .error {
       color: var(--tw-color-error);
     }
+    .stage.warning {
+      border: 2px solid var(--tw-color-error);
+      gap: 12px;
+    }
     /* Tablet hochkant und Smartphone: Bühne zuerst, Karte darunter über die ganze Breite. */
     @container ${stackedQuery} {
       .layout {

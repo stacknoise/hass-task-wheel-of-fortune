@@ -1,7 +1,7 @@
 import random
 
 from custom_components.task_wheel.domain.draw.engine import DrawEngine
-from custom_components.task_wheel.domain.draw.matching import safe_winners
+from custom_components.task_wheel.domain.draw.matching import safe_winners, unplaceable
 from custom_components.task_wheel.domain.draw.weighting import UniformWeighting
 
 from ..factories import task
@@ -54,3 +54,22 @@ def test_regression_last_person_with_previous_task_still_gets_it():
     for value in (0.0, 0.99):
         results = draw_round(DrawEngine(UniformWeighting(), FixedRandom(value)), tasks, ctx)
         assert all(r.winner_id for r in results)
+
+
+def test_unplaceable_is_empty_when_everything_can_be_assigned():
+    assert unplaceable([fs("a", "b"), fs("a")]) == frozenset()
+    assert unplaceable([]) == frozenset()
+
+
+def test_unplaceable_names_the_tasks_competing_for_too_few_people():
+    # t0 und t1 wollen nur "a"; t2 hat genug andere Personen und ist nie betroffen
+    assert unplaceable([fs("a"), fs("a"), fs("b", "c")]) == {0, 1}
+
+
+def test_unplaceable_includes_tasks_nobody_can_do():
+    assert unplaceable([fs(), fs("a")]) == {0}
+
+
+def test_unplaceable_follows_alternating_paths():
+    # t2 braucht "b", das t1 belegen könnte; t0 braucht "a", t1 nimmt "a" oder "b"
+    assert unplaceable([fs("a"), fs("a", "b"), fs("b")]) == {0, 1, 2}

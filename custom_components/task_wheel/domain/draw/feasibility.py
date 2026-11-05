@@ -6,12 +6,12 @@ und belastbar genug ist und (sofern die Aufgabe Abwesenheit beachtet) irgendwann
 nutzen die Auslosung, der Entscheidungslog und der Austausch von Aufgaben.
 """
 
-from collections.abc import Iterable
+from collections.abc import Iterable, MutableMapping
 
 from ..models import Task
-from ..types import PersonId
+from ..types import PersonId, TaskId
 from .candidates import CandidateSelector
-from .matching import assignable_count
+from .matching import assignable_count, unplaceable
 from .types import DrawContext
 
 _SELECTOR = CandidateSelector()
@@ -35,3 +35,20 @@ def feasible_tasks(tasks: Iterable[Task], context: DrawContext) -> tuple[Task, .
 def assignable_tasks(tasks: Iterable[Task], context: DrawContext) -> int:
     """Wie viele der Aufgaben gleichzeitig vergeben werden können (je Person eine)."""
     return assignable_count([feasible_persons(task, context) for task in tasks])
+
+
+def unassignable_tasks(
+    tasks: Iterable[Task],
+    context: DrawContext,
+    memo: MutableMapping[TaskId, frozenset[PersonId]] | None = None,
+) -> tuple[Task, ...]:
+    """Aufgaben, die nicht alle zugleich vergeben werden können (je Person höchstens eine).
+
+    Genannt werden alle Aufgaben, bei denen es leer ausgehen könnte: die ohne mögliche Person und
+    die, die um zu wenige Personen konkurrieren. Leer, wenn die Runde vollständig vergebbar ist.
+    `memo` (Aufgabe → mögliche Personen) kann der Aufrufer über eine Runde teilen.
+    """
+    items = tuple(tasks)
+    cache = {} if memo is None else memo
+    options = [cache.setdefault(t.id, feasible_persons(t, context)) for t in items]
+    return tuple(items[index] for index in sorted(unplaceable(options)))

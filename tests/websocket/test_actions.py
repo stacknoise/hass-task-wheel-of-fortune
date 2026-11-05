@@ -63,6 +63,7 @@ def test_panel_round_runs_step_by_step(api: Api) -> None:
     begun = api.result("draw/begin", schedule_id="s1", **BEGIN)
     rid = begun["id"]
     assert begun["pending_task_ids"] == ["t1", "t2"]
+    assert begun["unplaceable_task_ids"] == []
     assert begun["results"] == []
     first = api.result("draw/spin", panel_round_id=rid)
     assert first["result"]["task_id"] == "t1"
