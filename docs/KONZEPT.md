@@ -1,6 +1,6 @@
 # Technisches Konzept: Task Wheel of Fortune für Home Assistant
 
-Stand: 2026-11-04 (Version 0.6.0) · Status: **Abgestimmt** (Pattern und Annahmen §11 bestätigt) · Grundlage: UI-Mockups in `mockups/` (PR #1)
+Stand: 2026-11-05 (Version 0.6.0) · Status: **Abgestimmt** (Pattern und Annahmen §11 bestätigt) · Grundlage: UI-Mockups in `mockups/` (PR #1)
 
 Dieses Dokument beschreibt Architektur, Datenmodell, Algorithmen, Schnittstellen und Qualitätsregeln der
 Erweiterung. Die Umsetzung ist in [ARBEITSPAKETE.md](ARBEITSPAKETE.md) geschnitten, der Code selbst wird in
@@ -16,12 +16,13 @@ nachvollziehbar per Glücksrad an Personen verteilt.
 | Bereich | Umfang (aus den Mockups) |
 |---|---|
 | Personen | Eigene Objekte (keine HA-Benutzer), Farbe im Rad, Belastbarkeit (voll / halb / pausiert), Anwesenheitsregeln, optionaler Benachrichtigungsdienst |
-| Aufgaben | Erlaubte Personen, Punkte (Aufwand), Häufigkeitsregel, Zusatzregeln (keine Wiederholung, Abwesenheit beachten, Tausch erlaubt) |
-| Zeitpläne | Wiederkehrend (Wochentage + Uhrzeit + Rhythmus), einmalig (Datum + Uhrzeit), nur manuell (mit Erinnerung) |
+| Aufgaben | Erlaubte Personen, Punkte (Aufwand), Häufigkeitsregel, Mindest-Belastbarkeit, Räume, Zusatzregeln (keine Wiederholung, Abwesenheit beachten, Tausch erlaubt) |
+| Zeitpläne | Wiederkehrend (Wochentage + Uhrzeit + Rhythmus), einmalig (Datum + Uhrzeit), nur manuell (mit Erinnerung); Frist (Beginn + Dauer) und Animationen je Zeitplan |
 | Auslosung | Automatisch per Zeitplan oder manuell im Panel mit Animation (Glücksrad, Lostrommel, Slot-Machine, Plinko, Scheinwerfer, Rubbellose, Eilmeldung, Oscar-Verleihung, je Zeitplan wählbar (leer = sofort ohne Animation), bei mehreren zufällig je Auslosung); jede Auslosung gehört zu einem Zeitplan |
 | Zuteilungen | Abhaken, Fristen, Status (offen, pünktlich, verspätet, getauscht, verpasst, „Bleibt unerledigt“), Tausch zweier Aufgaben innerhalb einer Auslosung |
 | Historie | Runden mit Zuteilungen, Chance, Status, Filter, CSV-Export |
-| Statistik | KPIs, Punkte vs. fairer Anteil, Erledigungsquote pro Woche, Matrix Aufgabe × Person, Glückspilz/Pechvogel |
+| Statistik | KPIs, Punkte vs. fairer Anteil, Erledigungsquote pro Woche, Matrix Aufgabe × Person, Glückspilz/Pechvogel, Soll/Ist der Verlosungen je Zeitplan |
+| Entscheidungslog | Je Auslosung und Aufgabe: Rad, Ausschlussgründe, Gewinner; Tausch und Admin-Austausch; Aufbewahrung einstellbar |
 | HA-Integration | Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen, Frontend-Panel in der Seitenleiste |
 
 Nicht im ersten Release: Mehrmandantenfähigkeit (mehrere Haushalte), Lovelace-Karte (eigenes optionales Paket),
@@ -120,7 +121,7 @@ Nur Pakete und Schlüsseldateien; die vollständige Modulliste mit Verantwortung
 custom_components/task_wheel/
 ├── __init__.py              # Einstieg: async_setup_entry / async_unload_entry
 ├── manifest.json
-├── config_flow.py           # Einzelinstanz, Optionen (Joker/Monat – für später reserviert –, Fairness-Fenster, Aufbewahrung)
+├── config_flow.py           # Einzelinstanz, Optionen (Joker/Monat – für später reserviert –, Fairness-Fenster, Aufbewahrung, Aufbewahrung des Entscheidungslogs)
 ├── runtime.py               # TaskWheelData (entry.runtime_data) und compose: Objekte verdrahten
 ├── entry_lookup.py          # geladene Config Entry für Dienste und WebSocket finden
 ├── sensor.py, todo.py, button.py  # Plattform-Einstiege, reichen an entities/ durch
@@ -134,17 +135,19 @@ custom_components/task_wheel/
 │   ├── rules/               # FrequencyRule-Strategien + FrequencyRuleFactory
 │   ├── availability/        # AvailabilityRule-Strategien + Factory
 │   ├── triggers/            # TriggerStrategy (recurring, once, manual) + Factory
-│   ├── draw/                # candidates, matching, weighting, draft, engine, types
+│   ├── draw/                # candidates, feasibility, matching, weighting, draft, engine, types
+│   ├── deadline.py          # Frist am Zeitplan (DeadlineWindow)
+│   ├── decisions.py         # Entscheidungslog (Einträge, Ausschlussgründe)
 │   ├── statistics/          # aggregate, report, goals
 │   ├── status.py            # Statusübergänge der Zuteilungen
 │   ├── history.py           # HistoryFilter
 │   └── swap.py              # Prüfregeln für den Tausch
 ├── application/             # Schicht 3: Use Cases (draw_service, draw_inputs, assignment_service,
 │                            #   swap_service, schedule_service, round_service, config_service,
-│                            #   statistics_service, history_service, notification_service, …),
+│                            #   statistics_service, history_service, decision_service, notification_service, …),
 │                            #   protocols.py, views/live_view/wire (Panel-Daten), fanout, event_payloads
 ├── infrastructure/          # Schicht 5
-│   ├── repository/          # ConfigStore, HistoryStore, Migrationen
+│   ├── repository/          # ConfigStore, HistoryStore, DecisionStore, Migrationen
 │   ├── scheduler.py         # HA-Zeitgeber (TimerPort)
 │   ├── notifier/            # NotifierFactory + Implementierungen
 │   ├── events.py            # RoundEvents auf dem HA-Bus
@@ -161,7 +164,7 @@ frontend/                    # Quellcode des Panels
 │   ├── api/                 # typisierter WebSocket-Client
 │   ├── state/               # Store + @lit/context
 │   ├── components/          # tw-wheel, tw-chips, tw-frequency-editor, tw-trigger-editor, tw-timeline, …
-│   ├── views/               # overview, draw, tasks, persons, schedules, history, statistics
+│   ├── views/               # overview, draw, tasks, persons, schedules, history, statistics, decisions
 │   └── task-wheel-panel.ts  # Einstieg
 ├── vite.config.ts
 └── package.json
