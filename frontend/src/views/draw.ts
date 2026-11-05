@@ -28,6 +28,7 @@ import {
   canSkip,
   drawableSchedules,
   isIdle,
+  needsConfirmation,
   openCandidates,
   openRoundFor,
   participantsOf,
@@ -38,7 +39,7 @@ import {
 } from '../state/index.ts';
 import type { AreaNames, DrawState, PersonInfo, ScheduleInfo, TaskInfo } from '../state/index.ts';
 import { roomTags } from './room.ts';
-import { drawSummary, stageNotice } from './draw-summary.ts';
+import { drawSummary, stageNotice, unplaceableNotice } from './draw-summary.ts';
 import { ReplaceFlow } from './draw-replace.ts';
 import { drawFailure, drawWindowDialog } from './draw-window.ts';
 import { drawStyles } from './draw-styles.ts';
@@ -395,6 +396,17 @@ export class TwDrawView extends LitElement {
     tasks: ReadonlyMap<string, TaskInfo>,
     persons: ReadonlyMap<string, PersonInfo>,
   ): TemplateResult {
+    if (needsConfirmation(state)) {
+      return unplaceableNotice({
+        state,
+        tasks,
+        text: (key) => this.#text(key),
+        onConfirm: () => {
+          this.#session?.confirmUnplaceable();
+        },
+        onCancel: () => void this.#session?.restart(),
+      });
+    }
     const notice = stageNotice(state, (key) => this.#text(key));
     if (notice) {
       return notice;

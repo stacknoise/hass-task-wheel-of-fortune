@@ -25,6 +25,10 @@ export interface DrawState {
   readonly errorCode: string | undefined;
   /** Vorbereitung ohne Animation: die Runde steht bereit und wird direkt verteilt (kein Rad). */
   readonly direct: boolean;
+  /** Aufgaben, die sich nicht alle vergeben lassen; vor dem Start entscheidet der Benutzer darüber. */
+  readonly unplaceable: readonly string[];
+  /** Der Benutzer hat die Auslosung trotz nicht vergebbarer Aufgaben bestätigt. */
+  readonly confirmed: boolean;
 }
 
 type Listener = () => void;
@@ -42,6 +46,8 @@ const INITIAL: DrawState = {
   preview: undefined,
   errorCode: undefined,
   direct: false,
+  unplaceable: [],
+  confirmed: false,
 };
 
 /** Wartet die Auslosung auf eine Wahl (noch keine Runde oder ein Fehler)? */
@@ -60,12 +66,19 @@ export const canReplace = (state: DrawState): boolean =>
 export const awaitsSpin = (state: DrawState): boolean =>
   state.phase === DRAW_PHASE.ready && !state.direct;
 
+/** Wartet die Runde vor dem Start auf die Entscheidung, trotz nicht vergebbarer Aufgaben auszulosen? */
+export const needsConfirmation = (state: DrawState): boolean =>
+  state.phase === DRAW_PHASE.ready &&
+  state.results.length === 0 &&
+  state.unplaceable.length > 0 &&
+  !state.confirmed;
+
 const isPausedInRound = (state: DrawState): boolean =>
   state.phase === DRAW_PHASE.ready || state.phase === DRAW_PHASE.revealed;
 
 /** Bietet die Ansicht „Rest ohne Animation ziehen“ an? */
 export const canSkip = (state: DrawState): boolean =>
-  isPausedInRound(state) && shownCount(state) < state.taskIds.length;
+  isPausedInRound(state) && !needsConfirmation(state) && shownCount(state) < state.taskIds.length;
 
 /**
  * Ablauf einer manuellen Auslosung: Runde beginnen, je Aufgabe drehen, abschließen.
@@ -101,7 +114,8 @@ export class DrawSession {
    * `window` sagt, ab wann die Aufgaben gelten und bis wann sie erledigt sein müssen.
    * Ohne Animation (`animated` falsch) wird sofort alles gezogen und die Runde abgeschlossen;
    * mit `prepare` bleibt die Runde stattdessen bereit (zum Austauschen von Aufgaben), bis der
-   * Benutzer „direkt verteilen“ wählt.
+   * Benutzer „direkt verteilen“ wählt. Lassen sich nicht alle Aufgaben vergeben, bleibt die Runde
+   * ebenfalls bereit, bis der Benutzer entscheidet (`confirmUnplaceable` oder `restart`).
    */
   async begin(
     scheduleId: string,
@@ -121,7 +135,7 @@ export class DrawSession {
       await this.#finishIfNothingPending(alive);
       if (animated) {
         await this.#loadPreview();
-      } else if (prepare) {
+      } else if (prepare || needsConfirmation(this.#state)) {
         this.#set({ direct: true });
       } else {
         await this.#drawRemaining(alive);
@@ -159,6 +173,8 @@ export class DrawSession {
           phase: DRAW_PHASE.ready,
           taskIds: [...round.results.map((result) => result.task_id), ...round.pending_task_ids],
           preview: undefined,
+          unplaceable: round.unplaceable_task_ids,
+          confirmed: false,
         });
         await this.#loadPreview();
       }
@@ -168,7 +184,7 @@ export class DrawSession {
   /** Zieht die nächste Aufgabe; die Ansicht dreht das Rad danach zum Gewinner. */
   async spin(): Promise<void> {
     const roundId = this.#state.roundId;
-    if (this.#state.phase !== DRAW_PHASE.ready || !roundId) {
+    if (this.#state.phase !== DRAW_PHASE.ready || !roundId || needsConfirmation(this.#state)) {
       return;
     }
     await this.#run(async (alive) => {
@@ -205,10 +221,17 @@ export class DrawSession {
 
   /** Zieht alle übrigen Aufgaben ohne Animation und schließt die Runde ab. */
   async drawRest(): Promise<void> {
-    if (!isPausedInRound(this.#state) || !this.#state.roundId) {
+    if (!isPausedInRound(this.#state) || !this.#state.roundId || needsConfirmation(this.#state)) {
       return;
     }
     await this.#run((alive) => this.#drawRemaining(alive));
+  }
+
+  /** Der Benutzer will trotz nicht vergebbarer Aufgaben auslosen: Drehen und Verteilen sind frei. */
+  confirmUnplaceable(): void {
+    if (needsConfirmation(this.#state)) {
+      this.#set({ confirmed: true });
+    }
   }
 
   /** Verwirft eine offene Runde und beginnt wieder bei der Wahl des Zeitplans. */
@@ -251,6 +274,7 @@ export class DrawSession {
       roundId: round.id,
       taskIds: [...round.results.map((result) => result.task_id), ...round.pending_task_ids],
       results: round.results,
+      unplaceable: round.unplaceable_task_ids,
     });
   }
 

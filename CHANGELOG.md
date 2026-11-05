@@ -5,6 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- **Geändert:** Vor dem Start einer Auslosung im Panel prüft das Backend, ob sich alle Aufgaben der Runde vergeben lassen (je Person höchstens eine; erlaubt, belastbar, im Fristfenster anwesend). Wenn nicht, nennt eine Warnung die betroffenen Aufgaben, und der Benutzer entscheidet: „Trotzdem auslosen“ oder „Abbrechen“ (Admins können vorher Aufgaben austauschen). Das gilt auch ohne Animation. Die Panel-Runde liefert dafür `unplaceable_task_ids`; Auslosungen per Dienst, Button und Zeitplan laufen wie bisher
 - **Geändert:** Der Admin-Austausch wahrt die Vergebbarkeit der Runde: Eine Aufgabe ersetzt eine andere nur, wenn die Runde danach mindestens so viele Aufgaben an verschiedene Personen vergeben kann wie vorher (sind „Test 1“ und „Test 2“ nur Andrea erlaubt, lassen sie sich nur gegeneinander tauschen). `draw/replacements` braucht dafür die `task_id` der Aufgabe, die ersetzt wird
 - **Geändert:** „Gilt ab“ beim manuellen Auslösen bietet „morgen um 10:00“ nicht mehr an
 - Behoben: Nach dem Austausch einer Aufgabe startete die Auslosung von allein (die erste Aufgabe war sofort vergeben); die erste Aufgabe startet nur per Klick auf den Button, nie automatisch

@@ -72,3 +72,23 @@ def safe_winners(candidates: frozenset[PersonId], rest: Options) -> frozenset[Pe
 def assignable_count(options: Options) -> int:
     """Wie viele Aufgaben gleichzeitig an verschiedene Personen gehen können (je Person eine)."""
     return len(_match(options))
+
+
+def unplaceable(options: Options) -> frozenset[int]:
+    """Aufgaben (Indizes), die in mindestens einer größten Zuordnung leer ausgehen.
+
+    Reicht es nicht für alle Aufgaben, sind das die unvergebbaren samt jener, die um dieselben
+    Personen konkurrieren (erreichbar über abwechselnd Aufgabe → Person → deren Aufgabe).
+    Sind alle vergebbar, ist die Menge leer.
+    """
+    owner = _match(options)
+    task_of = {task: person for person, task in owner.items()}
+    queue = deque(index for index in range(len(options)) if index not in task_of)
+    seen = set(queue)
+    while queue:
+        for person in options[queue.popleft()]:
+            holder = owner[person]
+            if holder not in seen:
+                seen.add(holder)
+                queue.append(holder)
+    return frozenset(seen)

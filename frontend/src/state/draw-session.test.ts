@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiClient } from '../api/index.ts';
 import type { DrawWindowRequest, PanelRoundWire, TaskDrawWire } from '../api/index.ts';
 import { FakeHass } from '../api/fake-hass.testing.ts';
-import { DrawSession, canSkip, isIdle, shownCount } from './draw-session.ts';
+import { DrawSession, canSkip, isIdle, needsConfirmation, shownCount } from './draw-session.ts';
 
 const draw = (task: string, winner: string | null): TaskDrawWire => ({
   task_id: task,
@@ -13,13 +13,18 @@ const draw = (task: string, winner: string | null): TaskDrawWire => ({
   exclusions: [],
 });
 
-function round(results: TaskDrawWire[], pending: string[]): PanelRoundWire {
+function round(
+  results: TaskDrawWire[],
+  pending: string[],
+  unplaceable: string[] = [],
+): PanelRoundWire {
   return {
     id: 'r1',
     schedule_id: 's1',
     expires_at: '2026-11-03T13:00:00+00:00',
     results,
     pending_task_ids: pending,
+    unplaceable_task_ids: unplaceable,
   };
 }
 
@@ -85,6 +90,38 @@ describe('DrawSession', () => {
     hass.replies.set('task_wheel/draw/preview', { result: draw('t2', null) });
     await session.next();
     expect(session.state.preview?.task_id).toBe('t2');
+  });
+
+  it('hält die Runde bei nicht vergebbaren Aufgaben an, bis der Benutzer entscheidet', async () => {
+    hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2'], ['t2']));
+    hass.replies.set('task_wheel/draw/spin', {
+      result: draw('t1', 'p1'),
+      panel_round: round([], ['t2']),
+    });
+    await session.begin('s1', WINDOW, false);
+    expect(session.state).toMatchObject({ phase: 'ready', direct: true, unplaceable: ['t2'] });
+    expect(needsConfirmation(session.state)).toBe(true);
+    expect(canSkip(session.state)).toBe(false);
+
+    await session.drawRest();
+    await session.spin();
+    expect(hass.calls).not.toContain('task_wheel/draw/spin_rest');
+    expect(hass.calls).not.toContain('task_wheel/draw/spin');
+
+    session.confirmUnplaceable();
+    expect(needsConfirmation(session.state)).toBe(false);
+    await session.spin();
+    expect(session.state.phase).toBe('spinning');
+  });
+
+  it('fragt nach dem Austausch erneut, wenn weiter Aufgaben nicht vergebbar sind', async () => {
+    hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2'], ['t2']));
+    hass.replies.set('task_wheel/draw/preview', { result: draw('t1', null) });
+    hass.replies.set('task_wheel/draw/replace_task', { panel_round: round([], ['t1', 't3'], []) });
+    await session.begin('s1', WINDOW);
+    session.confirmUnplaceable();
+    await session.replaceTask('t2', 't3');
+    expect(session.state).toMatchObject({ unplaceable: [], confirmed: false });
   });
 
   it('kommt ohne Vorschau aus, wenn sie fehlschlägt', async () => {

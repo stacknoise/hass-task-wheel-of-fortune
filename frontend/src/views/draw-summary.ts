@@ -50,6 +50,35 @@ export function drawSummary(context: DrawSummaryContext): TemplateResult {
   `;
 }
 
+export interface UnplaceableContext {
+  readonly state: DrawState;
+  readonly tasks: ReadonlyMap<string, TaskInfo>;
+  readonly text: (key: TextKey) => string;
+  readonly onConfirm: () => void;
+  readonly onCancel: () => void;
+}
+
+/** Warnung vor dem Start: diese Aufgaben lassen sich nicht vergeben; der Benutzer entscheidet. */
+export function unplaceableNotice(context: UnplaceableContext): TemplateResult {
+  const { state, tasks, text } = context;
+  return html`<section class="stage warning" role="alertdialog" aria-labelledby="unplaceable-title">
+    <div class="heading">
+      <span class="title" id="unplaceable-title">${text('draw.unplaceable.title')}</span>
+      <p class="muted">${text('draw.unplaceable.body')}</p>
+      <ul class="summary">
+        ${state.unplaceable.map((id) => html`<li>${tasks.get(id)?.name ?? id}</li>`)}
+      </ul>
+      <p class="muted">${text('draw.unplaceable.ask')}</p>
+    </div>
+    <div class="actions">
+      <button class="button primary" @click=${context.onConfirm}>
+        ${text('draw.unplaceable.confirm')}
+      </button>
+      <button class="button" @click=${context.onCancel}>${text('draw.unplaceable.cancel')}</button>
+    </div>
+  </section>`;
+}
+
 /** Bühne ohne Rad: Wahl des Zeitplans oder (ohne Animation) die Vorbereitung der Runde. */
 export function stageNotice(
   state: DrawState,

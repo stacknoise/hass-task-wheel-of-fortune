@@ -23,6 +23,7 @@ from ..const.keys import (
     WIRE_STARTED_AT,
     WIRE_TASKS,
     WIRE_TOTAL,
+    WIRE_UNPLACEABLE,
     WIRE_UPSERT,
     WS_FIELD_SCHEDULE_ID,
 )
@@ -67,7 +68,7 @@ def _by_id(items: list[Json]) -> Collection:
 
 
 def panel_round_view(panel_round: PanelRound) -> Json:
-    """Panel-Runde: bisherige Ziehungen und noch offene Aufgaben (ohne internen Zustand)."""
+    """Panel-Runde: Ziehungen, offene und (vor dem Start) unvergebbare Aufgaben, ohne Interna."""
     draft = panel_round.draft
     return {
         KEY_ID: panel_round.id,
@@ -75,6 +76,7 @@ def panel_round_view(panel_round: PanelRound) -> Json:
         WIRE_EXPIRES_AT: panel_round.expires_at.isoformat(),
         WIRE_RESULTS: to_wire(draft.results),
         WIRE_PENDING: [task.id for task in draft.pending],
+        WIRE_UNPLACEABLE: [task.id for task in draft.unplaceable],
     }
 
 

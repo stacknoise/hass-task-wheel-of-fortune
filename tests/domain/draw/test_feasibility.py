@@ -7,6 +7,7 @@ from custom_components.task_wheel.domain.draw.feasibility import (
     feasible_persons,
     feasible_tasks,
     is_feasible,
+    unassignable_tasks,
 )
 from custom_components.task_wheel.domain.enums import Load
 from custom_components.task_wheel.domain.models import OnceAbsence
@@ -52,3 +53,18 @@ def test_tasks_nobody_can_do_are_left_out():
     assert feasible_tasks([only_a, anyone], context) == (anyone,)
     ignoring = task(id="t3", allowed=frozenset({"a"}), respect_absence=False)
     assert is_feasible(ignoring, context)
+
+
+def test_unassignable_tasks_name_those_competing_for_the_same_person():
+    context = _context(DeadlineWindow(NOW, NOW + DAY))
+    only_a = [task(id="t1", allowed=frozenset({"a"})), task(id="t2", allowed=frozenset({"a"}))]
+    anyone = task(id="t3", allowed=frozenset())
+    assert [t.id for t in unassignable_tasks([*only_a, anyone], context)] == ["t1", "t2"]
+    assert unassignable_tasks([only_a[0], anyone], context) == ()
+
+
+def test_unassignable_tasks_use_a_shared_memo():
+    context = _context(DeadlineWindow(NOW, NOW + DAY))
+    memo = {}
+    unassignable_tasks([task(id="t1", allowed=frozenset({"a"}))], context, memo)
+    assert memo == {"t1": frozenset({"a"})}

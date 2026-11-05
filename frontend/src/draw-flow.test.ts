@@ -47,6 +47,7 @@ const round = (results: TaskDrawWire[], pending: string[]): PanelRoundWire => ({
   expires_at: '2026-11-03T13:00:00+00:00',
   results,
   pending_task_ids: pending,
+  unplaceable_task_ids: [],
 });
 
 function hassWith(panelRounds: unknown[] = [], animations?: string[]): FakeHass {
@@ -106,6 +107,30 @@ afterEach(() => {
 });
 
 describe('Auslosung', () => {
+  it('warnt vor dem Start, wenn nicht alle Aufgaben vergeben werden können', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    const hass = hassWith();
+    hass.replies.set('task_wheel/draw/begin', {
+      ...round([], ['t1', 't2']),
+      unplaceable_task_ids: ['t2'],
+    });
+    hass.replies.set('task_wheel/draw/preview', { result: result('t1', null) });
+    const { view } = await mount(hass);
+
+    await start(view);
+    await vi.waitFor(() => {
+      expect(text(view)).toContain('Nicht alle Aufgaben lassen sich verteilen');
+    });
+    expect(view().querySelector('.stage.warning li')?.textContent).toContain('Müll');
+    expect(view().querySelector('tw-stage')).toBeNull();
+
+    await click(view, '.stage.warning .primary');
+    await vi.waitFor(() => {
+      expect(view().querySelector('.stage.warning')).toBeNull();
+      expect(view().querySelector('tw-stage')).not.toBeNull();
+    });
+  });
+
   it('führt durch die Runde, zeigt das Ergebnis des Backends und schließt ab', async () => {
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
     const hass = hassWith();

@@ -254,6 +254,13 @@ export const en: Record<keyof typeof de, string> = {
     'This task does not belong to the schedule or is already in the round.',
   'error.draw_replacement_infeasible': 'This task cannot be done by the people who are present.',
   'draw.prepare': 'The round is ready. Replace tasks if needed, then assign the tasks directly.',
+  'draw.unplaceable.title': 'Not every task can be assigned',
+  'draw.unplaceable.body':
+    'Nobody is left for these tasks: each person gets only one task per round, and not everyone is allowed, capable and present.',
+  'draw.unplaceable.ask':
+    'As an admin you can replace tasks first. Should the draw take place anyway?',
+  'draw.unplaceable.confirm': 'Draw anyway',
+  'draw.unplaceable.cancel': 'Cancel',
   'draw.restart': 'Restart round',
   'draw.spin': 'Go',
   'draw.spin.label': 'Start the draw',
