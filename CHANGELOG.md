@@ -5,6 +5,10 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- **Geändert:** Der Admin-Austausch wahrt die Vergebbarkeit der Runde: Eine Aufgabe ersetzt eine andere nur, wenn die Runde danach mindestens so viele Aufgaben an verschiedene Personen vergeben kann wie vorher (sind „Test 1“ und „Test 2“ nur Andrea erlaubt, lassen sie sich nur gegeneinander tauschen). `draw/replacements` braucht dafür die `task_id` der Aufgabe, die ersetzt wird
+- **Geändert:** „Gilt ab“ beim manuellen Auslösen bietet „morgen um 10:00“ nicht mehr an
+- Behoben: Nach dem Austausch einer Aufgabe startete die Auslosung von allein (die erste Aufgabe war sofort vergeben); solange der Admin noch tauschen kann, dreht nichts automatisch
+- Behoben: Aufgabenzeilen in der Auslosung (Name, Status, „Austauschen“) sind einheitlich ausgerichtet und brechen auf Tablet und Smartphone sauber um
 - **Geändert:** Ist bei einer Auslosung keine Aufgabe fällig (alle haben ihr Maximum aus „höchstens n× in x Tagen/Wochen/Monaten“ erreicht, gezählt wird verlost, nicht erledigt) oder kann niemand mitmachen, entsteht keine leere Runde mehr: Das Panel und der Dienst zeigen „Keine Aufgabe fällig“, die automatische Auslosung überspringt den Lauf mit einem Log-Eintrag (ein einmaliger Plan bleibt offen)
 - **Geändert:** Die Frist kommt vom Zeitplan statt von der Aufgabe: Dauer in Stunden, Tagen, Wochen oder Monaten und Beginn (sofort, nach einem Versatz, am Folgetag oder am nächsten Wochentag zu einer Uhrzeit). Das Feld „Frist in Tagen“ der Aufgabe entfällt (keine Migration, die App ist unveröffentlicht)
 - **Geändert:** Machbarkeit: Eine Person ist Kandidat, wenn sie irgendwann im Fristfenster (von „gilt ab“ bis zur Frist) anwesend ist, nicht mehr nur am Tag der Auslosung; dazu gelten erlaubte Personen und Belastbarkeit wie bisher. Die Prüfung steht als wiederverwendbare Funktion bereit

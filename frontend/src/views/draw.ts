@@ -24,6 +24,7 @@ import type { TextKey } from '../i18n/index.ts';
 import {
   DrawSession,
   StoreController,
+  canReplace,
   canSkip,
   drawableSchedules,
   isIdle,
@@ -142,6 +143,7 @@ export class TwDrawView extends LitElement {
       !snapshot ||
       state.direct ||
       state.phase !== DRAW_PHASE.ready ||
+      this.#mayStillReplace(state) ||
       !task ||
       key === this.#autoSpun
     ) {
@@ -152,6 +154,11 @@ export class TwDrawView extends LitElement {
       this.#autoSpun = key;
       void this.#session?.spin();
     }
+  }
+
+  /** Der Admin kann vor dem ersten Dreh noch tauschen: dann startet nichts von allein. */
+  #mayStillReplace(state: DrawState): boolean {
+    return canReplace(state) && this.#store.client?.isAdmin() === true;
   }
 
   protected override render(): TemplateResult | typeof nothing {
@@ -377,7 +384,7 @@ export class TwDrawView extends LitElement {
   ): TemplateResult {
     return html`
       <li class="task ${this.#isCurrent(state, index, shown) ? 'current' : ''}">
-        <span>
+        <span class="info">
           ${task?.name ?? EMPTY_TEXT}<br />
           <span class="muted">${task?.points ?? 0} ${this.#text('draw.points')}</span>
           ${this.#room(task)}

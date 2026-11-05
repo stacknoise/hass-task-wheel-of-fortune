@@ -57,6 +57,7 @@ _BEGIN: Final = {
     **optional_fields((WS_FIELD_REPLACE_NEXT, bool)),
 }
 _PANEL_ROUND: Final = required_fields((WS_FIELD_PANEL_ROUND_ID, ID))
+_REPLACEMENTS: Final = required_fields((WS_FIELD_PANEL_ROUND_ID, ID), (WS_FIELD_TASK_ID, ID))
 _REPLACE_TASK: Final = required_fields(
     (WS_FIELD_PANEL_ROUND_ID, ID), (WS_FIELD_TASK_ID, ID), (WS_FIELD_NEW_TASK_ID, ID)
 )
@@ -119,8 +120,11 @@ def _preview(request: Request) -> Reply:
 
 
 def _replacements(request: Request) -> Reply:
-    """Aufgaben, die vor dem Start gegen eine der Runde getauscht werden könnten."""
-    items = request.data.draws.replacements(request.params[WS_FIELD_PANEL_ROUND_ID], request.now)
+    """Aufgaben, die vor dem Start die angegebene Aufgabe der Runde ersetzen könnten."""
+    params = request.params
+    items = request.data.draws.replacements(
+        params[WS_FIELD_PANEL_ROUND_ID], params[WS_FIELD_TASK_ID], request.now
+    )
     return Reply({WIRE_REPLACEMENTS: to_wire(items)})
 
 
@@ -170,7 +174,7 @@ COMMANDS: Final = (
     Command(WS_ROUND_DELETE, _ROUND, _delete_round, access=Access.ADMIN, mutates=True),
     Command(WS_DRAW_BEGIN, _BEGIN, _begin, mutates=True),
     Command(WS_DRAW_PREVIEW, _PANEL_ROUND, _preview),
-    Command(WS_DRAW_REPLACEMENTS, _PANEL_ROUND, _replacements, access=Access.ADMIN),
+    Command(WS_DRAW_REPLACEMENTS, _REPLACEMENTS, _replacements, access=Access.ADMIN),
     Command(WS_DRAW_REPLACE_TASK, _REPLACE_TASK, _replace_task, access=Access.ADMIN, mutates=True),
     Command(WS_DRAW_SPIN, _PANEL_ROUND, _spin, mutates=True),
     Command(WS_DRAW_SPIN_REST, _PANEL_ROUND, _spin_rest, mutates=True),

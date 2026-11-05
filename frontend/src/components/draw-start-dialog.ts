@@ -8,7 +8,6 @@ import {
   EVENT_CONFIRM,
   FORM_TAGS,
   MANUAL_STARTS,
-  MANUAL_TOMORROW_HOUR,
 } from '../constants/index.ts';
 import type { ManualStart } from '../constants/index.ts';
 import { formatDateTime } from '../i18n/format.ts';
@@ -26,14 +25,6 @@ import { LocalizedElement } from './localized.ts';
 import './select.ts';
 import { baseStyles, tokenStyles, viewStyles } from './styles.ts';
 import './toggle.ts';
-
-/** Der morgige Tag um `MANUAL_TOMORROW_HOUR` Uhr (Ortszeit des Browsers) als ISO-Zeitpunkt. */
-function tomorrowMorning(): string {
-  const moment = new Date();
-  moment.setDate(moment.getDate() + 1);
-  moment.setHours(MANUAL_TOMORROW_HOUR, 0, 0, 0);
-  return moment.toISOString();
-}
 
 /**
  * Frage vor einer manuellen Auslosung: ab wann gelten die Aufgaben und bis wann müssen sie erledigt
@@ -214,7 +205,6 @@ export class TwDrawStartDialog extends LocalizedElement {
   #startsAt(): string {
     const starts: Readonly<Record<ManualStart, () => string>> = {
       now: () => this.now,
-      tomorrow: tomorrowMorning,
       custom: () => fromLocalInput(this._custom),
     };
     return starts[this._start]();

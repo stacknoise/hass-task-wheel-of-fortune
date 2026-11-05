@@ -11,6 +11,7 @@ from collections.abc import Iterable
 from ..models import Task
 from ..types import PersonId
 from .candidates import CandidateSelector
+from .matching import assignable_count
 from .types import DrawContext
 
 _SELECTOR = CandidateSelector()
@@ -29,3 +30,8 @@ def is_feasible(task: Task, context: DrawContext) -> bool:
 def feasible_tasks(tasks: Iterable[Task], context: DrawContext) -> tuple[Task, ...]:
     """Die Aufgaben, die im Fenster mindestens eine Person übernehmen kann (Reihenfolge bleibt)."""
     return tuple(task for task in tasks if is_feasible(task, context))
+
+
+def assignable_tasks(tasks: Iterable[Task], context: DrawContext) -> int:
+    """Wie viele der Aufgaben gleichzeitig vergeben werden können (je Person eine)."""
+    return assignable_count([feasible_persons(task, context) for task in tasks])

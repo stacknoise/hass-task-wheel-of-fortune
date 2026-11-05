@@ -135,7 +135,7 @@ export class ReplaceFlow {
   }
 
   async #open(taskId: string): Promise<void> {
-    const options = (await this.#deps.session()?.replacements()) ?? [];
+    const options = (await this.#deps.session()?.replacements(taskId)) ?? [];
     this.#set(taskId, options, options.find((item) => item.doable)?.task_id ?? EMPTY_TEXT);
   }
 

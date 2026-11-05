@@ -57,12 +57,31 @@ export const drawStyles: CSSResult[] = [
       padding: 0;
     }
     .task {
-      display: flex;
-      justify-content: space-between;
+      --tw-task-status-width: 6.5rem;
+      --tw-task-action-width: 8.5rem;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--tw-task-status-width) var(--tw-task-action-width);
+      grid-template-areas: 'info status action';
       align-items: center;
       gap: var(--tw-space-s);
       padding: var(--tw-space-m);
       border-top: 1px solid var(--tw-color-divider);
+    }
+    .task .info {
+      grid-area: info;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      hyphens: auto;
+    }
+    .task .status {
+      grid-area: status;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+    .task .button {
+      grid-area: action;
+      width: 100%;
+      padding: 0 var(--tw-space-s);
     }
     .task.current {
       background: var(--tw-color-background);
@@ -95,7 +114,6 @@ export const drawStyles: CSSResult[] = [
     }
     .status {
       font-weight: 500;
-      white-space: nowrap;
     }
     .button {
       min-height: 44px;
@@ -346,7 +364,14 @@ export const drawStyles: CSSResult[] = [
         width: 100%;
       }
       .task {
+        grid-template-columns: minmax(0, 1fr) var(--tw-task-action-width);
+        grid-template-areas:
+          'info info'
+          'status action';
         padding: var(--tw-space-s) var(--tw-space-m);
+      }
+      .task .status {
+        text-align: left;
       }
     }
   `,
