@@ -237,7 +237,7 @@ describe('Auslosung', () => {
       ...hass.snapshot,
       tasks: [
         ...TASKS,
-        { ...TASKS[0], id: 't3', name: 'Garage' },
+        { ...TASKS[0], id: 't3', name: 'Garage', area_ids: ['kueche', 'bad'] },
         { ...TASKS[0], id: 't4', name: 'Keller' },
       ],
     };
@@ -261,6 +261,8 @@ describe('Auslosung', () => {
     expect(radios).toHaveLength(2);
     expect(radios[1]?.disabled).toBe(true);
     expect(dialog().textContent).toContain('Nicht wählbar');
+    // Die Räume stehen im Dialog neben den Aufgaben (mehrere Räume je Aufgabe).
+    expect(dialog().querySelectorAll('tw-room')).toHaveLength(2);
     dialog().querySelector<HTMLButtonElement>('.button.primary')?.click();
     const list = (): string => view().querySelector('ul')?.textContent ?? '';
     await vi.waitFor(() => {

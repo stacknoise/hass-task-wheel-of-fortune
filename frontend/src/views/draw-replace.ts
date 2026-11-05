@@ -11,6 +11,9 @@ import type { DrawSession, DrawState, TaskInfo } from '../state/index.ts';
 /** Symbol des Knopfs „Austauschen“ (der Text steht als Beschriftung für Screenreader und Tooltip). */
 const REPLACE_ICON = '⇄';
 
+/** Die Räume einer Aufgabe als Marken (leer ohne Raum). */
+export type RoomOf = (task: TaskInfo | undefined) => TemplateResult | typeof nothing;
+
 export interface ReplaceDialogContext {
   readonly language: string;
   /** Die Aufgabe, die aus der Runde genommen wird. */
@@ -19,6 +22,8 @@ export interface ReplaceDialogContext {
   readonly options: readonly TaskReplacementWire[];
   readonly pick: string;
   readonly text: (key: TextKey) => string;
+  /** Die Räume einer Aufgabe als Marken. */
+  readonly room: RoomOf;
   readonly onPick: (taskId: string) => void;
   readonly onClose: () => void;
   readonly onApply: () => void;
@@ -26,6 +31,7 @@ export interface ReplaceDialogContext {
 
 function option(item: TaskReplacementWire, context: ReplaceDialogContext): TemplateResult {
   const { text } = context;
+  const task = context.tasks.get(item.task_id);
   return html`
     <label class="option ${item.doable ? '' : 'out'}">
       <input
@@ -39,7 +45,7 @@ function option(item: TaskReplacementWire, context: ReplaceDialogContext): Templ
         }}
       />
       <span>
-        <strong>${context.tasks.get(item.task_id)?.name ?? item.task_id}</strong><br />
+        <strong>${task?.name ?? item.task_id}</strong> ${context.room(task)}<br />
         <span class="muted"
           >${text(item.doable ? 'draw.replace.doable' : 'draw.replace.infeasible')}</span
         >
@@ -57,7 +63,10 @@ export function replaceDialog(context: ReplaceDialogContext): TemplateResult {
       label=${text('draw.replace.title')}
       @tw-cancel=${context.onClose}
     >
-      <p><strong>${text('draw.replace.out')}</strong> ${context.task?.name ?? EMPTY_TEXT}</p>
+      <p>
+        <strong>${text('draw.replace.out')}</strong> ${context.task?.name ?? EMPTY_TEXT}
+        ${context.room(context.task)}
+      </p>
       <fieldset class="options">
         <legend class="muted">${text('draw.replace.with')}</legend>
         ${
@@ -82,6 +91,7 @@ export interface ReplaceFlowDeps {
   readonly session: () => DrawSession | undefined;
   readonly isAdmin: () => boolean;
   readonly text: (key: TextKey) => string;
+  readonly room: RoomOf;
 }
 
 /** Der Ablauf „Aufgabe austauschen“ in der Auslosung: Knopf je Aufgabe, Dialog, Tausch. */
@@ -129,6 +139,7 @@ export class ReplaceFlow {
       options: this.#options,
       pick: this.#pick,
       text: this.#deps.text,
+      room: this.#deps.room,
       onPick: (id) => {
         this.#set(this.#replacing, this.#options, id);
       },
