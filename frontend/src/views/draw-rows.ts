@@ -53,17 +53,25 @@ export function isCurrentTask(state: DrawState, index: number, shown: number): b
   return index === shown && state.phase !== DRAW_PHASE.done;
 }
 
-/** Was in der Aufgabenliste steht: der Gewinner, „nicht verteilbar“, „ist dran“ oder „wartet“. */
-export function taskStatus(
+/** Die Person, der die Aufgabe an dieser Stelle schon zugeteilt wurde, sonst nichts. */
+export function winnerOf(
   state: DrawState,
   persons: ReadonlyMap<string, PersonInfo>,
+  index: number,
+  shown: number,
+): PersonInfo | undefined {
+  return index < shown ? persons.get(state.results[index]?.winner_id ?? EMPTY_TEXT) : undefined;
+}
+
+/** Was in der Aufgabenliste als Status steht: „nicht verteilbar“, „ist dran“ oder „wartet“. */
+export function taskStatus(
+  state: DrawState,
   index: number,
   shown: number,
   language: string,
 ): string {
   if (index < shown) {
-    const winner = persons.get(state.results[index]?.winner_id ?? EMPTY_TEXT);
-    return winner?.name ?? translate('draw.undistributable', language);
+    return translate('draw.undistributable', language);
   }
   return translate(isCurrentTask(state, index, shown) ? 'draw.current' : 'draw.waiting', language);
 }
