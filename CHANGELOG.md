@@ -5,6 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- **Geändert:** Die Aufgabenauswahl der Runde berücksichtigt die Machbarkeit: Gewählt wird eine größtmögliche Menge, die sich vollständig an verschiedene Personen vergeben lässt (tägliche Aufgaben zuerst, Rest zufällig). Zwei Aufgaben, die nur dieselbe Person darf (z. B. „Test 1“ und „Test 2“ nur für Andrea), landen nicht mehr zusammen in einer Runde; Aufgaben, die niemand übernehmen kann, bleiben draußen (kein „Niemand verfügbar“ mehr mitten in der Runde)
 - **Geändert:** Vor dem Start einer Auslosung im Panel prüft das Backend, ob sich alle Aufgaben der Runde vergeben lassen (je Person höchstens eine; erlaubt, belastbar, im Fristfenster anwesend). Wenn nicht, nennt eine Warnung die betroffenen Aufgaben, und der Benutzer entscheidet: „Trotzdem auslosen“ oder „Abbrechen“ (Admins können vorher Aufgaben austauschen). Das gilt auch ohne Animation. Die Panel-Runde liefert dafür `unplaceable_task_ids`; Auslosungen per Dienst, Button und Zeitplan laufen wie bisher
 - **Geändert:** Der Admin-Austausch wahrt die Vergebbarkeit der Runde: Eine Aufgabe ersetzt eine andere nur, wenn die Runde danach mindestens so viele Aufgaben an verschiedene Personen vergeben kann wie vorher (sind „Test 1“ und „Test 2“ nur Andrea erlaubt, lassen sie sich nur gegeneinander tauschen). `draw/replacements` braucht dafür die `task_id` der Aufgabe, die ersetzt wird
 - **Geändert:** „Gilt ab“ beim manuellen Auslösen bietet „morgen um 10:00“ nicht mehr an

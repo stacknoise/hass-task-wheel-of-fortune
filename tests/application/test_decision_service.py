@@ -43,7 +43,7 @@ def test_draw_is_logged_per_task_with_wheel_and_winner():
     assert {e.person_id: e.reason for e in second.excluded} == {"p1": ExclusionReason.TAKEN}
 
 
-def test_task_nobody_can_take_is_logged_as_unassigned_with_reason():
+def test_task_nobody_can_take_is_not_part_of_the_round_at_all():
     world = World(0.1)
     away = (WeeklyDaysAbsence(weekdays=frozenset(range(7))),)
     world.config.put_person(f.person(id="p1", slug="p1", name="p1", absences=away))
@@ -52,12 +52,7 @@ def test_task_nobody_can_take_is_logged_as_unassigned_with_reason():
         f.task(id="t1", name="A", allowed=frozenset({"p1"}), points=5, frequency=daily)
     )
     world.draws.draw("s1", RoundOrigin.AUTO, NOW)
-    (item,) = _only(world).tasks
-    assert (item.task_id, item.assigned, item.wheel) == ("t1", False, ())
-    assert {e.person_id: e.reason for e in item.excluded} == {
-        "p1": ExclusionReason.ABSENT,
-        "p2": "not_allowed",
-    }
+    assert [item.task_id for item in _only(world).tasks] == ["t2"]
 
 
 def test_person_not_allowed_for_the_task_is_logged_with_that_reason():

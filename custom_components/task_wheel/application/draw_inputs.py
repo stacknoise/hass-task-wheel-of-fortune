@@ -7,8 +7,8 @@ from dataclasses import replace
 from ..const.limits import ONE_DAY, RECENT_HISTORY
 from ..domain.availability.calendar import PersonAvailability
 from ..domain.deadline import DeadlineWindow
+from ..domain.draw.feasibility import pick_assignable
 from ..domain.draw.types import DrawContext, RandomSource
-from ..domain.enums import Load
 from ..domain.models import Assignment, Schedule, Settings, Task
 from ..domain.rules.factory import FrequencyRuleFactory
 from ..domain.status import counted_points
@@ -68,45 +68,25 @@ def respecting_schedule(schedule: Schedule, task: Task) -> Task:
     return task if schedule.skip_absent else replace(task, respect_absence=False)
 
 
-def _seats(tasks: tuple[Task, ...], context: DrawContext) -> int:
-    """Personen, die in dieser Runde eine Aufgabe übernehmen können (nicht pausiert, da)."""
-    window = context.window
-    ignores_absence = not all(task.respect_absence for task in tasks)
-    return sum(
-        1
-        for pid, person in context.persons.items()
-        if person.load is not Load.PAUSED
-        and (
-            ignores_absence
-            or context.availability[pid].present_in_window(window.first_day, window.last_day)
-        )
-    )
-
-
-def _pick(tasks: tuple[Task, ...], rng: RandomSource, count: int) -> tuple[Task, ...]:
-    """`count` Aufgaben: tägliche zuerst, innerhalb der Gruppen zufällig (gleiche Chance).
-
-    Die Reihenfolge der Auswahl bleibt die des Zeitplans.
-    """
+def _priority(tasks: tuple[Task, ...], rng: RandomSource) -> list[int]:
+    """Reihenfolge der Auswahl: tägliche Aufgaben zuerst, innerhalb der Gruppen zufällig."""
     keys = [rng.random() for _ in tasks]
-    ranked = sorted(range(len(tasks)), key=lambda i: (not tasks[i].is_daily, keys[i]))
-    return tuple(tasks[i] for i in sorted(ranked[:count]))
+    return sorted(range(len(tasks)), key=lambda i: (not tasks[i].is_daily, keys[i]))
 
 
-def limit_to_participants(
+def select_assignable(
     tasks: tuple[Task, ...], context: DrawContext, rng: RandomSource
 ) -> tuple[Task, ...]:
-    """Beschränkt die Runde auf so viele Aufgaben, wie Personen mitmachen können.
+    """Wählt die Aufgaben der Runde so, dass sich alle vergeben lassen.
 
-    Jede Person bekommt je Runde höchstens eine Aufgabe; weitere Aufgaben wären nur "nicht
-    verteilbar". Täglich anfallende Aufgaben sind immer dabei, der Rest der Plätze wird zufällig
-    gefüllt (nicht vorhersehbar). Gibt es mehr tägliche Aufgaben als Plätze, wird unter ihnen
-    zufällig gewählt. Die Reihenfolge der Auswahl bleibt die des Zeitplans.
+    Jede Person bekommt je Runde höchstens eine Aufgabe, und nicht jede darf, kann oder ist da
+    (erlaubt, belastbar, im Fristfenster anwesend). Gewählt wird eine größtmögliche Menge, die
+    sich vollständig an verschiedene Personen vergeben lässt: Täglich anfallende Aufgaben sind
+    zuerst dabei, der Rest wird zufällig gefüllt (nicht vorhersehbar). Aufgaben, die niemand
+    übernehmen kann, und solche, die um dieselben Personen konkurrieren und leer ausgingen,
+    bleiben draußen. Die Reihenfolge der Auswahl bleibt die des Zeitplans.
     """
-    if not tasks:
-        return tasks
-    seats = _seats(tasks, context)
-    return tasks if seats >= len(tasks) else _pick(tasks, rng, seats)
+    return pick_assignable(tasks, context, _priority(tasks, rng)) if tasks else tasks
 
 
 def build_context(
