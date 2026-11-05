@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+## [0.6.1] – 2026-11-05
+
 - Behoben: Das Rad zeigte in seinen Segmenten noch Prozentzahlen; sie sind entfernt (samt ungenutzter Chance-Stile in den übrigen Animationen). Keine Animation zeigt mehr Chancen an
 - **Geändert:** Der Dialog „Aufgabe austauschen“ zeigt bei der Aufgabe, die ersetzt wird, und bei jeder Ersatzaufgabe die Räume (⌂ Küche ⌂ Wohnzimmer), wie in der Rundenliste
 
@@ -111,7 +113,8 @@ Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.
 - Fairness-Gewichtung, Tausch mit Joker, „Bleibt unerledigt“, Historie mit CSV-Export und Statistiken
 - Home-Assistant-Anbindung: Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen
 
-[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.0...HEAD
+[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.3.1...v0.4.0
