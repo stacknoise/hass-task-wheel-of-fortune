@@ -57,31 +57,48 @@ export const drawStyles: CSSResult[] = [
       padding: 0;
     }
     .task {
-      --tw-task-status-width: 6.5rem;
-      --tw-task-action-width: 8.5rem;
+      --tw-task-stripe: 4px;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) var(--tw-task-status-width) var(--tw-task-action-width);
-      grid-template-areas: 'info status action';
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
       gap: var(--tw-space-s);
-      padding: var(--tw-space-m);
+      padding: var(--tw-space-s) var(--tw-space-m);
       border-top: 1px solid var(--tw-color-divider);
+      border-left: var(--tw-task-stripe) solid var(--tw-color-neutral);
     }
     .task .info {
-      grid-area: info;
       min-width: 0;
-      overflow-wrap: anywhere;
+      display: flex;
+      flex-direction: column;
+      overflow-wrap: break-word;
       hyphens: auto;
     }
-    .task .status {
-      grid-area: status;
-      text-align: center;
-      overflow-wrap: anywhere;
+    .task .name {
+      font-weight: 500;
     }
-    .task .button {
-      grid-area: action;
-      width: 100%;
-      padding: 0 var(--tw-space-s);
+    .task .line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 var(--tw-space-s);
+      font-size: 0.875em;
+    }
+    .task .points::before {
+      content: '·';
+      margin-right: var(--tw-space-s);
+    }
+    .task .rooms {
+      font-size: 0.875em;
+    }
+    .task .button.icon {
+      width: var(--tw-control-height);
+      min-width: var(--tw-control-height);
+      min-height: var(--tw-control-height);
+      padding: 0;
+      border-radius: 50%;
+      font-size: 1.25em;
+    }
+    .task.current {
+      border-left-color: var(--tw-color-success);
     }
     .task.current {
       background: var(--tw-color-background);
@@ -366,16 +383,6 @@ export const drawStyles: CSSResult[] = [
       }
       .result .button {
         width: 100%;
-      }
-      .task {
-        grid-template-columns: minmax(0, 1fr) var(--tw-task-action-width);
-        grid-template-areas:
-          'info info'
-          'status action';
-        padding: var(--tw-space-s) var(--tw-space-m);
-      }
-      .task .status {
-        text-align: left;
       }
     }
   `,

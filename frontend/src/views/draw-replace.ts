@@ -8,6 +8,9 @@ import type { TextKey } from '../i18n/index.ts';
 import { canReplace } from '../state/index.ts';
 import type { DrawSession, DrawState, TaskInfo } from '../state/index.ts';
 
+/** Symbol des Knopfs „Austauschen“ (der Text steht als Beschriftung für Screenreader und Tooltip). */
+const REPLACE_ICON = '⇄';
+
 export interface ReplaceDialogContext {
   readonly language: string;
   /** Die Aufgabe, die aus der Runde genommen wird. */
@@ -105,11 +108,12 @@ export class ReplaceFlow {
     }
     const label = this.#deps.text('draw.replace');
     return html`<button
-      class="button"
+      class="button icon"
+      title=${label}
       aria-label="${label}: ${task.name}"
       @click=${() => void this.#open(task.id)}
     >
-      ${label}
+      ${REPLACE_ICON}
     </button>`;
   }
 
