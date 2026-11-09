@@ -48,6 +48,7 @@ const round = (results: TaskDrawWire[], pending: string[]): PanelRoundWire => ({
   results,
   pending_task_ids: pending,
   unplaceable_task_ids: [],
+  participant_ids: [],
 });
 
 function hassWith(panelRounds: unknown[] = [], animations?: string[]): FakeHass {

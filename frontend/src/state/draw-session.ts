@@ -16,6 +16,8 @@ export interface DrawState {
   readonly roundId: string | undefined;
   /** Alle Aufgaben der Runde in der Reihenfolge der Ziehung. */
   readonly taskIds: readonly string[];
+  /** Die Personen, die an der Runde teilnehmen (leer vor dem Start). */
+  readonly participantIds: readonly string[];
   /** Die bisher gezogenen Ergebnisse (gleiche Reihenfolge). */
   readonly results: readonly TaskDrawWire[];
   /** Das Ergebnis, das gerade gedreht oder gezeigt wird. */
@@ -41,6 +43,7 @@ const INITIAL: DrawState = {
   scheduleId: undefined,
   roundId: undefined,
   taskIds: [],
+  participantIds: [],
   results: [],
   current: undefined,
   preview: undefined,
@@ -179,6 +182,7 @@ export class DrawSession {
           phase: DRAW_PHASE.ready,
           taskIds: [...round.results.map((result) => result.task_id), ...round.pending_task_ids],
           preview: undefined,
+          participantIds: round.participant_ids,
           unplaceable: round.unplaceable_task_ids,
           confirmed: false,
         });
@@ -280,6 +284,7 @@ export class DrawSession {
       roundId: round.id,
       taskIds: [...round.results.map((result) => result.task_id), ...round.pending_task_ids],
       results: round.results,
+      participantIds: round.participant_ids,
       unplaceable: round.unplaceable_task_ids,
     });
   }

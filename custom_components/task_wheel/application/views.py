@@ -13,6 +13,7 @@ from ..const.keys import (
     WIRE_NOW,
     WIRE_ORIGIN,
     WIRE_PANEL_ROUNDS,
+    WIRE_PARTICIPANTS,
     WIRE_PENDING,
     WIRE_PERSONS,
     WIRE_REMOVE,
@@ -77,6 +78,7 @@ def panel_round_view(panel_round: PanelRound) -> Json:
         WIRE_RESULTS: to_wire(draft.results),
         WIRE_PENDING: [task.id for task in draft.pending],
         WIRE_UNPLACEABLE: [task.id for task in draft.unplaceable],
+        WIRE_PARTICIPANTS: sorted(draft.participants),
     }
 
 
