@@ -108,6 +108,8 @@ export interface PanelRoundWire {
   readonly pending_task_ids: readonly string[];
   /** Vor dem Start: Aufgaben, die sich nicht alle vergeben lassen (je Person höchstens eine). */
   readonly unplaceable_task_ids: readonly string[];
+  /** Wer an der Runde teilnimmt: im Fristfenster anwesend, belastbar und für eine Aufgabe erlaubt. */
+  readonly participant_ids: readonly string[];
 }
 
 /** Eine Aufgabe, die der Admin vor dem Start gegen eine der Runde tauschen könnte. */

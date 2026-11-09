@@ -15,7 +15,7 @@ from ..errors import DrawRejectedError
 from ..models import Assignment, Round, Task
 from ..types import PersonId, RoundId, ScheduleId, TaskId
 from .engine import DrawEngine, capacities
-from .feasibility import unassignable_tasks
+from .feasibility import participants, unassignable_tasks
 from .types import DrawContext, TaskDraw
 
 
@@ -68,6 +68,14 @@ class RoundDraft:
         Der Benutzer soll davor entscheiden, ob die Auslosung trotzdem stattfindet.
         """
         return () if self.started else unassignable_tasks(self.tasks, self.context, self.reach)
+
+    @property
+    def participants(self) -> frozenset[PersonId]:
+        """Personen der Runde: wer im Fristfenster mindestens eine ihrer Aufgaben übernehmen kann.
+
+        Abwesende, pausierte oder zu wenig belastbare Personen gehören nicht dazu (Rad, Liste).
+        """
+        return participants(self.tasks, self.context)
 
     def replace_task(self, task_id: TaskId, new_task: Task) -> "RoundDraft":
         """Ersetzt eine Aufgabe der Runde an derselben Stelle durch eine andere.

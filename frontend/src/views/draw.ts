@@ -139,7 +139,9 @@ export class TwDrawView extends LitElement {
       return;
     }
     const taken = new Set(state.results.map((result) => result.winner_id));
-    if (openCandidates(personsById(snapshot), task, taken) <= 1) {
+    if (
+      openCandidates(participantsOf(personsById(snapshot), state.participantIds), task, taken) <= 1
+    ) {
       this.#autoSpun = key;
       void this.#session?.spin();
     }
@@ -154,7 +156,7 @@ export class TwDrawView extends LitElement {
     this.#areas = this.#store.areaNames();
     const state = session.state;
     const tasks = tasksById(snapshot);
-    const persons = participantsOf(personsById(snapshot), tasks, state.taskIds);
+    const persons = participantsOf(personsById(snapshot), state.participantIds);
     return html`
       <div class="layout">
         ${this.#side(state, tasks, persons)} ${this.#stagePanel(state, tasks, persons)}

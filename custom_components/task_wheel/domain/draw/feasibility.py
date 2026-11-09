@@ -22,6 +22,11 @@ def feasible_persons(task: Task, context: DrawContext) -> frozenset[PersonId]:
     return _SELECTOR.eligible(task, context)
 
 
+def participants(tasks: Iterable[Task], context: DrawContext) -> frozenset[PersonId]:
+    """Personen, die im Fenster mindestens eine der Aufgaben übernehmen können (Teilnehmer)."""
+    return frozenset().union(*(feasible_persons(task, context) for task in tasks))
+
+
 def is_feasible(task: Task, context: DrawContext) -> bool:
     """Ob mindestens eine Person `task` im Fenster übernehmen kann."""
     return bool(feasible_persons(task, context))

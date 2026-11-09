@@ -25,6 +25,7 @@ function round(
     results,
     pending_task_ids: pending,
     unplaceable_task_ids: unplaceable,
+    participant_ids: [],
   };
 }
 

@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Behoben: Abwesende Personen erscheinen nicht mehr in der Auslosung. Rad, Animationen und „Wer ist dabei?“ zeigen nur noch Personen, die im Fristfenster anwesend, belastbar genug und für eine Aufgabe der Runde erlaubt sind. Die Panel-Runde liefert dafür `participant_ids`
+
 ## [0.6.1] – 2026-11-05
 
 - Behoben: Das Rad zeigte in seinen Segmenten noch Prozentzahlen; sie sind entfernt (samt ungenutzter Chance-Stile in den übrigen Animationen). Keine Animation zeigt mehr Chancen an

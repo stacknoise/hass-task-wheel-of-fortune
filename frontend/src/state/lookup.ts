@@ -101,19 +101,16 @@ export function openCandidates(
     .length;
 }
 
-/** Personen der Runde: nur wer für mindestens eine ihrer Aufgaben erlaubt ist (ohne Runde: alle). */
+/** Personen der Runde: nur wer laut Backend teilnimmt (ohne Runde: alle). */
 export function participantsOf(
   persons: ReadonlyMap<string, PersonInfo>,
-  tasks: ReadonlyMap<string, TaskInfo>,
-  taskIds: readonly string[],
+  participantIds: readonly string[],
 ): ReadonlyMap<string, PersonInfo> {
-  const roundTasks = taskIds.flatMap((id) => tasks.get(id) ?? []);
-  if (roundTasks.length === 0) {
+  if (participantIds.length === 0) {
     return persons;
   }
-  return new Map(
-    [...persons].filter(([id]) => roundTasks.some((task) => allowsPerson(task.allowed, id))),
-  );
+  const taking = new Set(participantIds);
+  return new Map([...persons].filter(([id]) => taking.has(id)));
 }
 
 /** Die offene Panel-Runde des Zeitplans, falls es eine gibt. */

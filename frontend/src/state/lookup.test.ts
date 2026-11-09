@@ -29,12 +29,11 @@ describe('lookup', () => {
     expect(allowsPerson(new Set(['p1']), 'p2')).toBe(false);
   });
 
-  it('zählt nur Personen zur Runde, die für eine ihrer Aufgaben erlaubt sind', () => {
+  it('zählt nur die Personen zur Runde, die das Backend als Teilnehmer nennt', () => {
     const persons = personsById(SNAPSHOT);
-    const tasks = tasksById(SNAPSHOT);
-    expect([...participantsOf(persons, tasks, ['t1']).keys()]).toEqual(['p1']);
-    expect([...participantsOf(persons, tasks, ['t1', 't2']).keys()]).toEqual(['p1', 'p2']);
-    expect([...participantsOf(persons, tasks, []).keys()]).toEqual(['p1', 'p2']);
+    expect([...participantsOf(persons, ['p1']).keys()]).toEqual(['p1']);
+    expect([...participantsOf(persons, ['p1', 'p2']).keys()]).toEqual(['p1', 'p2']);
+    expect([...participantsOf(persons, []).keys()]).toEqual(['p1', 'p2']);
   });
 
   it('liest Personen mit Rückfallwerten', () => {

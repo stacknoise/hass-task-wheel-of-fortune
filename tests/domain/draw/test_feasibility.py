@@ -7,6 +7,7 @@ from custom_components.task_wheel.domain.draw.feasibility import (
     feasible_persons,
     feasible_tasks,
     is_feasible,
+    participants,
     pick_assignable,
     unassignable_tasks,
 )
@@ -37,6 +38,14 @@ def test_present_on_any_day_of_the_window_is_enough():
 def test_absent_for_the_whole_window_is_not_feasible():
     window = DeadlineWindow(NOW + DAY, NOW + DAY + dt.timedelta(hours=4))
     assert feasible_persons(task(allowed=frozenset()), _context(window)) == {"b", "c"}
+
+
+def test_participants_leave_out_persons_absent_for_the_whole_window():
+    window = DeadlineWindow(NOW + DAY, NOW + DAY + dt.timedelta(hours=4))
+    context = _context(window)
+    tasks = [task(id="t1", allowed=frozenset({"a", "b"})), task(id="t2", allowed=frozenset())]
+    assert participants(tasks, context) == {"b", "c"}
+    assert participants([], context) == frozenset()
 
 
 def test_allowed_persons_and_minimum_load_apply():
