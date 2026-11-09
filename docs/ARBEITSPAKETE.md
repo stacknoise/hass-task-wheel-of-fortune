@@ -1,6 +1,6 @@
 # Arbeitspakete: Task Wheel of Fortune
 
-Stand: 2026-11-05 (AP-00 bis AP-19 umgesetzt, Nachträge bis Version 0.6.1 unten) · Grundlage: [KONZEPT.md](KONZEPT.md)
+Stand: 2026-11-05 (AP-00 bis AP-19 umgesetzt, Nachträge bis Version 0.6.2 unten) · Grundlage: [KONZEPT.md](KONZEPT.md)
 
 Größen: **S** ≈ bis 1 Tag · **M** ≈ 2–3 Tage · **L** ≈ 4–5 Tage (Richtwerte für eine Person).
 Jedes Paket gilt erst als fertig, wenn die **gemeinsame Definition of Done** erfüllt ist.
@@ -236,7 +236,7 @@ Parallelisierbar: AP-04/05 nach AP-02; AP-11/12/13 nach AP-09; AP-15/16/17 nach 
 
 ---
 
-## Nachträge nach AP-19 (Version 0.6.1 ergänzt)
+## Nachträge nach AP-19 (Version 0.6.2 ergänzt)
 
 Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. Details je Änderung stehen im Änderungsprotokoll in [CODE_DOKU.md](CODE_DOKU.md) §4.
 
@@ -316,3 +316,10 @@ Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. 
 | #118 | Räume im Dialog „Aufgabe austauschen“ |
 | #119 | Prozentanzeige im Rad entfernt |
 | – | Version 0.6.1 |
+
+### Version 0.6.2
+
+| PR | Inhalt |
+|---|---|
+| #121 | Abwesende Personen erscheinen nicht mehr in Rad, Animationen und „Wer ist dabei?“ |
+| – | Version 0.6.2 |
