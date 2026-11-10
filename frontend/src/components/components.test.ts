@@ -32,7 +32,13 @@ describe('tw-avatar', () => {
 
   it('bleibt ohne Namen leer', async () => {
     const avatar = await mount<TwAvatar>('tw-avatar', {});
-    expect(avatar.shadowRoot?.textContent).toMatch(/^:host/);
+    // jsdom >= 31 unterstützt adoptedStyleSheets (kein <style>-Text mehr im Shadow-Root): nur Textknoten zählen.
+    const text = [...(avatar.shadowRoot?.childNodes ?? [])]
+      .filter((node) => node.nodeType === Node.TEXT_NODE)
+      .map((node) => node.textContent ?? '')
+      .join('')
+      .trim();
+    expect(text).toBe('');
   });
 });
 
