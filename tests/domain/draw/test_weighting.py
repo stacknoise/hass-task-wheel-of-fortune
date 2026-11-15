@@ -21,9 +21,15 @@ def test_uniform_gives_equal_weights():
     assert UniformWeighting().weigh(inputs((1, 0), (5, 9))) == (1.0, 1.0)
 
 
-def test_fairness_without_points_follows_capacity():
-    weights = FairnessWeighting().weigh(inputs((10, 0), (30, 0)))
-    assert weights[1] / weights[0] == pytest.approx(3.0)
+def test_fairness_without_points_gives_everyone_the_same_weight_whatever_the_capacity():
+    weights = FairnessWeighting().weigh(inputs((10, 0), (30, 0), (1, 0)))
+    assert weights[1] == pytest.approx(weights[0]) == pytest.approx(weights[2])
+
+
+def test_capacity_counts_only_through_the_deviation_from_the_fair_share():
+    # gleiche Abweichung (halber fairer Anteil an Punkten) bei sehr verschiedener Kapazität
+    weights = FairnessWeighting().weigh(inputs((10, 1), (30, 3), (60, 6)))
+    assert weights[0] == pytest.approx(weights[1]) == pytest.approx(weights[2])
 
 
 def test_fairness_favours_person_with_fewer_points():
@@ -33,7 +39,7 @@ def test_fairness_favours_person_with_fewer_points():
 
 def test_fairness_formula_for_known_values():
     f, a = 0.5, 0.25
-    expected = f * math.exp((f - a) / f)
+    expected = math.exp(-a / f)
     weights = FairnessWeighting().weigh(inputs((1, 1), (1, 3)))
     assert weights[0] == pytest.approx(min(expected, WEIGHT_MAX))
 

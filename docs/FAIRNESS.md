@@ -49,11 +49,11 @@ point; for "missed" (default 0) they get 0.
 **Effect on the draw**
 
 Whoever is below their fair share gets a bigger chance in the draw. Only people who are not absent for the whole deadline window, may do the task and have enough load capacity take part. The backend computes the chance as follows (the animations show all people in equal slices and no percentages, so nobody can tell the winner beforehand; the chances are visible in the history). The weight is
-`w = f × exp((f − a) ÷ f)` with the fair share `f` and the actual share `a` (the person's points ÷ points of
-everyone), then limited to at least 0.5 % and at most 100 % and normalized to chances. Example: Anna and Ben are
+`w = exp(−a ÷ f)` with the fair share `f` and the actual share `a` (the person's points ÷ points of
+everyone), then limited to at least 0.5 % and at most 100 % and normalized to chances. Capacity thus counts only through the deviation from the fair share, not as a factor; otherwise the most present people would always win first and the order of the people would never vary. Example: Anna and Ben are
 both fully capable and always present (`f` = 50 %), Anna has 3 and Ben 1 point in the window (`a` = 75 % and 25 %). Then
-Anna's weight is 0.50 × e^−0.5 ≈ 0.30 and Ben's is 0.50 × e^0.5 ≈ 0.82. Ben thus has about a 73 % chance, Anna about 27 %.
-Without points in the window, everyone's chance is their fair share; people without capacity (paused or never present in the window) keep only the minimum weight of 0.5 %.
+Anna's weight is e^−1.5 ≈ 0.22 and Ben's is e^−0.5 ≈ 0.61. Ben thus has about a 73 % chance, Anna about 27 %.
+Without points in the window, everyone has the same chance; people without capacity (paused or never present in the window) keep only the minimum weight of 0.5 %.
 
 **Further indicators**
 
