@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Behoben: Die Reihenfolge, in der die Personen ihre Aufgabe bekommen, ist jetzt zufällig. Die Fairness-Gewichtung bevorzugte bisher Personen mit viel Anwesenheit und hoher Belastbarkeit so stark, dass sie fast immer zuerst gezogen wurden. Die Kapazität zählt nur noch über die Abweichung vom fairen Anteil; ohne Punkte im Fenster haben alle dieselbe Chance. Die Auslosungsregeln bleiben unverändert
+
 - Behoben: Die Reihenfolge der Auslosung ist jetzt zufällig. Bisher wurden die Aufgaben einer Runde immer in der Reihenfolge des Zeitplans gezogen; waren Aufgaben auf bestimmte Personen beschränkt, ging die erste Aufgabe deshalb immer an dieselbe Person, die zweite an dieselbe usw. Die Auslosungsregeln bleiben unverändert
 
 ## [0.6.2] – 2026-11-09

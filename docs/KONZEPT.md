@@ -290,7 +290,7 @@ bekommt ein größeres Segment.
 - Kapazität `c_i = load_i × anwesende_Tage_i` im Fenster
 - Fairer Anteil `f_i = c_i / Σ c`
 - Ist-Anteil `a_i = p_i / Σ p` (bei `Σ p = 0`: `a_i = f_i`)
-- Gewicht `w_i = f_i × exp(k × (f_i − a_i) / f_i)` mit Dämpfung `k` (Konstante), begrenzt auf `[w_min, w_max]`
+- Gewicht `w_i = exp(−k × a_i / f_i)` (gleich `exp(k × (f_i − a_i) / f_i)` geteilt durch `e^k`) mit Dämpfung `k` (Konstante), begrenzt auf `[w_min, w_max]`; die Kapazität geht nur über die Abweichung vom fairen Anteil ein, nicht als Faktor (sonst gewönnen die meisten Anwesenden immer zuerst und die Reihenfolge der Personen wäre nie zufällig)
 - Chance `π_i = w_i / Σ w` (wird gespeichert und im Rad als Segmentgröße gezeigt)
 
 Punkte, die innerhalb derselben Runde vergeben werden, fließen sofort in `p_i` ein, damit eine Runde nicht alle

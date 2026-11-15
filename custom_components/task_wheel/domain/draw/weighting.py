@@ -33,7 +33,10 @@ class FairnessWeighting:
     """Wer im Verhältnis zum fairen Anteil weniger Punkte hatte, bekommt ein größeres Segment.
 
     `f = Kapazität / Σ Kapazität`, `a = Punkte / Σ Punkte` (ohne Punkte: `a = f`),
-    `w = f * exp(k * (f - a) / f)`, begrenzt auf `[WEIGHT_MIN, WEIGHT_MAX]`.
+    `w = exp(k * (f - a) / f)`, begrenzt auf `[WEIGHT_MIN, WEIGHT_MAX]` und durch `e^k` geteilt
+    (also `w = exp(-k * a / f)`). Die Kapazität geht nur über die Abweichung vom fairen Anteil
+    ein, nicht als Faktor: Sonst gewönnen die meisten Anwesenden jede Runde zuerst, und die
+    Reihenfolge der Personen wäre nicht zufällig.
     """
 
     def __init__(self, damping: float = FAIRNESS_DAMPING) -> None:
@@ -54,7 +57,7 @@ class FairnessWeighting:
         if fair <= 0:
             return WEIGHT_MIN
         actual = item.points / total_points if total_points > 0 else fair
-        raw = fair * math.exp(self._damping * (fair - actual) / fair)
+        raw = math.exp(-self._damping * actual / fair)
         return min(max(raw, WEIGHT_MIN), WEIGHT_MAX)
 
 
