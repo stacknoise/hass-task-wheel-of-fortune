@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+## [0.6.3] – 2026-11-15
+
 - Behoben: Die Reihenfolge, in der die Personen ihre Aufgabe bekommen, ist jetzt zufällig. Die Fairness-Gewichtung bevorzugte bisher Personen mit viel Anwesenheit und hoher Belastbarkeit so stark, dass sie fast immer zuerst gezogen wurden. Die Kapazität zählt nur noch über die Abweichung vom fairen Anteil; ohne Punkte im Fenster haben alle dieselbe Chance. Die Auslosungsregeln bleiben unverändert
 
 - Behoben: Die Reihenfolge der Auslosung ist jetzt zufällig. Bisher wurden die Aufgaben einer Runde immer in der Reihenfolge des Zeitplans gezogen; waren Aufgaben auf bestimmte Personen beschränkt, ging die erste Aufgabe deshalb immer an dieselbe Person, die zweite an dieselbe usw. Die Auslosungsregeln bleiben unverändert
@@ -121,7 +123,8 @@ Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.
 - Fairness-Gewichtung, Tausch mit Joker, „Bleibt unerledigt“, Historie mit CSV-Export und Statistiken
 - Home-Assistant-Anbindung: Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen
 
-[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.2...HEAD
+[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.3...HEAD
+[0.6.3]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.5.0...v0.6.0
