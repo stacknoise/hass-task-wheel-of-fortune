@@ -8,6 +8,7 @@ from custom_components.task_wheel.application.draw_inputs import (
     due_tasks,
     recent_assignments,
     select_assignable,
+    shuffled,
     window_points,
 )
 from custom_components.task_wheel.const.limits import RECENT_HISTORY_DAYS
@@ -191,3 +192,15 @@ def test_more_daily_tasks_than_persons_are_picked_randomly_among_themselves():
 def test_task_over_several_days_is_not_daily():
     weekly = f.task(frequency=MaxPerPeriod(count=1, period=Period.DAY, every=2))
     assert not weekly.is_daily
+
+
+def test_shuffled_orders_the_tasks_by_their_random_numbers():
+    tasks = (f.task(id="t1"), f.task(id="t2"), f.task(id="t3"))
+    assert [t.id for t in shuffled(tasks, FixedRandom(0.5, 0.9, 0.1))] == ["t3", "t1", "t2"]
+    assert [t.id for t in shuffled(tasks, FixedRandom(0.1, 0.5, 0.9))] == ["t1", "t2", "t3"]
+
+
+def test_shuffled_keeps_all_tasks_and_handles_an_empty_round():
+    tasks = (f.task(id="t1"), f.task(id="t2"))
+    assert sorted(t.id for t in shuffled(tasks, FixedRandom(0.7, 0.2))) == ["t1", "t2"]
+    assert shuffled((), FixedRandom(0.5)) == ()

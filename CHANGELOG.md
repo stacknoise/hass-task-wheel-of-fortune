@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Behoben: Die Reihenfolge der Auslosung ist jetzt zufällig. Bisher wurden die Aufgaben einer Runde immer in der Reihenfolge des Zeitplans gezogen; waren Aufgaben auf bestimmte Personen beschränkt, ging die erste Aufgabe deshalb immer an dieselbe Person, die zweite an dieselbe usw. Die Auslosungsregeln bleiben unverändert
+
 ## [0.6.2] – 2026-11-09
 
 - Behoben: Abwesende Personen erscheinen nicht mehr in der Auslosung. Rad, Animationen und „Wer ist dabei?“ zeigen nur noch Personen, die im Fristfenster anwesend, belastbar genug und für eine Aufgabe der Runde erlaubt sind. Die Panel-Runde liefert dafür `participant_ids`

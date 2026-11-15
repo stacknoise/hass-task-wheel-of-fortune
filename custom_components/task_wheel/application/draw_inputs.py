@@ -74,6 +74,16 @@ def _priority(tasks: tuple[Task, ...], rng: RandomSource) -> list[int]:
     return sorted(range(len(tasks)), key=lambda i: (not tasks[i].is_mandatory, keys[i]))
 
 
+def shuffled(tasks: tuple[Task, ...], rng: RandomSource) -> tuple[Task, ...]:
+    """Die Aufgaben in zufälliger Reihenfolge (jede Anordnung gleich wahrscheinlich).
+
+    In dieser Reihenfolge wird gezogen. Bliebe sie die des Zeitplans, wäre bei Einschränkungen
+    (nur bestimmte Personen erlaubt) die Folge der Gewinner in jeder Runde dieselbe.
+    """
+    keys = [rng.random() for _ in tasks]
+    return tuple(tasks[i] for i in sorted(range(len(tasks)), key=keys.__getitem__))
+
+
 def select_assignable(
     tasks: tuple[Task, ...], context: DrawContext, rng: RandomSource
 ) -> tuple[Task, ...]:

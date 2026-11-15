@@ -37,6 +37,7 @@ from .draw_inputs import (
     recent_assignments,
     respecting_schedule,
     select_assignable,
+    shuffled,
 )
 from .ids import new_id
 from .protocols import (
@@ -318,8 +319,9 @@ class DrawService:
         context = build_context(
             self._config, self._history, recent, now, window or schedule.deadline.window(now)
         )
-        tasks = select_assignable(
-            due_tasks(self._config, schedule, recent, now), context, self._rng
+        tasks = shuffled(
+            select_assignable(due_tasks(self._config, schedule, recent, now), context, self._rng),
+            self._rng,
         )
         if not tasks:
             raise DrawRejectedError(ERR_NOTHING_DUE)

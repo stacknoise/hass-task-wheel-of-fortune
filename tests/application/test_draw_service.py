@@ -186,6 +186,14 @@ def test_panel_round_runs_step_by_step_and_is_stored_on_commit():
     assert world.draws.open_rounds(NOW) == ()
 
 
+def test_tasks_of_a_round_are_drawn_in_random_order_not_in_the_order_of_the_schedule():
+    # zwei Zahlen für die Auswahl, zwei für die Reihenfolge: t2 zieht vor t1
+    world = World(0.0, 0.0, 0.9, 0.1, 0.5)
+    panel = begin(world, "s1", NOW)
+    assert [task.id for task in panel.draft.tasks] == ["t2", "t1"]
+    assert world.draws.spin(panel.id, NOW).task_id == "t2"
+
+
 def test_commit_before_the_last_spin_is_rejected_and_keeps_the_round_open():
     world = World()
     panel = begin(world, "s1", NOW)
