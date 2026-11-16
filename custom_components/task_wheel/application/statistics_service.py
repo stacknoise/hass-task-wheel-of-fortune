@@ -1,7 +1,7 @@
 """Statistik-Service: Monatsaggregate fortschreiben und Auswertungen liefern (KONZEPT §6)."""
 
 import datetime as dt
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 from dataclasses import replace
 
 from ..const.defaults import DEFAULT_STATISTICS_MONTHS, DEFAULT_STATISTICS_WEEKS
@@ -20,7 +20,7 @@ from ..domain.statistics import aggregate
 from ..domain.statistics.aggregate import AssignmentChange
 from ..domain.statistics.goals import TaskGoal, build_goals, goals_start
 from ..domain.statistics.report import StatisticsReport, WeekRate, build_report, weekly_rates
-from ..domain.types import PersonId
+from ..domain.types import PersonId, TaskId
 from ..domain.validation import ensure_range
 from .protocols import ConfigRepository, HistoryRepository
 
@@ -77,7 +77,7 @@ class StatisticsService:
         first_day = aggregate.month_starts(today, months)[0]
         report = build_report(
             keys,
-            aggregate.rows(self._history.aggregates, keys),
+            aggregate.rows(self._history.aggregates, keys, self._config.tasks.keys()),
             self._capacities(first_day, today),
             self._config.settings,
             self._weekly(now, weeks),
@@ -109,4 +109,6 @@ class StatisticsService:
         last = period_start(Period.WEEK, now)
         starts = tuple(last - ONE_WEEK * back for back in reversed(range(weeks)))
         since = dt.datetime.combine(starts[0], dt.time.min, tzinfo=now.tzinfo)
-        return weekly_rates(self._history.rounds_since(since), starts)
+        return weekly_rates(
+            self._history.rounds_since(since), starts, self._config.tasks.keys()
+        )

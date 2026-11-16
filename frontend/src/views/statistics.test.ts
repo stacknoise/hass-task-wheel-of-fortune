@@ -21,7 +21,7 @@ describe('Statistik', () => {
     expect(content).toContain('5 pünktlich, 1 verspätet');
     expect(content).toContain('2 noch offen');
     expect(content).toContain('0,83');
-    expect(content).toContain('Gelöschte Aufgabe');
+    expect(content).not.toContain('Gelöschte Aufgabe');
     expect(content).toContain('Glückspilz');
     expect(content).toContain('4 unter dem fairen Anteil');
     expect(content).toContain('90 % pünktlich bei 10 abgeschlossenen Zuteilungen');

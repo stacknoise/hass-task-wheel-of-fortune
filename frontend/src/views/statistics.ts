@@ -436,7 +436,7 @@ export class TwStatisticsView extends LitElement {
               (row) =>
                 html`<tr>
                   <td>
-                    ${row.name ?? this.#text('common.unknownTask')}
+                    ${row.name}
                     ${roomTags(areas, row.areaIds, this.#text('common.unknownArea'))}
                   </td>
                   ${row.cells.map(

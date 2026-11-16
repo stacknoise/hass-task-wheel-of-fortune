@@ -41,6 +41,13 @@ def test_rows_read_only_requested_months() -> None:
     assert found == [agg.StatRow("p2", "t2", S.LATE, 1, 4)]
 
 
+def test_rows_skip_tasks_that_are_no_longer_known() -> None:
+    data = {"2026-11": {"p1": {"t1": {"on_time": [2, 6]}, "gone": {"late": [1, 4]}}}}
+    found = list(agg.rows(data, ["2026-11"], {"t1"}))
+    assert found == [agg.StatRow("p1", "t1", S.ON_TIME, 2, 6)]
+    assert len(list(agg.rows(data, ["2026-11"]))) == 2
+
+
 @pytest.mark.parametrize(
     "broken",
     [

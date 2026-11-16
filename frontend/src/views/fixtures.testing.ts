@@ -196,7 +196,7 @@ export const REPORT: StatisticsReport = {
     { person_id: 'p9', points: 1, fair_points: 1, difference: 0 },
   ],
   fairness_index: 0.83,
-  matrix: { t1: { p1: 3, p2: 1 }, t2: { p1: 2 }, t7: { p2: 1 } },
+  matrix: { t1: { p1: 3, p2: 1 }, t2: { p1: 2 } },
   weeks: [
     { week_start: '2026-10-12', done: 2, missed: 0, rate: 1 },
     { week_start: '2026-10-19', done: 0, missed: 0, rate: null },
