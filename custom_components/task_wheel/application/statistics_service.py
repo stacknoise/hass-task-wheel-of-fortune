@@ -77,7 +77,7 @@ class StatisticsService:
         first_day = aggregate.month_starts(today, months)[0]
         report = build_report(
             keys,
-            aggregate.rows(self._history.aggregates, keys),
+            aggregate.rows(self._history.aggregates, keys, self._config.tasks.keys()),
             self._capacities(first_day, today),
             self._config.settings,
             self._weekly(now, weeks),
@@ -109,4 +109,4 @@ class StatisticsService:
         last = period_start(Period.WEEK, now)
         starts = tuple(last - ONE_WEEK * back for back in reversed(range(weeks)))
         since = dt.datetime.combine(starts[0], dt.time.min, tzinfo=now.tzinfo)
-        return weekly_rates(self._history.rounds_since(since), starts)
+        return weekly_rates(self._history.rounds_since(since), starts, self._config.tasks.keys())

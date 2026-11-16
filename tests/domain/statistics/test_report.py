@@ -116,3 +116,11 @@ def test_weekly_rates_bucket_rounds_by_week_start() -> None:
     assert weeks == (WeekRate(starts[0], 0, 0), WeekRate(monday, 1, 0))
     assert weeks[0].rate is None
     assert weeks[1].rate == 1.0
+
+
+def test_weekly_rates_ignore_deleted_tasks() -> None:
+    monday = dt.date(2026, 11, 2)
+    round_ = f.finished_round()
+    known = {item.task_id for item in round_.assignments}
+    assert weekly_rates([round_], (monday,), known) == weekly_rates([round_], (monday,))
+    assert weekly_rates([round_], (monday,), set()) == (WeekRate(monday, 0, 0),)

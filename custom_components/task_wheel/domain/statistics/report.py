@@ -1,7 +1,7 @@
 """Auswertung der Aggregate: KPIs, Punkte gegen fairen Anteil, Matrix, Hervorhebungen."""
 
 import datetime as dt
-from collections.abc import Iterable, Mapping
+from collections.abc import Collection, Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Final
 
@@ -204,15 +204,23 @@ def _reliable(per_person: Mapping[PersonId, Tally]) -> Reliable | None:
     return max(candidates, key=lambda entry: (entry.on_time_rate, entry.closed), default=None)
 
 
-def weekly_rates(rounds: Iterable[Round], week_starts: tuple[dt.date, ...]) -> tuple[WeekRate, ...]:
-    """Erledigt/verpasst je Woche (Wochenbeginn Montag) aus den Rohdaten der Runden."""
+def weekly_rates(
+    rounds: Iterable[Round],
+    week_starts: tuple[dt.date, ...],
+    task_ids: Collection[TaskId] | None = None,
+) -> tuple[WeekRate, ...]:
+    """Erledigt/verpasst je Woche (Wochenbeginn Montag) aus den Rohdaten der Runden.
+
+    Mit `task_ids` zählen nur Zuteilungen dieser Aufgaben (gelöschte Aufgaben fallen heraus).
+    """
     wanted = {start: Tally() for start in week_starts}
     for round_ in rounds:
         tally = wanted.get(period_start(Period.WEEK, round_.started_at))
         if tally is None:
             continue
         for assignment in round_.assignments:
-            tally.add(assignment.status, 1)
+            if task_ids is None or assignment.task_id in task_ids:
+                tally.add(assignment.status, 1)
     return tuple(
         WeekRate(start, tally.count(DONE_STATUSES), tally.count(UNDONE_STATUSES))
         for start, tally in wanted.items()

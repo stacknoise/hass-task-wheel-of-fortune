@@ -7,7 +7,7 @@ die Aggregate nicht entwertet; der Faktor kommt erst bei der Auswertung.
 """
 
 import datetime as dt
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Collection, Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from typing import Final
 
@@ -134,12 +134,21 @@ def recompute(rounds: Iterable[Round]) -> Aggregates:
     return {key: month for key, month in result.items() if month}
 
 
-def rows(aggregates: Mapping[str, object], keys: Iterable[str]) -> Iterator[StatRow]:
-    """Liefert die Zellen der genannten Monate (fehlende Monate sind leer)."""
+def rows(
+    aggregates: Mapping[str, object],
+    keys: Iterable[str],
+    task_ids: Collection[TaskId] | None = None,
+) -> Iterator[StatRow]:
+    """Liefert die Zellen der genannten Monate (fehlende Monate sind leer).
+
+    Mit `task_ids` bleiben nur Zellen dieser Aufgaben; gelöschte Aufgaben fallen heraus.
+    """
     for key in keys:
         month = decode_month(aggregates.get(key, {}))
         for person_id, by_task in month.items():
             for task_id, by_status in by_task.items():
+                if task_ids is not None and task_id not in task_ids:
+                    continue
                 for status, cell in by_status.items():
                     yield StatRow(
                         person_id, task_id, AssignmentStatus(status), cell[_COUNT], cell[_POINTS]
