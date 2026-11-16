@@ -13,7 +13,15 @@ import {
   OSCAR_FLAP_MS,
   OSCAR_HOLD_MS,
   OSCAR_LOSER_OPACITY,
+  OSCAR_HALF,
+  OSCAR_NOMINEE_GAP_CQW,
+  OSCAR_NOMINEE_HALF_GAP_CQW,
   OSCAR_NOMINEE_MIN_MS,
+  OSCAR_NOMINEE_STEP_CQW,
+  OSCAR_NOMINEE_WIDTH_CQW,
+  OSCAR_SCROLL_MS,
+  OSCAR_WINDOW_HALF_CQW,
+  OSCAR_WINDOW_INSET_PCT,
   OSCAR_NOMINEE_TOTAL_MS,
   OSCAR_PAUSE_MS,
   STAGE_TAGS,
@@ -26,6 +34,7 @@ import { defineOnce } from './define.ts';
 import type { MotionToken } from './motion.ts';
 import { StageElement, sharesOf } from './stage-base.ts';
 import type { Share } from './stage-base.ts';
+import { oscarCenterIndex } from './oscar-geometry.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 
 /** Die Abschnitte der Verleihung in ihrer Reihenfolge; ein Abschnitt gilt auch in allen folgenden. */
@@ -61,13 +70,24 @@ export class TwOscar extends StageElement {
       }
       .nominees {
         position: absolute;
-        inset: 8% 4% auto;
+        inset: 0 ${unsafeCSS(OSCAR_WINDOW_INSET_PCT)}% auto;
+        overflow: hidden;
+        padding: 8% 0 24px;
+      }
+      .track {
         display: flex;
-        justify-content: center;
-        gap: 3%;
+        gap: ${unsafeCSS(OSCAR_NOMINEE_GAP_CQW)}cqw;
+        width: max-content;
+        transform: translateX(
+          calc(
+            ${unsafeCSS(OSCAR_WINDOW_HALF_CQW)}cqw - (var(--tw-center) + ${unsafeCSS(OSCAR_HALF)}) *
+              ${unsafeCSS(OSCAR_NOMINEE_STEP_CQW)}cqw + ${unsafeCSS(OSCAR_NOMINEE_HALF_GAP_CQW)}cqw
+          )
+        );
+        transition: transform var(--tw-scroll) ease-out;
       }
       .nominee {
-        flex: 0 1 22%;
+        flex: 0 0 ${unsafeCSS(OSCAR_NOMINEE_WIDTH_CQW)}cqw;
         min-width: 0;
         text-align: center;
         font-size: clamp(11px, 4cqw, 15px);
@@ -239,6 +259,8 @@ export class TwOscar extends StageElement {
   #phase: Phase = 'closed';
   #winner: string | undefined;
   #lit: string | undefined;
+  /** Zuletzt hervorgehobene Person: die Namensleiste bleibt dort stehen, wenn der Scheinwerfer erlischt. */
+  #center: string | undefined;
   #still = false;
 
   /** Der Abschnitt der Verleihung, in dem die Bühne gerade ist. */
@@ -250,6 +272,7 @@ export class TwOscar extends StageElement {
     this.#phase = 'closed';
     this.#winner = undefined;
     this.#lit = undefined;
+    this.#center = undefined;
     this.#still = false;
   }
 
@@ -263,6 +286,7 @@ export class TwOscar extends StageElement {
     this.#phase = 'nominees';
     for (const share of sharesOf(this.segments)) {
       this.#lit = share.id;
+      this.#center = share.id;
       this.requestUpdate();
       await token.sleep(dwell);
     }
@@ -301,6 +325,13 @@ export class TwOscar extends StageElement {
       '--tw-envelope': `${String(OSCAR_ENVELOPE_MS)}ms`,
       '--tw-flap': `${String(OSCAR_FLAP_MS)}ms`,
       '--tw-card': `${String(OSCAR_CARD_MS)}ms`,
+      '--tw-scroll': `${String(OSCAR_SCROLL_MS)}ms`,
+      '--tw-center': String(
+        oscarCenterIndex(
+          shares.length,
+          shares.findIndex((share) => share.id === (this.#lit ?? this.#center)),
+        ),
+      ),
       '--tw-lose-opacity': String(OSCAR_LOSER_OPACITY),
     });
     return html`
@@ -314,11 +345,13 @@ export class TwOscar extends StageElement {
       >
         <div class="floor"></div>
         <div class="nominees">
-          ${repeat(
-            shares,
-            (share) => share.id,
-            (share) => this.#nominee(share, winner),
-          )}
+          <div class="track">
+            ${repeat(
+              shares,
+              (share) => share.id,
+              (share) => this.#nominee(share, winner),
+            )}
+          </div>
         </div>
         <div class="envelope">
           <div class="body"></div>

@@ -97,4 +97,18 @@ describe('tw-oscar', () => {
     await element.updateComplete;
     expect(element.phase).toBe('closed');
   });
+
+  it('scrollt die Namensleiste bei vielen Personen zur hervorgehobenen Person', async () => {
+    const element = document.createElement(STAGE_TAGS.oscar) as TwOscar;
+    element.segments = Array.from({ length: 12 }, (_, index) => ({
+      id: `p${String(index)}`,
+      label: `Person ${String(index)}`,
+      color: '',
+      chance: 1,
+    }));
+    document.body.append(element);
+    await element.updateComplete;
+    const scene = element.shadowRoot?.querySelector<HTMLElement>('.scene');
+    expect(scene?.style.getPropertyValue('--tw-center')).toBe('1');
+  });
 });

@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- Behoben: In der Oscar-Animation verschwanden bei vielen Personen die Namen unter den Vorhängen. Die Namensleiste scrollt jetzt sanft mit, sodass die hervorgehobene Person immer mittig sichtbar ist
+
 ## [0.6.3] – 2026-11-15
 
 - Behoben: Die Reihenfolge, in der die Personen ihre Aufgabe bekommen, ist jetzt zufällig. Die Fairness-Gewichtung bevorzugte bisher Personen mit viel Anwesenheit und hoher Belastbarkeit so stark, dass sie fast immer zuerst gezogen wurden. Die Kapazität zählt nur noch über die Abweichung vom fairen Anteil; ohne Punkte im Fenster haben alle dieselbe Chance. Die Auslosungsregeln bleiben unverändert

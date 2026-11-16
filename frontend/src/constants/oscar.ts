@@ -12,3 +12,19 @@ export const OSCAR_PAUSE_MS = 350;
 export const OSCAR_HOLD_MS = 450;
 /** Abdunkelung der Nominierten, die nicht gewonnen haben (CSS-Deckkraft). */
 export const OSCAR_LOSER_OPACITY = 0.25;
+
+/**
+ * Namensleiste: Fensterbreite zwischen den geöffneten Vorhängen und Größe der Nominierten (in `cqw` der
+ * Bühne). Passen nicht alle hinein, scrollt die Leiste und hält die Hervorgehobenen mittig.
+ */
+export const OSCAR_WINDOW_INSET_PCT = 12;
+export const OSCAR_WINDOW_CQW = 100 - 2 * OSCAR_WINDOW_INSET_PCT;
+export const OSCAR_NOMINEE_WIDTH_CQW = 22;
+export const OSCAR_NOMINEE_GAP_CQW = 3;
+export const OSCAR_NOMINEE_STEP_CQW = OSCAR_NOMINEE_WIDTH_CQW + OSCAR_NOMINEE_GAP_CQW;
+/** Dauer, in der die Leiste zur nächsten Person gleitet (kürzer als die Verweildauer). */
+export const OSCAR_SCROLL_MS = 140;
+/** Hälfte, für die Mitte von Fenster, Leiste und Lücke. */
+export const OSCAR_HALF = 0.5;
+export const OSCAR_WINDOW_HALF_CQW = OSCAR_WINDOW_CQW * OSCAR_HALF;
+export const OSCAR_NOMINEE_HALF_GAP_CQW = OSCAR_NOMINEE_GAP_CQW * OSCAR_HALF;
