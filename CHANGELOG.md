@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+## [0.6.4] – 2026-11-16
+
 - Behoben: In der Oscar-Animation verschwanden bei vielen Personen die Namen unter den Vorhängen. Die Namensleiste scrollt jetzt sanft mit, sodass die hervorgehobene Person immer mittig sichtbar ist
 
 ## [0.6.3] – 2026-11-15
@@ -124,7 +126,8 @@ Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.
 - Fairness-Gewichtung, Tausch mit Joker, „Bleibt unerledigt“, Historie mit CSV-Export und Statistiken
 - Home-Assistant-Anbindung: Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen
 
-[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.3...HEAD
+[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.4...HEAD
+[0.6.4]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.3...v0.6.4
 [0.6.3]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.0...v0.6.1
