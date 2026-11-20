@@ -17,8 +17,8 @@ export type {
   ScheduleWire,
   TaskWire,
 } from '../api/index.ts';
-export { areaNames, roomsOf } from './areas.ts';
-export type { AreaNames } from './areas.ts';
+export { areaNames, roomRefsOf, roomsOf } from './areas.ts';
+export type { AreaNames, RoomRef } from './areas.ts';
 export { animationsOf, isAnimationKind, pickAnimation } from './animation.ts';
 export { safeColor } from './color.ts';
 export { PlanPreviewLoader } from './plan-preview.ts';

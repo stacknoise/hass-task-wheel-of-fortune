@@ -7,7 +7,14 @@ describe('Aufgabenliste des Zeitplans', () => {
   it('zeigt die Räume der Aufgaben unter dem Namen', async () => {
     const editor = document.createElement('tw-entry-editor') as TwEntryEditor;
     editor.tasks = [
-      { id: 't1', label: 'Bad putzen', rooms: ['Bad', 'Küche'] },
+      {
+        id: 't1',
+        label: 'Bad putzen',
+        rooms: [
+          { name: 'Bad', deleted: false },
+          { name: 'Küche', deleted: false },
+        ],
+      },
       { id: 't2', label: 'Müll', rooms: [] },
     ];
     document.body.append(editor);

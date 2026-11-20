@@ -60,6 +60,10 @@ describe('tw-room', () => {
     const room = await mount<TwRoom>('tw-room', {});
     expect(room.shadowRoot?.querySelector('.dot')).toBeNull();
   });
+  it('zeigt einen gelöschten Raum grau', async () => {
+    const room = await mount<TwRoom>('tw-room', { name: 'Unbekannter Raum', deleted: true });
+    expect(room.hasAttribute('deleted')).toBe(true);
+  });
   it('färbt den Punkt stabil nach dem Namen', async () => {
     const first = await mount<TwRoom>('tw-room', { name: 'Küche' });
     const second = await mount<TwRoom>('tw-room', { name: 'Küche' });

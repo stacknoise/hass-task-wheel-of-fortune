@@ -257,7 +257,16 @@ describe('Editoren', () => {
       language: 'de',
       runDays: 30,
       preview,
-      tasks: [{ id: 'a', label: 'Bad', rooms: ['Bad', 'Flur'] }],
+      tasks: [
+        {
+          id: 'a',
+          label: 'Bad',
+          rooms: [
+            { name: 'Bad', deleted: false },
+            { name: 'Flur', deleted: false },
+          ],
+        },
+      ],
       people: [{ id: 'p1', label: 'Anna', color: '#e03131' }],
     });
     const text = element.shadowRoot?.textContent ?? '';

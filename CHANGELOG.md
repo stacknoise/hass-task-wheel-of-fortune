@@ -5,7 +5,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
-- **Geändert:** Räume erscheinen überall als Chip (Kontur mit farbigem Punkt, eine Farbe je Raum, ohne Umbruch), auch in der Planvorschau „Abstände je Aufgabe“ unter dem Aufgabennamen
+- **Geändert:** Räume erscheinen überall als Chip (Kontur mit farbigem Punkt, eine Farbe je Raum, ohne Umbruch), auch in der Planvorschau „Abstände je Aufgabe“ unter dem Aufgabennamen; gelöschte Räume erscheinen grau
 
 ## [0.7.1] – 2026-11-20
 

@@ -2,6 +2,7 @@ import { LitElement, css, html, nothing, unsafeCSS } from 'lit';
 import type { TemplateResult } from 'lit';
 
 import { COMPONENT_TAGS, ROOM_COLORS, ROOM_DOT_COLOR } from '../constants/index.ts';
+import type { RoomRef } from '../state/index.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
 import { defineOnce } from './define.ts';
 import { roomHue } from './room-color.ts';
@@ -10,7 +11,10 @@ const ROOM_DOT = unsafeCSS(ROOM_DOT_COLOR);
 
 /** Raum einer Aufgabe als Chip (Kontur mit farbigem Punkt); ohne Namen wird nichts gezeigt. */
 export class TwRoom extends LitElement {
-  static override properties = { name: { type: String } };
+  static override properties = {
+    name: { type: String },
+    deleted: { type: Boolean, reflect: true },
+  };
 
   static override styles = [
     tokenStyles,
@@ -32,6 +36,12 @@ export class TwRoom extends LitElement {
           color-mix(in srgb, ${ROOM_DOT} ${ROOM_COLORS.borderMixPercent}%, var(--tw-color-divider));
         border-radius: 1em;
       }
+      :host([deleted]) {
+        border-color: var(--tw-color-divider);
+      }
+      :host([deleted]) .dot {
+        background: var(--tw-color-neutral);
+      }
       :host([hidden]) {
         display: none;
       }
@@ -50,10 +60,12 @@ export class TwRoom extends LitElement {
   ];
 
   declare name: string;
+  declare deleted: boolean;
 
   constructor() {
     super();
     this.name = '';
+    this.deleted = false;
   }
 
   protected override render(): TemplateResult | typeof nothing {
@@ -69,8 +81,10 @@ export class TwRoom extends LitElement {
 defineOnce(COMPONENT_TAGS.room, TwRoom);
 
 /** Die Räume als Chips; überall dort, wo Räume gezeigt werden. Ohne Räume nichts. */
-export function roomChips(names: readonly string[]): TemplateResult | typeof nothing {
-  return names.length > 0
-    ? html`${names.map((name) => html`<tw-room .name=${name}></tw-room>`)}`
+export function roomChips(rooms: readonly RoomRef[]): TemplateResult | typeof nothing {
+  return rooms.length > 0
+    ? html`${rooms.map(
+        (room) => html`<tw-room .name=${room.name} ?deleted=${room.deleted}></tw-room>`,
+      )}`
     : nothing;
 }
