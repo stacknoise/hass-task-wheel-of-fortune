@@ -43,6 +43,7 @@ export type {
   AssignmentObject,
   DecisionExchange,
   DecisionExcluded,
+  DecisionSkipped,
   DecisionPage,
   DecisionQuery,
   DecisionRecord,

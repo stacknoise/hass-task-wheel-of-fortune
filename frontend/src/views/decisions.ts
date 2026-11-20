@@ -203,8 +203,22 @@ export class TwDecisionsView extends LitElement {
                 (task) => this.#task(task, persons),
               )
         }
+        ${exchange ? nothing : this.#skipped(record)}
       </details>
     `;
+  }
+
+  #skipped(record: DecisionRecord): TemplateResult | typeof nothing {
+    if (record.skipped.length === 0) return nothing;
+    return html`<div class="skipped">
+      <strong>${this.#text('log.skipped.title')}</strong>
+      ${record.skipped.map(
+        (item) =>
+          html`<p class="why">
+            ${item.task_name}: ${this.#text(`log.skipped.${item.reason}` as TextKey)}
+          </p>`,
+      )}
+    </div>`;
   }
 
   #task(task: DecisionTask, persons: ReadonlyMap<string, PersonObject>): TemplateResult {
@@ -219,6 +233,7 @@ export class TwDecisionsView extends LitElement {
           <strong class="grow">${heading}</strong>
           <span class="chevron" aria-hidden="true">▾</span>
         </summary>
+        ${task.note === null ? nothing : html`<p class="why">${this.#text(`log.note.${task.note}` as TextKey)}</p>`}
         ${candidateLines(task, this.language, (key, params) => this.#text(key, params)).map(
           (line) =>
             html`<div class="cand">

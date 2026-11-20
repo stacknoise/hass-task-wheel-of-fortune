@@ -150,3 +150,34 @@ def test_deleting_a_round_removes_its_log_entries_only():
     ).delete(second.id)
     (left,) = world.decision_store.records.values()
     assert left.round_id == first.id
+
+
+def test_task_not_due_is_logged_as_skipped():
+    world = World(0.9)
+    entries = (*f.entries("t1"), *f.entries("t2", every_draw=False, min_count=1))
+    world.put_schedule(entries=entries)
+    world.draws.draw("s1", RoundOrigin.AUTO, NOW)
+    record = _only(world)
+    assert [(s.task_id, s.reason) for s in record.skipped] == [("t2", "not_due")]
+    assert [t.task_id for t in record.tasks] == ["t1"] and record.tasks[0].note is None
+
+
+def test_gap_filler_is_noted_on_its_task_and_not_listed_as_skipped():
+    world = World(0.9)
+    world.put_schedule(entries=f.entries("t1", "t2", every_draw=False, min_count=1))
+    world.draws.draw("s1", RoundOrigin.AUTO, NOW)
+    record = _only(world)
+    (task,) = record.tasks
+    assert task.note == "filled"
+    assert [s.reason for s in record.skipped] == ["not_due"]
+    assert record.skipped[0].task_id != task.task_id
+
+
+def test_due_tasks_beyond_the_people_are_logged_as_deferred():
+    world = World(0.1)
+    for ident in ("t1", "t2"):
+        world.config.put_task(f.task(id=ident, name=ident, allowed=frozenset({"p1"})))
+    world.put_schedule(entries=f.entries("t1", "t2"))
+    world.draws.draw("s1", RoundOrigin.AUTO, NOW)
+    record = _only(world)
+    assert [(s.reason) for s in record.skipped] == ["deferred"]

@@ -185,6 +185,10 @@ WIRE_PRESENT: Final = "present"
 
 # Grund im Entscheidungslog, den die Filterkette nicht kennt: Aufgabe für die Person nicht erlaubt
 REASON_NOT_ALLOWED: Final = "not_allowed"
+# Gründe, warum eine Aufgabe in einer Auslosung nicht oder nur als Füllung vorkam (Entscheidungslog)
+NOTE_NOT_DUE: Final = "not_due"
+NOTE_DEFERRED: Final = "deferred"
+NOTE_FILLED: Final = "filled"
 
 # Namen der Ressourcen in Fehlern (Platzhalter `resource`)
 RESOURCE_PERSON: Final = "person"

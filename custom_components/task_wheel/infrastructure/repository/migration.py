@@ -5,6 +5,7 @@ from collections.abc import Callable, Mapping
 from types import MappingProxyType
 from typing import Final
 
+from ...const.defaults import DEFAULT_RUN_DAYS
 from ...const.keys import (
     KEY_AREA_ID,
     KEY_AREA_IDS,
@@ -26,8 +27,8 @@ from ...const.keys import (
     STORE_MINOR_VERSION,
     STORE_VERSION,
 )
-from ...const.limits import RETENTION_MIN
-from ...domain.enums import EntryMode, IntervalUnit
+from ...const.limits import HOURS_PER_DAY, RETENTION_MIN
+from ...domain.enums import INTERVAL_UNIT_HOURS, EntryMode, IntervalUnit
 from ...domain.errors import StorageVersionError
 
 type Version = tuple[int, int]
@@ -42,6 +43,11 @@ LEGACY_COUNT: Final = "count"
 LEGACY_ONCE: Final = "once"
 LEGACY_RECURRING: Final = "recurring"
 LEGACY_EVERY_ROUND: Final = "every_round"
+LEGACY_PERIOD: Final = "period"
+LEGACY_EVERY: Final = "every"
+LEGACY_DAYS: Final = "days"
+LEGACY_DAY: Final = "day"
+LEGACY_PERIOD_DAYS: Final = MappingProxyType({"day": 1, "week": 7, "month": 30})
 NEW_START: Final = "start"
 NEW_INTERVAL: Final = "interval"
 NEW_AUTOMATIC: Final = "automatic"
@@ -132,41 +138,69 @@ def _default_start() -> str:
     return dt.datetime.now(dt.UTC).replace(minute=0, second=0, microsecond=0).isoformat()
 
 
+def _interval_of(trigger: dict[str, object]) -> tuple[str, int]:
+    """Einheit und Anzahl des neuen Intervalls: „alle n Wochen“ bleibt, sonst täglich."""
+    weeks = trigger.get(LEGACY_EVERY_N_WEEKS)
+    if isinstance(weeks, int):
+        return IntervalUnit.WEEK.value, weeks
+    return IntervalUnit.DAY.value, 1
+
+
 def _plan_fields(
     schedule: dict[str, object], tasks: Mapping[object, dict[str, object]]
 ) -> dict[str, object]:
     """Beginn, Intervall, Modus und Aufgaben des neuen Zeitplans aus Auslöser und Häufigkeiten."""
-    trigger = schedule.get(KEY_TRIGGER)
-    kind = trigger.get(LEGACY_KIND) if isinstance(trigger, dict) else None
-    weeks = trigger.get(LEGACY_EVERY_N_WEEKS) if isinstance(trigger, dict) else None
-    start = (
-        trigger.get(LEGACY_AT)
-        if kind == LEGACY_ONCE and isinstance(trigger, dict)
-        else _default_start()
-    )
-    unit, every = (
-        (IntervalUnit.WEEK.value, weeks) if isinstance(weeks, int) else (IntervalUnit.DAY.value, 1)
-    )
+    raw = schedule.get(KEY_TRIGGER)
+    trigger = raw if isinstance(raw, dict) else {}
+    kind = trigger.get(LEGACY_KIND)
+    start = trigger.get(LEGACY_AT) if kind == LEGACY_ONCE else _default_start()
+    unit, every = _interval_of(trigger)
     task_ids = schedule.get(KEY_TASK_IDS)
     ids = task_ids if isinstance(task_ids, list) else []
-    entries = [_entry(task_id, tasks.get(task_id, {})) for task_id in ids]
+    draws = max(
+        1, DEFAULT_RUN_DAYS * HOURS_PER_DAY // (INTERVAL_UNIT_HOURS[IntervalUnit(unit)] * every)
+    )
     return {
         NEW_START: start,
         NEW_INTERVAL: {NEW_UNIT: unit, NEW_EVERY: every},
         NEW_AUTOMATIC: kind in {LEGACY_RECURRING, LEGACY_ONCE},
-        NEW_ENTRIES: entries,
+        NEW_ENTRIES: [_entry(task_id, tasks.get(task_id, {}), draws) for task_id in ids],
     }
 
 
-def _entry(task_id: object, task: dict[str, object]) -> dict[str, object]:
-    """Eintrag einer Aufgabe: „jede Auslosung“ oder mindestens so oft, wie ihre Regel erlaubte."""
-    rule = task.get(KEY_FREQUENCY)
-    kind = rule.get(LEGACY_KIND) if isinstance(rule, dict) else None
-    count = rule.get(LEGACY_COUNT) if isinstance(rule, dict) else None
-    if kind == LEGACY_EVERY_ROUND:
+def _per_run(rule: dict[str, object], draws: int) -> int:
+    """Wie oft die alte Regel eine Aufgabe in einem Lauf erlaubte (mindestens 1, höchstens `draws`).
+
+    „Höchstens n-mal je x Tage/Wochen/Monate“ und „alle d Tage“ werden auf die Läufe der
+    Standardlänge umgerechnet (Monat = 30 Tage); ohne lesbare Angaben zählt die Regel als einmal.
+    """
+    period_days = LEGACY_PERIOD_DAYS.get(str(rule.get(LEGACY_PERIOD)))
+    every, count, days = (rule.get(k) for k in (LEGACY_EVERY, LEGACY_COUNT, LEGACY_DAYS))
+    if isinstance(days, int) and days > 0:
+        wanted = DEFAULT_RUN_DAYS // days
+    elif isinstance(count, int) and isinstance(every, int | None) and period_days:
+        wanted = DEFAULT_RUN_DAYS * count // (period_days * (every or 1))
+    else:
+        wanted = 1
+    return max(1, min(wanted, draws))
+
+
+def _is_daily(rule: dict[str, object]) -> bool:
+    """Die alte Regel „höchstens n-mal in 1 Tag“: die Aufgabe kam in jeder Runde vor."""
+    return rule.get(LEGACY_PERIOD) == LEGACY_DAY and rule.get(LEGACY_EVERY, 1) == 1
+
+
+def _entry(task_id: object, task: dict[str, object], draws: int) -> dict[str, object]:
+    """Eintrag einer Aufgabe: „jede Auslosung“ oder so oft je Lauf, wie ihre Regel erlaubte."""
+    raw = task.get(KEY_FREQUENCY)
+    rule = raw if isinstance(raw, dict) else {}
+    if rule.get(LEGACY_KIND) == LEGACY_EVERY_ROUND or _is_daily(rule):
         return {NEW_TASK_ID: task_id, NEW_MODE: EntryMode.EVERY_DRAW.value}
-    mode = {NEW_TASK_ID: task_id, NEW_MODE: EntryMode.MIN_COUNT.value}
-    return {**mode, NEW_MIN_COUNT: count} if isinstance(count, int) and count > 0 else mode
+    return {
+        NEW_TASK_ID: task_id,
+        NEW_MODE: EntryMode.MIN_COUNT.value,
+        NEW_MIN_COUNT: _per_run(rule, draws),
+    }
 
 
 def _without(
