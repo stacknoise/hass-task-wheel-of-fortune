@@ -1,6 +1,6 @@
 # Arbeitspakete: Task Wheel of Fortune
 
-Stand: 2026-11-05 (AP-00 bis AP-19 umgesetzt, Nachträge bis Version 0.6.4 unten) · Grundlage: [KONZEPT.md](KONZEPT.md)
+Stand: 2026-11-05 (AP-00 bis AP-19 umgesetzt, Nachträge bis Version 0.7.0 unten) · Grundlage: [KONZEPT.md](KONZEPT.md)
 
 Größen: **S** ≈ bis 1 Tag · **M** ≈ 2–3 Tage · **L** ≈ 4–5 Tage (Richtwerte für eine Person).
 Jedes Paket gilt erst als fertig, wenn die **gemeinsame Definition of Done** erfüllt ist.
@@ -236,7 +236,7 @@ Parallelisierbar: AP-04/05 nach AP-02; AP-11/12/13 nach AP-09; AP-15/16/17 nach 
 
 ---
 
-## Nachträge nach AP-19 (Version 0.6.4 ergänzt)
+## Nachträge nach AP-19 (Version 0.7.0 ergänzt)
 
 Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. Details je Änderung stehen im Änderungsprotokoll in [CODE_DOKU.md](CODE_DOKU.md) §4.
 
@@ -338,3 +338,13 @@ Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. 
 |---|---|
 | #131 | Oscar-Animation: Namensleiste scrollt bei vielen Personen mit |
 | – | Version 0.6.4 |
+
+### Version 0.7.0
+
+| PR | Inhalt |
+|---|---|
+| #132 | Gelöschte Aufgaben aus der Statistik ausblenden |
+| #137, #138 | Häufigkeit an den Zeitplan verlagern (Backend und Frontend) |
+| #139 | Einheitliche Abstände im Zeitplan-Editor |
+| #140 | Entscheidungslog: Gründe für nicht ausgeloste Aufgaben, Migration je Lauf |
+| – | Version 0.7.0 |
