@@ -43,34 +43,21 @@ RHYTHM_CYCLE_MIN: Final = 1
 RHYTHM_CYCLE_MAX: Final = 8
 RECURRENCE_INTERVAL_MIN: Final = 1
 RECURRENCE_INTERVAL_MAX: Final = 52
-EVERY_N_WEEKS_MIN: Final = 1
-EVERY_N_WEEKS_MAX: Final = 52
-REMIND_AFTER_DAYS_MIN: Final = 1
-REMIND_AFTER_DAYS_MAX: Final = 365
-# So weit schaut ein wiederkehrender Auslöser höchstens voraus (längster Rhythmus plus eine Woche)
-TRIGGER_LOOKAHEAD_DAYS: Final = EVERY_N_WEEKS_MAX * WEEKDAY_COUNT + WEEKDAY_COUNT
 
-# Frist am Zeitplan: Dauer und Versatz in ihrer Einheit; das ganze Fenster (Versatz, Wartezeit bis
-# zur Uhrzeit, Dauer) bleibt höchstens `DEADLINE_MAX_DAYS` Tage lang
-DEADLINE_DURATION_MIN: Final = 1
-DEADLINE_OFFSET_MIN: Final = 0
-DEADLINE_AMOUNT_MAX: Final = 10000
-DEADLINE_MAX_DAYS: Final = 365
-DAYS_PER_MONTH_MAX: Final = 31
+# Zeitplan: Intervall (Anzahl der Einheiten), Lauf in Tagen, Mindestanzahl je Lauf und Nummer der
+# Periode im Raster des Zeitplans
+INTERVAL_EVERY_MIN: Final = 1
+INTERVAL_EVERY_MAX: Final = 1000
+RUN_DAYS_MIN: Final = 1
+RUN_DAYS_MAX: Final = 365
+MIN_COUNT_MIN: Final = 1
+MIN_COUNT_MAX: Final = 1000
+PERIOD_INDEX_MIN: Final = 0
+PERIOD_INDEX_MAX: Final = 1_000_000
 
 # Aufgaben und Häufigkeit
 POINTS_MIN: Final = 1
 POINTS_MAX: Final = 100
-PERIOD_COUNT_MIN: Final = 1
-PERIOD_COUNT_MAX: Final = 50
-PERIOD_EVERY_MIN: Final = 1
-DAILY_EVERY: Final = 1  # Zeitraum von 1 Tag = täglich anfallende Aufgabe
-PERIOD_EVERY_MAX: Final = 12
-# Längster Monat; begrenzt, wie weit ein Zeitraum von `PERIOD_EVERY_MAX` Monaten zurückreicht
-PERIOD_MAX_DAYS: Final = 31
-INTERVAL_DAYS_MIN: Final = 1
-INTERVAL_DAYS_MAX: Final = 365
-INTERVAL_TOLERANCE_MIN: Final = 0
 
 # Zuteilungen
 CHANCE_MIN: Final = 0.0
@@ -92,18 +79,19 @@ MISSED_FACTOR_MAX: Final = 0.0
 GRACE_HOURS_MIN: Final = 0
 GRACE_HOURS_MAX: Final = 168
 
-# Zuteilungen: so lange kann eine Zuteilung höchstens offen sein (Frist plus Kulanzzeit plus ein
+# Zuteilungen: so lange kann eine Zuteilung höchstens offen sein (Periode plus Kulanzzeit plus ein
 # Sicherheitstag, damit Sommerzeit-Verschiebungen sie nicht aus dem Suchfenster fallen lassen)
 HOURS_PER_DAY: Final = 24
 OPEN_ASSIGNMENT_SAFETY_DAYS: Final = 1
 OPEN_ASSIGNMENT_MAX_AGE_DAYS: Final = (
-    DEADLINE_MAX_DAYS + GRACE_HOURS_MAX // HOURS_PER_DAY + OPEN_ASSIGNMENT_SAFETY_DAYS
+    RUN_DAYS_MAX + GRACE_HOURS_MAX // HOURS_PER_DAY + OPEN_ASSIGNMENT_SAFETY_DAYS
 )
 
-# Verlauf, der für Häufigkeitsregeln und Fairness-Fenster einer Runde herangezogen wird
-RECENT_HISTORY_DAYS: Final = max(
-    INTERVAL_DAYS_MAX, FAIRNESS_WINDOW_MAX, PERIOD_EVERY_MAX * PERIOD_MAX_DAYS
-)
+# Läufe, die der Abstandsausgleich zurückschaut (der laufende und der davor)
+RECENT_RUNS: Final = 2
+
+# Verlauf, der für den Abstandsausgleich und Fairness-Fenster einer Runde herangezogen wird
+RECENT_HISTORY_DAYS: Final = max(FAIRNESS_WINDOW_MAX, RECENT_RUNS * RUN_DAYS_MAX)
 
 # Aufbewahrung des Verlaufs: mindestens so lange, wie Regeln, Fairness und offene Zuteilungen ihn
 # brauchen (sonst gälten Häufigkeitsregeln still nicht mehr oder offene Zuteilungen verschwänden)
@@ -119,7 +107,7 @@ RECENT_HISTORY: Final = dt.timedelta(days=RECENT_HISTORY_DAYS)
 # Anwesenheit
 PREVIEW_WEEKS_MIN: Final = 1
 PREVIEW_WEEKS_MAX: Final = 12
-AVAILABILITY_WINDOW_MAX_DAYS: Final = DEADLINE_MAX_DAYS + 1
+AVAILABILITY_WINDOW_MAX_DAYS: Final = RUN_DAYS_MAX + 1
 
 # Statistik und Historie (KONZEPT §6)
 MONTHS_PER_YEAR: Final = 12

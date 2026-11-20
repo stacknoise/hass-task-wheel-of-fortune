@@ -13,6 +13,7 @@ from ..const.keys import (
     ERR_NOTIFY_FAILED,
     ERR_NOTIFY_TARGET,
     ERR_ROUND_HAS_DONE,
+    ERR_ROUND_NOT_NEWEST,
     ERR_STORAGE_CORRUPT,
     ERR_STORAGE_VERSION,
     ERR_UNKNOWN_KIND,
@@ -121,6 +122,14 @@ class RoundHasDoneError(TaskWheelError):
     def __init__(self, round_id: str, done: int) -> None:
         """Merkt sich Runde und Zahl der erledigten Zuteilungen als Platzhalter."""
         super().__init__(ERR_ROUND_HAS_DONE, {"id": round_id, "done": done})
+
+
+class RoundNotNewestError(TaskWheelError):
+    """Nur die jüngste Auslosung eines Zeitplans lässt sich löschen (keine Lücken)."""
+
+    def __init__(self, round_id: str) -> None:
+        """Merkt sich die Runde als Platzhalter."""
+        super().__init__(ERR_ROUND_NOT_NEWEST, {"id": round_id})
 
 
 class SwapRejectedError(TaskWheelError):

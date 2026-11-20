@@ -6,13 +6,13 @@ from dataclasses import replace
 
 from ..const.limits import ONE_DAY, RECENT_HISTORY
 from ..domain.availability.calendar import PersonAvailability
-from ..domain.deadline import DeadlineWindow
 from ..domain.draw.feasibility import pick_assignable, unassignable_tasks
 from ..domain.draw.types import DrawContext, RandomSource
 from ..domain.models import Assignment, Schedule, Settings, Task
-from ..domain.rules.factory import FrequencyRuleFactory
+from ..domain.plan.due import DueRanking, rank_tasks
+from ..domain.plan.window import PeriodWindow, period_window
 from ..domain.status import counted_points
-from ..domain.types import PersonId, TaskId
+from ..domain.types import PersonId, ScheduleId, TaskId
 from .protocols import ConfigRepository, HistoryRepository
 
 type Recent = tuple[tuple[Assignment, dt.datetime], ...]
@@ -27,12 +27,17 @@ def recent_assignments(history: HistoryRepository, now: dt.datetime) -> Recent:
     )
 
 
-def assigned_times(recent: Recent) -> dict[TaskId, list[dt.datetime]]:
-    """Zuteilungszeitpunkte je Aufgabe (für die Häufigkeitsregeln)."""
-    times: defaultdict[TaskId, list[dt.datetime]] = defaultdict(list)
-    for item, started in recent:
-        times[item.task_id].append(started)
-    return dict(times)
+def last_periods(history: HistoryRepository, schedule_id: ScheduleId) -> dict[TaskId, int]:
+    """Nummer der jüngsten Periode je Aufgabe, in der der Zeitplan sie zugeteilt hat."""
+    last: dict[TaskId, int] = {}
+    for round_ in history.rounds.values():
+        if round_.schedule_id != schedule_id:
+            continue
+        for item in round_.assignments:
+            last[item.task_id] = max(
+                last.get(item.task_id, round_.period_index), round_.period_index
+            )
+    return last
 
 
 def window_points(recent: Recent, settings: Settings, now: dt.datetime) -> dict[PersonId, float]:
@@ -45,33 +50,25 @@ def window_points(recent: Recent, settings: Settings, now: dt.datetime) -> dict[
     return dict(points)
 
 
-def due_tasks(
-    config: ConfigRepository, schedule: Schedule, recent: Recent, now: dt.datetime
-) -> tuple[Task, ...]:
-    """Aufgaben des Zeitplans, die laut Häufigkeitsregel jetzt an der Reihe sind.
+def ranked_tasks(
+    config: ConfigRepository,
+    history: HistoryRepository,
+    schedule: Schedule,
+    period: int,
+    rng: RandomSource,
+) -> DueRanking:
+    """Die Aufgaben des Zeitplans für die Periode `period`: jede Auslosung, fällige, übrige.
 
     Gelöschte Aufgaben werden übergangen. Ist `skip_absent` aus, gilt Abwesenheit nicht.
     """
-    times = assigned_times(recent)
     found = (config.tasks.get(task_id) for task_id in schedule.task_ids)
-    due = (
-        task
-        for task in found
-        if task is not None
-        and FrequencyRuleFactory.create(task.frequency).is_due(times.get(task.id, ()), now)
-    )
-    return tuple(respecting_schedule(schedule, task) for task in due)
+    tasks = tuple(respecting_schedule(schedule, task) for task in found if task is not None)
+    return rank_tasks(schedule, tasks, last_periods(history, schedule.id), period, rng)
 
 
 def respecting_schedule(schedule: Schedule, task: Task) -> Task:
     """Die Aufgabe, wie der Zeitplan sie behandelt (ohne `skip_absent` zählt Abwesenheit nicht)."""
     return task if schedule.skip_absent else replace(task, respect_absence=False)
-
-
-def _priority(tasks: tuple[Task, ...], rng: RandomSource) -> list[int]:
-    """Reihenfolge der Auswahl: Aufgaben „in jeder Runde“ und tägliche zuerst, dann zufällig."""
-    keys = [rng.random() for _ in tasks]
-    return sorted(range(len(tasks)), key=lambda i: (not tasks[i].is_mandatory, keys[i]))
 
 
 def shuffled(tasks: tuple[Task, ...], rng: RandomSource) -> tuple[Task, ...]:
@@ -84,33 +81,35 @@ def shuffled(tasks: tuple[Task, ...], rng: RandomSource) -> tuple[Task, ...]:
     return tuple(tasks[i] for i in sorted(range(len(tasks)), key=keys.__getitem__))
 
 
-def select_assignable(
-    tasks: tuple[Task, ...], context: DrawContext, rng: RandomSource
-) -> tuple[Task, ...]:
-    """Wählt die Aufgaben der Runde so, dass sich alle vergeben lassen.
+def choose_tasks(ranking: DueRanking, context: DrawContext) -> tuple[Task, ...]:
+    """Wählt die Aufgaben der Auslosung so, dass sich alle vergeben lassen.
 
-    Jede Person bekommt je Runde höchstens eine Aufgabe, und nicht jede darf, kann oder ist da
-    (erlaubt, belastbar, im Fristfenster anwesend). Gewählt wird eine größtmögliche Menge, die
-    sich vollständig an verschiedene Personen vergeben lässt. Aufgaben „in jeder Runde“ und täglich
-    anfallende sind zuerst dabei, der Rest wird zufällig gefüllt (nicht vorhersehbar). Gibt es etwa
-    wegen Abwesenheit weniger Personen als solche Aufgaben, entscheidet der Zufall unter ihnen.
-    Aufgaben, die niemand übernehmen kann, und solche, die um dieselben Personen konkurrieren und
-    leer ausgingen, bleiben draußen. Die Reihenfolge der Auswahl bleibt die des Zeitplans.
+    Jede Person bekommt je Auslosung höchstens eine Aufgabe, und nicht jede darf, kann oder ist da
+    (erlaubt, belastbar, im Periodenfenster anwesend). Gewählt wird eine größtmögliche Menge der
+    „jede Auslosung“-Aufgaben und der fälligen, in dieser Reihenfolge: sind mehr fällig als
+    Personen, entscheidet der gewichtete Zufall (Überlast). Ist nichts vergebbar fällig (Lücke),
+    zieht der Zufall die erste vergebbare der übrigen Aufgaben nach.
     """
-    return pick_assignable(tasks, context, _priority(tasks, rng)) if tasks else tasks
+    priority = ranking.priority
+    picked = pick_assignable(priority, context, range(len(priority))) if priority else ()
+    for spare in () if picked else ranking.spare:
+        picked = pick_assignable((spare,), context, (0,))
+        if picked:
+            break
+    return picked
 
 
-def unassignable_every_round(
+def unassignable_every_draw(
     config: ConfigRepository, history: HistoryRepository, schedule: Schedule, now: dt.datetime
 ) -> tuple[Task, ...]:
-    """Aufgaben „in jeder Runde“ des Zeitplans, die sich nicht alle verteilen lassen.
+    """„Jede Auslosung“-Aufgaben des Zeitplans, die sich nicht alle verteilen lassen.
 
     Geprüft wird die Konfiguration: erlaubte Personen und Belastbarkeit, jede Person höchstens
     eine Aufgabe. Abwesenheit zählt nicht (vorübergehend; die Auslosung wählt dann zufällig).
     """
-    found = (config.tasks.get(task_id) for task_id in schedule.task_ids)
-    tasks = [replace(task, respect_absence=False) for task in found if task and task.every_round]
-    context = build_context(config, history, (), now, schedule.deadline.window(now))
+    found = (config.tasks.get(entry.task_id) for entry in schedule.entries if entry.every_draw)
+    tasks = [replace(task, respect_absence=False) for task in found if task]
+    context = build_context(config, history, (), now, period_window(schedule, 0))
     return unassignable_tasks(tasks, context)
 
 
@@ -119,7 +118,7 @@ def build_context(
     history: HistoryRepository,
     recent: Recent,
     now: dt.datetime,
-    window: DeadlineWindow,
+    window: PeriodWindow,
 ) -> DrawContext:
     """Schnappschuss von Personen, Anwesenheit, Punkten, letzten Inhabern und Frist-Fenster."""
     persons = dict(config.persons)

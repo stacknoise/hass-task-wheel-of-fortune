@@ -15,10 +15,10 @@ from ..const.keys import (
     ERR_SWAP_SAME_PERSON,
 )
 from .availability.calendar import PersonAvailability
+from .dates import local_date
 from .enums import AssignmentStatus, Load
 from .errors import SwapRejectedError
 from .models import Assignment, Person, Task
-from .rules.periods import local_date
 from .types import PersonId
 
 

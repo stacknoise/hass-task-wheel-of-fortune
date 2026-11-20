@@ -1,15 +1,11 @@
-"""Tägliche Zeitpunkte: derselbe Mechanismus wie bei wiederkehrenden Zeitplänen."""
+"""Tägliche Zeitpunkte (Wartungslauf, Erinnerungsprüfung)."""
 
 import datetime as dt
 
-from ..const.limits import WEEKDAY_MAX, WEEKDAY_MIN
-from ..domain.models import Recurring
-from ..domain.triggers.factory import TriggerFactory
-
-_EVERY_WEEKDAY = frozenset(range(WEEKDAY_MIN, WEEKDAY_MAX + 1))
+from ..const.limits import ONE_DAY
 
 
-def next_daily(hour: int, after: dt.datetime) -> dt.datetime | None:
+def next_daily(hour: int, after: dt.datetime) -> dt.datetime:
     """Nächster Zeitpunkt nach `after`, an dem es `hour`:00 Uhr (Ortszeit von `after`) ist."""
-    trigger = Recurring(weekdays=_EVERY_WEEKDAY, time=dt.time(hour))
-    return TriggerFactory.create(trigger).next_fire(after)
+    today = dt.datetime.combine(after.date(), dt.time(hour), tzinfo=after.tzinfo)
+    return today if today > after else today + ONE_DAY

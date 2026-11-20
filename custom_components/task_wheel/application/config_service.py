@@ -13,6 +13,7 @@ from typing import Final, Protocol
 
 from ..const.keys import (
     ERR_DUPLICATE,
+    ERR_INCONSISTENT,
     ERR_SCHEDULE_UNASSIGNABLE,
     PH_TASKS,
     RESOURCE_ASSIGNMENT,
@@ -20,11 +21,19 @@ from ..const.keys import (
     RESOURCE_SCHEDULE,
     RESOURCE_TASK,
 )
-from ..const.limits import SLUG_MAX_LENGTH
+from ..const.limits import (
+    HOURS_PER_DAY,
+    MAX_TASKS_PER_SCHEDULE,
+    RUN_DAYS_MAX,
+    RUN_DAYS_MIN,
+    SLUG_MAX_LENGTH,
+)
 from ..domain.errors import InUseError, NotFoundError, ValidationError
-from ..domain.models import OnceAbsence, Person, Schedule, Settings, Task
+from ..domain.models import Interval, OnceAbsence, Person, Schedule, ScheduleEntry, Settings, Task
+from ..domain.plan.preview import PlanPreview, evaluate_plan
 from ..domain.types import PersonId, ScheduleId, TaskId
-from .draw_inputs import unassignable_every_round
+from ..domain.validation import ensure_range, ensure_size, ensure_unique
+from .draw_inputs import unassignable_every_draw
 from .draw_service import DrawService
 from .ids import new_id
 from .protocols import ConfigRepository, HistoryRepository, IdFactory
@@ -34,7 +43,8 @@ FIELD_ID: Final = "id"
 FIELD_SLUG: Final = "slug"
 FIELD_NAME: Final = "name"
 FIELD_ALLOWED: Final = "allowed"
-FIELD_TASK_IDS: Final = "task_ids"
+FIELD_ENTRIES: Final = "entries"
+FIELD_RUN_DAYS: Final = "run_days"
 _SLUG_SEPARATOR: Final = "_"
 _SLUG_FALLBACK: Final = "item"
 _NOT_SLUG: Final = re.compile(r"[^a-z0-9]+")
@@ -199,7 +209,7 @@ class ConfigService:
         schedule = Schedule.from_dict(self._with_identity(fields, self._config.schedules.values()))
         self._ensure_slug_free(schedule, self._config.schedules.values())
         self._ensure_known(schedule.task_ids, self._config.tasks, RESOURCE_TASK)
-        self._ensure_every_round_assignable(schedule, now)
+        self._ensure_schedule_valid(schedule, now)
         self._schedules.save(schedule, now)
         return schedule
 
@@ -211,7 +221,7 @@ class ConfigService:
         schedule = Schedule.from_dict({**current.to_dict(), **fields})
         self._ensure_slug_free(schedule, self._config.schedules.values())
         self._ensure_known(schedule.task_ids, self._config.tasks, RESOURCE_TASK)
-        self._ensure_every_round_assignable(schedule, now)
+        self._ensure_schedule_valid(schedule, now)
         self._schedules.save(schedule, now)
         return schedule
 
@@ -238,16 +248,54 @@ class ConfigService:
         )
         return {**fields, FIELD_ID: self._new_id(), FIELD_SLUG: slug}
 
-    def _ensure_every_round_assignable(self, schedule: Schedule, now: dt.datetime) -> None:
-        """Die Aufgaben „in jeder Runde“ lassen sich an verschiedene Personen vergeben.
+    def preview_plan(
+        self, interval: Fields, run_days: int, entries: Iterable[Fields]
+    ) -> PlanPreview:
+        """Bewertet einen noch nicht gespeicherten Plan (Editor): Platz, Belegung, Warnungen.
 
         Raises:
-            ValidationError: Es gibt weniger passende Personen als solche Aufgaben.
+            ValidationError: Intervall, Lauf oder Aufgabenliste sind ungültig.
+            NotFoundError: Eine Aufgabe gibt es nicht.
         """
-        stuck = unassignable_every_round(self._config, self._history, schedule, now)
+        parsed_interval = Interval.from_dict(interval)
+        parsed = tuple(ScheduleEntry.from_dict(entry) for entry in entries)
+        ensure_range(FIELD_RUN_DAYS, run_days, RUN_DAYS_MIN, RUN_DAYS_MAX)
+        ensure_size(FIELD_ENTRIES, parsed, 0, MAX_TASKS_PER_SCHEDULE)
+        ensure_unique(FIELD_ENTRIES, (entry.task_id for entry in parsed))
+        self._ensure_known((entry.task_id for entry in parsed), self._config.tasks, RESOURCE_TASK)
+        draws = run_days * HOURS_PER_DAY // parsed_interval.hours
+        return evaluate_plan(parsed, draws, parsed_interval.hours, self._reach(parsed))
+
+    def _reach(self, entries: Iterable[ScheduleEntry]) -> dict[TaskId, frozenset[PersonId]]:
+        """Je Aufgabe die Personen, die sie bekommen dürfen (ohne Einschränkung: alle)."""
+        everyone = frozenset(self._config.persons)
+        return {
+            entry.task_id: self._config.tasks[entry.task_id].allowed & everyone or everyone
+            for entry in entries
+        }
+
+    def _ensure_schedule_valid(self, schedule: Schedule, now: dt.datetime) -> None:
+        """Der Plan ist speicherbar und die „jede Auslosung“-Aufgaben lassen sich vergeben.
+
+        Überlast und Lücken sind nur Warnungen (der Editor zeigt sie), der Zeitplan lässt sich
+        speichern.
+
+        Raises:
+            ValidationError: Niemand darf die Aufgaben übernehmen, oder es gibt weniger passende
+                Personen als „jede Auslosung“-Aufgaben.
+        """
+        plan = evaluate_plan(
+            schedule.entries,
+            schedule.draws_per_run,
+            schedule.interval.hours,
+            self._reach(schedule.entries),
+        )
+        if not plan.savable:
+            raise ValidationError(FIELD_ENTRIES, ERR_INCONSISTENT)
+        stuck = unassignable_every_draw(self._config, self._history, schedule, now)
         if stuck:
             names = ", ".join(task.name for task in stuck)
-            raise ValidationError(FIELD_TASK_IDS, ERR_SCHEDULE_UNASSIGNABLE, {PH_TASKS: names})
+            raise ValidationError(FIELD_ENTRIES, ERR_SCHEDULE_UNASSIGNABLE, {PH_TASKS: names})
 
     @staticmethod
     def _ensure_slug_free(item: Sluggable, existing: Iterable[Sluggable]) -> None:

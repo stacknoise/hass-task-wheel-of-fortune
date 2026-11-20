@@ -9,12 +9,17 @@ from ..const.keys import (
     WIRE_ASSIGNMENTS,
     WIRE_DONE,
     WIRE_EXPIRES_AT,
+    WIRE_NEWEST_PERIOD,
+    WIRE_NEXT_PERIOD,
     WIRE_NEXT_RUN,
     WIRE_NOW,
     WIRE_ORIGIN,
     WIRE_PANEL_ROUNDS,
     WIRE_PARTICIPANTS,
     WIRE_PENDING,
+    WIRE_PERIOD_END,
+    WIRE_PERIOD_INDEX,
+    WIRE_PERIOD_START,
     WIRE_PERSONS,
     WIRE_REMOVE,
     WIRE_RESULTS,
@@ -30,6 +35,7 @@ from ..const.keys import (
 )
 from ..domain.enums import DONE_STATUSES
 from ..domain.models import Assignment, Round, Schedule
+from ..domain.plan.window import newest_period, next_open_period
 from .draw_service import DrawService, PanelRound
 from .history_service import HistoryEntry
 from .protocols import ConfigRepository, HistoryRepository
@@ -79,6 +85,9 @@ def panel_round_view(panel_round: PanelRound) -> Json:
         WIRE_PENDING: [task.id for task in draft.pending],
         WIRE_UNPLACEABLE: [task.id for task in draft.unplaceable],
         WIRE_PARTICIPANTS: sorted(draft.participants),
+        WIRE_PERIOD_INDEX: draft.period_index,
+        WIRE_PERIOD_START: draft.context.window.start.isoformat(),
+        WIRE_PERIOD_END: draft.context.window.end.isoformat(),
     }
 
 
@@ -88,6 +97,7 @@ def round_head(round_: Round) -> Json:
         KEY_ID: round_.id,
         WS_FIELD_SCHEDULE_ID: round_.schedule_id,
         WIRE_ORIGIN: round_.origin.value,
+        WIRE_PERIOD_INDEX: round_.period_index,
         WIRE_STARTED_AT: round_.started_at.isoformat(),
         WIRE_TOTAL: len(round_.assignments),
         WIRE_DONE: sum(item.status in DONE_STATUSES for item in round_.assignments),
@@ -143,9 +153,15 @@ class SnapshotBuilder:
         ]
 
     def _schedule(self, schedule: Schedule, now: dt.datetime) -> Json:
-        """Der Zeitplan samt nächster automatischer Auslosung (leer bei manuell/pausiert)."""
+        """Der Zeitplan samt nächster Auslosung sowie nächster und jüngster Periode."""
         upcoming = self._schedules.next_run(schedule, now)
-        return {**to_json(schedule), WIRE_NEXT_RUN: upcoming.isoformat() if upcoming else None}
+        rounds = self._history.rounds.values()
+        return {
+            **to_json(schedule),
+            WIRE_NEXT_RUN: upcoming.isoformat() if upcoming else None,
+            WIRE_NEXT_PERIOD: next_open_period(rounds, schedule.id),
+            WIRE_NEWEST_PERIOD: newest_period(rounds, schedule.id),
+        }
 
 
 def _collection_delta(before: Collection, after: Collection) -> Json | None:

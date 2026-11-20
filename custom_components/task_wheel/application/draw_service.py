@@ -9,7 +9,7 @@ from ..const.keys import (
     ERR_DRAW_STARTED,
     ERR_DRAW_TOO_SOON,
     ERR_NOTHING_DUE,
-    ERR_REPLACE_UNCONFIRMED,
+    ERR_PERIOD_DRAWN,
     ERR_REPLACEMENT_INFEASIBLE,
     ERR_REPLACEMENT_INVALID,
     ERR_SCHEDULE_ARCHIVED,
@@ -21,7 +21,6 @@ from ..const.keys import (
     RESOURCE_TASK,
 )
 from ..const.limits import DRAW_MIN_INTERVAL, DRAW_MIN_INTERVAL_SECONDS, MAX_OPEN_PANEL_ROUNDS
-from ..domain.deadline import DeadlineWindow
 from ..domain.draw.draft import RoundDraft
 from ..domain.draw.engine import DrawEngine
 from ..domain.draw.feasibility import assignable_tasks, is_feasible
@@ -30,13 +29,14 @@ from ..domain.draw.weighting import WeightingFactory
 from ..domain.enums import RoundOrigin
 from ..domain.errors import DrawRejectedError, LimitReachedError, NotFoundError
 from ..domain.models import Round, Schedule, Task
+from ..domain.plan.window import next_open_period, period_window
 from ..domain.types import ScheduleId
 from .draw_inputs import (
     build_context,
-    due_tasks,
+    choose_tasks,
+    ranked_tasks,
     recent_assignments,
     respecting_schedule,
-    select_assignable,
     shuffled,
 )
 from .ids import new_id
@@ -50,7 +50,6 @@ from .protocols import (
     NoEvents,
     RoundEvents,
 )
-from .runs import next_regular_run
 
 _PANEL_TIMEOUT = dt.timedelta(minutes=PANEL_ROUND_TIMEOUT_MINUTES)
 
@@ -93,11 +92,12 @@ class DrawService:
         schedule_id: ScheduleId,
         origin: RoundOrigin,
         now: dt.datetime,
-        window: DeadlineWindow | None = None,
+        period_index: int | None = None,
     ) -> Round:
-        """Löst eine Runde in einem Schritt aus und speichert sie.
+        """Löst eine Auslosung in einem Schritt aus und speichert sie.
 
-        Ohne `window` gilt die Frist des Zeitplans, gerechnet ab `now`.
+        Ohne `period_index` ist es die nächste offene Periode des Zeitplans (jüngste Auslosung
+        plus eins, ohne Auslosung die erste), die der Zeitgeber nennt die seines Termins.
 
         Eine offene Panel-Runde desselben Zeitplans wird dabei verworfen, damit keine Runde
         doppelt entsteht.
@@ -105,43 +105,29 @@ class DrawService:
         Raises:
             NotFoundError: Den Zeitplan gibt es nicht.
             DrawRejectedError: Der Zeitplan ist archiviert, (automatisch) pausiert, nichts ist
-                fällig (alle Aufgaben am Maximum ihrer Häufigkeit oder niemand verfügbar), oder die
+                fällig (niemand kann etwas übernehmen), die Periode ist schon ausgelost, oder die
                 letzte Auslosung von Hand liegt noch keine `DRAW_MIN_INTERVAL` zurück.
         """
-        draft = self._start(schedule_id, origin, now, window)
+        draft = self._start(schedule_id, origin, now, period_index)
         self.discard_for(schedule_id)
         return self._finish(draft.spin_rest(self._engine()), now)
 
     def begin(
-        self,
-        schedule_id: ScheduleId,
-        now: dt.datetime,
-        window: DeadlineWindow,
-        *,
-        replace_next: bool = False,
-        is_admin: bool = True,
+        self, schedule_id: ScheduleId, now: dt.datetime, *, is_admin: bool = True
     ) -> PanelRound:
-        """Beginnt eine Panel-Runde (Herkunft „manuell“); eine frühere desselben Plans entfällt.
+        """Beginnt eine Panel-Runde (Herkunft „manuell“) für die nächste offene Periode.
 
-        `window` ist Pflicht: ab wann die Aufgaben gelten und bis wann sie erledigt sein müssen.
-        Hat der Zeitplan einen nächsten regulären Lauf, zieht die Runde ihn vor (er entfällt);
-        das muss `replace_next` bestätigen.
-
-        Eine schon gezogene Panel-Runde ersetzen nur Administratoren (kein Neuziehen nach Sicht).
+        Eine frühere Panel-Runde desselben Plans entfällt; eine schon gezogene ersetzen nur
+        Administratoren (kein Neuziehen nach Sicht).
 
         Raises:
             NotFoundError: Den Zeitplan gibt es nicht.
-            DrawRejectedError: Der Zeitplan ist archiviert, nichts ist fällig, der vorgezogene
-                reguläre Lauf ist nicht bestätigt, oder eine schon gezogene Panel-Runde würde
-                ersetzt und der Benutzer ist kein Administrator.
+            DrawRejectedError: Der Zeitplan ist archiviert, nichts ist fällig, oder eine schon
+                gezogene Panel-Runde würde ersetzt und der Benutzer ist kein Administrator.
             LimitReachedError: Es sind schon zu viele Panel-Runden offen.
         """
         self._purge(now)
-        draft = self._start(schedule_id, RoundOrigin.MANUAL, now, window)
-        upcoming = self._upcoming(schedule_id, now)
-        if upcoming is not None and not replace_next:
-            raise DrawRejectedError(ERR_REPLACE_UNCONFIRMED)
-        draft = replace(draft, replaces=upcoming)
+        draft = self._start(schedule_id, RoundOrigin.MANUAL, now, None)
         if not is_admin and self._has_results(schedule_id):
             raise DrawRejectedError(ERR_CANCEL_ADMIN_ONLY)
         self.discard_for(schedule_id)
@@ -302,35 +288,44 @@ class DrawService:
             raise NotFoundError(RESOURCE_SCHEDULE, schedule_id)
         return schedule
 
-    def _upcoming(self, schedule_id: ScheduleId, now: dt.datetime) -> dt.datetime | None:
-        """Der nächste reguläre Lauf des Zeitplans, den eine manuelle Auslosung vorziehen würde."""
-        return next_regular_run(self._history, self._config.schedules[schedule_id], now)
+    def next_period(self, schedule_id: ScheduleId) -> int:
+        """Nummer der nächsten offenen Periode (jüngste Auslosung plus eins, sonst die erste)."""
+        return next_open_period(self._history.rounds.values(), schedule_id)
 
     def _start(
         self,
         schedule_id: ScheduleId,
         origin: RoundOrigin,
         now: dt.datetime,
-        window: DeadlineWindow | None,
+        period_index: int | None,
     ) -> RoundDraft:
         """Liest Konfiguration und Verlauf einmal und bildet den Ausgangsstand der Runde."""
         schedule = self._schedule(schedule_id, origin)
+        period = self.next_period(schedule_id) if period_index is None else period_index
+        self._ensure_period_free(schedule_id, period)
         recent = recent_assignments(self._history, now)
         context = build_context(
-            self._config, self._history, recent, now, window or schedule.deadline.window(now)
+            self._config, self._history, recent, now, period_window(schedule, period)
         )
-        tasks = shuffled(
-            select_assignable(due_tasks(self._config, schedule, recent, now), context, self._rng),
-            self._rng,
-        )
+        ranking = ranked_tasks(self._config, self._history, schedule, period, self._rng)
+        tasks = shuffled(choose_tasks(ranking, context), self._rng)
         if not tasks:
             raise DrawRejectedError(ERR_NOTHING_DUE)
-        return RoundDraft(schedule_id, origin, now, context, tasks)
+        return RoundDraft(schedule_id, origin, now, context, tasks, period)
+
+    def _ensure_period_free(self, schedule_id: ScheduleId, period: int) -> None:
+        """Die Periode wurde noch nicht ausgelost (jede Periode höchstens einmal)."""
+        if any(
+            r.schedule_id == schedule_id and r.period_index == period
+            for r in self._history.rounds.values()
+        ):
+            raise DrawRejectedError(ERR_PERIOD_DRAWN)
 
     def _finish(self, draft: RoundDraft, now: dt.datetime) -> Round:
         """Macht aus dem Stand die Runde, speichert sie und meldet sie."""
         round_ = draft.to_round(self._new_id(), self._new_id, now)
         self._ensure_known(round_)
+        self._ensure_period_free(round_.schedule_id, round_.period_index)
         self._ensure_not_flooded(draft, now)
         self._history.put_round(round_)
         self._recorder.record_round(round_)

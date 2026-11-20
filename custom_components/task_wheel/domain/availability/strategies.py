@@ -4,8 +4,8 @@ import datetime as dt
 from dataclasses import dataclass
 
 from ...const.limits import WEEKDAY_COUNT
+from ..dates import week_start
 from ..models import OnceAbsence, RecurringAbsence, WeeklyDaysAbsence, WeekRhythmAbsence
-from ..rules.periods import week_start
 
 
 @dataclass(slots=True, frozen=True)

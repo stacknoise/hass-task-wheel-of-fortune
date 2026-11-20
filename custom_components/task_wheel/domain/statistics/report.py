@@ -6,16 +6,15 @@ from dataclasses import dataclass, field
 from typing import Final
 
 from ...const.limits import RELIABILITY_MIN_CLOSED
+from ..dates import week_start
 from ..enums import (
     CLOSED_STATUSES,
     DONE_STATUSES,
     PENDING_STATUSES,
     UNDONE_STATUSES,
     AssignmentStatus,
-    Period,
 )
 from ..models import Round, Settings
-from ..rules.periods import period_start
 from ..status import points_factor
 from ..types import PersonId, TaskId
 from .aggregate import StatRow
@@ -215,7 +214,7 @@ def weekly_rates(
     """
     wanted = {start: Tally() for start in week_starts}
     for round_ in rounds:
-        tally = wanted.get(period_start(Period.WEEK, round_.started_at))
+        tally = wanted.get(week_start(round_.started_at.date()))
         if tally is None:
             continue
         for assignment in round_.assignments:

@@ -16,6 +16,6 @@
   },
   "reminder": {
     "title": "Reminder: {schedule}",
-    "message": "\"{schedule}\" has not been drawn for {days} days."
+    "message": "The draw of \"{schedule}\" is due (the last one was {days} days ago)."
   }
 }
