@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { EVENT_CHIP_SELECT } from '../constants/index.ts';
 import { initialOf } from './index.ts';
+import { roomHue } from './index.ts';
 import type { TwAvatar, TwBadge, TwChips, TwRoom } from './index.ts';
 import './index.ts';
 
@@ -57,7 +58,15 @@ describe('tw-room', () => {
   });
   it('zeigt ohne Namen nichts', async () => {
     const room = await mount<TwRoom>('tw-room', {});
-    expect(room.shadowRoot?.textContent).not.toContain('⌂');
+    expect(room.shadowRoot?.querySelector('.dot')).toBeNull();
+  });
+  it('färbt den Punkt stabil nach dem Namen', async () => {
+    const first = await mount<TwRoom>('tw-room', { name: 'Küche' });
+    const second = await mount<TwRoom>('tw-room', { name: 'Küche' });
+    expect(first.style.getPropertyValue('--tw-room-hue')).toBe(String(roomHue('Küche')));
+    expect(second.style.getPropertyValue('--tw-room-hue')).toBe(
+      first.style.getPropertyValue('--tw-room-hue'),
+    );
   });
 });
 

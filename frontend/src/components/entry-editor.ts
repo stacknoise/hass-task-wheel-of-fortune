@@ -16,7 +16,7 @@ import { emitChange, onChange } from './change.ts';
 import type { ChipOption } from './chip-select.ts';
 import { formStyles, stackStyles } from './formStyles.ts';
 import { LocalizedElement } from './localized.ts';
-import './room.ts';
+import { roomChips } from './room.ts';
 import './stepper.ts';
 import { baseStyles, tokenStyles, viewStyles } from './styles.ts';
 import { describeSpan } from './summaries.ts';
@@ -124,7 +124,7 @@ export class TwEntryEditor extends LocalizedElement {
             this.#select(task.id, on);
           })}
         ></tw-toggle>
-        ${(task.rooms ?? []).map((name) => html`<tw-room .name=${name}></tw-room> `)}
+        ${roomChips(task.rooms ?? [])}
       </div>
       ${entry ? this.#detail(entry) : nothing}
     </div>`;

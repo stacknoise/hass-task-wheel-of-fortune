@@ -39,3 +39,21 @@ export const SCRATCH_COLORS = {
 export const SPOTLIGHT_COLORS = {
   whiteGlow: 'rgb(255 255 255 / 55%)',
 } as const;
+
+/**
+ * Raum-Chip: die Farbe ergibt sich stabil aus dem Namen des Raums. Der Farbton liegt auf einem
+ * von `hueBuckets` gleich großen Stufen des Farbkreises; Sättigung und Helligkeit passen zu hellem
+ * und dunklem Thema, die Mischanteile bestimmen Rahmen und Punkt.
+ */
+export const ROOM_COLORS = {
+  hueBuckets: 24,
+  hueDegrees: 360,
+  hashMultiplier: 31,
+  hashModulo: 4_294_967_296,
+  saturation: '65%',
+  lightness: '50%',
+  borderMixPercent: 45,
+} as const;
+
+/** Punktfarbe des Raum-Chips: der Farbton kommt als `--tw-room-hue` vom Chip. */
+export const ROOM_DOT_COLOR = `hsl(var(--tw-room-hue) ${ROOM_COLORS.saturation} ${ROOM_COLORS.lightness})`;
