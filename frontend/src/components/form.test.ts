@@ -257,13 +257,14 @@ describe('Editoren', () => {
       language: 'de',
       runDays: 30,
       preview,
-      tasks: [{ id: 'a', label: 'Bad' }],
+      tasks: [{ id: 'a', label: 'Bad', rooms: ['Bad', 'Flur'] }],
       people: [{ id: 'p1', label: 'Anna', color: '#e03131' }],
     });
     const text = element.shadowRoot?.textContent ?? '';
     expect(element.shadowRoot?.querySelectorAll('.kpi')).toHaveLength(3);
     expect(element.shadowRoot?.querySelectorAll('.kpi.warn')).toHaveLength(2);
     expect(text).toContain('Anna · 2');
+    expect(element.shadowRoot?.querySelectorAll('.track tw-room')).toHaveLength(2);
     expect(text).toContain('2 Wochen');
     expect(text).toContain('jede Auslosung');
     expect(element.shadowRoot?.querySelectorAll('.bar')).toHaveLength(2);

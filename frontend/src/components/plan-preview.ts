@@ -15,11 +15,12 @@ import type { PlanIssueWire, PlanPreviewWire, PlanTrackWire } from '../state/ind
 import { defineOnce } from './define.ts';
 import type { ChipOption } from './chip-select.ts';
 import { LocalizedElement } from './localized.ts';
+import { roomChips } from './room.ts';
 import { baseStyles, tokenStyles, viewStyles } from './styles.ts';
 import { describeSpan } from './summaries.ts';
 
 /** Höhe einer Zeile der Abstandsspuren in `em`; es zeigen sich `TRACK_ROWS_VISIBLE` Zeilen. */
-const TRACK_HEIGHT_EM = 3.2;
+const TRACK_HEIGHT_EM = 4.4;
 const HALF = 0.5;
 const UNKNOWN_ISSUE: TextKey = 'error.unknown';
 
@@ -86,6 +87,10 @@ export class TwPlanPreview extends LocalizedElement {
       .track {
         display: grid;
         gap: var(--tw-space-xs);
+      }
+      .track-title {
+        display: grid;
+        min-width: 0;
       }
       .track-head {
         display: flex;
@@ -227,14 +232,14 @@ export class TwPlanPreview extends LocalizedElement {
     if (preview.tracks.length === 0) {
       return nothing;
     }
-    const names = new Map(this.tasks.map((task) => [task.id, task.label]));
+    const options = new Map(this.tasks.map((task) => [task.id, task]));
     return html`<div class="group">
       <span class="label">${this.text('plan.tracks')}</span>
       <div class="tracks">
         ${repeat(
           preview.tracks,
           (track) => track.task_id,
-          (track) => this.#track(track, preview, names.get(track.task_id) ?? track.task_id),
+          (track) => this.#track(track, preview, options.get(track.task_id)),
         )}
       </div>
       <span class="hint"
@@ -244,7 +249,11 @@ export class TwPlanPreview extends LocalizedElement {
     </div>`;
   }
 
-  #track(track: PlanTrackWire, preview: PlanPreviewWire, name: string): TemplateResult {
+  #track(
+    track: PlanTrackWire,
+    preview: PlanPreviewWire,
+    task: ChipOption | undefined,
+  ): TemplateResult {
     const draws = preview.draws_per_run;
     const ghosts = Math.max(TRACK_GHOST_MIN, Math.ceil(draws / TRACK_GHOST_DIVISOR));
     const total = draws + ghosts;
@@ -252,7 +261,10 @@ export class TwPlanPreview extends LocalizedElement {
       `left: ${String(((position + HALF) / total) * PERCENT)}%`;
     return html`<div class="track">
       <div class="track-head">
-        <span>${name}</span><span class="muted">${this.#gap(track, preview.interval_hours)}</span>
+        <span class="track-title"
+          ><span>${task?.label ?? track.task_id}</span
+          ><span>${roomChips(task?.rooms ?? [])}</span></span
+        ><span class="muted">${this.#gap(track, preview.interval_hours)}</span>
       </div>
       <div class="bar">
         ${track.positions.map((position) => html`<span class="dot" style=${left(position)}></span>`)}
