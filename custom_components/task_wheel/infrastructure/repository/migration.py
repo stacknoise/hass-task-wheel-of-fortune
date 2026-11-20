@@ -34,6 +34,24 @@ type Version = tuple[int, int]
 type Migration = Callable[[dict[str, object]], dict[str, object]]
 type Migrations = Mapping[Version, tuple[Version, Migration]]
 
+# Schlüssel und Werte des alten und des neuen Speicherstands (nur hier, nur für die Umstellung)
+LEGACY_KIND: Final = "kind"
+LEGACY_EVERY_N_WEEKS: Final = "every_n_weeks"
+LEGACY_AT: Final = "at"
+LEGACY_COUNT: Final = "count"
+LEGACY_ONCE: Final = "once"
+LEGACY_RECURRING: Final = "recurring"
+LEGACY_EVERY_ROUND: Final = "every_round"
+NEW_START: Final = "start"
+NEW_INTERVAL: Final = "interval"
+NEW_AUTOMATIC: Final = "automatic"
+NEW_ENTRIES: Final = "entries"
+NEW_UNIT: Final = "unit"
+NEW_EVERY: Final = "every"
+NEW_TASK_ID: Final = "task_id"
+NEW_MODE: Final = "mode"
+NEW_MIN_COUNT: Final = "min_count"
+
 CURRENT_VERSION: Final[Version] = (STORE_VERSION, STORE_MINOR_VERSION)
 
 
@@ -119,9 +137,13 @@ def _plan_fields(
 ) -> dict[str, object]:
     """Beginn, Intervall, Modus und Aufgaben des neuen Zeitplans aus Auslöser und Häufigkeiten."""
     trigger = schedule.get(KEY_TRIGGER)
-    kind = trigger.get("kind") if isinstance(trigger, dict) else None
-    weeks = trigger.get("every_n_weeks") if isinstance(trigger, dict) else None
-    start = trigger.get("at") if kind == "once" and isinstance(trigger, dict) else _default_start()
+    kind = trigger.get(LEGACY_KIND) if isinstance(trigger, dict) else None
+    weeks = trigger.get(LEGACY_EVERY_N_WEEKS) if isinstance(trigger, dict) else None
+    start = (
+        trigger.get(LEGACY_AT)
+        if kind == LEGACY_ONCE and isinstance(trigger, dict)
+        else _default_start()
+    )
     unit, every = (
         (IntervalUnit.WEEK.value, weeks) if isinstance(weeks, int) else (IntervalUnit.DAY.value, 1)
     )
@@ -129,22 +151,22 @@ def _plan_fields(
     ids = task_ids if isinstance(task_ids, list) else []
     entries = [_entry(task_id, tasks.get(task_id, {})) for task_id in ids]
     return {
-        "start": start,
-        "interval": {"unit": unit, "every": every},
-        "automatic": kind in {"recurring", "once"},
-        "entries": entries,
+        NEW_START: start,
+        NEW_INTERVAL: {NEW_UNIT: unit, NEW_EVERY: every},
+        NEW_AUTOMATIC: kind in {LEGACY_RECURRING, LEGACY_ONCE},
+        NEW_ENTRIES: entries,
     }
 
 
 def _entry(task_id: object, task: dict[str, object]) -> dict[str, object]:
     """Eintrag einer Aufgabe: „jede Auslosung“ oder mindestens so oft, wie ihre Regel erlaubte."""
     rule = task.get(KEY_FREQUENCY)
-    kind = rule.get("kind") if isinstance(rule, dict) else None
-    count = rule.get("count") if isinstance(rule, dict) else None
-    if kind == "every_round":
-        return {"task_id": task_id, "mode": EntryMode.EVERY_DRAW.value}
-    mode = {"task_id": task_id, "mode": EntryMode.MIN_COUNT.value}
-    return {**mode, "min_count": count} if isinstance(count, int) and count > 0 else mode
+    kind = rule.get(LEGACY_KIND) if isinstance(rule, dict) else None
+    count = rule.get(LEGACY_COUNT) if isinstance(rule, dict) else None
+    if kind == LEGACY_EVERY_ROUND:
+        return {NEW_TASK_ID: task_id, NEW_MODE: EntryMode.EVERY_DRAW.value}
+    mode = {NEW_TASK_ID: task_id, NEW_MODE: EntryMode.MIN_COUNT.value}
+    return {**mode, NEW_MIN_COUNT: count} if isinstance(count, int) and count > 0 else mode
 
 
 def _schedule_plan(data: dict[str, object]) -> dict[str, object]:
