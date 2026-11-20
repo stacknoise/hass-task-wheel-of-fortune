@@ -4,6 +4,7 @@ import { repeat } from 'lit/directives/repeat.js';
 
 import { modelsOf } from '../api/index.ts';
 import type {
+  EntryWire,
   GoalWindow,
   PersonObject,
   ScheduleObject,
@@ -29,11 +30,10 @@ import { formatNumber, formatPercent, formatShortDate } from '../i18n/format.ts'
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
 import { AsyncValue, LiveLoad, StoreController, indexById } from '../state/index.ts';
-import type { AreaNames, FrequencyWire } from '../state/index.ts';
-import { describeFrequency } from '../components/summaries.ts';
-import { roomTags } from './room.ts';
+import type { AreaNames } from '../state/index.ts';
 import { pointBars, weeklyChart } from './statistics-charts.ts';
-import { barRows, matrixRows } from './statistics-model.ts';
+import { barRows, goalProgress, goalState, matrixRows } from './statistics-model.ts';
+import { roomTags } from './room.ts';
 import { defineOnce } from '../components/define.ts';
 
 interface Kpi {
@@ -316,7 +316,7 @@ export class TwStatisticsView extends LitElement {
               <summary>
                 ${scheduleById.get(scheduleId)?.name ?? this.#text('common.unknownSchedule')}
               </summary>
-              ${this.#goalTable(goals, taskById, areas)}
+              ${this.#goalTable(goals, taskById, areas, scheduleById.get(scheduleId))}
             </details>`,
         )}
       </div>
@@ -327,7 +327,9 @@ export class TwStatisticsView extends LitElement {
     goals: readonly TaskGoal[],
     taskById: ReadonlyMap<string, TaskObject>,
     areas: AreaNames,
+    schedule: ScheduleObject | undefined,
   ): TemplateResult {
+    const entryOf = new Map(schedule?.entries.map((entry) => [entry.task_id, entry]));
     const windows = Math.max(...goals.map((goal) => goal.windows.length));
     return html`<div class="scroll">
       <table>
@@ -348,37 +350,52 @@ export class TwStatisticsView extends LitElement {
           ${repeat(
             goals,
             (goal) => goal.task_id,
-            (goal) => this.#goalRow(goal, taskById.get(goal.task_id), areas),
+            (goal) =>
+              this.#goalRow(goal, taskById.get(goal.task_id), areas, entryOf.get(goal.task_id)),
           )}
         </tbody>
       </table>
     </div>`;
   }
 
-  #goalRow(goal: TaskGoal, task: TaskObject | undefined, areas: AreaNames): TemplateResult {
-    const rule: FrequencyWire = {
-      kind: 'max_per_period',
-      count: goal.target,
-      period: goal.period,
-      every: goal.every,
-    };
+  #goalRow(
+    goal: TaskGoal,
+    task: TaskObject | undefined,
+    areas: AreaNames,
+    entry: EntryWire | undefined,
+  ): TemplateResult {
+    const rule =
+      entry?.mode === 'every_draw'
+        ? this.#text('statistics.goalEveryDraw')
+        : this.#text('statistics.goalMinCount', { count: goal.target });
     return html`<tr>
       <td>
         ${task?.name ?? this.#text('common.unknownTask')}
         ${roomTags(areas, task?.area_ids, this.#text('common.unknownArea'))}
       </td>
-      <td>${describeFrequency(rule, this.language)}</td>
+      <td>${rule}</td>
       ${goal.windows.map((window) => this.#goalCell(goal.target, window))}
     </tr>`;
   }
 
   #goalCell(target: number, window: GoalWindow): TemplateResult {
-    const state = window.assigned === target ? 'met' : window.assigned > target ? 'over' : 'under';
+    const state = goalState(target, window);
     const range = `${formatShortDate(window.start, this.language)} – ${formatShortDate(window.end, this.language)}`;
     return html`<td class="goal-cell" data-state=${state}>
       <strong>${window.assigned} / ${target}</strong>
       <div class="muted">${range}</div>
       <div class="muted">${this.#text('statistics.goalDone', { done: window.done })}</div>
+      ${
+        window.elapsed < window.draws
+          ? html`<div class="muted">
+              ${this.#text('statistics.goalProgress', {
+                elapsed: window.elapsed,
+                draws: window.draws,
+                share: formatNumber(goalProgress(target, window), this.language),
+              })}
+            </div>`
+          : nothing
+      }
     </td>`;
   }
 

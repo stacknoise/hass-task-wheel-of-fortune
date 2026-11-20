@@ -12,11 +12,13 @@ import {
   EMPTY_TEXT,
   EVENT_TAB_SELECT,
   FALLBACK_COLOR,
+  PERIOD_NUMBER_OFFSET,
   ROUTE_HISTORY,
   START_PLACEMENT,
   VIEW_TAGS,
 } from '../constants/index.ts';
 import type { AnimationKind } from '../constants/index.ts';
+import { formatDateTime } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import {
@@ -39,7 +41,7 @@ import { roomTags } from './room.ts';
 import { drawSummary, stageNotice } from './draw-summary.ts';
 import { peopleList } from './draw-people.ts';
 import { ReplaceFlow } from './draw-replace.ts';
-import { drawFailure, drawWindowDialog } from './draw-window.ts';
+import { drawFailure } from './draw-failure.ts';
 import { drawStyles } from './draw-styles.ts';
 import { isCurrentTask, nameOf, taskStatus, waitingPersons, winnerOf } from './draw-rows.ts';
 import { taskRow } from './task-row.ts';
@@ -50,7 +52,6 @@ export class TwDrawView extends LitElement {
   static override properties = {
     language: { type: String },
     _scheduleId: { state: true },
-    _starting: { state: true },
   };
 
   static override styles = drawStyles;
@@ -58,7 +59,6 @@ export class TwDrawView extends LitElement {
   declare language: string;
   declare _scheduleId: string;
   /** Die Zeitplan-Kennung, für die der Dialog „ab wann, bis wann“ offen ist. */
-  declare _starting: string;
 
   readonly #store = new StoreController(this);
   /** Räume des laufenden Renders. */
@@ -84,7 +84,6 @@ export class TwDrawView extends LitElement {
     super();
     this.language = EMPTY_TEXT;
     this._scheduleId = EMPTY_TEXT;
-    this._starting = EMPTY_TEXT;
   }
 
   /**
@@ -248,15 +247,14 @@ export class TwDrawView extends LitElement {
           class="button primary"
           ?disabled=${!scheduleId}
           @click=${() => {
-            this._starting = scheduleId;
+            this.#begin(scheduleId);
           }}
         >
           ${this.#text('draw.start')}
         </button>
         ${open ? this.#resumeButton(scheduleId) : nothing}
       </div>
-      <p class="muted">${this.#text('draw.choose')}</p>
-      ${this._starting === scheduleId ? this.#windowDialog(scheduleId) : nothing}
+      <p class="muted">${this.#nextHint(this.#schedule(scheduleId))}</p>
     `;
   }
 
@@ -275,25 +273,24 @@ export class TwDrawView extends LitElement {
     return html`<button class="button" @click=${resume}>${this.#text('draw.resume')}</button>`;
   }
 
-  #windowDialog(scheduleId: string): TemplateResult {
-    return drawWindowDialog({
-      language: this.language,
-      schedule: this.#schedule(scheduleId),
-      now: this.#store.state?.snapshot?.now ?? EMPTY_TEXT,
-      onConfirm: (request) => {
-        const kind = this.#pick(scheduleId);
-        this._starting = EMPTY_TEXT;
-        void this.#session?.begin(
-          scheduleId,
-          request,
-          kind !== undefined,
-          this.#store.client?.isAdmin() === true,
-        );
-      },
-      onCancel: () => {
-        this._starting = EMPTY_TEXT;
-      },
-    });
+  /** Beginnt die Runde für die nächste offene Periode des Zeitplans. */
+  #begin(scheduleId: string): void {
+    const kind = this.#pick(scheduleId);
+    void this.#session?.begin(
+      scheduleId,
+      kind !== undefined,
+      this.#store.client?.isAdmin() === true,
+    );
+  }
+
+  /** Welche Periode die nächste Auslosung abdeckt und wann sie fällig ist bzw. war. */
+  #nextHint(schedule: ScheduleInfo | undefined): string {
+    return schedule?.nextRun
+      ? translate('draw.next_period', this.language, {
+          period: schedule.nextPeriod + PERIOD_NUMBER_OFFSET,
+          at: formatDateTime(schedule.nextRun, this.language),
+        })
+      : this.#text('draw.choose');
   }
 
   /** Wählt zufällig eine der Animationen, die der Zeitplan erlaubt (ohne Auswahl keine), und merkt sie. */

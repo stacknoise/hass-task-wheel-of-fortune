@@ -3,8 +3,7 @@ import type { TemplateResult } from 'lit';
 
 import { personsOf } from '../api/index.ts';
 import type { AreaOption, Snapshot, TaskWire } from '../api/index.ts';
-import { describeFrequency, onChange } from '../components/index.ts';
-import type { ChipOption } from '../components/index.ts';
+import { onChange } from '../components/index.ts';
 import '../components/index.ts';
 import {
   DEFAULT_MIN_LOAD,
@@ -14,8 +13,9 @@ import {
   VIEW_TAGS,
 } from '../constants/index.ts';
 import type { Load } from '../constants/index.ts';
-import { FREQUENCY_BUILDERS } from '../state/index.ts';
-import type { FrequencyWire } from '../state/index.ts';
+import { translate } from '../i18n/index.ts';
+import { taskUsage } from '../state/index.ts';
+import { personOptions } from './chip-options.ts';
 import { ConfigView } from './config-view.ts';
 import { roomTags } from './room.ts';
 import type { ConfigTexts } from './config-view.ts';
@@ -26,7 +26,7 @@ type TaskDraft = Omit<TaskWire, 'id'>;
 
 const TEXTS: ConfigTexts = { add: 'tasks.add', create: 'tasks.new', edit: 'tasks.edit' };
 
-/** Aufgaben: erlaubte Personen, Häufigkeit mit Zeitstrahl, Punkte und Zusatzregeln (die Frist gibt der Zeitplan vor). */
+/** Aufgaben: erlaubte Personen, Punkte und Zusatzregeln; Häufigkeit und Frist legt der Zeitplan fest. */
 export class TasksView extends ConfigView<TaskWire, TaskDraft> {
   protected readonly resource = 'task';
   protected readonly collection = 'tasks';
@@ -36,7 +36,6 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
     return {
       name: '',
       allowed: personsOf(snapshot).map((person) => person.id),
-      frequency: FREQUENCY_BUILDERS.every_round(),
       points: DEFAULT_TASK_POINTS,
       no_repeat: false,
       respect_absence: true,
@@ -50,7 +49,6 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
     return {
       name: task.name,
       allowed: task.allowed,
-      frequency: task.frequency,
       points: task.points,
       no_repeat: task.no_repeat,
       respect_absence: task.respect_absence,
@@ -64,41 +62,33 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
     return draft;
   }
 
-  protected card(task: TaskWire): TemplateResult {
+  protected card(task: TaskWire, snapshot: Snapshot): TemplateResult {
     return html`
       <strong>${task.name}</strong>
       <div class="muted">${task.points} ${this.text('tasks.points_short')}</div>
-      <div class="muted">${describeFrequency(task.frequency, this.language)}</div>
+      <div class="muted">
+        ${translate('tasks.card.schedules', this.language, {
+          count: taskUsage(snapshot, task.id).length,
+        })}
+      </div>
       ${this.#room(task.area_ids)}
     `;
   }
 
   protected form(draft: TaskDraft, snapshot: Snapshot): TemplateResult {
-    const people: readonly ChipOption[] = personsOf(snapshot).map((person) => ({
-      id: person.id,
-      label: person.name,
-      color: person.color,
-    }));
     return html`
       ${this.nameField(draft.name, (name) => {
         this.patch({ name });
       })}
       <tw-chip-select
         .label=${this.text('tasks.allowed')}
-        .options=${people}
+        .options=${personOptions(snapshot)}
         .selected=${draft.allowed}
         .error=${this.fieldError('allowed')}
         @tw-change=${onChange<string[]>((allowed) => {
           this.patch({ allowed });
         })}
       ></tw-chip-select>
-      <tw-frequency-editor
-        .language=${this.language}
-        .value=${draft.frequency}
-        @tw-change=${onChange<FrequencyWire>((frequency) => {
-          this.patch({ frequency });
-        })}
-      ></tw-frequency-editor>
       <tw-stepper
         .label=${this.text('tasks.points')}
         .value=${draft.points}
@@ -109,6 +99,35 @@ export class TasksView extends ConfigView<TaskWire, TaskDraft> {
         })}
       ></tw-stepper>
       ${this.#areaSelect(draft.area_ids)} ${this.#minLoad(draft.min_load)} ${this.#rules(draft)}
+      ${this.#usage(snapshot)}
+    `;
+  }
+
+  /** In welchen Zeitplänen die Aufgabe vorkommt und wie oft; die Häufigkeit stellt man im Zeitplan ein. */
+  #usage(snapshot: Snapshot): TemplateResult {
+    const usage = this._editId === undefined ? [] : taskUsage(snapshot, this._editId);
+    return html`
+      <div>
+        <span class="label">${this.text('tasks.usage')}</span>
+        ${
+          usage.length === 0
+            ? html`<span class="muted">${this.text('tasks.usage.none')}</span>`
+            : html`<ul>
+                ${usage.map(
+                  ({ scheduleId, scheduleName, entry }) =>
+                    html`<li class="muted" data-schedule=${scheduleId}>
+                      ${translate(
+                        entry.mode === 'every_draw'
+                          ? 'tasks.usage.every_draw'
+                          : 'tasks.usage.min_count',
+                        this.language,
+                        { name: scheduleName, count: entry.min_count },
+                      )}
+                    </li>`,
+                )}
+              </ul>`
+        }
+      </div>
     `;
   }
 

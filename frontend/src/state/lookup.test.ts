@@ -8,6 +8,7 @@ import {
   openRoundFor,
   participantsOf,
   personsById,
+  taskUsage,
   tasksById,
 } from './lookup.ts';
 
@@ -16,11 +17,37 @@ const SNAPSHOT: Snapshot = {
   persons: [{ id: 'p1', name: 'Anna', color: '#c05600' }, { id: 'p2' }],
   tasks: [{ id: 't1', name: 'Bad', points: 3, allowed: ['p1', 7] }, { id: 't2' }],
   schedules: [
-    { id: 's1', name: 'Woche', archived: false },
+    { id: 's1', name: 'Woche', archived: false, next_run: '2026-11-09T18:00:00Z', next_period: 2 },
     { id: 's2', name: 'Alt', archived: true },
   ],
   panel_rounds: [{ id: 'r1', schedule_id: 's1' }],
 };
+
+describe('taskUsage', () => {
+  it('nennt die Zeitpläne, in denen die Aufgabe vorkommt, mit ihrem Eintrag', () => {
+    const snapshot: Snapshot = {
+      ...EMPTY_SNAPSHOT,
+      schedules: [
+        { id: 's1', name: 'Woche', entries: [{ task_id: 't1', mode: 'min_count', min_count: 2 }] },
+        { id: 's2', name: 'Monat', entries: [{ task_id: 't1', mode: 'every_draw', min_count: 1 }] },
+        { id: 's3', name: 'Leer', entries: [{ task_id: 't9', mode: 'min_count', min_count: 1 }] },
+      ],
+    };
+    expect(taskUsage(snapshot, 't1')).toEqual([
+      {
+        scheduleId: 's1',
+        scheduleName: 'Woche',
+        entry: { task_id: 't1', mode: 'min_count', min_count: 2 },
+      },
+      {
+        scheduleId: 's2',
+        scheduleName: 'Monat',
+        entry: { task_id: 't1', mode: 'every_draw', min_count: 1 },
+      },
+    ]);
+    expect(taskUsage(snapshot, 'tx')).toEqual([]);
+  });
+});
 
 describe('lookup', () => {
   it('erlaubt ohne erlaubte Personen jede Person', () => {
@@ -51,6 +78,10 @@ describe('lookup', () => {
 
   it('bietet nur nicht archivierte Zeitpläne an', () => {
     expect(drawableSchedules(SNAPSHOT).map((item) => item.id)).toEqual(['s1']);
+    expect(drawableSchedules(SNAPSHOT)[0]).toMatchObject({
+      nextRun: '2026-11-09T18:00:00Z',
+      nextPeriod: 2,
+    });
   });
 
   it('findet die offene Runde eines Zeitplans', () => {

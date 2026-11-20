@@ -5,13 +5,13 @@ import { repeat } from 'lit/directives/repeat.js';
 import type { AssignmentObject, PersonObject, TaskObject } from '../api/index.ts';
 import type { ActionItem } from '../components/index.ts';
 
-import { STATUS } from '../constants/index.ts';
+import { PERIOD_NUMBER_OFFSET, STATUS } from '../constants/index.ts';
 import { formatDateTime } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey, TextParams } from '../i18n/index.ts';
 import type { AreaNames } from '../state/index.ts';
 import { roomTags } from './room.ts';
-import { canSwap, swapTargets } from './overview-model.ts';
+import { canSwap, hasNewerDraw, swapTargets } from './overview-model.ts';
 import { roundDelete } from './round-delete.ts';
 import type { AssignmentGroup, SwapTarget } from './overview-model.ts';
 
@@ -224,6 +224,7 @@ function groupHead(
   const title = schedule?.name ?? text('overview.noSchedule');
   const meta = round
     ? text('overview.roundMeta', {
+        period: round.period_index + PERIOD_NUMBER_OFFSET,
         date: formatDateTime(round.started_at, context.language),
         open: group.assignments.length,
         total: round.total,
@@ -238,6 +239,9 @@ function groupHead(
               language: context.language,
               total: round.total,
               done: round.done,
+              period: round.period_index,
+              newerDraw: hasNewerDraw(round, schedule),
+              automatic: schedule?.automatic ?? false,
               busy: context.busy,
               onConfirm: () => {
                 context.handlers.deleteRound(round.id);

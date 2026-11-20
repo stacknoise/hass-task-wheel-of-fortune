@@ -44,15 +44,19 @@ describe('Statistik', () => {
       '2 / 3',
       '3 / 3',
       '1 / 3',
+      '4 / 4',
       '0 / 3',
     ]);
     expect(cells.map((cell) => cell.getAttribute('data-state'))).toEqual([
       'under',
       'met',
       'under',
+      'met',
       'under',
     ]);
-    expect(text(view)).toContain('max. 3× in 2 Monaten');
+    expect(text(view)).toContain('mind. 3× je Lauf');
+    expect(text(view)).toContain('jede Auslosung');
+    expect(text(view)).toContain('2 von 4 Auslosungen, anteiliges Soll 1,5');
     const first = view.shadowRoot?.querySelector('tr:has(td.goal-cell) td');
     expect(first?.textContent).toContain('Bad putzen');
     const room = first?.querySelector('tw-room') as (HTMLElement & { name: string }) | null;
@@ -71,7 +75,7 @@ describe('Statistik', () => {
       'Wochenplan',
       'Monatsplan',
     ]);
-    expect(groups.map((group) => group.querySelectorAll('td.goal-cell').length)).toEqual([3, 1]);
+    expect(groups.map((group) => group.querySelectorAll('td.goal-cell').length)).toEqual([4, 1]);
   });
 
   it('zeigt in der Matrix leer, wo eine Person die Aufgabe nicht darf', async () => {
@@ -80,7 +84,9 @@ describe('Statistik', () => {
       expect(view.shadowRoot?.querySelector('td.cell')).not.toBeNull();
     });
     const rows = [...(view.shadowRoot?.querySelectorAll('tbody tr') ?? [])];
-    const muell = rows.find((row) => row.textContent.includes('Müll'));
+    const muell = rows.find(
+      (row) => row.querySelector('td.cell') !== null && row.textContent.includes('Müll'),
+    );
     const cells = [...(muell?.querySelectorAll('td.cell') ?? [])].map((c) => c.textContent.trim());
     expect(cells).toEqual(['2', '–', '–']);
   });

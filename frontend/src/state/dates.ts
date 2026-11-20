@@ -1,6 +1,6 @@
 /** Datums- und Zeitwerte zwischen Leitung (ISO-Text) und Eingabefeldern; reine Funktionen. */
 
-import { DATE_LENGTH, TIME_INPUT_LENGTH } from '../constants/index.ts';
+import { DATE_LENGTH } from '../constants/index.ts';
 
 const PAD_LENGTH = 2;
 const PAD_CHAR = '0';
@@ -8,11 +8,6 @@ const PAD_CHAR = '0';
 /** Der Kalendertag eines ISO-Zeitpunkts oder Datums (`2026-11-03T12:00:00+00:00` ⇒ `2026-11-03`). */
 export function dayOf(iso: string): string {
   return iso.slice(0, DATE_LENGTH);
-}
-
-/** Uhrzeit der Leitung (`18:30:00`) als Wert des Eingabefelds (`18:30`). */
-export function timeInput(time: string): string {
-  return time.slice(0, TIME_INPUT_LENGTH);
 }
 
 function pad(value: number): string {

@@ -1,91 +1,36 @@
-import type { DeadlineUnit, FrequencyKind, TriggerKind } from '../constants/index.ts';
-import { formatDateTime } from '../i18n/format.ts';
+import { INTERVAL_UNIT_HOURS } from '../constants/index.ts';
+import type { IntervalUnit } from '../constants/index.ts';
+import { formatNumber } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
-import type { DeadlineWire, FrequencyWire, TriggerWire } from '../state/index.ts';
-import { timeInput } from '../state/index.ts';
-import { WEEKDAY_TEXT, toIds, weekdayOptions } from './options.ts';
-
-type FrequencySummaries = {
-  readonly [K in FrequencyKind]: (
-    frequency: Extract<FrequencyWire, { kind: K }>,
-    language: string,
-  ) => string;
-};
-type TriggerSummaries = {
-  readonly [K in TriggerKind]: (
-    trigger: Extract<TriggerWire, { kind: K }>,
-    language: string,
-  ) => string;
-};
-
-const FREQUENCY_SUMMARIES: FrequencySummaries = {
-  every_round: (_, language) => translate('frequency.summary_every_round', language),
-  max_per_period: (frequency, language) =>
-    frequency.every === 1
-      ? translate('frequency.summary_max', language, {
-          count: frequency.count,
-          period: translate(`period.${frequency.period}`, language),
-        })
-      : translate('frequency.summary_max_span', language, {
-          count: frequency.count,
-          every: frequency.every,
-          period: translate(`period.${frequency.period}.plural`, language),
-        }),
-  interval: (frequency, language) =>
-    translate('frequency.summary_interval', language, {
-      days: frequency.days,
-      tolerance: frequency.tolerance,
-    }),
-};
-
-const TRIGGER_SUMMARIES: TriggerSummaries = {
-  recurring: (trigger, language) => {
-    const names = new Map(weekdayOptions(language).map((option) => [option.id, option.label]));
-    return translate('summary.recurring', language, {
-      days: toIds(trigger.weekdays)
-        .map((id) => names.get(id) ?? id)
-        .join(' '),
-      time: timeInput(trigger.time),
-    });
-  },
-  once: (trigger, language) =>
-    translate('summary.once', language, {
-      at: formatDateTime(trigger.at, language),
-    }),
-  manual: (_, language) => translate('summary.manual', language),
-};
-
-/** Kurztext einer Häufigkeitsregel für Karten (`alle 7 Tage ± 1`). */
-export function describeFrequency(frequency: FrequencyWire, language: string): string {
-  return (FREQUENCY_SUMMARIES[frequency.kind] as (f: FrequencyWire, l: string) => string)(
-    frequency,
-    language,
-  );
-}
-
-/** Kurztext eines Auslösers für Karten (`Mo Do um 18:30`). */
-export function describeTrigger(trigger: TriggerWire, language: string): string {
-  return (TRIGGER_SUMMARIES[trigger.kind] as (t: TriggerWire, l: string) => string)(
-    trigger,
-    language,
-  );
-}
+import type { IntervalWire } from '../state/index.ts';
 
 const SINGULAR = 1;
+/** Ab zwei Tagen zählt eine Dauer in Tagen, auch mit Bruchteil. */
+const MULTI_DAY_COUNT = 2;
+const MULTI_DAY_HOURS = INTERVAL_UNIT_HOURS.day * MULTI_DAY_COUNT;
 
-/** Anzahl mit Einheit in der richtigen Zahl (`1 Stunde`, `4 Stunden`). */
-export function describeAmount(count: number, unit: DeadlineUnit, language: string): string {
+/** Anzahl mit Einheit in der richtigen Zahl (`1 Stunde`, `4 Tage`). */
+function describeAmount(count: number, unit: IntervalUnit, language: string): string {
   const form = count === SINGULAR ? 'one' : 'other';
-  return translate(`deadline.count.${unit}.${form}`, language, { count });
+  return translate(`span.${unit}.${form}`, language, { count: formatNumber(count, language) });
 }
 
-/** Kurztext einer Frist für Karten (`ab Folgetag 10:00, 4 Stunden`). */
-export function describeDeadline(deadline: DeadlineWire, language: string): string {
-  const params = {
-    duration: describeAmount(deadline.duration, deadline.duration_unit, language),
-    offset: describeAmount(deadline.offset, deadline.offset_unit, language),
-    time: timeInput(deadline.time),
-    weekday: translate(WEEKDAY_TEXT[deadline.weekday as keyof typeof WEEKDAY_TEXT], language),
-  };
-  return translate(`deadline.summary.${deadline.start}`, language, params);
+/** Kurztext eines Intervalls für Karten (`alle 7 Tage`, `jeden Tag`). */
+export function describeInterval(interval: IntervalWire, language: string): string {
+  return interval.every === SINGULAR
+    ? translate(`interval.single.${interval.unit}`, language)
+    : translate('interval.every', language, {
+        span: describeAmount(interval.every, interval.unit, language),
+      });
+}
+
+/** Eine Dauer in Stunden als Text in der größten Einheit, in der sie ohne Rest aufgeht (sonst Tage mit Nachkomma). */
+export function describeSpan(hours: number, language: string): string {
+  if (hours % INTERVAL_UNIT_HOURS.week === 0) {
+    return describeAmount(hours / INTERVAL_UNIT_HOURS.week, 'week', language);
+  }
+  if (hours % INTERVAL_UNIT_HOURS.day === 0 || hours >= MULTI_DAY_HOURS) {
+    return describeAmount(hours / INTERVAL_UNIT_HOURS.day, 'day', language);
+  }
+  return describeAmount(hours, 'hour', language);
 }

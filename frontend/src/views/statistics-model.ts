@@ -1,4 +1,11 @@
-import type { Matrix, PersonObject, Standing, TaskObject, WeekRate } from '../api/index.ts';
+import type {
+  GoalWindow,
+  Matrix,
+  PersonObject,
+  Standing,
+  TaskObject,
+  WeekRate,
+} from '../api/index.ts';
 import { CHART, HEAT_LEVELS, PAIR, PERCENT } from '../constants/index.ts';
 
 export interface BarRow {
@@ -102,4 +109,24 @@ export function matrixRows(
       };
     }),
   }));
+}
+
+/** Stand einer Aufgabe in einem Lauf: erreicht, übertroffen oder zu selten verlost. */
+export type GoalState = 'met' | 'over' | 'under';
+
+/** Anteiliges Soll im laufenden Lauf: `target` je Lauf, gerechnet nach den schon möglichen Auslosungen. */
+export function goalProgress(target: number, window: GoalWindow): number {
+  return (target * window.elapsed) / window.draws;
+}
+
+/**
+ * Vergleicht das Ist mit dem Soll. Ein abgeschlossener Lauf zählt gegen das ganze Soll; im
+ * laufenden Lauf ist „zu selten“ erst, wer unter dem ganzzahlig abgerundeten anteiligen Soll liegt.
+ */
+export function goalState(target: number, window: GoalWindow): GoalState {
+  const due = window.elapsed < window.draws ? Math.floor(goalProgress(target, window)) : target;
+  if (window.assigned > target) {
+    return 'over';
+  }
+  return window.assigned >= due ? 'met' : 'under';
 }

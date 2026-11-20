@@ -1,7 +1,6 @@
 import { DEFAULT_LANGUAGE } from '../constants/index.ts';
 
 const DATE_TIME: Intl.DateTimeFormatOptions = { dateStyle: 'medium', timeStyle: 'short' };
-const DATE: Intl.DateTimeFormatOptions = { dateStyle: 'medium' };
 const SHORT_DATE: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'numeric' };
 const PERCENT: Intl.NumberFormatOptions = { style: 'percent', maximumFractionDigits: 0 };
 const FRACTION_DIGITS = 2;
@@ -29,7 +28,6 @@ function perLanguage<T>(create: (locale: string) => T): (language: string) => T 
 }
 
 const dateTimeFormat = perLanguage((tag) => new Intl.DateTimeFormat(tag, DATE_TIME));
-const dateFormat = perLanguage((tag) => new Intl.DateTimeFormat(tag, DATE));
 const shortDateFormat = perLanguage((tag) => new Intl.DateTimeFormat(tag, SHORT_DATE));
 const percentFormat = perLanguage((tag) => new Intl.NumberFormat(tag, PERCENT));
 const numberFormat = perLanguage((tag) => new Intl.NumberFormat(tag, NUMBER));
@@ -37,10 +35,6 @@ const numberFormat = perLanguage((tag) => new Intl.NumberFormat(tag, NUMBER));
 /** Datum und Uhrzeit aus einem ISO-Text; ein unlesbarer Wert bleibt unverändert. */
 export function formatDateTime(iso: string, language: string): string {
   return formatWith(iso, dateTimeFormat(language));
-}
-
-export function formatDate(iso: string, language: string): string {
-  return formatWith(iso, dateFormat(language));
 }
 
 /** Tag und Monat, für Achsenbeschriftungen. */
