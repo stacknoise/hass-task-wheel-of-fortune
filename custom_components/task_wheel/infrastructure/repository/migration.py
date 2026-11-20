@@ -169,6 +169,15 @@ def _entry(task_id: object, task: dict[str, object]) -> dict[str, object]:
     return {**mode, NEW_MIN_COUNT: count} if isinstance(count, int) and count > 0 else mode
 
 
+def _without(
+    item: object, removed: set[str], extra: Callable[[dict[str, object]], dict[str, object]]
+) -> object:
+    """Eintrag ohne die entfernten Felder, ergänzt um `extra(item)`; Fremdes bleibt unverändert."""
+    if not isinstance(item, dict):
+        return item
+    return {k: v for k, v in item.items() if k not in removed} | extra(item)
+
+
 def _schedule_plan(data: dict[str, object]) -> dict[str, object]:
     """1.5 -> 1.6: Häufigkeit, Auslöser und Frist wandern an den Zeitplan (Beginn, Intervall, Lauf).
 
@@ -179,29 +188,20 @@ def _schedule_plan(data: dict[str, object]) -> dict[str, object]:
     if not isinstance(schedules, list) or not isinstance(tasks, list):
         return data
     by_id = {t.get("id"): t for t in tasks if isinstance(t, dict)}
-    removed = {KEY_TRIGGER, KEY_DEADLINE, KEY_TASK_IDS}
     return {
         **data,
         KEY_SCHEDULES: [
-            {k: v for k, v in item.items() if k not in removed} | _plan_fields(item, by_id)
-            if isinstance(item, dict)
-            else item
+            _without(
+                item, {KEY_TRIGGER, KEY_DEADLINE, KEY_TASK_IDS}, lambda i: _plan_fields(i, by_id)
+            )
             for item in schedules
         ],
-        KEY_TASKS: [
-            {k: v for k, v in item.items() if k != KEY_FREQUENCY}
-            if isinstance(item, dict)
-            else item
-            for item in tasks
-        ],
+        KEY_TASKS: [_without(item, {KEY_FREQUENCY}, lambda _: {}) for item in tasks],
     }
 
 
-def _round_periods(data: dict[str, object]) -> dict[str, object]:
-    """1.5 -> 1.6: Runden erhalten ihre Periodennummer je Zeitplan, `replaces` entfällt."""
-    rounds = data.get(KEY_ROUNDS)
-    if not isinstance(rounds, list):
-        return data
+def _period_numbers(rounds: list[object]) -> dict[int, int]:
+    """Periodennummer je Runde (nach `id()`): Reihenfolge des Starts innerhalb des Zeitplans."""
     ordered = sorted(
         (item for item in rounds if isinstance(item, dict)),
         key=lambda item: str(item.get(KEY_STARTED_AT)),
@@ -212,13 +212,19 @@ def _round_periods(data: dict[str, object]) -> dict[str, object]:
         schedule_id = item.get(KEY_SCHEDULE_ID)
         numbered[id(item)] = counters.get(schedule_id, 0)
         counters[schedule_id] = numbered[id(item)] + 1
+    return numbered
+
+
+def _round_periods(data: dict[str, object]) -> dict[str, object]:
+    """1.5 -> 1.6: Runden erhalten ihre Periodennummer je Zeitplan, `replaces` entfällt."""
+    rounds = data.get(KEY_ROUNDS)
+    if not isinstance(rounds, list):
+        return data
+    numbered = _period_numbers(rounds)
     return {
         **data,
         KEY_ROUNDS: [
-            {k: v for k, v in item.items() if k != KEY_REPLACES}
-            | {KEY_PERIOD_INDEX: numbered[id(item)]}
-            if isinstance(item, dict)
-            else item
+            _without(item, {KEY_REPLACES}, lambda i: {KEY_PERIOD_INDEX: numbered[id(i)]})
             for item in rounds
         ],
     }

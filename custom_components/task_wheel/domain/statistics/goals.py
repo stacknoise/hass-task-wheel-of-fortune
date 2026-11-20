@@ -2,12 +2,12 @@
 
 import datetime as dt
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 from ...const.defaults import DEFAULT_GOAL_WINDOWS
 from ..enums import DONE_STATUSES
-from ..models import Round, Schedule
+from ..models import Round, Schedule, ScheduleEntry
 from ..plan.window import period_index_at, period_start
 from ..types import ScheduleId, TaskId
 
@@ -60,6 +60,21 @@ def _counts(rounds: Iterable[Round], draws: int) -> dict[tuple[int, TaskId], tup
     return {key: (count, done[key]) for key, count in assigned.items()}
 
 
+def _goal(
+    schedule: Schedule,
+    entry: ScheduleEntry,
+    runs: Sequence[int],
+    current: int,
+    counts: Mapping[tuple[int, TaskId], tuple[int, int]],
+) -> TaskGoal:
+    """Soll und Läufe einer Aufgabe."""
+    target = schedule.draws_per_run if entry.every_draw else entry.min_count
+    windows = tuple(
+        _window(schedule, run, current, counts.get((run, entry.task_id), (0, 0))) for run in runs
+    )
+    return TaskGoal(schedule.id, entry.task_id, target, windows)
+
+
 def schedule_goals(
     schedule: Schedule,
     rounds: Iterable[Round],
@@ -78,18 +93,7 @@ def schedule_goals(
     counts = _counts((round_ for round_ in rounds if round_.schedule_id == schedule.id), draws)
     current_run = current // draws
     runs = [run for run in range(current_run, current_run - windows, -1) if run >= 0]
-    return tuple(
-        TaskGoal(
-            schedule.id,
-            entry.task_id,
-            draws if entry.every_draw else entry.min_count,
-            tuple(
-                _window(schedule, run, current, counts.get((run, entry.task_id), (0, 0)))
-                for run in runs
-            ),
-        )
-        for entry in schedule.entries
-    )
+    return tuple(_goal(schedule, entry, runs, current, counts) for entry in schedule.entries)
 
 
 def build_goals(
