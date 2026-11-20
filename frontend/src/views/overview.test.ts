@@ -248,7 +248,7 @@ describe('Übersicht', () => {
     hass.replies.set(WS_STATISTICS_GET, new Error('x'));
     const { view } = await mount(hass);
     await vi.waitFor(() => {
-      expect(text(view)).toContain('Keine automatische Auslosung geplant.');
+      expect(text(view)).toContain('Keine Auslosung geplant.');
     });
     expect(text(view)).toContain('Keine offenen Zuteilungen.');
     expect(text(view)).toContain('Noch keine Aktivität.');

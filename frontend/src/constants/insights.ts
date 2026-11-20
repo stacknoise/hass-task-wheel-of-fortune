@@ -9,9 +9,6 @@ export const WS_ASSIGNMENT_COMPLETE = `${WS_PREFIX}assignment/complete`;
 export const WS_ASSIGNMENT_SWAP = `${WS_PREFIX}assignment/swap`;
 export const WS_ASSIGNMENT_SKIP = `${WS_PREFIX}assignment/skip`;
 
-export const FIELD_PERSON_ID = 'person_id';
-export const FIELD_OFFSET = 'offset';
-export const FIELD_LIMIT = 'limit';
 export const FIELD_MONTHS = 'months';
 export const FIELD_WEEKS = 'weeks';
 export const FIELD_ASSIGNMENT_ID = 'assignment_id';
@@ -27,9 +24,7 @@ export const STATUS = {
 } as const;
 export type AssignmentStatus = (typeof STATUS)[keyof typeof STATUS];
 
-/** Status, in denen eine Zuteilung noch zu erledigen ist. */
-export const PENDING_STATUSES: readonly AssignmentStatus[] = [STATUS.open, STATUS.swapped];
-/** Status, in denen sie erledigt wurde. */
+/** Status, in denen eine Zuteilung erledigt wurde. */
 export const DONE_STATUSES: readonly AssignmentStatus[] = [STATUS.onTime, STATUS.late];
 
 export type Tone = 'success' | 'warning' | 'error' | 'info' | 'neutral';
@@ -58,7 +53,6 @@ export const DECISION_PAGE_SIZE = 20;
 export const DECISION_PAGE_SIZE_MAX = 200;
 /** Art eines Eintrags: Auslosung, Tausch zweier Personen, Austausch einer Aufgabe durch einen Admin. */
 export const DECISION_KINDS = { draw: 'draw', swap: 'swap', exchange: 'exchange' } as const;
-export type DecisionKind = (typeof DECISION_KINDS)[keyof typeof DECISION_KINDS];
 /** Ergebnis je Aufgabe, nach dem das Log gefiltert wird (neben `FILTER_ALL`). */
 export const DECISION_OUTCOMES = { assigned: 'assigned', unassigned: 'unassigned' } as const;
 export type DecisionOutcome = (typeof DECISION_OUTCOMES)[keyof typeof DECISION_OUTCOMES];

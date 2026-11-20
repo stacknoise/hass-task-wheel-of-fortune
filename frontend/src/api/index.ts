@@ -17,7 +17,10 @@ export type {
   Snapshot,
   SpinReply,
   SpinRestReply,
-  DrawWindowRequest,
+  PlanIssueWire,
+  PlanPreviewRequest,
+  PlanPreviewWire,
+  PlanTrackWire,
   TaskDrawWire,
   WireExclusion,
   NotifyTarget,
@@ -26,12 +29,11 @@ export type {
 } from './types.ts';
 export type {
   AbsenceWire,
-  DeadlineWire,
-  FrequencyWire,
+  EntryWire,
+  IntervalWire,
   PersonWire,
   ScheduleWire,
   TaskWire,
-  TriggerWire,
 } from './config-types.ts';
 export { failureFor, parseFailure } from './errors.ts';
 export type { ApiFailure } from './errors.ts';

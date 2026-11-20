@@ -29,6 +29,7 @@ import { buildCsv } from './csv.ts';
 import { roundDelete } from './round-delete.ts';
 import { downloadText } from './download.ts';
 import { csvRows, doneCount, originText } from './history-model.ts';
+import { hasNewerDraw } from './overview-model.ts';
 import type { HistoryLookups } from './history-model.ts';
 import { defineOnce } from '../components/define.ts';
 
@@ -205,7 +206,8 @@ export class TwHistoryView extends LitElement {
 
   #round(round: RoundObject, lookups: HistoryLookups): TemplateResult {
     const open = this._open.has(round.id);
-    const schedule = lookups.schedules.get(round.schedule_id)?.name;
+    const scheduleObject = lookups.schedules.get(round.schedule_id);
+    const schedule = scheduleObject?.name;
     const text = (key: TextKey): string => this.#text(key);
     return html`
       <section class="card">
@@ -237,6 +239,9 @@ export class TwHistoryView extends LitElement {
           language: this.language,
           total: round.assignments.length,
           done: doneCount(round.assignments),
+          period: round.period_index,
+          newerDraw: hasNewerDraw(round, scheduleObject),
+          automatic: scheduleObject?.automatic ?? false,
           busy: this._busy,
           onConfirm: () => {
             this.#delete(round.id);

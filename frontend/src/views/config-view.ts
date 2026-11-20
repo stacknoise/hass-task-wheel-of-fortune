@@ -134,6 +134,11 @@ export abstract class ConfigView<
   protected abstract card(item: Wire, snapshot: Snapshot): TemplateResult;
   protected abstract form(draft: Draft, snapshot: Snapshot): TemplateResult;
 
+  /** Ob der Entwurf gespeichert werden darf; das Backend prüft ihn beim Speichern ohnehin noch einmal. */
+  protected canSave(): boolean {
+    return true;
+  }
+
   protected text(key: TextKey): string {
     return translate(key, this.language);
   }
@@ -251,7 +256,7 @@ export abstract class ConfigView<
           <button
             type="button"
             class="primary"
-            ?disabled=${this._busy}
+            ?disabled=${this._busy || !this.canSave()}
             @click=${() => {
               void this.#save();
             }}

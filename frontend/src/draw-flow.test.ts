@@ -17,14 +17,12 @@ const TASKS = [
     name: 'Bad putzen',
     points: 3,
     allowed: ['p1', 'p2', 'p3'],
-    frequency: { kind: 'every_round' },
   },
   {
     id: 't2',
     name: 'Müll',
     points: 1,
     allowed: ['p1'],
-    frequency: { kind: 'every_round' },
   },
 ];
 
@@ -45,6 +43,9 @@ const round = (results: TaskDrawWire[], pending: string[]): PanelRoundWire => ({
   id: 'r1',
   schedule_id: 's1',
   expires_at: '2026-11-03T13:00:00+00:00',
+  period_index: 0,
+  period_start: '2026-11-03T10:00:00+00:00',
+  period_end: '2026-11-10T10:00:00+00:00',
   results,
   pending_task_ids: pending,
   unplaceable_task_ids: [],
@@ -57,7 +58,17 @@ function hassWith(panelRounds: unknown[] = [], animations?: string[]): FakeHass 
     ...EMPTY_SNAPSHOT,
     persons: PERSONS,
     tasks: TASKS,
-    schedules: [{ id: 's1', name: 'Wochenplan', archived: false, animations }],
+    schedules: [
+      {
+        id: 's1',
+        name: 'Wochenplan',
+        archived: false,
+        entries: [],
+        next_run: '2026-11-09T18:00:00+00:00',
+        next_period: 1,
+        animations,
+      },
+    ],
     panel_rounds: panelRounds as never,
   };
   return hass;
@@ -86,18 +97,9 @@ async function click(view: () => ParentNode, selector: string): Promise<void> {
   view().querySelector<HTMLButtonElement>(selector)?.click();
 }
 
-/** Öffnet die Frage nach Gilt-ab und Frist und bestätigt sie. */
+/** Startet die Runde mit einem Klick (die Periode ergibt sich aus dem Zeitplan). */
 async function start(view: () => ParentNode, selector = '.button.primary'): Promise<void> {
   await click(view, selector);
-  await vi.waitFor(() => {
-    expect(
-      view().querySelector('tw-draw-start-dialog')?.shadowRoot?.querySelector('.primary'),
-    ).not.toBeNull();
-  });
-  view()
-    .querySelector('tw-draw-start-dialog')
-    ?.shadowRoot?.querySelector<HTMLButtonElement>('.primary')
-    ?.click();
 }
 
 const text = (view: () => ParentNode): string => (view().textContent ?? '').replace(/\s+/gu, ' ');
@@ -145,8 +147,13 @@ describe('Auslosung', () => {
     });
     const { panel, view } = await mount(hass);
     expect(text(view)).toContain('Wochenplan');
+    expect(text(view)).toContain('Nächste Auslosung: Periode 2');
 
     await start(view);
+    expect(hass.messages.find((message) => message.type === 'task_wheel/draw/begin')).toEqual({
+      type: 'task_wheel/draw/begin',
+      schedule_id: 's1',
+    });
     await vi.waitFor(() => {
       expect(text(view)).toContain('0 / 2 verlost');
     });

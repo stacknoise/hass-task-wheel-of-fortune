@@ -24,6 +24,26 @@ export function upcomingDraws(schedules: readonly ScheduleObject[]): readonly Sc
     .sort((a, b) => (a.next_run ?? '').localeCompare(b.next_run ?? ''));
 }
 
+/** Ob die nächste Auslosung schon fällig ist (manuelle Pläne warten dann auf den Klick). */
+export function isDue(schedule: ScheduleObject, now: string): boolean {
+  return schedule.next_run !== null && schedule.next_run <= now;
+}
+
+/**
+ * Ob die Auslosung eine neuere Auslosung desselben Zeitplans hat; dann darf sie nicht gelöscht
+ * werden (es entstünde eine Lücke). Ohne bekannten Zeitplan entscheidet das Backend.
+ */
+export function hasNewerDraw(
+  round: { readonly period_index: number },
+  schedule: ScheduleObject | undefined,
+): boolean {
+  return (
+    schedule?.newest_period !== undefined &&
+    schedule.newest_period !== null &&
+    round.period_index < schedule.newest_period
+  );
+}
+
 /** Zuteilungen der gewählten Person (oder aller). */
 export function filterByPerson(
   assignments: readonly AssignmentObject[],

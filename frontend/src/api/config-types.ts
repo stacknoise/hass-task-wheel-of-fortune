@@ -2,14 +2,10 @@
 
 import type {
   AbsenceKind,
-  AfterOnce,
   AnimationKind,
-  DeadlineStart,
-  DeadlineUnit,
-  FrequencyKind,
+  EntryMode,
+  IntervalUnit,
   Load,
-  Period,
-  TriggerKind,
 } from '../constants/index.ts';
 
 export interface OnceAbsenceWire {
@@ -43,47 +39,6 @@ export interface RecurringAbsenceWire {
 export type AbsenceWire =
   OnceAbsenceWire | WeeklyDaysAbsenceWire | WeekRhythmAbsenceWire | RecurringAbsenceWire;
 
-export interface EveryRoundWire {
-  readonly kind: Extract<FrequencyKind, 'every_round'>;
-}
-
-export interface MaxPerPeriodWire {
-  readonly kind: Extract<FrequencyKind, 'max_per_period'>;
-  readonly count: number;
-  readonly period: Period;
-  readonly every: number;
-}
-
-export interface IntervalWire {
-  readonly kind: Extract<FrequencyKind, 'interval'>;
-  readonly days: number;
-  readonly tolerance: number;
-}
-
-export type FrequencyWire = EveryRoundWire | MaxPerPeriodWire | IntervalWire;
-
-export interface RecurringWire {
-  readonly kind: Extract<TriggerKind, 'recurring'>;
-  readonly weekdays: readonly number[];
-  readonly time: string;
-  readonly every_n_weeks: number;
-  readonly monthly: boolean;
-  readonly anchor: string | null;
-}
-
-export interface OnceTriggerWire {
-  readonly kind: Extract<TriggerKind, 'once'>;
-  readonly at: string;
-  readonly after: AfterOnce;
-}
-
-export interface ManualTriggerWire {
-  readonly kind: Extract<TriggerKind, 'manual'>;
-  readonly remind_after_days: number | null;
-}
-
-export type TriggerWire = RecurringWire | OnceTriggerWire | ManualTriggerWire;
-
 export interface PersonWire {
   readonly id: string;
   readonly name: string;
@@ -98,7 +53,6 @@ export interface TaskWire {
   readonly id: string;
   readonly name: string;
   readonly allowed: readonly string[];
-  readonly frequency: FrequencyWire;
   readonly points: number;
   readonly no_repeat: boolean;
   readonly respect_absence: boolean;
@@ -108,24 +62,30 @@ export interface TaskWire {
   readonly area_ids: readonly string[];
 }
 
-/** Frist eines Zeitplans: Beginn (sofort, Versatz, Folgetag, Wochentag) und Dauer. */
-export interface DeadlineWire {
-  readonly start: DeadlineStart;
-  readonly offset: number;
-  readonly offset_unit: DeadlineUnit;
-  readonly time: string;
-  readonly weekday: number;
-  readonly duration: number;
-  readonly duration_unit: DeadlineUnit;
+/** Abstand zwischen zwei Auslosungen: alle `every` Stunden, Tage oder Wochen. */
+export interface IntervalWire {
+  readonly unit: IntervalUnit;
+  readonly every: number;
+}
+
+/** Eine Aufgabe im Zeitplan: mindestens `min_count`× je Lauf oder in jeder Auslosung. */
+export interface EntryWire {
+  readonly task_id: string;
+  readonly mode: EntryMode;
+  readonly min_count: number;
 }
 
 export interface ScheduleWire {
   readonly id: string;
   readonly name: string;
   readonly slug: string;
-  readonly trigger: TriggerWire;
-  readonly task_ids: readonly string[];
-  readonly deadline: DeadlineWire;
+  /** Zeitpunkt der ersten Auslosung (ISO mit Zeitzone). */
+  readonly start: string;
+  readonly interval: IntervalWire;
+  readonly automatic: boolean;
+  /** Länge eines Laufs in Tagen; so lange gilt die Mindesthäufigkeit. */
+  readonly run_days: number;
+  readonly entries: readonly EntryWire[];
   readonly enabled: boolean;
   readonly notify: boolean;
   readonly skip_absent: boolean;
