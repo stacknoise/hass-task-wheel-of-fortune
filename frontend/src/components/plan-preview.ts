@@ -52,6 +52,14 @@ export class TwPlanPreview extends LocalizedElement {
         display: grid;
         gap: var(--tw-space-field);
       }
+      .group {
+        display: grid;
+        gap: var(--tw-space-s);
+      }
+      .group > .muted {
+        display: block;
+        line-height: 1.4;
+      }
       .kpis {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -71,7 +79,7 @@ export class TwPlanPreview extends LocalizedElement {
       }
       .tracks {
         display: grid;
-        gap: var(--tw-space-s);
+        gap: var(--tw-space-m);
         max-height: ${unsafeCSS(String(TRACK_ROWS_VISIBLE * TRACK_HEIGHT_EM))}em;
         overflow-y: auto;
       }
@@ -81,6 +89,8 @@ export class TwPlanPreview extends LocalizedElement {
       }
       .track-head {
         display: flex;
+        align-items: baseline;
+        margin-bottom: 4px;
         justify-content: space-between;
         gap: var(--tw-space-s);
       }
@@ -194,7 +204,7 @@ export class TwPlanPreview extends LocalizedElement {
   #persons(preview: PlanPreviewWire): TemplateResult {
     const names = new Map(this.people.map((person) => [person.id, person]));
     const entries = Object.entries(preview.persons);
-    return html`<div>
+    return html`<div class="group">
       <span class="label">${this.text('plan.persons')}</span>
       ${
         entries.length === 0
@@ -218,7 +228,7 @@ export class TwPlanPreview extends LocalizedElement {
       return nothing;
     }
     const names = new Map(this.tasks.map((task) => [task.id, task.label]));
-    return html`<div>
+    return html`<div class="group">
       <span class="label">${this.text('plan.tracks')}</span>
       <div class="tracks">
         ${repeat(

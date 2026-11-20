@@ -156,6 +156,7 @@ export const DECISIONS: DecisionPage = {
             { person_id: 'p2', person_name: 'Ben', chance: 0.6 },
           ],
           excluded: [{ person_id: 'p3', person_name: 'Cara', reason: 'absent' }],
+          note: null,
         },
         {
           task_id: 't2',
@@ -163,6 +164,7 @@ export const DECISIONS: DecisionPage = {
           winner_id: 'p2',
           wheel: [{ person_id: 'p2', person_name: 'Ben', chance: 1 }],
           excluded: [{ person_id: 'p1', person_name: 'Anna', reason: 'taken' }],
+          note: 'filled',
         },
         {
           task_id: 't3',
@@ -170,7 +172,12 @@ export const DECISIONS: DecisionPage = {
           winner_id: null,
           wheel: [],
           excluded: [{ person_id: 'p3', person_name: 'Cara', reason: 'zukunft' }],
+          note: null,
         },
+      ],
+      skipped: [
+        { task_id: 't4', task_name: 'Fenster putzen', reason: 'not_due' },
+        { task_id: 't5', task_name: 'Keller', reason: 'deferred' },
       ],
     },
     {
@@ -182,6 +189,7 @@ export const DECISIONS: DecisionPage = {
       round_id: null,
       origin: null,
       tasks: [],
+      skipped: [],
       exchange: {
         person_id: null,
         person_name: null,

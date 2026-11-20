@@ -94,6 +94,15 @@ export interface DecisionTask {
   readonly winner_id: string | null;
   readonly wheel: readonly DecisionWheelEntry[];
   readonly excluded: readonly DecisionExcluded[];
+  /** `filled`: nicht fällig, vom Zufall nachgezogen, um eine Lücke zu füllen. */
+  readonly note: string | null;
+}
+
+/** Aufgabe des Zeitplans, die in der Auslosung nicht vorkam: `not_due` (noch nicht fällig) oder `deferred` (zurückgestellt). */
+export interface DecisionSkipped {
+  readonly task_id: string;
+  readonly task_name: string;
+  readonly reason: string;
 }
 
 /** Tausch zweier Personen oder Austausch einer Aufgabe; `before_start` markiert den Admin-Austausch vor dem Start. */
@@ -120,6 +129,7 @@ export interface DecisionRecord {
   readonly origin: string | null;
   readonly tasks: readonly DecisionTask[];
   readonly exchange: DecisionExchange | null;
+  readonly skipped: readonly DecisionSkipped[];
 }
 
 export interface DecisionPage {

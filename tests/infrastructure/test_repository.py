@@ -358,6 +358,16 @@ def test_config_migration_moves_frequency_trigger_and_deadline_to_the_schedule(m
             {"id": "t1", "name": "A", "frequency": {"kind": "every_round"}},
             {"id": "t2", "name": "B", "frequency": {"kind": "max_per_period", "count": 3}},
             {"id": "t3", "name": "C", "frequency": {"kind": "interval", "days": 7}},
+            {
+                "id": "t4",
+                "name": "D",
+                "frequency": {"kind": "max_per_period", "count": 1, "period": "week", "every": 2},
+            },
+            {
+                "id": "t5",
+                "name": "E",
+                "frequency": {"kind": "max_per_period", "count": 1, "period": "day"},
+            },
             "kaputt",
         ],
         "schedules": [
@@ -367,26 +377,30 @@ def test_config_migration_moves_frequency_trigger_and_deadline_to_the_schedule(m
                 "slug": "s",
                 "trigger": {"kind": "recurring", "weekdays": [0], "every_n_weeks": 2},
                 "deadline": {"duration": 3},
-                "task_ids": ["t1", "t2", "t3", "t9"],
+                "task_ids": ["t1", "t2", "t3", "t4", "t5", "t9"],
             },
             {"id": "s2", "trigger": {"kind": "once", "at": "2026-12-01T08:00:00+00:00"}},
             {"id": "s3", "trigger": {"kind": "manual"}, "task_ids": []},
+            {"id": "s4", "trigger": {"kind": "recurring"}, "task_ids": ["t3", "t4"]},
             "kaputt",
         ],
     }
     new = migrate(STORE_CONFIG, old, (1, 5), CONFIG_MIGRATIONS)
-    first, once, manual, broken = new["schedules"]
+    first, once, manual, daily, broken = new["schedules"]
     assert first["interval"] == {"unit": "week", "every": 2} and first["automatic"] is True
     assert first["start"] == "2026-11-03T10:00:00+00:00"
     assert [(e["task_id"], e["mode"], e.get("min_count")) for e in first["entries"]] == [
         ("t1", "every_draw", None),
-        ("t2", "min_count", 3),
-        ("t3", "min_count", None),
-        ("t9", "min_count", None),
+        ("t2", "min_count", 1),
+        ("t3", "min_count", 2),
+        ("t4", "min_count", 2),
+        ("t5", "every_draw", None),
+        ("t9", "min_count", 1),
     ]
     assert not {"trigger", "deadline", "task_ids"} & set(first)
     assert once["start"] == "2026-12-01T08:00:00+00:00" and once["automatic"] is True
     assert manual["automatic"] is False and manual["entries"] == []
+    assert [e["min_count"] for e in daily["entries"]] == [4, 2]
     assert broken == "kaputt"
     assert all("frequency" not in t for t in new["tasks"] if isinstance(t, dict))
     assert migrate(STORE_CONFIG, {}, (1, 5), CONFIG_MIGRATIONS) == {}

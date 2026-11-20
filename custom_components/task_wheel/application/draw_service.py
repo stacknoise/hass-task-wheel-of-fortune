@@ -29,6 +29,7 @@ from ..domain.draw.weighting import WeightingFactory
 from ..domain.enums import RoundOrigin
 from ..domain.errors import DrawRejectedError, LimitReachedError, NotFoundError
 from ..domain.models import Round, Schedule, Task
+from ..domain.plan.due import task_notes
 from ..domain.plan.window import effective_window, next_open_period
 from ..domain.types import ScheduleId
 from .draw_inputs import (
@@ -308,10 +309,12 @@ class DrawService:
             self._config, self._history, recent, now, effective_window(schedule, period, now)
         )
         ranking = ranked_tasks(self._config, self._history, schedule, period, self._rng)
-        tasks = shuffled(choose_tasks(ranking, context), self._rng)
+        picked = choose_tasks(ranking, context)
+        tasks = shuffled(picked, self._rng)
         if not tasks:
             raise DrawRejectedError(ERR_NOTHING_DUE)
-        return RoundDraft(schedule_id, origin, now, context, tasks, period)
+        notes = task_notes(ranking, picked)
+        return RoundDraft(schedule_id, origin, now, context, tasks, period, notes=notes)
 
     def _ensure_period_free(self, schedule_id: ScheduleId, period: int) -> None:
         """Die Periode wurde noch nicht ausgelost (jede Periode höchstens einmal)."""

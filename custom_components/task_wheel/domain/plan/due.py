@@ -13,7 +13,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from ...const.defaults import GAP_WEIGHT_FLOOR
-from ..draw.types import RandomSource
+from ...const.keys import NOTE_DEFERRED, NOTE_FILLED, NOTE_NOT_DUE
+from ..draw.types import RandomSource, TaskNote
 from ..models import Schedule, ScheduleEntry, Task
 from ..types import TaskId
 
@@ -112,3 +113,13 @@ def rank_tasks(
     return DueRanking(
         _weighted_order(required, rng), _weighted_order(due, rng), _weighted_order(spare, rng)
     )
+
+
+def task_notes(ranking: DueRanking, picked: Sequence[Task]) -> tuple[TaskNote, ...]:
+    """Die Vermerke zu allen Aufgaben, die nicht ganz regulär ausgelost wurden."""
+    chosen = {task.id for task in picked}
+    notes = [TaskNote(task.id, NOTE_DEFERRED) for task in ranking.priority if task.id not in chosen]
+    for task in ranking.spare:
+        reason = NOTE_FILLED if task.id in chosen else NOTE_NOT_DUE
+        notes.append(TaskNote(task.id, reason))
+    return tuple(notes)
