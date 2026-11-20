@@ -168,7 +168,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
   }
 
   protected form(draft: ScheduleDraft, snapshot: Snapshot): TemplateResult {
-    const tasks = taskOptions(snapshot);
+    const tasks = taskOptions(snapshot, this.store.areaNames(), this.text('common.unknownArea'));
     return html`
       ${this.nameField(draft.name, (name) => {
         this.patch({ name });
