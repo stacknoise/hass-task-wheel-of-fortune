@@ -104,7 +104,7 @@ export class TwEntryEditor extends LocalizedElement {
         </div>
         ${this.error ? html`<div class="error">${this.error}</div>` : nothing}
       </div>
-      <span class="muted">${this.text('entries.hint')}</span>
+      <span class="hint">${this.text('entries.hint')}</span>
     `;
   }
 

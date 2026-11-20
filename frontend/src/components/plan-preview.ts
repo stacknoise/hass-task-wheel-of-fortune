@@ -75,6 +75,10 @@ export class TwPlanPreview extends LocalizedElement {
         max-height: ${unsafeCSS(String(TRACK_ROWS_VISIBLE * TRACK_HEIGHT_EM))}em;
         overflow-y: auto;
       }
+      .track {
+        display: grid;
+        gap: var(--tw-space-xs);
+      }
       .track-head {
         display: flex;
         justify-content: space-between;
@@ -205,7 +209,7 @@ export class TwPlanPreview extends LocalizedElement {
               })}
             </div>`
       }
-      <span class="muted">${this.text('plan.persons.hint')}</span>
+      <span class="hint">${this.text('plan.persons.hint')}</span>
     </div>`;
   }
 
@@ -223,7 +227,7 @@ export class TwPlanPreview extends LocalizedElement {
           (track) => this.#track(track, preview, names.get(track.task_id) ?? track.task_id),
         )}
       </div>
-      <span class="muted"
+      <span class="hint"
         >${translate('plan.tracks.legend', this.language, { draws: preview.draws_per_run })} ·
         ${this.text('plan.tracks.ghost')}</span
       >
@@ -236,7 +240,7 @@ export class TwPlanPreview extends LocalizedElement {
     const total = draws + ghosts;
     const left = (position: number): string =>
       `left: ${String(((position + HALF) / total) * PERCENT)}%`;
-    return html`<div>
+    return html`<div class="track">
       <div class="track-head">
         <span>${name}</span><span class="muted">${this.#gap(track, preview.interval_hours)}</span>
       </div>

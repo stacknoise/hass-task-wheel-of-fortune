@@ -256,7 +256,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
       label: this.text(`schedules.mode.${mode}`),
     }));
     const mode: ScheduleMode = automatic ? 'automatic' : 'manual';
-    return html`
+    return html`<div>
       <tw-segmented
         .label=${this.text('schedules.mode')}
         .options=${modes}
@@ -265,13 +265,13 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
           this.patch({ automatic: next === 'automatic' });
         })}
       ></tw-segmented>
-      <span class="muted">${this.text(`schedules.mode.${mode}.hint`)}</span>
-    `;
+      <span class="hint">${this.text(`schedules.mode.${mode}.hint`)}</span>
+    </div>`;
   }
 
   /** Länge des Laufs, über den die Mindesthäufigkeit gilt. */
   #run(draft: ScheduleDraft): TemplateResult {
-    return html`
+    return html`<div>
       <tw-stepper
         .label=${this.text('schedules.run_days')}
         .value=${draft.run_days}
@@ -281,12 +281,12 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
           this.patch({ run_days });
         })}
       ></tw-stepper>
-      <span class="muted">
+      <span class="hint">
         ${translate('schedules.due_hint', this.language, {
           interval: describeInterval(draft.interval, this.language),
         })}
       </span>
-    `;
+    </div>`;
   }
 
   /** Mehrfachauswahl der Animationen; bei mehreren wird bei jeder Auslosung zufällig eine genommen. */
@@ -295,7 +295,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
       id: kind,
       label: this.text(`animation.${kind}` as TextKey),
     }));
-    return html`
+    return html`<div>
       <tw-chip-select
         .label=${this.text('schedules.animations')}
         .options=${options}
@@ -305,8 +305,8 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
           this.patch({ animations });
         })}
       ></tw-chip-select>
-      <span class="muted">${this.text('schedules.animations.hint')}</span>
-    `;
+      <span class="hint">${this.text('schedules.animations.hint')}</span>
+    </div>`;
   }
 
   #example(slug: string): TemplateResult {

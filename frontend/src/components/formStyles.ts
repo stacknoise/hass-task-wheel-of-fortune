@@ -10,12 +10,18 @@ export const formStyles: CSSResult = css`
     display: block;
     font-size: 0.85em;
     font-weight: 500;
-    margin-bottom: 4px;
+    margin-bottom: var(--tw-space-s);
+  }
+  .hint {
+    display: block;
+    margin-top: var(--tw-space-s);
+    color: var(--tw-color-text-muted);
+    font-size: 0.85em;
   }
   .error {
     color: var(--tw-color-error);
     font-size: 0.85em;
-    margin-top: 4px;
+    margin-top: var(--tw-space-xs);
   }
   button,
   input,
