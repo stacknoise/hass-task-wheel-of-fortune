@@ -24,6 +24,8 @@ export const TOKENS = {
   '--tw-color-ink': '#1f2328',
   '--tw-color-stage': '#0a1624',
   '--tw-glow-gold': 'rgb(245 197 66 / 70%)',
+  /** Kleinster Abstand: Zeile und zugehöriger Balken, Beschriftung und Inhalt innerhalb eines Elements. */
+  '--tw-space-xs': '4px',
   '--tw-space-s': '8px',
   /** Einheitlicher Abstand zwischen den Feldern eines Formulars. */
   '--tw-space-field': '16px',
