@@ -45,7 +45,7 @@ And because chores are more fun with a little suspense, every draw comes with an
     <td width="50%"><img src="https://raw.githubusercontent.com/stacknoise/hass-task-wheel-of-fortune/main/docs/screenshots/draw-slot.png" alt="Slot machine"><br><sub><b>Draw:</b> the slot machine, one of eight animations</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="https://raw.githubusercontent.com/stacknoise/hass-task-wheel-of-fortune/main/docs/screenshots/schedules.png" alt="Schedules"><br><sub><b>Schedules:</b> recurring, once or manual</sub></td>
+    <td width="50%"><img src="https://raw.githubusercontent.com/stacknoise/hass-task-wheel-of-fortune/main/docs/screenshots/schedules.png" alt="Schedules"><br><sub><b>Schedules:</b> start, interval, automatic or manual</sub></td>
     <td width="50%"><img src="https://raw.githubusercontent.com/stacknoise/hass-task-wheel-of-fortune/main/docs/screenshots/statistics.png" alt="Statistics"><br><sub><b>Statistics:</b> fair share, completion rate, task × person</sub></td>
   </tr>
   <tr>
@@ -81,9 +81,9 @@ and restart Home Assistant.
 ## Quick start
 
 1. **People:** add everyone who takes part. Choose a color for the wheel and a load capacity (full, half or paused), and enter absences if there are any.
-2. **Tasks:** add your chores with the people who may do them, points for the effort and how often they come up (every round, "at most 2× per month", a fixed interval, …).
-3. **Schedule:** create a schedule, for example "every Saturday at 10:00", choose its tasks and animations, and set the **deadline**: how long the tasks stay valid and from when (right away, after an offset, the next day or on a weekday at a time). Only people who are present at some point in that period can get a task.
-4. **Draw:** open the *Draw* tab, press start, say from when the tasks apply and how long people have, and watch. (For a scheduled plan you confirm that this draw replaces its next regular run.) Or let the schedule draw by itself and tell everyone with a push message.
+2. **Tasks:** add your chores with the people who may do them, and points for the effort.
+3. **Schedule:** create a schedule: valid from a date and time, drawn every n hours, days or weeks, automatically or by hand. Choose its tasks and animations and say for each task how often it should come up in one run (a run lasts 30 days by default): "at least n times per run" or "in every draw". The editor shows how many tasks fit and warns about overload and gaps. A task stays assigned until the next draw.
+4. **Draw:** open the *Draw* tab, press start and watch: a manual draw always takes the next open period of the schedule. Or let the schedule draw by itself and tell everyone with a push message.
 5. **Done?** Tick chores off in the *Overview* (or in the to-do list of the person). The statistics keep score and the next draw becomes fairer.
 
 ## Use it in Home Assistant

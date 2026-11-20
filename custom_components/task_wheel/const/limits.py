@@ -87,11 +87,8 @@ OPEN_ASSIGNMENT_MAX_AGE_DAYS: Final = (
     RUN_DAYS_MAX + GRACE_HOURS_MAX // HOURS_PER_DAY + OPEN_ASSIGNMENT_SAFETY_DAYS
 )
 
-# Läufe, die der Abstandsausgleich zurückschaut (der laufende und der davor)
-RECENT_RUNS: Final = 2
-
 # Verlauf, der für den Abstandsausgleich und Fairness-Fenster einer Runde herangezogen wird
-RECENT_HISTORY_DAYS: Final = max(FAIRNESS_WINDOW_MAX, RECENT_RUNS * RUN_DAYS_MAX)
+RECENT_HISTORY_DAYS: Final = max(FAIRNESS_WINDOW_MAX, RUN_DAYS_MAX)
 
 # Aufbewahrung des Verlaufs: mindestens so lange, wie Regeln, Fairness und offene Zuteilungen ihn
 # brauchen (sonst gälten Häufigkeitsregeln still nicht mehr oder offene Zuteilungen verschwänden)

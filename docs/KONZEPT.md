@@ -16,8 +16,8 @@ nachvollziehbar per Glücksrad an Personen verteilt.
 | Bereich | Umfang (aus den Mockups) |
 |---|---|
 | Personen | Eigene Objekte (keine HA-Benutzer), Farbe im Rad, Belastbarkeit (voll / halb / pausiert), Anwesenheitsregeln, optionaler Benachrichtigungsdienst |
-| Aufgaben | Erlaubte Personen, Punkte (Aufwand), Häufigkeitsregel, Mindest-Belastbarkeit, Räume, Zusatzregeln (keine Wiederholung, Abwesenheit beachten, Tausch erlaubt) |
-| Zeitpläne | Wiederkehrend (Wochentage + Uhrzeit + Rhythmus), einmalig (Datum + Uhrzeit), nur manuell (mit Erinnerung); Frist (Beginn + Dauer) und Animationen je Zeitplan |
+| Aufgaben | Erlaubte Personen, Punkte (Aufwand), Mindest-Belastbarkeit, Räume, Zusatzregeln (keine Wiederholung, Abwesenheit beachten, Tausch erlaubt); die Häufigkeit steht am Zeitplan |
+| Zeitpläne | Gültig ab (Datum + Uhrzeit), Intervall (alle n Stunden/Tage/Wochen), automatisch oder manuell, Lauf (Standard 30 Tage), je Aufgabe „mindestens n× je Lauf“ oder „jede Auslosung“; Planvorschau mit Warnungen; Animationen je Zeitplan |
 | Auslosung | Automatisch per Zeitplan oder manuell im Panel mit Animation (Glücksrad, Lostrommel, Slot-Machine, Plinko, Scheinwerfer, Rubbellose, Eilmeldung, Oscar-Verleihung, je Zeitplan wählbar (leer = sofort ohne Animation), bei mehreren zufällig je Auslosung); jede Auslosung gehört zu einem Zeitplan |
 | Zuteilungen | Abhaken, Fristen, Status (offen, pünktlich, verspätet, getauscht, verpasst, „Bleibt unerledigt“), Tausch zweier Aufgaben innerhalb einer Auslosung |
 | Historie | Runden mit Zuteilungen, Chance, Status, Filter, CSV-Export |
@@ -59,7 +59,7 @@ flowchart TD
   E["1 · Einstieg<br/>__init__.py, config_flow.py, runtime.py (compose),<br/>entry_lookup.py, sensor.py, todo.py, button.py"]
   A["2 · Schnittstellen<br/>services.py, websocket/, entities/"]
   U["3 · Anwendung (Use Cases)<br/>DrawService, AssignmentService, SwapService,<br/>ScheduleService, StatisticsService, NotificationService"]
-  D["4 · Domäne (reines Python)<br/>models, rules/, availability/, triggers/, draw/, statistics/"]
+  D["4 · Domäne (reines Python)<br/>models, plan/, availability/, draw/, statistics/"]
   I["5 · Infrastruktur<br/>repository/ (Store), scheduler (HA-Zeitgeber), notifier/,<br/>events (HA-Bus), panel (Bundle, Seitenleiste)"]
   C["0 · Konstanten<br/>const/ (wird von allen Schichten genutzt)"]
   E --> A --> U --> D
@@ -96,9 +96,7 @@ Schlüssel, unbekannte Arten werfen eine eigene Ausnahme.
 
 | Fabrik | Erzeugt aus | Arten |
 |---|---|---|
-| `FrequencyRuleFactory` | `FrequencyConfig` | `every_round`, `max_per_period`, `interval` |
 | `AvailabilityRuleFactory` | `AbsenceConfig` | `once`, `weekly_days`, `week_rhythm`, `recurring` |
-| `TriggerFactory` | `TriggerConfig` | `recurring`, `once`, `manual` |
 | `WeightingFactory` | `Settings.weighting` | `fairness` (Standard), `uniform` |
 | `NotifierFactory` | Ziel des Benachrichtigungsdienstes | `notify_entity` (`notify.send_message`), `notify_service` (Legacy `notify.*`), `none` |
 | `EntityFactory` | Personen, Zeitpläne | Sensoren, To-do-Listen, Buttons über `EntityDescription`-Tabellen |
@@ -107,7 +105,7 @@ Schlüssel, unbekannte Arten werfen eine eigene Ausnahme.
 > **Entschieden (2026-11-03, Anton): Factory + Strategy + Repository.**
 > - **Factory** ist das Leitmuster für die Erzeugung (Tabelle oben).
 > - **Strategy:** Die Fabriken erzeugen Objekte, deren *Verhalten* sich je Art unterscheidet. Jede Regelart ist
->   eine Klasse mit derselben Schnittstelle (z. B. `FrequencyRule.is_due(assigned, now)`, `AvailabilityRule.is_present(...)`,
+>   eine Klasse mit derselben Schnittstelle (z. B. `AvailabilityRule.is_present(...)`,
 >   `Weighting.weigh(...)`); Aufrufer kennen nur die Schnittstelle.
 > - **Repository:** Persistenz liegt hinter `ConfigRepository` und `HistoryRepository` (`typing.Protocol`);
 >   Services greifen nie direkt auf den `Store` zu. Für Tests gibt es eine In-Memory-Implementierung.
@@ -132,11 +130,10 @@ custom_components/task_wheel/
 │   ├── models.py            # Person, Task, Schedule, Round, Assignment, …
 │   ├── serialization.py     # to_dict/from_dict für alle Modelle
 │   ├── enums.py, errors.py, types.py, validation.py
-│   ├── rules/               # FrequencyRule-Strategien + FrequencyRuleFactory
+│   ├── plan/                # window (Perioden), due (Fälligkeit, Abstände), preview (Planvorschau)
 │   ├── availability/        # AvailabilityRule-Strategien + Factory
-│   ├── triggers/            # TriggerStrategy (recurring, once, manual) + Factory
+│   ├── dates.py             # Kalenderhilfen (week_start, local_date)
 │   ├── draw/                # candidates, feasibility, matching, weighting, draft, engine, types
-│   ├── deadline.py          # Frist am Zeitplan (DeadlineWindow)
 │   ├── decisions.py         # Entscheidungslog (Einträge, Ausschlussgründe)
 │   ├── statistics/          # aggregate, report, goals
 │   ├── status.py            # Statusübergänge der Zuteilungen
@@ -163,7 +160,7 @@ frontend/                    # Quellcode des Panels
 │   ├── i18n/                # de.ts, en.ts, typisierte Schlüssel
 │   ├── api/                 # typisierter WebSocket-Client
 │   ├── state/               # Store + @lit/context
-│   ├── components/          # tw-wheel, tw-chips, tw-frequency-editor, tw-trigger-editor, tw-timeline, …
+│   ├── components/          # tw-wheel, tw-chips, tw-schedule-editor, …
 │   ├── views/               # overview, draw, tasks, persons, schedules, history, statistics, decisions
 │   └── task-wheel-panel.ts  # Einstieg
 ├── vite.config.ts
@@ -198,10 +195,10 @@ erDiagram
 |---|---|
 | `Person` | `id`, `name`, `slug`, `color`, `load: Load` (`full`=1,0 · `half`=0,5 · `paused`=0), `absences: tuple[AbsenceConfig, ...]`, `notify_target: str \| None` |
 | `AbsenceConfig` | `kind` + Felder je Art: `once(start, end)`, `weekly_days(weekdays)`, `week_rhythm(present_weeks, cycle_weeks, change_weekday, anchor)`, `recurring(weekdays, interval_weeks, start, end?)` (abwesend an den Wochentagen jeder n-ten Woche ab der Woche von `start`, bis einschließlich `end`; ohne `end` unbefristet) |
-| `Task` | `id`, `name`, `points`, `allowed: frozenset[PersonId]` (leer = alle Personen), `frequency: FrequencyConfig`, `no_repeat`, `respect_absence`, `swap_allowed`, `min_load: Load` (Mindest-Belastbarkeit, Standard `paused` = egal; `half` = mindestens halbe, `full` = nur volle Last), `area_ids: tuple[str, ...]` (null bis `MAX_AREAS_PER_TASK` HA-Bereiche/Räume ohne Doppelte, nur Anzeige; die Namen kommen im Panel aus `hass.areas`, ein gelöschter Bereich erscheint als „Unbekannter Raum“; Speicherstand 1.3 macht aus dem früheren einzelnen `area_id` eine Liste) |
-| `FrequencyConfig` | `every_round` · `max_per_period(count, period, every)` · `interval(days, tolerance)` |
-| `Schedule` | `id`, `name`, `slug`, `trigger: TriggerConfig`, `task_ids: tuple[TaskId, ...]`, `enabled`, `notify`, `skip_absent`, `archived`, `animations: tuple[AnimationKind, ...]` (0 bis 8 verschiedene Arten, Standard `wheel`; leer = ohne Animation sofort auslosen) (archiviert ⇒ nicht aktiv, nie auslösbar) |
-| `TriggerConfig` | `recurring(weekdays, time, every_n_weeks \| monthly)` · `once(at, after: keep_manual \| archive \| delete)` · `manual(remind_after_days)` |
+| `Task` | `id`, `name`, `points`, `allowed: frozenset[PersonId]` (leer = alle Personen), `no_repeat`, `respect_absence`, `swap_allowed`, `min_load: Load` (Mindest-Belastbarkeit, Standard `paused` = egal; `half` = mindestens halbe, `full` = nur volle Last), `area_ids: tuple[str, ...]` (null bis `MAX_AREAS_PER_TASK` HA-Bereiche/Räume ohne Doppelte, nur Anzeige; die Namen kommen im Panel aus `hass.areas`, ein gelöschter Bereich erscheint als „Unbekannter Raum“; Speicherstand 1.3 macht aus dem früheren einzelnen `area_id` eine Liste) |
+| `Interval` | `unit: hour \| day \| week`, `every` (1 bis 1000); `hours` = Länge einer Periode |
+| `Schedule` | `id`, `name`, `slug`, `start` (mit Zeitzone), `interval: Interval`, `automatic`, `run_days` (Standard 30, 1 bis 365; ein Intervall muss in den Lauf passen), `entries: tuple[ScheduleEntry, ...]`, `enabled`, `notify`, `skip_absent`, `archived`, `animations: tuple[AnimationKind, ...]` (0 bis 8 verschiedene Arten, Standard `wheel`; leer = ohne Animation sofort auslosen); abgeleitet: `task_ids`, `draws_per_run` = `run_days × 24 ÷ Intervallstunden` (archiviert ⇒ nicht aktiv, nie auslösbar) |
+| `ScheduleEntry` | `task_id`, `mode: min_count \| every_draw`, `min_count` (1 bis 1000, nur bei `min_count`) |
 | `Round` | `id`, `schedule_id`, `origin: auto \| manual \| service`, `started_at`, `finished_at`, `assignments` |
 | `Assignment` | `id`, `round_id`, `schedule_id` (auslosender Zeitplan), `task_id`, `person_id`, `chance` (0–1), `points`, `due_at`, `status`, `done_at`, `swap: Swap \| None` |
 | `Settings` | `jokers_per_month` (für später reserviert, derzeit ohne Wirkung), `fairness_window_days`, `history_retention_days`, `weighting`, `late_points_factor` (0–1, Standard 1,0), `missed_points_factor` (−1–0, Standard 0), `missed_grace_hours`, `panel_admin_only` (Standard aus), `decision_retention_days` (1–365, Standard 7; Aufbewahrung des Entscheidungslogs) |
@@ -249,13 +246,13 @@ sequenceDiagram
   DS->>HA: Event task_wheel_drawn, Entitäten aktualisieren, Benachrichtigen
 ```
 
-Vor der Ziehung wählt `select_assignable` (`application/draw_inputs.py`, Kern `pick_assignable` in `domain/draw/feasibility.py`) aus den fälligen Aufgaben eine größtmögliche Menge, die sich **vollständig** an verschiedene Personen vergeben lässt (je Person höchstens eine Aufgabe; erlaubt, belastbar, im Fristfenster anwesend; Matching Personen ↔ Aufgaben). Täglich anfallende Aufgaben (`Task.is_daily`: höchstens n× in 1 Tag) sind zuerst dabei, die injizierte Zufallsquelle füllt den Rest gleichverteilt (nicht vorhersehbar), die Aufgaben der Runde werden anschließend in zufälliger Reihenfolge gezogen (`shuffled`), sonst wäre bei eingeschränkten Aufgaben die Folge der Gewinner in jeder Runde dieselbe. Aufgaben, die niemand übernehmen kann oder die um dieselben Personen konkurrieren und leer ausgingen (z. B. zwei Aufgaben, die nur eine Person darf), kommen in dieser Runde gar nicht vor und zählen für die Häufigkeit nicht als verlost; bleibt nichts übrig, gilt „Keine Aufgabe fällig“. Gibt es wegen Abwesenheit weniger Personen als Aufgaben „in jeder Runde“, ist das in Ordnung: Die Aufgaben „in jeder Runde“ und täglichen gehen zuerst hinein, unter ihnen entscheidet der Zufall. Beim Speichern eines Zeitplans wird dagegen geprüft, ob sich die Aufgaben „in jeder Runde“ der Konfiguration nach (erlaubte Personen, Belastbarkeit, ohne Abwesenheit) an verschiedene Personen vergeben lassen; sonst wird er nicht gespeichert (`schedule_tasks_unassignable`). Eine Runde enthält also nie eine Aufgabe, die nicht vergeben werden kann; die Warnung vor dem Start (`unplaceable_task_ids`) bleibt als Absicherung, etwa nach einem Admin-Austausch.
+Vor der Ziehung wählt `select_assignable` (`application/draw_inputs.py`, Kern `pick_assignable` in `domain/draw/feasibility.py`) aus den fälligen Aufgaben eine größtmögliche Menge, die sich **vollständig** an verschiedene Personen vergeben lässt (je Person höchstens eine Aufgabe; erlaubt, belastbar, in der Periode anwesend; Matching Personen ↔ Aufgaben). „Jede Auslosung“-Aufgaben sind zuerst dabei, danach kommen die fälligen Aufgaben (§5.2a) in gewichteter Zufallsreihenfolge (die injizierte Zufallsquelle, nicht vorhersehbar); die Aufgaben der Runde werden anschließend in zufälliger Reihenfolge gezogen (`shuffled`), sonst wäre bei eingeschränkten Aufgaben die Folge der Gewinner in jeder Runde dieselbe. Aufgaben, die niemand übernehmen kann oder die um dieselben Personen konkurrieren und leer ausgingen (z. B. zwei Aufgaben, die nur eine Person darf), kommen in dieser Runde gar nicht vor und zählen nicht als verlost; bleibt dadurch eine Lücke, füllt die erste vergebbare noch nicht fällige Aufgabe sie auf; bleibt nichts übrig, gilt „Keine Aufgabe fällig“. Gibt es wegen Abwesenheit weniger Personen als Aufgaben „in jeder Runde“, ist das in Ordnung: Die Aufgaben „jede Auslosung“ gehen zuerst hinein, unter ihnen entscheidet der Zufall. Beim Speichern eines Zeitplans wird dagegen geprüft, ob sich die Aufgaben „jede Auslosung“ der Konfiguration nach (erlaubte Personen, Belastbarkeit, ohne Abwesenheit) an verschiedene Personen vergeben lassen; sonst wird er nicht gespeichert (`schedule_tasks_unassignable`). Eine Runde enthält also nie eine Aufgabe, die nicht vergeben werden kann; die Warnung vor dem Start (`unplaceable_task_ids`) bleibt als Absicherung, etwa nach einem Admin-Austausch.
 
 Beim manuellen Ablauf im Panel wird die Runde schrittweise gezogen (`draw/begin`, `draw/spin`, `draw/spin_rest`,
 `draw/commit`, `draw/cancel`; vorab zeigt `draw/preview` Rad und Kandidaten einer Aufgabe). Das **Ergebnis bestimmt immer das Backend**; das Frontend erhält Gewinner und
 Segmentgrenzen und animiert nur dorthin. Eine offene Runde verfällt nach einer Zeitgrenze (Konstante) und
 blockiert keine automatischen Runden desselben Zeitplans: löst der Zeitplan automatisch aus, wird die offene
-Panel-Runde verworfen (der Zeitplan geht vor, eine Runde entsteht nie doppelt). Je Zeitplan ist höchstens eine
+Panel-Runde verworfen (der Zeitplan geht vor, eine Periode wird nie doppelt ausgelost). Je Zeitplan ist höchstens eine
 Panel-Runde offen (`begin` ersetzt die alte), insgesamt höchstens `MAX_OPEN_PANEL_ROUNDS`. Pausierte Zeitpläne
 lösen nicht automatisch aus, lassen sich aber von Hand auslosen; archivierte nie.
 
@@ -266,21 +263,19 @@ Objekt mit `reason`, die Gründe erscheinen im Entscheidungslog):
 
 1. **Belastung**: `load == paused`
 2. **Mindest-Belastbarkeit** (wenn `min_load` nicht `paused`): `load.factor < min_load.factor` entfernt die Person (`load_too_low`); gibt es niemanden mit ausreichender Belastbarkeit, bleibt die Aufgabe unvergeben
-3. **Anwesenheit** (wenn `respect_absence`): an keinem Tag des Fristfensters (`DrawContext.window`, von „gilt ab“ bis zur Frist des Zeitplans) anwesend. Wer irgendwann im Fenster da ist, bleibt Kandidat; wer z. B. am Mittwoch fehlt, wenn die Aufgaben am Mittwoch von 10 bis 14 Uhr gelten, bekommt keine, auch wenn die Auslosung am Dienstag war. Diese Machbarkeitsprüfung ist als Funktion `feasible_persons`/`is_feasible`/`feasible_tasks` (`domain/draw/feasibility.py`) wiederverwendbar (Entscheidungslog, Austausch von Aufgaben)
+3. **Anwesenheit** (wenn `respect_absence`): an keinem Tag der Periode (`DrawContext.window`: Beginn bis Ende der ausgelosten Periode) anwesend. Wer irgendwann in der Periode da ist, bleibt Kandidat. Diese Machbarkeitsprüfung ist als Funktion `feasible_persons`/`is_feasible`/`feasible_tasks` (`domain/draw/feasibility.py`) wiederverwendbar (Entscheidungslog, Austausch von Aufgaben)
 4. **Keine Wiederholung** (wenn `no_repeat`): hatte die Aufgabe in der letzten Zuteilung, sofern noch andere Kandidaten übrig sind (nur Vorliebe: wer sonst unvergeben bliebe, bekommt die Aufgabe trotzdem; vorher sperren harte Filter und eine Zuordnung stellt sicher, dass so viele Aufgaben wie möglich verteilt werden)
 5. **Aufgabe in dieser Runde** (immer): Wer in derselben Runde schon eine Aufgabe gezogen hat, bekommt keine zweite und ist für die weiteren Aufgaben nicht mehr im Rad (`taken`). Die Begrenzung auf die Zahl der mitmachenden Personen (siehe 5.1) nimmt überzählige Aufgaben gar nicht erst in die Runde auf; bleibt dennoch eine Aufgabe ohne Kandidaten übrig (z. B. weil alle erlaubten Personen schon eine Aufgabe haben), bleibt sie unverteilt
 6. **Reserviert für andere** (`needed`, nur bei der Zuordnung): Wer für eine andere Aufgabe dieser Runde zwingend gebraucht wird (sonst bliebe sie unverteilt), ist für diese Aufgabe nicht im Rad
 7. **Ohne Kandidaten** wird die Aufgabe als „nicht verteilbar“ protokolliert, nicht erzwungen
 
-Die Häufigkeitsregel wirkt **vor** dem Kandidatenfilter auf Aufgabenebene:
+### 5.2a Häufigkeit und Abstände (Entscheidung von Anton, 2026-11-17)
 
-| Regel | `is_due(assigned, now)` (`assigned` = bisherige Zuteilungszeitpunkte der Aufgabe) |
-|---|---|
-| `every_round` | immer |
-| `max_per_period(n, period, every)` | Anzahl Zuteilungen in den letzten `every` Kalendertagen/-wochen/-monaten (laufende Periode eingeschlossen) `< n`; `every` ist standardmäßig 1 |
-| `interval(d, tol)` | Tage seit letzter Zuteilung `≥ d − tol` |
+Die Häufigkeit steht je Aufgabe am Zeitplan (`ScheduleEntry`), nicht an der Aufgabe. Ein Lauf hat `R = draws_per_run` Perioden (Standard 30 Tage). Für „mindestens n× je Lauf“ ist der **Zielabstand** `R ÷ n`; der Mindestabstand ist `max(1, abgerundet)`. Eine Aufgabe ist **fällig**, wenn seit ihrer letzten Zuteilung mindestens so viele Perioden vergangen sind (`domain/plan/due.py`). Der Zähler wird an der Lauf-Grenze nicht zurückgesetzt, so wird dieselbe Aufgabe nicht am Ende eines Laufs und gleich am Anfang des nächsten ausgelost. Ohne Vorgeschichte ist die Aufgabe mit Wahrscheinlichkeit `1 ÷ Mindestabstand` fällig (zufällige Phase). „Jede Auslosung“ ist von dieser Regel ausgenommen und immer dabei (bei zu wenig Personen entscheidet der Zufall).
 
-Es zählt die **Zuteilung** (verlost), nicht das Erledigen. Ist danach keine Aufgabe fällig (alle am Maximum ihrer Häufigkeit) oder kann niemand mitmachen, entsteht keine leere Runde: Die Auslosung wird mit `draw_nothing_due` abgelehnt. Die automatische Auslosung überspringt den Lauf mit einem Info-Eintrag im Log (ein einmaliger Plan bleibt offen, der nächste Lauf ist normal gesetzt), das Panel zeigt den Hinweis.
+Reihenfolge: zuerst „jede Auslosung“, dann die fälligen Aufgaben, gewichtet nach Verzug (`1 + Verzug`), zuletzt nicht fällige als Füllung (gewichtet nach Fortschritt, mindestens `GAP_WEIGHT_FLOOR`); die gewichtete Zufallsreihenfolge nutzt den Schlüssel `zufall ** (1 ÷ gewicht)`. Es zählt die **Zuteilung** (verlost), nicht das Erledigen. Ist nichts fällig und niemand kann mitmachen, entsteht keine leere Runde: `draw_nothing_due`; die automatische Auslosung überspringt die Periode mit einem Log-Eintrag.
+
+**Planvorschau** (`domain/plan/preview.py`, WebSocket `schedule/plan_preview`, ohne Speichern): Platz = `R × min(Personen im Rad, Aufgaben)`; die Personen im Rad sind alle erlaubten Personen der gewählten Aufgaben (leere Liste = alle). Je Aufgabe werden die Positionen im Lauf gleichmäßig verteilt (Phase so, dass die Perioden möglichst gleich belegt sind) samt kleinstem und größtem Abstand (auch über die Lauf-Grenze). **Blockierend** (Speichern nicht möglich): keine Aufgabe, Intervall länger als der Lauf, keine Person. **Warnungen** (Speichern geht): Überlast (mehr Aufgaben als Personen in einer Periode), Lücken (Perioden ohne Aufgabe), Aufgabe öfter als Auslosungen. Beim Speichern prüft das Backend zusätzlich, dass sich „jede Auslosung“-Aufgaben an verschiedene Personen vergeben lassen (`schedule_tasks_unassignable`).
 
 ### 5.3 Fairness-Gewichtung
 
@@ -299,9 +294,9 @@ Aufgaben an dieselbe Person verteilt. Aufwand pro Runde: `O(Aufgaben × Personen
 
 ### 5.4 Zuteilungen, Fristen, Tausch
 
-**Frist am Zeitplan (Entscheidung von Anton, 2026-11-04):** Die Frist steht nicht mehr an der Aufgabe, sondern am Zeitplan (`Schedule.deadline`, `domain/deadline.py`) und gilt für alle Aufgaben einer Auslosung. Sie besteht aus dem **Beginn** („gilt ab“: `now` sofort bei der Auslosung, `offset` nach einem Versatz in Stunden/Tagen/Wochen/Monaten, `next_day` am Folgetag zu einer Uhrzeit, `weekday` am nächsten Wochentag, frühestens morgen, zu einer Uhrzeit) und der **Dauer** (Stunden, Tage, Wochen oder Monate). Daraus entsteht je Auslosung ein `DeadlineWindow(start, end)`; jede Zuteilung trägt `starts_at` (gilt ab) und `due_at` (Frist = `end`). Tage, Wochen und Monate rechnen in Kalenderzeit (Uhrzeit bleibt über die Sommerzeit gleich, ein kurzer Zielmonat kürzt den Tag), Stunden in echter Zeit; das ganze Fenster ist höchstens ein Jahr lang. Das Feld `due_days` der Aufgabe entfällt ersatzlos (keine Migration, die App ist unveröffentlicht).
+**Perioden statt Fristen (Entscheidung von Anton, 2026-11-17/20):** Es gibt keine Frist je Auslosung. Ein Zeitplan beginnt bei `start` und teilt die Zeit in Perioden der Länge `interval` (`domain/plan/window.py`). Die Periode `k` reicht von `start + k × Intervall` bis zur nächsten; jede Auslosung gehört zu genau einer Periode (`Round.period_index`), und jede Zuteilung trägt `starts_at` und `due_at` dieser Periode. Eine Zuteilung gilt bis zur nächsten Auslosung. Wird eine Periode erst nach ihrem Beginn ausgelost, beginnt das Fenster beim Auslosen (`effective_window`) und behält die Länge, damit die Zuteilung nicht sofort überfällig ist. Tage und Wochen rechnen in Kalenderzeit (Uhrzeit bleibt über die Sommerzeit gleich), Stunden in echter Zeit.
 
-**Manuell auslösen:** Bei `draw/begin` sind `starts_at`, `duration` und `duration_unit` Pflicht (das Panel fragt sie in einem Dialog ab; für nur manuelle Zeitpläne gibt es keine feste Frist). Hat der Zeitplan einen nächsten regulären Lauf (aktiv, nicht archiviert, Auslöser nicht „nur manuell“), zieht die manuelle Auslosung ihn vor: das muss `replace_next` bestätigen, sonst lehnt das Backend mit `draw_replace_unconfirmed` ab. Die Runde merkt sich den ersetzten Lauf (`Round.replaces`); der Zeitgeber überspringt ihn (`application/runs.py`, auch nach einem Neustart), danach geht es wie geplant weiter. Ein einmaliger Zeitplan gilt damit als erledigt (Archivieren/Löschen/Behalten wie sonst). Offene Zuteilungen bleiben bestehen. Der Dienst `task_wheel.draw` und automatische Läufe nutzen die Frist des Zeitplans und ersetzen nichts.
+**Manuell auslösen:** `draw/begin` nimmt nur den Zeitplan. Ausgelost wird immer die **nächste offene Periode** (jüngste ausgeloste + 1, sonst 0), nie eine Lücke. **Löschen** (`round/delete`) darf nur die jüngste Periode des Zeitplans (`round_not_newest`) und nur solange nichts erledigt ist. Der automatische Zeitgeber löst zu jedem Rasterzeitpunkt genau die Periode dieses Zeitpunkts aus; ist sie schon ausgelost (`draw_period_drawn`) oder gibt es nichts zu vergeben, wird sie übersprungen. Eine gelöschte Periode wird nicht nachgeholt, solange man sie nicht vor dem nächsten automatischen Lauf von Hand auslost; sonst gilt sie als übersprungen (das Panel weist beim Löschen darauf hin). Beim Start wird nichts nachgeholt. Der Dienst `task_wheel.draw` und der Zeitgeber nutzen dieselbe Logik.
 
 | Übergang | Auslöser | Ergebnis |
 |---|---|---|
@@ -326,7 +321,7 @@ Belastbarkeit, bis zur Frist anwesend), und es muss eine andere Person sein (`sw
 Benachrichtigung über ihre neue Aufgabe). Eine getauschte Zuteilung lässt sich nicht noch einmal tauschen (Doppeltausch verboten) und zählt
 nicht als Gegenstück. Der Tausch hat **nichts mit Jokern zu tun**: Es gibt weder eine Prüfung noch einen Zähler noch eine Anzeige; die
 Einstellung `jokers_per_month` (Options Flow, `Settings`, Speicherstand) bleibt für später reserviert und wirkt derzeit nicht.
-Ist eine Aufgabe in mehreren Zeitplänen, kann sie mehrfach ausgelost werden (auch an dieselbe Person); jede Zuteilung kennt ihren Zeitplan und wird einzeln erledigt. Die Häufigkeitsregeln zählen Zuteilungen je Aufgabe über alle Zeitpläne.
+Ist eine Aufgabe in mehreren Zeitplänen, kann sie mehrfach ausgelost werden (auch an dieselbe Person); jede Zuteilung kennt ihren Zeitplan und wird einzeln erledigt. Die Abstände zählen je Zeitplan (Zuteilungen dieses Zeitplans).
 Statusübergänge sind eine Tabelle `dict[(Status, Aktion), Status]` – keine Verzweigungsketten.
 
 **Auslosung löschen** (`round/delete`, nur Administratoren): nur solange **keine** Zuteilung der Runde erledigt (pünktlich
@@ -339,12 +334,10 @@ sobald eine Aufgabe erledigt ist, und fragt sonst vor dem Löschen nach.
 
 | Art | Umsetzung |
 |---|---|
-| `recurring` | `async_track_point_in_time` auf den nächsten berechneten Zeitpunkt; nach Auslösung wird der nächste berechnet (Wochenrhythmus über Ankerwoche; „monatlich“ = erster gewählter Wochentag des Monats) |
-| `once` | einmaliger Zeitpunkt; danach je nach Einstellung behalten (nur manuell), archivieren oder löschen |
-| `manual` | kein Zeitgeber; optional tägliche Prüfung (09:00 Ortszeit) „seit n Tagen nicht ausgelost“ → Erinnerung nach n, 2n, 3n … Tagen; ohne bisherige Auslosung gibt es keinen Bezugspunkt und keine Erinnerung |
+| automatisch | `async_track_point_in_time` auf den nächsten Rasterzeitpunkt `start + k × Intervall` (`ScheduleService.next_run`); beim Auslösen wird die Periode dieses Zeitpunkts ausgelost, danach der nächste Zeitpunkt gesetzt |
+| manuell | derselbe Zeitgeber löst nur eine **Erinnerung** aus, wenn die offene Periode schon begonnen hat; ausgelost wird per Klick, Dienst oder Knopf (immer die nächste offene Periode) |
 
-Ein einmaliger Zeitplan, dessen Zeitpunkt beim Start schon vorbei ist (z. B. weil Home Assistant aus war), löst
-nicht nachträglich aus. Schlägt eine automatische Auslosung fehl, wird das protokolliert und der nächste Zeitgeber
+Ein Zeitpunkt, der beim Start schon vorbei ist (z. B. weil Home Assistant aus war), wird nicht nachgeholt. Schlägt eine automatische Auslosung fehl, wird das protokolliert und der nächste Zeitgeber
 trotzdem gesetzt. Zeitgeber werden beim Ändern eines Zeitplans gezielt neu gesetzt (nur dieser Plan) und beim Entladen der
 Integration vollständig abgemeldet. Zeitzone ist die von HA (`dt_util`).
 
@@ -390,7 +383,7 @@ Präfix `task_wheel/`. Befehle je Bereich in eigenen Modulen; jeder Befehl hat e
 
 | Bereich | Befehle | Recht |
 |---|---|---|
-| Lesen | `snapshot`, `subscribe` (Deltas), `history/list`, `statistics/get` (liefert auch `goals`: je Zeitplan und Aufgabe mit `max_per_period` (`schedule_id`) das Soll gegen die vom Zeitplan verlosten Zuteilungen im laufenden und in den drei vorherigen Fenstern aus je `every` Perioden), `availability/preview` (Anwesenheit der nächsten Wochen für ungespeicherte Regeln; einzige Quelle der Regeln ist das Backend) | angemeldeter Benutzer |
+| Lesen | `snapshot`, `subscribe` (Deltas), `history/list`, `statistics/get` (liefert auch `goals`: je Zeitplan und Aufgabe das Soll gegen die vom Zeitplan verlosten Zuteilungen im laufenden und in den vorherigen Läufen, `GoalWindow` je Lauf), `availability/preview` (Anwesenheit der nächsten Wochen für ungespeicherte Regeln; einzige Quelle der Regeln ist das Backend) | angemeldeter Benutzer |
 | Erledigen/Tauschen | `assignment/complete`, `assignment/swap`, `assignment/skip` | angemeldeter Benutzer |
 | Auslosung löschen | `round/delete` | **Administrator** |
 | Auslosen | `draw/begin`, `draw/preview` (Rad und Kandidaten einer Aufgabe vorab), `draw/spin`, `draw/spin_rest`, `draw/commit`, `draw/cancel`, `draw/replacements`, `draw/replace_task` | angemeldeter Benutzer; `draw/cancel` und ein erneutes `draw/begin` über eine schon gezogene Runde sowie `draw/replacements`/`draw/replace_task` (Aufgabe der Runde vor dem ersten Dreh gegen eine machbare Aufgabe desselben Zeitplans tauschen) nur Administrator |
@@ -508,7 +501,7 @@ Befunde der Stufe hoch oder mittel: **keine offen.**
 
 ## 11. Festgelegte Annahmen (bestätigt von Anton am 2026-11-03)
 
-1. Anwesenheit im Fristfenster: eine Person ist Kandidat, wenn sie **irgendwann im Fristfenster** anwesend ist (am 2026-11-04 kurz durch „Tag der Auslosung“ ersetzt, am selben Tag auf Wunsch von Anton mit der Frist am Zeitplan wieder aufgenommen; das Fenster beginnt jetzt bei „gilt ab“, nicht bei der Auslosung). Beim Tausch gilt dasselbe Fenster (§5.4).
+1. Anwesenheit in der Periode: eine Person ist Kandidat, wenn sie **irgendwann in der Periode** der Auslosung anwesend ist (seit 0.7.0 gibt es keine Frist je Auslosung, §5.4). Beim Tausch gilt dasselbe Fenster.
 2. ~~Joker werden pro Kalendermonat zurückgesetzt~~ – abgelöst am 2026-11-04: Der Tausch ist ein echter Tausch ohne Joker (§5.4); die Einstellung `jokers_per_month` bleibt für später reserviert.
 3. Punkte für verspätete und verpasste Aufgaben sind **einstellbar** (Options Flow: `late_points_factor`, `missed_points_factor`, `missed_grace_hours`); Standard: verspätet volle Punkte, verpasst keine. Grenzen der Faktoren stehen in `const/limits.py`.
 4. Panel ist für alle angemeldeten Benutzer sichtbar, Konfiguration nur für Admins.

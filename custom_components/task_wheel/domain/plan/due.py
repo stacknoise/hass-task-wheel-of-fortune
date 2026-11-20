@@ -45,7 +45,8 @@ class TaskTiming:
 class DueRanking:
     """Die Aufgaben einer Auslosung in Reihenfolge ihrer Wichtigkeit.
 
-    `required` sind die „jede Auslosung“-Aufgaben, `due` die fälligen (nach Verzug zufällig
+    `required` sind die „jede Auslosung“-Aufgaben (zufällige Reihenfolge, falls nicht alle
+    vergebbar sind), `due` die fälligen (nach Verzug zufällig
     gewichtet), `spare` die noch nicht fälligen (nach Fortschritt zufällig gewichtet; sie füllen
     nur eine Lücke).
     """
@@ -93,7 +94,7 @@ def rank_tasks(
 
     Aufgaben, die nicht (mehr) im Zeitplan stehen, sind nicht dabei.
     """
-    required: list[Task] = []
+    required: list[tuple[Task, float]] = []
     due: list[tuple[Task, float]] = []
     spare: list[tuple[Task, float]] = []
     for task in tasks:
@@ -101,11 +102,13 @@ def rank_tasks(
         if entry is None:
             continue
         if entry.every_draw:
-            required.append(task)
+            required.append((task, 1.0))
             continue
         timing = timing_of(schedule, entry, last_periods, period)
         if _is_due(timing, rng):
             due.append((task, 1 + timing.arrears))
         else:
             spare.append((task, max(timing.progress or rng.random(), GAP_WEIGHT_FLOOR)))
-    return DueRanking(tuple(required), _weighted_order(due, rng), _weighted_order(spare, rng))
+    return DueRanking(
+        _weighted_order(required, rng), _weighted_order(due, rng), _weighted_order(spare, rng)
+    )

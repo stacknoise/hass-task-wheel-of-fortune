@@ -7,7 +7,6 @@ from unittest.mock import MagicMock
 
 from custom_components.task_wheel.application.notification_service import NotificationService
 from custom_components.task_wheel.domain.enums import AssignmentStatus
-from custom_components.task_wheel.domain.models import EveryRound, ManualTrigger
 from custom_components.task_wheel.infrastructure.repository.config_store import ConfigStore
 from custom_components.task_wheel.infrastructure.repository.decision_store import DecisionStore
 from custom_components.task_wheel.infrastructure.repository.history_store import HistoryStore
@@ -25,8 +24,13 @@ if TYPE_CHECKING:
     from custom_components.task_wheel.application.wire import Json
 
 PREFIX = "task_wheel/"
-# Pflichtangaben beim Beginnen einer Panel-Runde: gilt ab jetzt, drei Tage lang
-BEGIN = {"starts_at": f.NOW.isoformat(), "duration": 3, "duration_unit": "day"}
+# Zeitplan-Felder zum Anlegen: täglich ab jetzt, automatisch, Aufgabe t1 in jeder Auslosung
+PLAN = {
+    "start": f.NOW.isoformat(),
+    "interval": {"unit": "day", "every": 1},
+    "automatic": True,
+    "entries": [{"task_id": "t1", "mode": "every_draw"}],
+}
 BY_NAME = {command.name: command for command in COMMANDS}
 
 
@@ -40,13 +44,9 @@ class Api:
         for ident in ("p1", "p2"):
             self.config.put_person(f.person(id=ident, slug=ident, name=ident, absences=()))
         both = frozenset({"p1", "p2"})
-        self.config.put_task(
-            f.task(id="t1", name="A", allowed=both, points=5, frequency=EveryRound())
-        )
-        self.config.put_task(
-            f.task(id="t2", name="B", allowed=both, points=2, frequency=EveryRound())
-        )
-        self.config.put_schedule(f.schedule(trigger=ManualTrigger(), task_ids=("t1", "t2")))
+        self.config.put_task(f.task(id="t1", name="A", allowed=both, points=5))
+        self.config.put_task(f.task(id="t2", name="B", allowed=both, points=2))
+        self.config.put_schedule(f.schedule(automatic=False))
         self.config.set_settings(f.settings())
         self.history.put_round(f.finished_round())
         self.timers = FakeTimers()

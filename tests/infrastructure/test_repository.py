@@ -19,6 +19,8 @@ from custom_components.task_wheel.domain.errors import (
     StorageCorruptError,
     StorageVersionError,
 )
+from custom_components.task_wheel.domain.models import Schedule, Task
+from custom_components.task_wheel.infrastructure.repository import migration
 from custom_components.task_wheel.infrastructure.repository.config_store import ConfigStore
 from custom_components.task_wheel.infrastructure.repository.history_store import HistoryStore
 from custom_components.task_wheel.infrastructure.repository.memory import MemoryStore
@@ -327,8 +329,87 @@ def test_history_migration_gives_assignments_the_schedule_of_their_round() -> No
     }
     new = migrate(STORE_HISTORY, old, (1, 1), HISTORY_MIGRATIONS)
     assert [a["schedule_id"] for a in new[KEY_ROUNDS][0]["assignments"]] == ["s7", "s7"]
-    assert new[KEY_ROUNDS][1:] == old[KEY_ROUNDS][1:]
+    assert new[KEY_ROUNDS][1]["schedule_id"] == "s8" and new[KEY_ROUNDS][2] == "kaputt"
     assert migrate(STORE_HISTORY, {}, (1, 1), HISTORY_MIGRATIONS) == {}
+
+
+def test_history_migration_numbers_the_periods_of_each_schedule() -> None:
+    rounds = [
+        {
+            "id": "r3",
+            "schedule_id": "s1",
+            "started_at": "2026-11-03T10:00:00+00:00",
+            "replaces": "x",
+        },
+        {"id": "r1", "schedule_id": "s1", "started_at": "2026-11-01T10:00:00+00:00"},
+        {"id": "r2", "schedule_id": "s2", "started_at": "2026-11-02T10:00:00+00:00"},
+        "kaputt",
+    ]
+    new = migrate(STORE_HISTORY, {KEY_ROUNDS: rounds}, (1, 5), HISTORY_MIGRATIONS)
+    assert [r.get("period_index") for r in new[KEY_ROUNDS][:3]] == [1, 0, 0]
+    assert "replaces" not in new[KEY_ROUNDS][0] and new[KEY_ROUNDS][3] == "kaputt"
+    assert migrate(STORE_HISTORY, {}, (1, 5), HISTORY_MIGRATIONS) == {}
+
+
+def test_config_migration_moves_frequency_trigger_and_deadline_to_the_schedule(monkeypatch) -> None:
+    monkeypatch.setattr(migration, "_default_start", lambda: "2026-11-03T10:00:00+00:00")
+    old = {
+        "tasks": [
+            {"id": "t1", "name": "A", "frequency": {"kind": "every_round"}},
+            {"id": "t2", "name": "B", "frequency": {"kind": "max_per_period", "count": 3}},
+            {"id": "t3", "name": "C", "frequency": {"kind": "interval", "days": 7}},
+            "kaputt",
+        ],
+        "schedules": [
+            {
+                "id": "s1",
+                "name": "S",
+                "slug": "s",
+                "trigger": {"kind": "recurring", "weekdays": [0], "every_n_weeks": 2},
+                "deadline": {"duration": 3},
+                "task_ids": ["t1", "t2", "t3", "t9"],
+            },
+            {"id": "s2", "trigger": {"kind": "once", "at": "2026-12-01T08:00:00+00:00"}},
+            {"id": "s3", "trigger": {"kind": "manual"}, "task_ids": []},
+            "kaputt",
+        ],
+    }
+    new = migrate(STORE_CONFIG, old, (1, 5), CONFIG_MIGRATIONS)
+    first, once, manual, broken = new["schedules"]
+    assert first["interval"] == {"unit": "week", "every": 2} and first["automatic"] is True
+    assert first["start"] == "2026-11-03T10:00:00+00:00"
+    assert [(e["task_id"], e["mode"], e.get("min_count")) for e in first["entries"]] == [
+        ("t1", "every_draw", None),
+        ("t2", "min_count", 3),
+        ("t3", "min_count", None),
+        ("t9", "min_count", None),
+    ]
+    assert not {"trigger", "deadline", "task_ids"} & set(first)
+    assert once["start"] == "2026-12-01T08:00:00+00:00" and once["automatic"] is True
+    assert manual["automatic"] is False and manual["entries"] == []
+    assert broken == "kaputt"
+    assert all("frequency" not in t for t in new["tasks"] if isinstance(t, dict))
+    assert migrate(STORE_CONFIG, {}, (1, 5), CONFIG_MIGRATIONS) == {}
+
+
+def test_migrated_old_store_loads_into_the_new_models(monkeypatch) -> None:
+    monkeypatch.setattr(migration, "_default_start", lambda: "2026-11-03T10:00:00+00:00")
+    old = {
+        "tasks": [{"id": "t1", "name": "A", "frequency": {"kind": "every_round"}}],
+        "schedules": [
+            {
+                "id": "s1",
+                "name": "S",
+                "slug": "s",
+                "trigger": {"kind": "manual"},
+                "deadline": {},
+                "task_ids": ["t1"],
+            }
+        ],
+    }
+    raw = migrate(STORE_CONFIG, old, (1, 5), CONFIG_MIGRATIONS)
+    assert Schedule.from_dict(raw["schedules"][0]).task_ids == ("t1",)
+    assert Task.from_dict(raw["tasks"][0]).id == "t1"
 
 
 async def test_migrated_history_loads() -> None:

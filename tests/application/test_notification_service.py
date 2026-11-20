@@ -140,7 +140,7 @@ async def test_reminder_goes_to_everyone_regardless_of_notify_flag() -> None:
     assert len(setup.notifier.sent) == 2
     assert setup.notifier.sent[0][1:] == (
         "Erinnerung: Wochenrunde",
-        "„Wochenrunde“ wurde seit 14 Tagen nicht ausgelost.",
+        "Die Auslosung von „Wochenrunde“ ist fällig (die letzte war vor 14 Tagen).",
     )
 
 

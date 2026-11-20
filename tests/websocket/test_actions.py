@@ -10,13 +10,14 @@ from custom_components.task_wheel.domain.errors import (
     SwapRejectedError,
 )
 
+from ..application.world import ORDERED
 from ..domain import factories as f
-from .harness import BEGIN, Api
+from .harness import Api
 
 
 @pytest.fixture
 def api() -> Api:
-    return Api(0.1, 0.9)
+    return Api(*ORDERED)
 
 
 def test_complete_marks_assignment_done(api: Api) -> None:
@@ -60,7 +61,7 @@ def test_swap_to_unknown_person(api: Api) -> None:
 
 def test_panel_round_runs_step_by_step(api: Api) -> None:
     api.advance(minutes=1)
-    begun = api.result("draw/begin", schedule_id="s1", **BEGIN)
+    begun = api.result("draw/begin", schedule_id="s1")
     rid = begun["id"]
     assert begun["pending_task_ids"] == ["t1", "t2"]
     assert begun["unplaceable_task_ids"] == []
@@ -81,14 +82,14 @@ def test_panel_round_runs_step_by_step(api: Api) -> None:
 
 
 def test_commit_before_all_drawn_is_rejected_and_round_stays(api: Api) -> None:
-    rid = api.result("draw/begin", schedule_id="s1", **BEGIN)["id"]
+    rid = api.result("draw/begin", schedule_id="s1")["id"]
     with pytest.raises(DrawRejectedError):
         api.run("draw/commit", panel_round_id=rid)
     assert [r["id"] for r in api.result("snapshot")["panel_rounds"]] == [rid]
 
 
 def test_cancel_discards_round_without_effect(api: Api) -> None:
-    rid = api.result("draw/begin", schedule_id="s1", **BEGIN)["id"]
+    rid = api.result("draw/begin", schedule_id="s1")["id"]
     api.run("draw/cancel", panel_round_id=rid)
     with pytest.raises(NotFoundError):
         api.run("draw/spin", panel_round_id=rid)
@@ -97,7 +98,7 @@ def test_cancel_discards_round_without_effect(api: Api) -> None:
 
 def test_begin_unknown_schedule(api: Api) -> None:
     with pytest.raises(NotFoundError):
-        api.run("draw/begin", schedule_id="nope", **BEGIN)
+        api.run("draw/begin", schedule_id="nope")
 
 
 def _undone_round(api: Api) -> None:
@@ -137,7 +138,7 @@ def test_snapshot_lists_rounds_with_open_assignments(api: Api) -> None:
 
 
 def test_preview_shows_the_wheel_of_the_next_task_without_drawing(api: Api) -> None:
-    rid = api.result("draw/begin", schedule_id="s1", **BEGIN)["id"]
+    rid = api.result("draw/begin", schedule_id="s1")["id"]
     preview = api.result("draw/preview", panel_round_id=rid)["result"]
     assert preview["task_id"] == "t1"
     assert preview["winner_id"] is None
@@ -149,7 +150,7 @@ def test_preview_shows_the_wheel_of_the_next_task_without_drawing(api: Api) -> N
 
 
 def test_preview_of_a_finished_round_is_rejected(api: Api) -> None:
-    rid = api.result("draw/begin", schedule_id="s1", **BEGIN)["id"]
+    rid = api.result("draw/begin", schedule_id="s1")["id"]
     api.run("draw/spin_rest", panel_round_id=rid)
     with pytest.raises(DrawRejectedError):
         api.run("draw/preview", panel_round_id=rid)
@@ -175,7 +176,7 @@ def _spare_task(api: Api) -> None:
 
 
 def test_replace_task_swaps_before_the_start_and_is_admin_only(api: Api) -> None:
-    rid = api.result("draw/begin", schedule_id="s1", **BEGIN)["id"]
+    rid = api.result("draw/begin", schedule_id="s1")["id"]
     _spare_task(api)
     options = api.result("draw/replacements", panel_round_id=rid, task_id="t1")["replacements"]
     assert options == [{"task_id": "t3", "doable": True}]

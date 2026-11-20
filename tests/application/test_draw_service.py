@@ -9,13 +9,10 @@ from custom_components.task_wheel.const.limits import (
     DRAW_MIN_INTERVAL_SECONDS,
     MAX_OPEN_PANEL_ROUNDS,
 )
-from custom_components.task_wheel.domain.deadline import Deadline, DeadlineWindow
 from custom_components.task_wheel.domain.enums import (
     AssignmentStatus,
-    DeadlineStart,
-    DeadlineUnit,
+    IntervalUnit,
     Load,
-    Period,
     RoundOrigin,
     WeightingKind,
 )
@@ -25,31 +22,28 @@ from custom_components.task_wheel.domain.errors import (
     NotFoundError,
 )
 from custom_components.task_wheel.domain.models import (
-    MaxPerPeriod,
+    Interval,
     OnceAbsence,
-    Recurring,
     WeeklyDaysAbsence,
 )
 from custom_components.task_wheel.domain.statistics import aggregate
 
 from ..domain import factories as f
-from .world import DAY, World
+from .world import DAY, ORDERED, World
 
 NOW = f.NOW
 AUTO, MANUAL = RoundOrigin.AUTO, RoundOrigin.MANUAL
 SECOND = dt.timedelta(seconds=1)
-HOUR = DeadlineUnit.HOUR
 HOUR_DELTA = dt.timedelta(hours=1)
-WINDOW = DeadlineWindow(NOW, NOW + 3 * DAY)
 
 
 def begin(world: World, schedule_id: str, now: dt.datetime = NOW, **kwargs):
-    """Panel-Runde mit Frist und bestätigtem Vorziehen des nächsten Laufs."""
-    return world.draws.begin(schedule_id, now, WINDOW, replace_next=True, **kwargs)
+    """Panel-Runde für die nächste offene Periode."""
+    return world.draws.begin(schedule_id, now, **kwargs)
 
 
 def test_automatic_round_is_drawn_stored_and_reported():
-    world = World(0.1, 0.9)
+    world = World(*ORDERED)
     round_ = world.draws.draw("s1", AUTO, NOW)
     assert world.history.rounds[round_.id] == round_
     assert world.events.drawn == [round_]
@@ -58,7 +52,7 @@ def test_automatic_round_is_drawn_stored_and_reported():
         ("t1", "p1", AssignmentStatus.OPEN),
         ("t2", "p2", AssignmentStatus.OPEN),
     ]
-    assert round_.assignments[0].due_at == NOW + 7 * DAY
+    assert round_.assignments[0].due_at == NOW + DAY  # gilt bis zur nächsten Auslosung
 
 
 def test_new_round_is_added_to_the_monthly_aggregates():
@@ -89,53 +83,28 @@ def test_paused_schedule_is_skipped_automatically_but_can_be_drawn_by_hand():
     assert world.draws.draw("s1", RoundOrigin.SERVICE, NOW).origin is RoundOrigin.SERVICE
 
 
-def test_frequency_rule_removes_tasks_that_are_not_due():
-    world = World(0.1)
-    world.config.put_task(
-        f.task(
-            id="t1",
-            allowed=frozenset({"p1", "p2"}),
-            points=5,
-            frequency=MaxPerPeriod(count=1, period=Period.DAY),
-        )
-    )
-    world.draws.draw("s1", AUTO, NOW)
-    second = world.draws.draw("s1", AUTO, NOW + dt.timedelta(hours=1))
-    assert [a.task_id for a in second.assignments] == ["t2"]
-    third = world.draws.draw("s1", AUTO, NOW + DAY)
-    assert [a.task_id for a in third.assignments] == ["t1", "t2"]
-
-
-def _exhaust_all_tasks(world: World) -> None:
-    """Beide Aufgaben am Tagesmaximum: nach einer Auslosung ist heute nichts mehr fällig."""
-    daily = MaxPerPeriod(count=1, period=Period.DAY)
-    for task_id in ("t1", "t2"):
-        world.config.put_task(f.task(id=task_id, allowed=frozenset({"p1", "p2"}), frequency=daily))
-    world.draws.draw("s1", AUTO, NOW)
-
-
-def test_nothing_due_rejects_the_draw_and_stores_no_empty_round():
+def test_periods_are_drawn_in_order_and_each_only_once():
     world = World(0.1, 0.9)
-    _exhaust_all_tasks(world)
-    stored = dict(world.history.rounds)
-    for origin in (AUTO, MANUAL):
-        with pytest.raises(DrawRejectedError, match="draw_nothing_due"):
-            world.draws.draw("s1", origin, NOW + HOUR_DELTA)
-    with pytest.raises(DrawRejectedError, match="draw_nothing_due"):
-        begin(world, "s1", NOW + HOUR_DELTA)
-    assert world.history.rounds == stored and len(world.events.drawn) == 1
-    assert world.draws.open_rounds(NOW + HOUR_DELTA) == ()
+    first = world.draws.draw("s1", AUTO, NOW)
+    second = world.draws.draw("s1", AUTO, NOW + HOUR_DELTA)
+    assert (first.period_index, second.period_index) == (0, 1)
+    assert world.draws.next_period("s1") == 2
+    with pytest.raises(DrawRejectedError, match="draw_period_drawn"):
+        world.draws.draw("s1", AUTO, NOW + 2 * HOUR_DELTA, 1)
+    assert world.draws.draw("s1", AUTO, NOW + 3 * HOUR_DELTA, 7).period_index == 7
+    assert world.draws.next_period("s1") == 8
 
 
-def test_nothing_due_keeps_an_open_panel_round_and_ends_with_the_next_day():
-    world = World(0.1, 0.9)
-    _exhaust_all_tasks(world)
-    with pytest.raises(DrawRejectedError, match="draw_nothing_due"):
-        begin(world, "s1", NOW + HOUR_DELTA)
-    assert len(world.draws.draw("s1", AUTO, NOW + DAY).assignments) == 2
+def test_only_due_tasks_are_drawn_and_a_gap_is_filled_by_chance():
+    world = World(0.01)
+    world.put_schedule(entries=f.entries("t1", "t2", every_draw=False, min_count=1))
+    first = world.draws.draw("s1", AUTO, NOW)
+    assert len(first.assignments) == 2  # ohne Vorgeschichte sind beide fällig (Zielabstand 30)
+    gap = world.draws.draw("s1", AUTO, NOW + DAY)
+    assert len(gap.assignments) == 1  # nichts fällig: der Zufall zieht eine Aufgabe nach
 
 
-def test_nobody_available_counts_as_nothing_due():
+def test_nobody_available_means_nothing_can_be_drawn():
     world = World()
     for pid in ("p1", "p2"):
         world.config.put_person(f.person(id=pid, load=Load.PAUSED))
@@ -173,7 +142,7 @@ def test_absence_is_ignored_when_the_schedule_does_not_skip_absent():
 
 
 def test_panel_round_runs_step_by_step_and_is_stored_on_commit():
-    world = World(0.1, 0.9)
+    world = World(*ORDERED)
     panel = begin(world, "s1", NOW)
     assert world.history.rounds == {}
     first = world.draws.spin(panel.id, NOW)
@@ -345,27 +314,20 @@ def test_commit_rejects_and_drops_a_round_whose_winner_was_deleted(gone: str):
 # --- Gilt-ab, Frist und Bestätigung beim manuellen Auslösen ------------------------------------
 
 
-def test_panel_round_uses_the_given_window_for_every_assignment():
+def test_assignments_carry_the_window_of_their_period():
     world = World(0.1, 0.9)
+    world.put_schedule(start=NOW, interval=Interval(unit=IntervalUnit.HOUR, every=6), run_days=2)
     panel = begin(world, "s1")
     world.draws.spin_rest(panel.id, NOW)
     round_ = world.draws.commit(panel.id, NOW)
-    assert {(a.starts_at, a.due_at) for a in round_.assignments} == {(WINDOW.start, WINDOW.end)}
+    assert {(a.starts_at, a.due_at) for a in round_.assignments} == {(NOW, NOW + 6 * HOUR_DELTA)}
+    later = world.draws.draw("s1", AUTO, NOW + DAY)
+    start = NOW + DAY
+    assert {(a.starts_at, a.due_at) for a in later.assignments} == {(start, start + 6 * HOUR_DELTA)}
+    assert (panel.draft.period_index, later.period_index) == (0, 1)
 
 
-def test_scheduled_draw_uses_the_deadline_of_the_schedule():
-    world = World(0.1, 0.9)
-    world.put_schedule(
-        deadline=Deadline(start=DeadlineStart.NEXT_DAY, duration=4, duration_unit=HOUR)
-    )
-    round_ = world.draws.draw("s1", AUTO, NOW)
-    expected = dt.datetime(2026, 11, 4, 10, tzinfo=dt.UTC)
-    assert {(a.starts_at, a.due_at) for a in round_.assignments} == {
-        (expected, expected + 4 * HOUR_DELTA)
-    }
-
-
-def test_person_absent_during_the_whole_window_gets_nothing():
+def test_person_absent_during_the_whole_period_gets_nothing():
     wednesday = dt.date(2026, 11, 4)
     world = World(0.1, 0.9)
     world.config.put_person(
@@ -373,36 +335,25 @@ def test_person_absent_during_the_whole_window_gets_nothing():
             id="p1", slug="p1", name="p1", absences=(OnceAbsence(start=wednesday, end=wednesday),)
         )
     )
-    world.put_schedule(
-        deadline=Deadline(start=DeadlineStart.NEXT_DAY, duration=4, duration_unit=HOUR)
-    )
+    world.put_schedule(start=NOW + DAY, interval=Interval(unit=IntervalUnit.HOUR, every=4))
     round_ = world.draws.draw("s1", AUTO, NOW)
     assert {a.person_id for a in round_.assignments} == {"p2"}
 
 
-def test_scheduled_schedule_needs_confirmation_that_the_next_run_is_replaced():
+def test_manual_draw_always_takes_the_next_open_period():
     world = World()
-    world.put_schedule(trigger=Recurring(weekdays=frozenset({0}), time=dt.time(7)))
-    with pytest.raises(DrawRejectedError) as caught:
-        world.draws.begin("s1", NOW, WINDOW)
-    assert caught.value.key == "draw_replace_unconfirmed"
-    assert world.draws.open_rounds(NOW) == ()
-    panel = world.draws.begin("s1", NOW, WINDOW, replace_next=True)
-    assert panel.draft.replaces == dt.datetime(2026, 11, 9, 7, tzinfo=dt.UTC)
-
-
-def test_paused_scheduled_schedule_has_no_run_to_replace():
-    world = World()
-    world.put_schedule(trigger=Recurring(weekdays=frozenset({0}), time=dt.time(7)), enabled=False)
-    assert world.draws.begin("s1", NOW, WINDOW).draft.replaces is None
+    panel = begin(world, "s1")
+    assert panel.draft.period_index == 0
+    world.draws.spin_rest(panel.id, NOW)
+    world.draws.commit(panel.id, NOW)
+    assert begin(world, "s1", NOW + DAY).draft.period_index == 1
 
 
 def _with_spare_tasks(world: World) -> None:
     """Zeitplan s1 mit vier Aufgaben: t3 machbar, t4 nur für eine unbekannte Person erlaubt."""
-    every = f.task(id="t3").frequency
     both = frozenset({"p1", "p2"})
-    world.config.put_task(f.task(id="t3", name="C", allowed=both, frequency=every))
-    world.config.put_task(f.task(id="t4", name="D", allowed=frozenset({"p9"}), frequency=every))
+    world.config.put_task(f.task(id="t3", name="C", allowed=both))
+    world.config.put_task(f.task(id="t4", name="D", allowed=frozenset({"p9"})))
     world.put_schedule(task_ids=("t1", "t2", "t3", "t4"))
 
 
@@ -427,10 +378,9 @@ def test_replace_task_swaps_in_place_before_the_start():
 
 def test_replacement_must_keep_the_round_assignable():
     world = World()
-    every = f.task(id="t3").frequency
     world.config.put_task(f.task(id="t1", allowed=frozenset({"p1"})))
     world.config.put_task(f.task(id="t2", allowed=frozenset({"p2"})))
-    world.config.put_task(f.task(id="t3", name="C", allowed=frozenset({"p1"}), frequency=every))
+    world.config.put_task(f.task(id="t3", name="C", allowed=frozenset({"p1"})))
     world.put_schedule(task_ids=("t1", "t2", "t3"))
     panel = begin(world, "s1")
     assert [t.id for t in panel.draft.tasks] == ["t1", "t2"]

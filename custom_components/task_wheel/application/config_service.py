@@ -269,8 +269,11 @@ class ConfigService:
     def _reach(self, entries: Iterable[ScheduleEntry]) -> dict[TaskId, frozenset[PersonId]]:
         """Je Aufgabe die Personen, die sie bekommen dürfen (ohne Einschränkung: alle)."""
         everyone = frozenset(self._config.persons)
+        tasks = self._config.tasks
         return {
-            entry.task_id: self._config.tasks[entry.task_id].allowed & everyone or everyone
+            entry.task_id: (tasks[entry.task_id].allowed & everyone)
+            if tasks[entry.task_id].allowed
+            else everyone
             for entry in entries
         }
 

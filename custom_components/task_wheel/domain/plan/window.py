@@ -62,6 +62,18 @@ def period_window(schedule: Schedule, index: int) -> PeriodWindow:
     return PeriodWindow(period_start(schedule, index), period_start(schedule, index + 1))
 
 
+def effective_window(schedule: Schedule, index: int, now: dt.datetime) -> PeriodWindow:
+    """Das Fenster der Zuteilungen einer Auslosung der Periode `index` zum Zeitpunkt `now`.
+
+    Wird eine Periode erst nach ihrem Beginn ausgelost (von Hand oder verspätet), gilt die
+    Zuteilung ab jetzt für die Länge der Periode, damit sie nicht schon abgelaufen ist.
+    """
+    window = period_window(schedule, index)
+    if now <= window.start:
+        return window
+    return PeriodWindow(now, now + (window.end - window.start))
+
+
 def period_index_at(schedule: Schedule, moment: dt.datetime) -> int | None:
     """Nummer der Periode, in der `moment` liegt; `None` vor dem Beginn des Zeitplans."""
     ensure_aware("moment", moment)
