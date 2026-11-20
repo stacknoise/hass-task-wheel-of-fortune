@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+## [0.7.2] – 2026-11-20
+
 - **Geändert:** Räume erscheinen überall als Chip (Kontur mit farbigem Punkt, eine Farbe je Raum, ohne Umbruch), auch in der Planvorschau „Abstände je Aufgabe“ unter dem Aufgabennamen; gelöschte Räume erscheinen grau
 
 ## [0.7.1] – 2026-11-20
@@ -140,7 +142,8 @@ Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.
 - Fairness-Gewichtung, Tausch mit Joker, „Bleibt unerledigt“, Historie mit CSV-Export und Statistiken
 - Home-Assistant-Anbindung: Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen
 
-[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.1...HEAD
+[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.3...v0.7.0
 [0.6.4]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.3...2cfd224
