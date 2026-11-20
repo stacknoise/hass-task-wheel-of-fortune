@@ -29,7 +29,7 @@ from ..domain.draw.weighting import WeightingFactory
 from ..domain.enums import RoundOrigin
 from ..domain.errors import DrawRejectedError, LimitReachedError, NotFoundError
 from ..domain.models import Round, Schedule, Task
-from ..domain.plan.window import next_open_period, period_window
+from ..domain.plan.window import effective_window, next_open_period
 from ..domain.types import ScheduleId
 from .draw_inputs import (
     build_context,
@@ -305,7 +305,7 @@ class DrawService:
         self._ensure_period_free(schedule_id, period)
         recent = recent_assignments(self._history, now)
         context = build_context(
-            self._config, self._history, recent, now, period_window(schedule, period)
+            self._config, self._history, recent, now, effective_window(schedule, period, now)
         )
         ranking = ranked_tasks(self._config, self._history, schedule, period, self._rng)
         tasks = shuffled(choose_tasks(ranking, context), self._rng)

@@ -11,10 +11,9 @@ from custom_components.task_wheel.application.statistics_service import Statisti
 from custom_components.task_wheel.application.swap_service import SwapService
 from custom_components.task_wheel.application.wire import to_json
 from custom_components.task_wheel.domain.enums import AssignmentStatus as S
-from custom_components.task_wheel.domain.enums import Load, Period
+from custom_components.task_wheel.domain.enums import Load
 from custom_components.task_wheel.domain.errors import TaskWheelError, ValidationError
 from custom_components.task_wheel.domain.history import HistoryFilter
-from custom_components.task_wheel.domain.models import MaxPerPeriod
 from custom_components.task_wheel.domain.statistics.aggregate import recompute
 from custom_components.task_wheel.infrastructure.repository.config_store import ConfigStore
 from custom_components.task_wheel.infrastructure.repository.history_store import HistoryStore
@@ -237,12 +236,13 @@ def test_history_validates_paging(kwargs: dict[str, int]) -> None:
 
 def test_report_holds_target_against_drawn_per_task():
     world = World()
-    rule = MaxPerPeriod(count=2, period=Period.WEEK)
-    world.config.put_task(f.task(id="t1", allowed=frozenset(PEOPLE), frequency=rule))
-    world.config.put_schedule(f.schedule(id="s1", task_ids=("t1",)))
+    world.config.put_task(f.task(id="t1", allowed=frozenset(PEOPLE)))
+    world.config.put_schedule(
+        f.schedule(id="s1", entries=f.entries("t1", every_draw=False, min_count=2))
+    )
     report = world.statistics.report(f.NOW)
     (goal,) = (g for g in report.goals if g.task_id == "t1")
     assert (goal.schedule_id, goal.target, goal.windows[0].assigned) == ("s1", 2, 0)
     wire = to_json(report)["goals"]
     assert wire[0]["schedule_id"] == "s1"
-    assert wire[0]["windows"][0]["start"] == "2026-11-02"
+    assert wire[0]["windows"][0]["start"] == "2026-11-03"

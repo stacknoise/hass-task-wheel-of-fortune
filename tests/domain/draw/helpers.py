@@ -4,13 +4,13 @@ import datetime as dt
 from collections.abc import Iterable, Mapping, Sequence
 
 from custom_components.task_wheel.domain.availability.calendar import PersonAvailability
-from custom_components.task_wheel.domain.deadline import DeadlineWindow
 from custom_components.task_wheel.domain.draw.draft import RoundDraft
 from custom_components.task_wheel.domain.draw.engine import DrawEngine
 from custom_components.task_wheel.domain.draw.matching import _match
 from custom_components.task_wheel.domain.draw.types import DrawContext, TaskDraw
 from custom_components.task_wheel.domain.enums import RoundOrigin
 from custom_components.task_wheel.domain.models import Person, Task
+from custom_components.task_wheel.domain.plan.window import PeriodWindow
 
 from ..factories import NOW
 
@@ -42,7 +42,7 @@ def make_context(
     last_holders: Mapping[str, str] | None = None,
     round_holders: frozenset[str] = frozenset(),
     now: dt.datetime = NOW,
-    window: DeadlineWindow | None = None,
+    window: PeriodWindow | None = None,
 ) -> DrawContext:
     people = {p.id: p for p in persons}
     return DrawContext(
@@ -52,7 +52,7 @@ def make_context(
         points=points or {},
         last_holders=last_holders or {},
         fairness_window_days=WINDOW,
-        window=window or DeadlineWindow(now, now + dt.timedelta(days=7)),
+        window=window or PeriodWindow(now, now + dt.timedelta(days=7)),
         round_holders=round_holders,
     )
 
@@ -61,7 +61,7 @@ def draw_round(
     engine: DrawEngine, tasks: Iterable[Task], context: DrawContext
 ) -> tuple[TaskDraw, ...]:
     """Zieht eine ganze Runde wie der Betrieb: über `RoundDraft`."""
-    draft = RoundDraft("s1", RoundOrigin.MANUAL, context.now, context, tuple(tasks))
+    draft = RoundDraft("s1", RoundOrigin.MANUAL, context.now, context, tuple(tasks), 0)
     return draft.spin_rest(engine).results
 
 

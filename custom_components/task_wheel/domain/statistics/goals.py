@@ -1,6 +1,7 @@
 """Soll-Ist je Zeitplan und Aufgabe: Verlosungen je Lauf gegen die Mindesthäufigkeit."""
 
 import datetime as dt
+from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
 
@@ -47,16 +48,16 @@ def _window(schedule: Schedule, run: int, current: int, counts: tuple[int, int])
     return GoalWindow(start, end, draws, elapsed, *counts)
 
 
-def _counts(rounds: Iterable[Round], task_id: TaskId, first: int, after: int) -> tuple[int, int]:
-    """Zuteilungen der Aufgabe in den Perioden `first` bis vor `after` und davon erledigte."""
-    items = [
-        item.status in DONE_STATUSES
-        for round_ in rounds
-        if first <= round_.period_index < after
-        for item in round_.assignments
-        if item.task_id == task_id
-    ]
-    return len(items), sum(items)
+def _counts(rounds: Iterable[Round], draws: int) -> dict[tuple[int, TaskId], tuple[int, int]]:
+    """Zuteilungen (Ist, erledigt) je Lauf und Aufgabe, in einem Durchlauf über die Runden."""
+    assigned: Counter[tuple[int, TaskId]] = Counter()
+    done: Counter[tuple[int, TaskId]] = Counter()
+    for round_ in rounds:
+        run = round_.period_index // draws
+        for item in round_.assignments:
+            assigned[run, item.task_id] += 1
+            done[run, item.task_id] += item.status in DONE_STATUSES
+    return {key: (count, done[key]) for key, count in assigned.items()}
 
 
 def schedule_goals(
@@ -73,8 +74,8 @@ def schedule_goals(
     current = period_index_at(schedule, now)
     if current is None or schedule.archived:
         return ()
-    mine = tuple(round_ for round_ in rounds if round_.schedule_id == schedule.id)
     draws = schedule.draws_per_run
+    counts = _counts((round_ for round_ in rounds if round_.schedule_id == schedule.id), draws)
     current_run = current // draws
     runs = [run for run in range(current_run, current_run - windows, -1) if run >= 0]
     return tuple(
@@ -83,12 +84,7 @@ def schedule_goals(
             entry.task_id,
             draws if entry.every_draw else entry.min_count,
             tuple(
-                _window(
-                    schedule,
-                    run,
-                    current,
-                    _counts(mine, entry.task_id, run * draws, (run + 1) * draws),
-                )
+                _window(schedule, run, current, counts.get((run, entry.task_id), (0, 0)))
                 for run in runs
             ),
         )

@@ -16,7 +16,6 @@ import pytest
 
 from custom_components.task_wheel.const import limits
 from custom_components.task_wheel.domain.enums import AssignmentStatus, RoundOrigin
-from custom_components.task_wheel.domain.models import EveryRound, ManualTrigger
 
 from ..domain import factories as f
 from ..websocket.harness import Api
@@ -51,14 +50,10 @@ def _full_world() -> Api:
     for i in range(limits.MAX_PERSONS):
         api.config.put_person(f.person(id=f"p{i}", slug=f"p{i}", name=f"P{i}", absences=()))
     for ident in task_ids:
-        api.config.put_task(
-            f.task(id=ident, name=ident, allowed=everyone, frequency=EveryRound(), points=3)
-        )
+        api.config.put_task(f.task(id=ident, name=ident, allowed=everyone, points=3))
     for i in range(limits.MAX_SCHEDULES):
         api.config.put_schedule(
-            f.schedule(
-                id=f"s{i}", slug=f"s{i}", name=f"S{i}", trigger=ManualTrigger(), task_ids=task_ids
-            )
+            f.schedule(id=f"s{i}", slug=f"s{i}", name=f"S{i}", automatic=False, task_ids=task_ids)
         )
     for number in range(HISTORY_ROUNDS):
         at = api.now - dt.timedelta(days=number % HISTORY_DAYS, minutes=number)

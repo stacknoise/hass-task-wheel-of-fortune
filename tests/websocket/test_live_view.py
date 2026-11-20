@@ -8,8 +8,7 @@ from custom_components.task_wheel.domain.errors import LimitReachedError
 from custom_components.task_wheel.domain.statistics.report import Standing, WeekRate
 
 from ..domain import factories as f
-from .harness import BEGIN, Api
-from .test_config import RECURRING
+from .harness import PLAN, Api
 
 
 @pytest.fixture
@@ -56,7 +55,7 @@ def test_config_changes_show_up_and_removals_are_listed(api: Api) -> None:
 
 def test_panel_round_steps_are_pushed(api: Api) -> None:
     api.run("subscribe")
-    rid = api.result("draw/begin", schedule_id="s1", **BEGIN)["id"]
+    rid = api.result("draw/begin", schedule_id="s1")["id"]
     assert [r["id"] for r in api.pushed[-1]["panel_rounds"]["upsert"]] == [rid]
     api.run("draw/cancel", panel_round_id=rid)
     assert api.pushed[-1]["panel_rounds"]["remove"] == [rid]
@@ -96,9 +95,7 @@ def test_subscription_limit(api: Api) -> None:
 
 
 def test_automatic_draw_by_timer_is_pushed(api: Api) -> None:
-    created = api.result(
-        "schedule/create", schedule={"name": "Plan", "trigger": RECURRING, "task_ids": ["t1"]}
-    )
+    created = api.result("schedule/create", schedule={"name": "Plan", **PLAN})
     api.run("subscribe")
     key = f"schedule:{created['id']}"
     planned, _ = api.timers.timers[key]
@@ -129,9 +126,7 @@ def test_to_wire_adds_computed_values() -> None:
 
 
 def test_observed_timers_pass_through_cancelling(api: Api) -> None:
-    created = api.result(
-        "schedule/create", schedule={"name": "Plan", "trigger": RECURRING, "task_ids": ["t1"]}
-    )
+    created = api.result("schedule/create", schedule={"name": "Plan", **PLAN})
     assert api.timers.timers
     api.data.schedules.disarm(created["id"])
     assert f"schedule:{created['id']}" not in api.timers.timers

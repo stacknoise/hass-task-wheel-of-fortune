@@ -22,10 +22,20 @@ CONFIG_COMMANDS = [
     ("task_wheel/task/delete", {"task_id": "t1"}),
     (
         "task_wheel/schedule/create",
-        {"schedule": {"name": "Neu", "trigger": {"kind": "manual"}, "task_ids": ["t1"]}},
+        {
+            "schedule": {
+                "name": "Neu",
+                "start": "2026-11-03T10:00:00+00:00",
+                "entries": [{"task_id": "t1"}],
+            }
+        },
     ),
     ("task_wheel/schedule/update", {"schedule_id": "s1", "schedule": {"enabled": False}}),
     ("task_wheel/schedule/delete", {"schedule_id": "s1"}),
+    (
+        "task_wheel/schedule/plan_preview",
+        {"interval": {"unit": "day", "every": 1}, "run_days": 30, "entries": []},
+    ),
     ("task_wheel/settings/update", {"settings": {"jokers_per_month": 3}}),
 ]
 
@@ -90,9 +100,6 @@ async def test_non_admin_can_draw_in_panel(
         client,
         "task_wheel/draw/begin",
         schedule_id="s1",
-        starts_at=f.NOW.isoformat(),
-        duration=3,
-        duration_unit="day",
     )
     rid = begun["result"]["id"]
     spun = await _call(client, "task_wheel/draw/spin_rest", panel_round_id=rid)

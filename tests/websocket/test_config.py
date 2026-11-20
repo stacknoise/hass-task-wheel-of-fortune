@@ -14,9 +14,7 @@ from custom_components.task_wheel.domain.errors import (
 )
 
 from ..domain import factories as f
-from .harness import BEGIN, Api
-
-RECURRING = {"kind": "recurring", "weekdays": [0, 3], "time": "18:30:00"}
+from .harness import PLAN, Api
 
 
 @pytest.fixture
@@ -130,22 +128,6 @@ def test_create_task_checks_allowed_persons(api: Api) -> None:
     assert api.config.tasks[created["id"]].points == 4
 
 
-def test_create_task_with_frequency_rule(api: Api) -> None:
-    created = api.result(
-        "task/create",
-        task={
-            "name": "Selten",
-            "allowed": ["p1"],
-            "frequency": {"kind": "interval", "days": 14, "tolerance": 2},
-        },
-    )
-    assert created["frequency"]["kind"] == "interval"
-    with pytest.raises(ValidationError):
-        api.run(
-            "task/create", task={"name": "Falsch", "allowed": ["p1"], "frequency": {"kind": "x"}}
-        )
-
-
 def test_update_task(api: Api) -> None:
     updated = api.result("task/update", task_id="t1", task={"points": 9, "no_repeat": True})
     assert (updated["points"], updated["no_repeat"]) == (9, True)
@@ -167,7 +149,11 @@ def test_delete_task_rejected_while_a_schedule_contains_it(api: Api) -> None:
     with pytest.raises(InUseError):
         api.run("task/delete", task_id="t2")
     assert api.config.schedules["s1"].task_ids == ("t1", "t2")
-    api.run("schedule/update", schedule_id="s1", schedule={"task_ids": ["t1"]})
+    api.run(
+        "schedule/update",
+        schedule_id="s1",
+        schedule={"entries": [{"task_id": "t1", "mode": "every_draw"}]},
+    )
     api.run("task/delete", task_id="t2")
     assert "t2" not in api.config.tasks
 
@@ -183,7 +169,7 @@ def test_delete_task_rejected_with_open_assignment(api: Api) -> None:
 def test_create_schedule_arms_timer(api: Api) -> None:
     created = api.result(
         "schedule/create",
-        schedule={"name": "Wochenplan", "trigger": RECURRING, "task_ids": ["t1"]},
+        schedule={"name": "Wochenplan", **PLAN},
     )
     assert created["slug"] == "wochenplan"
     assert f"schedule:{created['id']}" in api.timers.timers
@@ -193,37 +179,35 @@ def test_create_schedule_checks_tasks(api: Api) -> None:
     with pytest.raises(NotFoundError):
         api.run(
             "schedule/create",
-            schedule={"name": "Neu", "trigger": RECURRING, "task_ids": ["nope"]},
+            schedule={
+                "name": "Neu",
+                **PLAN,
+                "entries": [{"task_id": "nope", "mode": "every_draw"}],
+            },
         )
 
 
 def test_update_schedule_pause_cancels_timer(api: Api) -> None:
-    created = api.result(
-        "schedule/create", schedule={"name": "Plan", "trigger": RECURRING, "task_ids": ["t1"]}
-    )
+    created = api.result("schedule/create", schedule={"name": "Plan", **PLAN})
     key = f"schedule:{created['id']}"
     assert key in api.timers.timers
     api.run("schedule/update", schedule_id=created["id"], schedule={"enabled": False})
     assert key not in api.timers.timers
 
 
-def test_update_schedule_trigger_rearms(api: Api) -> None:
-    created = api.result(
-        "schedule/create", schedule={"name": "Plan", "trigger": RECURRING, "task_ids": ["t1"]}
-    )
+def test_update_schedule_start_rearms(api: Api) -> None:
+    created = api.result("schedule/create", schedule={"name": "Plan", **PLAN})
     key = f"schedule:{created['id']}"
     before = api.timers.timers[key][0]
-    later = {**RECURRING, "weekdays": [6], "time": "07:00:00"}
-    api.run("schedule/update", schedule_id=created["id"], schedule={"trigger": later})
+    later = (f.NOW + dt.timedelta(days=3)).isoformat()
+    api.run("schedule/update", schedule_id=created["id"], schedule={"start": later})
     assert api.timers.timers[key][0] != before
 
 
 def test_delete_schedule_cancels_timer_and_panel_round(api: Api) -> None:
-    created = api.result(
-        "schedule/create", schedule={"name": "Plan", "trigger": RECURRING, "task_ids": ["t1"]}
-    )
+    created = api.result("schedule/create", schedule={"name": "Plan", **PLAN})
     sid = created["id"]
-    rid = api.result("draw/begin", schedule_id=sid, **BEGIN, replace_next=True)["id"]
+    rid = api.result("draw/begin", schedule_id=sid)["id"]
     api.run("schedule/delete", schedule_id=sid)
     assert f"schedule:{sid}" not in api.timers.timers
     assert sid not in api.config.schedules
