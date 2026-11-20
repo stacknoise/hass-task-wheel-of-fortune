@@ -14,6 +14,8 @@ export { TwStepper } from './stepper.ts';
 export { describeInterval } from './summaries.ts';
 export { TwEntryEditor } from './entry-editor.ts';
 export { TwPlanPreview } from './plan-preview.ts';
+export { TwSectionTabs } from './section-tabs.ts';
+export type { SectionTab } from './section-tabs.ts';
 export { TwAvatar } from './avatar.ts';
 export { TwBadge } from './badge.ts';
 export { TwRoom, roomChips } from './room.ts';

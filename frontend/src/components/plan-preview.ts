@@ -1,26 +1,27 @@
-import { css, html, nothing, unsafeCSS } from 'lit';
+import { css, html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
+import { styleMap } from 'lit/directives/style-map.js';
 
 import {
+  EVENT_GOTO_TASK,
   FORM_TAGS,
   PERCENT,
   TRACK_GHOST_DIVISOR,
   TRACK_GHOST_MIN,
-  TRACK_ROWS_VISIBLE,
 } from '../constants/index.ts';
 import { hasText, translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
 import type { PlanIssueWire, PlanPreviewWire, PlanTrackWire } from '../state/index.ts';
 import { defineOnce } from './define.ts';
 import type { ChipOption } from './chip-select.ts';
+import { onChange } from './change.ts';
 import { LocalizedElement } from './localized.ts';
 import { roomChips } from './room.ts';
+import './segmented.ts';
 import { baseStyles, tokenStyles, viewStyles } from './styles.ts';
 import { describeSpan } from './summaries.ts';
 
-/** Höhe einer Zeile der Abstandsspuren in `em`; es zeigen sich `TRACK_ROWS_VISIBLE` Zeilen. */
-const TRACK_HEIGHT_EM = 4.4;
 const HALF = 0.5;
 const UNKNOWN_ISSUE: TextKey = 'error.unknown';
 
@@ -30,9 +31,13 @@ function issueKey(code: string): TextKey {
   return hasText(key) ? key : UNKNOWN_ISSUE;
 }
 
+/** Anzeige der Abstände: nur die Aufgaben, die ein Hinweis nennt, oder alle. */
+type TrackScope = 'flagged' | 'all';
+
 /**
- * Live-Auswertung des Plans im Zeitplan-Editor (vom Backend gerechnet): Zahlen je Lauf, die
- * Personen im Rad, die Abstände je Aufgabe und Hinweise. Nur Warnungen erlauben das Speichern.
+ * Live-Auswertung des Plans im Zeitplan-Editor (vom Backend gerechnet): zuerst die Hinweise
+ * (mit Sprung zur Aufgabe), dann Zahlen je Lauf, die Personen im Rad als Balken und die Abstände
+ * je Aufgabe, auffällige zuerst. Nur Warnungen erlauben das Speichern.
  */
 export class TwPlanPreview extends LocalizedElement {
   static override properties = {
@@ -42,6 +47,7 @@ export class TwPlanPreview extends LocalizedElement {
     people: { attribute: false },
     runDays: { type: Number },
     loading: { type: Boolean, reflect: true },
+    _scope: { state: true },
   };
 
   static override styles = [
@@ -81,8 +87,16 @@ export class TwPlanPreview extends LocalizedElement {
       .tracks {
         display: grid;
         gap: var(--tw-space-m);
-        max-height: ${unsafeCSS(String(TRACK_ROWS_VISIBLE * TRACK_HEIGHT_EM))}em;
-        overflow-y: auto;
+      }
+      .group-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--tw-space-s);
+      }
+      .group-head .label {
+        margin: 0;
       }
       .track {
         display: grid;
@@ -118,27 +132,54 @@ export class TwPlanPreview extends LocalizedElement {
         opacity: 0.3;
       }
       .persons {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--tw-space-s);
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(14em, 1fr));
+        gap: var(--tw-space-xs) var(--tw-space-l);
       }
       .person {
-        display: inline-flex;
+        display: grid;
+        grid-template-columns: 10px minmax(0, 6em) 1fr 2ch;
         align-items: center;
-        gap: 6px;
-        padding: 2px 10px;
-        border: 1px solid var(--tw-color-divider);
-        border-radius: 14px;
+        gap: var(--tw-space-s);
       }
       .swatch {
         width: 10px;
         height: 10px;
         border-radius: 50%;
       }
+      .share {
+        display: block;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--tw-color-fill);
+        overflow: hidden;
+      }
+      .share > span {
+        display: block;
+        height: 100%;
+        border-radius: 3px;
+      }
+      .count {
+        text-align: right;
+        color: var(--tw-color-text-muted);
+      }
       .issue {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--tw-space-s);
         padding: var(--tw-space-s) var(--tw-space-m);
         border: 1px solid var(--tw-color-warning);
         border-radius: 8px;
+      }
+      .issue .go {
+        margin-left: auto;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--tw-color-primary);
+        font-weight: 500;
+        white-space: nowrap;
+        cursor: pointer;
       }
       .issue.blocking {
         border-color: var(--tw-color-error);
@@ -161,6 +202,7 @@ export class TwPlanPreview extends LocalizedElement {
   declare people: readonly ChipOption[];
   declare runDays: number;
   declare loading: boolean;
+  declare _scope: TrackScope;
 
   constructor() {
     super();
@@ -169,6 +211,7 @@ export class TwPlanPreview extends LocalizedElement {
     this.people = [];
     this.runDays = 1;
     this.loading = false;
+    this._scope = 'flagged';
   }
 
   protected override render(): TemplateResult | typeof nothing {
@@ -177,9 +220,8 @@ export class TwPlanPreview extends LocalizedElement {
       return nothing;
     }
     return html`
-      <span class="label">${this.text('plan.title')}</span>
-      ${this.#kpis(preview)} ${this.#persons(preview)} ${this.#tracks(preview)}
-      ${this.#issues(preview.issues)}
+      ${this.#issues(preview.issues)} ${this.#kpis(preview)} ${this.#persons(preview)}
+      ${this.#tracks(preview)}
     `;
   }
 
@@ -208,20 +250,35 @@ export class TwPlanPreview extends LocalizedElement {
 
   #persons(preview: PlanPreviewWire): TemplateResult {
     const names = new Map(this.people.map((person) => [person.id, person]));
-    const entries = Object.entries(preview.persons);
+    const entries = Object.entries(preview.persons)
+      .map(([id, count]) => ({ person: names.get(id), id, count }))
+      .sort((a, b) => (a.person?.label ?? a.id).localeCompare(b.person?.label ?? b.id));
+    const most = Math.max(...entries.map((entry) => entry.count), 1);
     return html`<div class="group">
       <span class="label">${this.text('plan.persons')}</span>
       ${
         entries.length === 0
           ? html`<span class="muted">${this.text('plan.persons.none')}</span>`
           : html`<div class="persons">
-              ${entries.map(([id, count]) => {
-                const person = names.get(id);
-                return html`<span class="person">
-                  <span class="swatch" style="background: ${person?.color ?? 'transparent'}"></span>
-                  ${person?.label ?? id} · ${count}
-                </span>`;
-              })}
+              ${entries.map(
+                ({ person, id, count }) =>
+                  html`<div class="person">
+                    <span
+                      class="swatch"
+                      style=${styleMap({ background: person?.color ?? '' })}
+                    ></span>
+                    <span>${person?.label ?? id}</span>
+                    <span class="share"
+                      ><span
+                        style=${styleMap({
+                          width: `${String((count / most) * PERCENT)}%`,
+                          background: person?.color ?? '',
+                        })}
+                      ></span
+                    ></span>
+                    <span class="count">${count}</span>
+                  </div>`,
+              )}
             </div>`
       }
       <span class="hint">${this.text('plan.persons.hint')}</span>
@@ -233,11 +290,32 @@ export class TwPlanPreview extends LocalizedElement {
       return nothing;
     }
     const options = new Map(this.tasks.map((task) => [task.id, task]));
+    const named = new Set(preview.issues.map((issue) => String(issue.params['task_id'] ?? '')));
+    const flagged = preview.tracks.filter((track) => named.has(track.task_id));
+    const narrowed = this._scope === 'flagged' && flagged.length > 0;
+    const shown = narrowed ? flagged : preview.tracks;
+    const choices = [
+      { id: 'flagged', label: `${this.text('plan.tracks.flagged')} ${String(flagged.length)}` },
+      { id: 'all', label: `${this.text('plan.tracks.all')} ${String(preview.tracks.length)}` },
+    ];
     return html`<div class="group">
-      <span class="label">${this.text('plan.tracks')}</span>
+      <div class="group-head">
+        <span class="label">${this.text('plan.tracks')}</span>
+        ${
+          flagged.length > 0 && flagged.length < preview.tracks.length
+            ? html`<tw-segmented
+                .options=${choices}
+                .value=${narrowed ? 'flagged' : 'all'}
+                @tw-change=${onChange<TrackScope>((scope) => {
+                  this._scope = scope;
+                })}
+              ></tw-segmented>`
+            : nothing
+        }
+      </div>
       <div class="tracks">
         ${repeat(
-          preview.tracks,
+          shown,
           (track) => track.task_id,
           (track) => this.#track(track, preview, options.get(track.task_id)),
         )}
@@ -296,7 +374,28 @@ export class TwPlanPreview extends LocalizedElement {
     return html`${issues.map((issue) => {
       const task = names.get(String(issue.params['task_id'] ?? ''));
       return html`<div class="issue ${issue.blocking ? 'blocking' : ''}" role="alert">
-        ${translate(issueKey(issue.code), this.language, { ...issue.params, task: task ?? '' })}
+        <span>
+          ${translate(issueKey(issue.code), this.language, { ...issue.params, task: task ?? '' })}
+        </span>
+        ${
+          task
+            ? html`<button
+                type="button"
+                class="go"
+                @click=${() => {
+                  this.dispatchEvent(
+                    new CustomEvent<string>(EVENT_GOTO_TASK, {
+                      detail: task,
+                      bubbles: true,
+                      composed: true,
+                    }),
+                  );
+                }}
+              >
+                ${this.text('plan.goto_task')}
+              </button>`
+            : nothing
+        }
       </div>`;
     })}`;
   }

@@ -8,6 +8,7 @@ import {
   EVENT_CHANGE,
   PANEL_ELEMENT_NAME,
 } from './constants/index.ts';
+import type { ScheduleTab } from './constants/index.ts';
 import type { TaskWheelPanel } from './task-wheel-panel.ts';
 import './task-wheel-panel.ts';
 
@@ -106,6 +107,12 @@ async function click(view: El, selector: string): Promise<void> {
 
 function say(child: Element, detail: unknown): void {
   child.dispatchEvent(new CustomEvent(EVENT_CHANGE, { detail, bubbles: true, composed: true }));
+}
+
+/** Wechselt im Zeitplan-Editor zu einem Reiter. */
+async function showTab(view: El, tab: ScheduleTab): Promise<void> {
+  say(q(view.shadowRoot, 'tw-section-tabs'), tab);
+  await view.updateComplete;
 }
 
 /** Der nächste Befehl (außer Lesen) scheitert wie bei Home Assistant mit `{ code, message }`. */
@@ -352,9 +359,11 @@ describe('Zeitpläne', () => {
     expect(view.shadowRoot?.textContent).toContain('alle 7 Tage, manuell');
     expect(view.shadowRoot?.textContent).toContain('Lauf: 30 Tage · 1 Aufgaben');
     await click(view, '.card');
+    await showTab(view, 'options');
     expect(q(view.shadowRoot, 'section.editor').textContent).toContain('schedule: woche');
     const toggles = [...(view.shadowRoot?.querySelectorAll('section.editor tw-toggle') ?? [])];
     say(toggles[0] as El, true);
+    await showTab(view, 'tasks');
     say(q(view.shadowRoot, 'tw-entry-editor'), []);
     await click(view, '.buttons .primary');
     await vi.waitFor(() => {
@@ -408,6 +417,7 @@ describe('Zeitpläne', () => {
       issues: [{ code: 'no_person', blocking: true, params: {} }],
     });
     await click(view, '.card');
+    await showTab(view, 'tasks');
     say(q(view.shadowRoot, 'tw-entry-editor'), [
       { task_id: 't1', mode: 'every_draw', min_count: 1 },
     ]);
@@ -420,11 +430,15 @@ describe('Zeitpläne', () => {
       run_days: 30,
       entries: [{ task_id: 't1', mode: 'every_draw' }],
     });
+    expect(q(view.shadowRoot, 'section.editor').textContent).not.toContain('Keine Person');
+    expect(q(view.shadowRoot, '.status button').textContent).toContain('1 Hinweis');
+    await click(view, '.status button');
     expect(q(view.shadowRoot, 'tw-plan-preview').shadowRoot?.textContent).toContain(
       'Keine Person kann die gewählten Aufgaben übernehmen',
     );
 
     hass.replies.set('task_wheel/schedule/plan_preview', { ...PLAN, issues: [] });
+    await showTab(view, 'tasks');
     say(q(view.shadowRoot, 'tw-entry-editor'), []);
     await vi.waitFor(() => {
       expect(button(view, '.buttons .primary').disabled).toBe(false);
@@ -434,6 +448,7 @@ describe('Zeitpläne', () => {
   it('wählt die Animationen per Mehrfachauswahl und speichert sie', async () => {
     const { hass, view } = await open('/schedules');
     await click(view, '.card');
+    await showTab(view, 'options');
     const selects = [...(view.shadowRoot?.querySelectorAll('section.editor tw-chip-select') ?? [])];
     expect(selects).toHaveLength(1);
     const animations = selects[0] as El;
@@ -446,6 +461,50 @@ describe('Zeitpläne', () => {
       expect(lastChange(hass)?.type).toBe('task_wheel/schedule/update');
     });
     expect(lastChange(hass)?.['schedule']).toMatchObject({ animations: ['drum', 'plinko'] });
+  });
+
+  it('teilt den Editor in Reiter mit Zähler und startet immer auf dem Ablauf', async () => {
+    const { view } = await open('/schedules');
+    await click(view, '.card');
+    const tabs = q(view.shadowRoot, 'tw-section-tabs') as unknown as {
+      tabs: { id: string; badge?: number }[];
+      active: string;
+    };
+    expect(tabs.tabs.map((tab) => tab.id)).toEqual(['basics', 'tasks', 'review', 'options']);
+    expect(tabs.tabs.find((tab) => tab.id === 'tasks')?.badge).toBe(1);
+    expect(tabs.active).toBe('basics');
+    expect(q(view.shadowRoot, 'section.editor tw-entry-editor')).toBeNull();
+    await showTab(view, 'tasks');
+    expect(q(view.shadowRoot, 'section.editor tw-entry-editor')).not.toBeNull();
+    expect(q(view.shadowRoot, 'section.editor tw-field')).toBeNull();
+    await click(view, '.buttons .secondary');
+    await click(view, '.card');
+    expect((q(view.shadowRoot, 'tw-section-tabs') as unknown as { active: string }).active).toBe(
+      'basics',
+    );
+  });
+
+  it('springt von einem Hinweis zur Aufgabe in der Liste', async () => {
+    const { hass, view } = await open('/schedules');
+    hass.replies.set('task_wheel/schedule/plan_preview', {
+      ...PLAN,
+      issues: [
+        { code: 'too_often', blocking: false, params: { task_id: 't1', wanted: 9, draws: 4 } },
+      ],
+    });
+    await click(view, '.card');
+    await vi.waitFor(() => {
+      expect(q(view.shadowRoot, '.status button').textContent).toContain('1 Hinweis');
+    });
+    await click(view, '.status button');
+    const plan = q(view.shadowRoot, 'tw-plan-preview');
+    (plan.shadowRoot?.querySelector('.issue .go') as HTMLButtonElement).click();
+    await view.updateComplete;
+    const entries = q(view.shadowRoot, 'tw-entry-editor');
+    await entries.updateComplete;
+    expect(
+      (entries.shadowRoot?.querySelector('input[type="search"]') as HTMLInputElement).value,
+    ).toBe('Müll');
   });
 
   it('legt einen neuen Zeitplan an und zeigt Fehler am Intervall', async () => {

@@ -13,7 +13,7 @@ import { baseStyles, tokenStyles } from './styles.ts';
 
 /**
  * Modales Fenster für Formulare: Titel mit Schließen-Knopf, Inhalt im Standard-Slot (scrollt),
- * feste Fußzeile im Slot `actions`. Auf dem Smartphone füllt es das Fenster aus. Meldet `tw-cancel`
+ * optionale feste Reiterleiste im Slot `tabs`, feste Fußzeile im Slot `actions`. Auf dem Smartphone füllt es das Fenster aus. Meldet `tw-cancel`
  * bei Escape und beim Schließen-Knopf; das Schließen übernimmt der Aufrufer.
  */
 export class TwDialog extends ModalElement {
@@ -107,6 +107,7 @@ export class TwDialog extends ModalElement {
             ✕
           </button>
         </header>
+        <slot name="tabs"></slot>
         <div class="body"><slot></slot></div>
         <footer><slot name="actions"></slot></footer>
       </dialog>

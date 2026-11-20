@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { EVENT_CHANGE, FORM_TAGS } from '../constants/index.ts';
+import { EVENT_CHANGE, EVENT_GOTO_TASK, FORM_TAGS } from '../constants/index.ts';
 import type { EntryWire, PlanPreviewWire } from '../state/index.ts';
 import { describeInterval, describeSpan } from './summaries.ts';
 import './index.ts';
@@ -216,14 +216,95 @@ describe('Editoren', () => {
     expect(editor.shadowRoot?.textContent).toContain('ca. alle 15 Tage');
     say(part(editor, 'tw-stepper'), 3);
     expect(seen.at(-1)).toEqual([{ task_id: 'b', mode: 'min_count', min_count: 3 }]);
-    say(part(editor, '.detail > tw-toggle'), true);
+    part(editor, '.every').click();
     expect(seen.at(-1)).toEqual([{ task_id: 'b', mode: 'every_draw', min_count: 2 }]);
 
     editor.value = [{ task_id: 'b', mode: 'every_draw', min_count: 2 }];
     await editor.updateComplete;
     expect(editor.shadowRoot?.querySelector('tw-stepper')).toBeNull();
-    say(part(editor, '.detail > tw-toggle'), false);
+    expect(editor.shadowRoot?.textContent).toContain('in jeder Auslosung');
+    part(editor, '.every').click();
     expect(seen.at(-1)).toEqual([{ task_id: 'b', mode: 'min_count', min_count: 2 }]);
+  });
+
+  it('Zeitplan-Aufgaben: suchen, filtern und nach Raum eingrenzen', async () => {
+    const room = (name: string): { name: string; deleted: boolean } => ({ name, deleted: false });
+    const editor = await mount(FORM_TAGS.entryEditor, {
+      language: 'de',
+      runDays: 30,
+      tasks: [
+        { id: 'a', label: 'Bad putzen', rooms: [room('Bad')] },
+        { id: 'b', label: 'Müll rausbringen', rooms: [room('Küche'), room('Flur')] },
+        { id: 'c', label: 'Staub wischen', rooms: [room('Flur')] },
+      ],
+      value: [{ task_id: 'b', mode: 'min_count', min_count: 2 }] satisfies EntryWire[],
+    });
+    const names = (): string[] =>
+      [...(editor.shadowRoot?.querySelectorAll('.row tw-toggle') ?? [])].map(
+        (toggle) => (toggle as unknown as { label: string }).label,
+      );
+    const search = part(editor, 'input[type="search"]') as unknown as HTMLInputElement;
+    expect(names()).toEqual(['Bad putzen', 'Müll rausbringen', 'Staub wischen']);
+
+    search.value = 'flur';
+    search.dispatchEvent(new Event('input'));
+    await editor.updateComplete;
+    expect(names()).toEqual(['Müll rausbringen', 'Staub wischen']);
+
+    search.value = '';
+    search.dispatchEvent(new Event('input'));
+    say(part(editor, 'tw-segmented'), 'selected');
+    await editor.updateComplete;
+    expect(names()).toEqual(['Müll rausbringen']);
+    say(part(editor, 'tw-segmented'), 'open');
+    await editor.updateComplete;
+    expect(names()).toEqual(['Bad putzen', 'Staub wischen']);
+    say(part(editor, 'tw-segmented'), 'all');
+
+    const rooms = [
+      ...(editor.shadowRoot?.querySelectorAll('.rooms button') ?? []),
+    ] as HTMLElement[];
+    expect(rooms.map((button) => button.textContent.trim())).toEqual(['Bad', 'Flur', 'Küche']);
+    rooms[1]?.click();
+    await editor.updateComplete;
+    expect(names()).toEqual(['Müll rausbringen', 'Staub wischen']);
+    rooms[1]?.click();
+    search.value = 'kein Treffer';
+    search.dispatchEvent(new Event('input'));
+    await editor.updateComplete;
+    expect(names()).toEqual([]);
+    expect(editor.shadowRoot?.textContent).toContain('Keine Aufgabe passt zu Suche und Filter.');
+  });
+
+  it('Reiter melden die Wahl, auch mit den Pfeiltasten', async () => {
+    const tabs = await mount(FORM_TAGS.sectionTabs, {
+      label: 'Bereiche',
+      active: 'b',
+      tabs: [
+        { id: 'a', label: 'A' },
+        { id: 'b', label: 'B', badge: 2, warn: true },
+        { id: 'c', label: 'C' },
+      ],
+    });
+    const seen = changes(tabs);
+    expect(tabs.shadowRoot?.querySelector('.badge.warn')?.textContent).toBe('2');
+    expect(part(tabs, '[aria-selected="true"]').textContent).toContain('B');
+    (part(tabs, '#c') as unknown as HTMLButtonElement).click();
+    expect(seen.at(-1)).toBe('c');
+    const key = (name: string): void => {
+      part(tabs, '.tabs').dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true }));
+    };
+    key('ArrowRight');
+    expect(seen.at(-1)).toBe('c');
+    key('ArrowLeft');
+    expect(seen.at(-1)).toBe('a');
+    key('x');
+    expect(seen).toHaveLength(3);
+    tabs.active = 'c';
+    await tabs.updateComplete;
+    seen.length = 0;
+    key('ArrowRight');
+    expect(seen).toEqual([]);
   });
 
   it('Auswertung zeigt Zahlen, Personen, Abstände und Hinweise', async () => {
@@ -272,15 +353,27 @@ describe('Editoren', () => {
     const text = element.shadowRoot?.textContent ?? '';
     expect(element.shadowRoot?.querySelectorAll('.kpi')).toHaveLength(3);
     expect(element.shadowRoot?.querySelectorAll('.kpi.warn')).toHaveLength(2);
-    expect(text).toContain('Anna · 2');
+    expect(element.shadowRoot?.querySelectorAll('.person')).toHaveLength(1);
+    expect(element.shadowRoot?.querySelector('.person')?.textContent).toMatch(/Anna\s+2/u);
+    expect(element.shadowRoot?.querySelector('.issue .go')).not.toBeNull();
+    // Zuerst nur die Aufgabe, die ein Hinweis nennt; „Alle“ zeigt auch die übrigen.
+    expect(element.shadowRoot?.querySelectorAll('.track')).toHaveLength(1);
     expect(element.shadowRoot?.querySelectorAll('.track tw-room')).toHaveLength(2);
     expect(text).toContain('2 Wochen');
-    expect(text).toContain('jede Auslosung');
+    say(part(element, 'tw-segmented'), 'all');
+    await element.updateComplete;
+    expect(element.shadowRoot?.textContent).toContain('jede Auslosung');
     expect(element.shadowRoot?.querySelectorAll('.bar')).toHaveLength(2);
     expect(element.shadowRoot?.querySelectorAll('.dot.ghost').length).toBeGreaterThan(0);
     expect(element.shadowRoot?.querySelectorAll('.issue.blocking')).toHaveLength(1);
     expect(text).toContain('„Bad“ steht auf mindestens 9×');
     expect(text).toContain('Unbekannter Fehler.');
+    const goto: string[] = [];
+    element.addEventListener(EVENT_GOTO_TASK, (event) => {
+      goto.push((event as CustomEvent<string>).detail);
+    });
+    (part(element, '.issue .go') as unknown as HTMLButtonElement).click();
+    expect(goto).toEqual(['Bad']);
 
     element.preview = { ...preview, issues: [], tracks: [], persons: {} };
     await element.updateComplete;

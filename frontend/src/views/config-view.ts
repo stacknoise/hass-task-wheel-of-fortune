@@ -139,6 +139,16 @@ export abstract class ConfigView<
     return true;
   }
 
+  /** Reiterleiste über dem Inhalt des Dialogs (Element mit `slot="tabs"`); Standard: keine. */
+  protected tabs(): TemplateResult | typeof nothing {
+    return nothing;
+  }
+
+  /** Statuszeile links in der Fußzeile des Dialogs; Standard: keine. */
+  protected status(): TemplateResult | typeof nothing {
+    return nothing;
+  }
+
   protected text(key: TextKey): string {
     return translate(key, this.language);
   }
@@ -251,8 +261,10 @@ export abstract class ConfigView<
           this.#close();
         }}
       >
+        ${this.tabs()}
         <section class="editor">${this.form(draft, snapshot)} ${this.#banner()}</section>
         <div class="buttons" slot="actions">
+          ${this.status()}
           <button
             type="button"
             class="primary"
