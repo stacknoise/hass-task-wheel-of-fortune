@@ -5,6 +5,10 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+## [0.7.1] – 2026-11-20
+
+- **Geändert:** Der Zeitplan-Editor zeigt bei jeder Aufgabe die zugeordneten Räume, wie die Aufgabenliste und der Dialog „Aufgabe austauschen“
+
 ## [0.7.0] – 2026-11-20
 
 - **Geändert:** Die Häufigkeit gehört jetzt dem Zeitplan statt der Aufgabe. Ein Zeitplan hat „Gültig ab“, ein Intervall (Stunden, Tage, Wochen), ist automatisch oder manuell und hat einen Lauf (Standard 30 Tage); je Aufgabe gilt „mindestens n× je Lauf“ oder „jede Auslosung“. Die Auslosung gleicht die Abstände zwischen den Zuteilungen einer Aufgabe aus, auch über Lauf-Grenzen; Überlast und Lücken sind nur Warnungen. Manuell wird immer die nächste offene Periode ausgelost, gelöscht werden darf nur die jüngste unerledigte Auslosung. Der Zeitplan-Editor zeigt eine Live-Vorschau (`schedule/plan_preview`), Soll/Ist in der Statistik gilt je Lauf. Häufigkeit, Frist, Auslöser und Zeitstrahl der alten Fassung sind samt ungenutztem Code entfernt; vorhandene Daten werden beim Laden migriert (1.5 → 1.6)
@@ -134,7 +138,8 @@ Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.
 - Fairness-Gewichtung, Tausch mit Joker, „Bleibt unerledigt“, Historie mit CSV-Export und Statistiken
 - Home-Assistant-Anbindung: Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen
 
-[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.0...HEAD
+[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.3...v0.7.0
 [0.6.4]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.3...2cfd224
 [0.6.3]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.2...v0.6.3
