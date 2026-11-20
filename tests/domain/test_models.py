@@ -7,8 +7,13 @@ import pytest
 
 from custom_components.task_wheel.const import defaults, limits
 from custom_components.task_wheel.const.keys import KEY_KIND
-from custom_components.task_wheel.domain.deadline import Deadline
-from custom_components.task_wheel.domain.enums import AnimationKind, AssignmentStatus, Load, Period
+from custom_components.task_wheel.domain.enums import (
+    AnimationKind,
+    AssignmentStatus,
+    EntryMode,
+    IntervalUnit,
+    Load,
+)
 from custom_components.task_wheel.domain.errors import (
     TaskWheelError,
     UnknownKindError,
@@ -16,24 +21,19 @@ from custom_components.task_wheel.domain.errors import (
 )
 from custom_components.task_wheel.domain.models import (
     Assignment,
-    EveryRound,
     Interval,
-    ManualTrigger,
-    MaxPerPeriod,
     OnceAbsence,
-    OnceTrigger,
     Person,
-    Recurring,
     RecurringAbsence,
     Round,
     Schedule,
+    ScheduleEntry,
     Settings,
     Swap,
     Task,
     WeeklyDaysAbsence,
     WeekRhythmAbsence,
-    decode_frequency,
-    decode_trigger,
+    decode_absence,
 )
 
 from . import factories as f
@@ -41,11 +41,9 @@ from . import factories as f
 ROUNDTRIP = [
     f.person(),
     f.task(),
-    f.interval_task(),
-    f.task(frequency=EveryRound()),
     f.schedule(),
-    f.schedule(trigger=f.once_trigger()),
-    f.schedule(trigger=f.manual_trigger()),
+    f.schedule(automatic=False, interval=Interval(unit=IntervalUnit.HOUR, every=6)),
+    f.schedule(entries=f.entries("t1", every_draw=False, min_count=4)),
     f.swap(),
     f.assignment(),
     f.finished_round(),
@@ -64,7 +62,6 @@ def test_roundtrip_through_json(model):
 
 
 def test_kind_models_carry_kind():
-    assert f.task().to_dict()["frequency"][KEY_KIND] == "max_per_period"
     assert f.person().to_dict()["absences"][0][KEY_KIND] == "once"
 
 
@@ -131,29 +128,10 @@ def test_load_factors():
             ),
             "change_weekday",
         ),
-        (lambda: MaxPerPeriod(count=0, period=Period.DAY), "count"),
-        (lambda: MaxPerPeriod(count=1, period=Period.DAY, every=0), "every"),
-        (lambda: MaxPerPeriod(count=1, period=Period.DAY, every=13), "every"),
-        (lambda: Interval(days=0), "days"),
-        (lambda: Interval(days=3, tolerance=3), "tolerance"),
-        (lambda: Recurring(weekdays=frozenset(), time=dt.time(8)), "weekdays"),
-        (
-            lambda: Recurring(weekdays=frozenset({1}), time=dt.time(8), every_n_weeks=0),
-            "every_n_weeks",
-        ),
-        (
-            lambda: Recurring(
-                weekdays=frozenset({1}),
-                time=dt.time(8),
-                every_n_weeks=2,
-                monthly=True,
-                anchor=f.TODAY,
-            ),
-            "monthly",
-        ),
-        (lambda: Recurring(weekdays=frozenset({1}), time=dt.time(8), every_n_weeks=2), "anchor"),
-        (lambda: OnceTrigger(at=dt.datetime(2026, 1, 1)), "at"),
-        (lambda: ManualTrigger(remind_after_days=0), "remind_after_days"),
+        (lambda: Interval(every=0), "every"),
+        (lambda: Interval(every=limits.INTERVAL_EVERY_MAX + 1), "every"),
+        (lambda: ScheduleEntry(task_id="t1", min_count=0), "min_count"),
+        (lambda: ScheduleEntry(task_id=""), "task_id"),
         (lambda: f.person(id=""), "id"),
         (lambda: f.person(name=" Anna"), "name"),
         (lambda: f.person(name="x" * (limits.NAME_MAX_LENGTH + 1)), "name"),
@@ -163,10 +141,14 @@ def test_load_factors():
         (lambda: f.person(notify_target=""), "notify_target"),
         (lambda: f.person(absences=(OnceAbsence(start=f.TODAY, end=f.TODAY),) * 21), "absences"),
         (lambda: f.task(points=0), "points"),
-        (lambda: f.schedule(deadline=Deadline(duration=366)), "duration"),
-        (lambda: f.schedule(deadline=Deadline(duration=0)), "duration"),
-        (lambda: f.schedule(deadline=Deadline(offset=-1)), "offset"),
-        (lambda: f.schedule(deadline=Deadline(weekday=7)), "weekday"),
+        (lambda: f.schedule(run_days=0), "run_days"),
+        (lambda: f.schedule(run_days=366), "run_days"),
+        (
+            lambda: f.schedule(run_days=1, interval=Interval(unit=IntervalUnit.DAY, every=2)),
+            "run_days",
+        ),
+        (lambda: f.schedule(start=dt.datetime(2026, 1, 1)), "start"),
+        (lambda: f.finished_round(period_index=-1), "period_index"),
         (lambda: f.assignment(starts_at=f.NOW + dt.timedelta(days=8)), "starts_at"),
         (lambda: f.assignment(starts_at=dt.datetime(2026, 1, 1)), "starts_at"),
         (lambda: f.task(allowed=frozenset({""})), "allowed"),
@@ -176,8 +158,8 @@ def test_load_factors():
             lambda: f.task(area_ids=tuple(str(n) for n in range(limits.MAX_AREAS_PER_TASK + 1))),
             "area_ids",
         ),
-        (lambda: f.schedule(task_ids=()), "task_ids"),
-        (lambda: f.schedule(task_ids=("t1", "t1")), "task_ids"),
+        (lambda: f.schedule(task_ids=()), "entries"),
+        (lambda: f.schedule(task_ids=("t1", "t1")), "entries"),
         (lambda: f.schedule(slug=""), "slug"),
         (lambda: f.schedule(animations=(AnimationKind.DRUM, AnimationKind.DRUM)), "animations"),
         (lambda: Swap(from_person_id="p1", to_person_id="p1", at=f.NOW), "to_person_id"),
@@ -271,7 +253,14 @@ def test_schedule_rejects_unknown_animation():
         (OnceAbsence, {"start": "gestern", "end": "2026-01-01"}, "start", "invalid_type"),
         (OnceAbsence, {"start": 5, "end": "2026-01-01"}, "start", "invalid_type"),
         (Swap, {**f.swap().to_dict(), "at": "x"}, "at", "invalid_type"),
-        (Task, {**f.task().to_dict(), "frequency": 3}, "frequency", "invalid_type"),
+        (
+            Task,
+            {**f.task().to_dict(), "frequency": {"kind": "every_round"}},
+            "frequency",
+            "unknown_field",
+        ),
+        (Schedule, {**f.schedule().to_dict(), "trigger": {}}, "trigger", "unknown_field"),
+        (ScheduleEntry, {"task_id": "t1", "mode": "often"}, "mode", "invalid_type"),
     ],
 )
 def test_from_dict_rejects(model, data, field, key):
@@ -282,11 +271,11 @@ def test_from_dict_rejects(model, data, field, key):
 
 def test_unknown_kind_error_exposes_kind():
     with pytest.raises(ValidationError) as caught:
-        Schedule.from_dict({**f.schedule().to_dict(), "trigger": {KEY_KIND: "daily"}})
+        Person.from_dict({**f.person().to_dict(), "absences": [{KEY_KIND: "daily"}]})
     assert caught.value.placeholders["kind"] == "daily"
-    assert str(caught.value) == "trigger.kind: unknown_kind"
+    assert str(caught.value) == "absences.kind: unknown_kind"
     with pytest.raises(UnknownKindError):
-        decode_trigger({KEY_KIND: "daily"})
+        decode_absence({KEY_KIND: "daily"})
 
 
 def test_round_nested_error_path():
@@ -305,16 +294,19 @@ def test_task_without_allowed_persons_is_open_for_everyone():
     assert not f.task(allowed=frozenset({"p1"})).allows("p2")
 
 
-def test_task_default_frequency_is_every_round():
+def test_task_defaults():
     task = Task.from_dict({"id": "t", "name": "N", "allowed": ["p"]})
-    assert task.frequency == EveryRound()
     assert task.points == defaults.DEFAULT_TASK_POINTS
 
 
-def test_kind_must_match_class():
-    with pytest.raises(UnknownKindError):
-        EveryRound.from_dict({KEY_KIND: "interval"})
-    assert EveryRound.from_dict({}) == EveryRound()
+def test_schedule_derives_runs_and_entries():
+    plan = f.schedule(run_days=30, interval=Interval(unit=IntervalUnit.WEEK, every=1))
+    assert plan.draws_per_run == 4
+    assert f.schedule(interval=Interval(unit=IntervalUnit.HOUR, every=7)).draws_per_run == 102
+    assert plan.task_ids == ("t1", "t2")
+    assert plan.entry_for("t1").mode is EntryMode.EVERY_DRAW
+    assert plan.entry_for("nope") is None
+    assert Interval(unit=IntervalUnit.WEEK, every=2).hours == 336
 
 
 def test_task_areas_are_optional_and_roundtrip():
@@ -327,9 +319,3 @@ def test_task_areas_are_optional_and_roundtrip():
 def test_task_areas_drop_duplicates_and_keep_order():
     data = {**f.task().to_dict(), "area_ids": ["bad", "kueche", "bad"]}
     assert Task.from_dict(data).area_ids == ("bad", "kueche")
-
-
-def test_max_per_period_without_every_decodes_with_default():
-    """Gespeicherte Aufgaben aus Version 0.2.0 haben kein `every` und gelten je einer Periode."""
-    decoded = decode_frequency({"kind": "max_per_period", "count": 2, "period": "week"})
-    assert decoded == MaxPerPeriod(count=2, period=Period.WEEK, every=1)

@@ -23,7 +23,10 @@ def test_snapshot_lists_everything_the_panel_shows(api: Api) -> None:
     assert [p["id"] for p in snap["persons"]] == ["p1", "p2"]
     assert all("jokers_left" not in p for p in snap["persons"])
     assert [t["id"] for t in snap["tasks"]] == ["t1", "t2"]
-    assert snap["schedules"][0]["next_run"] is None
+    schedule = snap["schedules"][0]
+    # manuell: Termin der nächsten offenen Periode (Periode 0 ist ausgelost)
+    assert schedule["next_run"] == (f.NOW + dt.timedelta(days=1)).isoformat()
+    assert (schedule["next_period"], schedule["newest_period"]) == (1, 0)
     assert {a["id"] for a in snap["assignments"]} == {"a1", "a2"}
     assert snap["panel_rounds"] == []
     assert snap["settings"]["jokers_per_month"] == 2

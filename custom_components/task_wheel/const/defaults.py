@@ -1,6 +1,5 @@
 """Standardwerte und Bezeichner der Integration."""
 
-import datetime as dt
 from typing import Final
 
 from .limits import RETENTION_MIN
@@ -23,11 +22,12 @@ DEFAULT_PANEL_ADMIN_ONLY: Final = False
 # Personen, Aufgaben, Zeitpläne
 DEFAULT_PERSON_COLOR: Final = "#4f8cff"
 DEFAULT_TASK_POINTS: Final = 1
-DEFAULT_DEADLINE_DAYS: Final = 7
-DEFAULT_DEADLINE_TIME: Final = dt.time(10, 0)
-DEFAULT_EVERY_N_WEEKS: Final = 1
-DEFAULT_INTERVAL_TOLERANCE: Final = 0
-DEFAULT_PERIOD_EVERY: Final = 1
+DEFAULT_INTERVAL_EVERY: Final = 1
+DEFAULT_MIN_COUNT: Final = 1
+DEFAULT_RUN_DAYS: Final = 30
+
+# Auslosung: kleinstes Gewicht einer Aufgabe, die eine Lücke füllen soll (nie ganz ausgeschlossen)
+GAP_WEIGHT_FLOOR: Final = 0.05
 
 # Belastbarkeit einer Person als Faktor der Kapazität
 LOAD_FACTOR_FULL: Final = 1.0
@@ -48,9 +48,6 @@ UNIFORM_WEIGHT: Final = 1.0
 
 # Runden im Panel (KONZEPT §5.1): so lange bleibt eine offene Panel-Runde gültig
 PANEL_ROUND_TIMEOUT_MINUTES: Final = 15
-
-# Erinnerungen für Zeitpläne „nur manuell“ werden täglich zu dieser vollen Stunde geprüft
-REMINDER_HOUR: Final = 9
 
 # Täglicher Wartungslauf (verpasste Zuteilungen markieren, alte Runden löschen), nachts
 MAINTENANCE_HOUR: Final = 3

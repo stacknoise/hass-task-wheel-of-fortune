@@ -16,6 +16,6 @@
   },
   "reminder": {
     "title": "Erinnerung: {schedule}",
-    "message": "„{schedule}“ wurde seit {days} Tagen nicht ausgelost."
+    "message": "Die Auslosung von „{schedule}“ ist fällig (die letzte war vor {days} Tagen)."
   }
 }

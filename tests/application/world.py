@@ -9,8 +9,6 @@ from custom_components.task_wheel.application.schedule_service import ScheduleSe
 from custom_components.task_wheel.application.statistics_service import StatisticsService
 from custom_components.task_wheel.domain.models import (
     Assignment,
-    EveryRound,
-    ManualTrigger,
     Round,
     Schedule,
 )
@@ -23,6 +21,8 @@ from ..domain import factories as f
 from ..domain.draw.helpers import FixedRandom
 
 DAY = dt.timedelta(days=1)
+# Zufall: erst Rangfolge (t1 vor t2), dann Ziehreihenfolge (t1, t2), dann Gewinner (p1, p2)
+ORDERED = (0.9, 0.1, 0.1, 0.9, 0.1, 0.9)
 
 
 class FakeTimers:
@@ -93,10 +93,9 @@ class World:
         for ident in ("p1", "p2"):
             self.config.put_person(f.person(id=ident, slug=ident, name=ident, absences=()))
         both = frozenset({"p1", "p2"})
-        every = EveryRound()
-        self.config.put_task(f.task(id="t1", name="A", allowed=both, points=5, frequency=every))
-        self.config.put_task(f.task(id="t2", name="B", allowed=both, points=2, frequency=every))
-        self.config.put_schedule(f.schedule(trigger=ManualTrigger(), task_ids=("t1", "t2")))
+        self.config.put_task(f.task(id="t1", name="A", allowed=both, points=5))
+        self.config.put_task(f.task(id="t2", name="B", allowed=both, points=2))
+        self.config.put_schedule(f.schedule(automatic=False))
         self.config.set_settings(f.settings(**settings))
         self.events = RecordingEvents()
         self.timers = FakeTimers()
@@ -115,7 +114,6 @@ class World:
         )
 
     def put_schedule(self, **overrides: object) -> Schedule:
-        base = {"trigger": ManualTrigger(), "task_ids": ("t1", "t2")}
-        schedule = f.schedule(**{**base, **overrides})
+        schedule = f.schedule(**{"automatic": False, **overrides})
         self.config.put_schedule(schedule)
         return schedule

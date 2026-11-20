@@ -9,6 +9,7 @@ const SECOND_TASK_NAME = "Spülmaschine ausräumen";
 const openRows = (page: Page) =>
   page.locator(".assignments li", { hasText: TASK_NAME });
 const READY_MS = 30_000;
+const HOUR_MS = 3_600_000;
 // Budget für das Laden des Panels bis zur ersten Ansicht (Messwert: docs/CODE_DOKU.md §3.2)
 const PANEL_LOAD_BUDGET_MS = 5000;
 
@@ -71,7 +72,6 @@ test("Auslosung, Erledigen und Tausch im Panel", async ({ page, baseURL }) => {
     task: {
       name: "Müll rausbringen",
       allowed: [anna.id, ben.id],
-      frequency: { kind: "every_round" },
     },
   });
   // Getauscht wird nur innerhalb einer Auslosung: jede Person braucht eine Zuteilung
@@ -80,22 +80,25 @@ test("Auslosung, Erledigen und Tausch im Panel", async ({ page, baseURL }) => {
     task: {
       name: SECOND_TASK_NAME,
       allowed: [anna.id, ben.id],
-      frequency: { kind: "every_round" },
     },
   });
   await callWS(page, {
     type: "task_wheel/schedule/create",
     schedule: {
       name: "Wochenrunde",
-      trigger: { kind: "manual" },
-      task_ids: [task.id, second.id],
+      start: new Date(Date.now() - HOUR_MS).toISOString(),
+      interval: { unit: "week", every: 1 },
+      automatic: false,
+      entries: [
+        { task_id: task.id, mode: "every_draw" },
+        { task_id: second.id, mode: "every_draw" },
+      ],
     },
   });
 
   // Auslosung: Runde starten, drehen, abschließen
   await page.goto(`${PANEL}/draw`);
   await page.getByRole("button", { name: "Runde starten" }).click();
-  await page.getByRole("button", { name: "Weiter" }).click();
   await page.getByRole("button", { name: "Auslosung starten" }).click();
   await page
     .getByRole("button", { name: "Nächste Aufgabe" })

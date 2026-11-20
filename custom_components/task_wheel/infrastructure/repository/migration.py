@@ -1,5 +1,6 @@
 """Migration gespeicherter Daten: je Versionsschritt eine eigene, getestete Funktion."""
 
+import datetime as dt
 from collections.abc import Callable, Mapping
 from types import MappingProxyType
 from typing import Final
@@ -8,21 +9,48 @@ from ...const.keys import (
     KEY_AREA_ID,
     KEY_AREA_IDS,
     KEY_ASSIGNMENTS,
+    KEY_DEADLINE,
     KEY_DUE_DAYS,
+    KEY_FREQUENCY,
+    KEY_PERIOD_INDEX,
+    KEY_REPLACES,
     KEY_ROUNDS,
     KEY_SCHEDULE_ID,
+    KEY_SCHEDULES,
     KEY_SETTINGS,
+    KEY_STARTED_AT,
+    KEY_TASK_IDS,
     KEY_TASKS,
+    KEY_TRIGGER,
     OPT_RETENTION,
     STORE_MINOR_VERSION,
     STORE_VERSION,
 )
 from ...const.limits import RETENTION_MIN
+from ...domain.enums import EntryMode, IntervalUnit
 from ...domain.errors import StorageVersionError
 
 type Version = tuple[int, int]
 type Migration = Callable[[dict[str, object]], dict[str, object]]
 type Migrations = Mapping[Version, tuple[Version, Migration]]
+
+# Schlüssel und Werte des alten und des neuen Speicherstands (nur hier, nur für die Umstellung)
+LEGACY_KIND: Final = "kind"
+LEGACY_EVERY_N_WEEKS: Final = "every_n_weeks"
+LEGACY_AT: Final = "at"
+LEGACY_COUNT: Final = "count"
+LEGACY_ONCE: Final = "once"
+LEGACY_RECURRING: Final = "recurring"
+LEGACY_EVERY_ROUND: Final = "every_round"
+NEW_START: Final = "start"
+NEW_INTERVAL: Final = "interval"
+NEW_AUTOMATIC: Final = "automatic"
+NEW_ENTRIES: Final = "entries"
+NEW_UNIT: Final = "unit"
+NEW_EVERY: Final = "every"
+NEW_TASK_ID: Final = "task_id"
+NEW_MODE: Final = "mode"
+NEW_MIN_COUNT: Final = "min_count"
 
 CURRENT_VERSION: Final[Version] = (STORE_VERSION, STORE_MINOR_VERSION)
 
@@ -99,6 +127,109 @@ def _without_due_days(task: object) -> object:
     return {key: value for key, value in task.items() if key != KEY_DUE_DAYS}
 
 
+def _default_start() -> str:
+    """Beginn eines umgestellten Zeitplans ohne festen Termin: jetzt, auf die Stunde gerundet."""
+    return dt.datetime.now(dt.UTC).replace(minute=0, second=0, microsecond=0).isoformat()
+
+
+def _plan_fields(
+    schedule: dict[str, object], tasks: Mapping[object, dict[str, object]]
+) -> dict[str, object]:
+    """Beginn, Intervall, Modus und Aufgaben des neuen Zeitplans aus Auslöser und Häufigkeiten."""
+    trigger = schedule.get(KEY_TRIGGER)
+    kind = trigger.get(LEGACY_KIND) if isinstance(trigger, dict) else None
+    weeks = trigger.get(LEGACY_EVERY_N_WEEKS) if isinstance(trigger, dict) else None
+    start = (
+        trigger.get(LEGACY_AT)
+        if kind == LEGACY_ONCE and isinstance(trigger, dict)
+        else _default_start()
+    )
+    unit, every = (
+        (IntervalUnit.WEEK.value, weeks) if isinstance(weeks, int) else (IntervalUnit.DAY.value, 1)
+    )
+    task_ids = schedule.get(KEY_TASK_IDS)
+    ids = task_ids if isinstance(task_ids, list) else []
+    entries = [_entry(task_id, tasks.get(task_id, {})) for task_id in ids]
+    return {
+        NEW_START: start,
+        NEW_INTERVAL: {NEW_UNIT: unit, NEW_EVERY: every},
+        NEW_AUTOMATIC: kind in {LEGACY_RECURRING, LEGACY_ONCE},
+        NEW_ENTRIES: entries,
+    }
+
+
+def _entry(task_id: object, task: dict[str, object]) -> dict[str, object]:
+    """Eintrag einer Aufgabe: „jede Auslosung“ oder mindestens so oft, wie ihre Regel erlaubte."""
+    rule = task.get(KEY_FREQUENCY)
+    kind = rule.get(LEGACY_KIND) if isinstance(rule, dict) else None
+    count = rule.get(LEGACY_COUNT) if isinstance(rule, dict) else None
+    if kind == LEGACY_EVERY_ROUND:
+        return {NEW_TASK_ID: task_id, NEW_MODE: EntryMode.EVERY_DRAW.value}
+    mode = {NEW_TASK_ID: task_id, NEW_MODE: EntryMode.MIN_COUNT.value}
+    return {**mode, NEW_MIN_COUNT: count} if isinstance(count, int) and count > 0 else mode
+
+
+def _without(
+    item: object, removed: set[str], extra: Callable[[dict[str, object]], dict[str, object]]
+) -> object:
+    """Eintrag ohne die entfernten Felder, ergänzt um `extra(item)`; Fremdes bleibt unverändert."""
+    if not isinstance(item, dict):
+        return item
+    return {k: v for k, v in item.items() if k not in removed} | extra(item)
+
+
+def _schedule_plan(data: dict[str, object]) -> dict[str, object]:
+    """1.5 -> 1.6: Häufigkeit, Auslöser und Frist wandern an den Zeitplan (Beginn, Intervall, Lauf).
+
+    Die alten Felder entfallen; der Zeitplan beginnt jetzt (einmalige: zum alten Termin), die
+    Aufgaben übernehmen ihre bisherige Häufigkeit als Mindestanzahl.
+    """
+    schedules, tasks = data.get(KEY_SCHEDULES), data.get(KEY_TASKS)
+    if not isinstance(schedules, list) or not isinstance(tasks, list):
+        return data
+    by_id = {t.get("id"): t for t in tasks if isinstance(t, dict)}
+    return {
+        **data,
+        KEY_SCHEDULES: [
+            _without(
+                item, {KEY_TRIGGER, KEY_DEADLINE, KEY_TASK_IDS}, lambda i: _plan_fields(i, by_id)
+            )
+            for item in schedules
+        ],
+        KEY_TASKS: [_without(item, {KEY_FREQUENCY}, lambda _: {}) for item in tasks],
+    }
+
+
+def _period_numbers(rounds: list[object]) -> dict[int, int]:
+    """Periodennummer je Runde (nach `id()`): Reihenfolge des Starts innerhalb des Zeitplans."""
+    ordered = sorted(
+        (item for item in rounds if isinstance(item, dict)),
+        key=lambda item: str(item.get(KEY_STARTED_AT)),
+    )
+    counters: dict[object, int] = {}
+    numbered: dict[int, int] = {}
+    for item in ordered:
+        schedule_id = item.get(KEY_SCHEDULE_ID)
+        numbered[id(item)] = counters.get(schedule_id, 0)
+        counters[schedule_id] = numbered[id(item)] + 1
+    return numbered
+
+
+def _round_periods(data: dict[str, object]) -> dict[str, object]:
+    """1.5 -> 1.6: Runden erhalten ihre Periodennummer je Zeitplan, `replaces` entfällt."""
+    rounds = data.get(KEY_ROUNDS)
+    if not isinstance(rounds, list):
+        return data
+    numbered = _period_numbers(rounds)
+    return {
+        **data,
+        KEY_ROUNDS: [
+            _without(item, {KEY_REPLACES}, lambda i: {KEY_PERIOD_INDEX: numbered[id(i)]})
+            for item in rounds
+        ],
+    }
+
+
 # `von-Version -> (nach-Version, Funktion)`; bei Schemaänderungen hier ergänzen.
 CONFIG_MIGRATIONS: Final[Migrations] = MappingProxyType(
     {
@@ -106,6 +237,7 @@ CONFIG_MIGRATIONS: Final[Migrations] = MappingProxyType(
         (1, 2): ((1, 3), _task_areas),
         (1, 3): ((1, 4), _retention_floor),
         (1, 4): ((1, 5), _drop_task_due_days),
+        (1, 5): ((1, 6), _schedule_plan),
     }
 )
 HISTORY_MIGRATIONS: Final[Migrations] = MappingProxyType(
@@ -114,10 +246,13 @@ HISTORY_MIGRATIONS: Final[Migrations] = MappingProxyType(
         (1, 2): ((1, 3), _unchanged),
         (1, 3): ((1, 4), _unchanged),
         (1, 4): ((1, 5), _unchanged),
+        (1, 5): ((1, 6), _round_periods),
     }
 )
 # Das Entscheidungslog entstand mit Version 1.4 und kennt keine älteren Stände
-DECISION_MIGRATIONS: Final[Migrations] = MappingProxyType({(1, 4): ((1, 5), _unchanged)})
+DECISION_MIGRATIONS: Final[Migrations] = MappingProxyType(
+    {(1, 4): ((1, 5), _unchanged), (1, 5): ((1, 6), _unchanged)}
+)
 
 
 def migrate(

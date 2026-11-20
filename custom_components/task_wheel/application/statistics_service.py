@@ -13,12 +13,11 @@ from ..const.limits import (
     STATISTICS_WEEKS_MIN,
 )
 from ..domain.availability.calendar import PersonAvailability
-from ..domain.enums import Period
+from ..domain.dates import week_start
 from ..domain.models import Round
-from ..domain.rules.periods import period_start
 from ..domain.statistics import aggregate
 from ..domain.statistics.aggregate import AssignmentChange
-from ..domain.statistics.goals import TaskGoal, build_goals, goals_start
+from ..domain.statistics.goals import TaskGoal, build_goals
 from ..domain.statistics.report import StatisticsReport, WeekRate, build_report, weekly_rates
 from ..domain.types import PersonId
 from ..domain.validation import ensure_range
@@ -85,17 +84,8 @@ class StatisticsService:
         return replace(report, goals=self._goals(now))
 
     def _goals(self, now: dt.datetime) -> tuple[TaskGoal, ...]:
-        """Soll-Ist je Aufgabe mit Häufigkeitsregel (aus den Rohdaten, nicht aus den Aggregaten)."""
-        tasks = self._config.tasks
-        since = dt.datetime.combine(
-            goals_start(tasks.values(), now), dt.time.min, tzinfo=now.tzinfo
-        )
-        placed = (
-            (item, round_.started_at)
-            for round_ in self._history.rounds_since(since)
-            for item in round_.assignments
-        )
-        return build_goals(self._config.schedules.values(), tasks, placed, now)
+        """Soll-Ist je Aufgabe und Zeitplan (aus den Rohdaten, nicht aus den Aggregaten)."""
+        return build_goals(self._config.schedules.values(), self._history.rounds.values(), now)
 
     def _capacities(self, start: dt.date, end: dt.date) -> dict[PersonId, float]:
         """Kapazität = Belastbarkeit mal anwesende Tage im Zeitraum (fairer Anteil)."""
@@ -106,7 +96,7 @@ class StatisticsService:
         }
 
     def _weekly(self, now: dt.datetime, weeks: int) -> tuple[WeekRate, ...]:
-        last = period_start(Period.WEEK, now)
+        last = week_start(now.date())
         starts = tuple(last - ONE_WEEK * back for back in reversed(range(weeks)))
         since = dt.datetime.combine(starts[0], dt.time.min, tzinfo=now.tzinfo)
         return weekly_rates(self._history.rounds_since(since), starts, self._config.tasks.keys())

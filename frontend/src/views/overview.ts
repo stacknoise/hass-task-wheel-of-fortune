@@ -22,6 +22,7 @@ import {
   OVERVIEW_MONTHS,
   OVERVIEW_WEEKS,
   PAIR,
+  PERIOD_NUMBER_OFFSET,
   STATUS_TONES,
   VIEW_TAGS,
 } from '../constants/index.ts';
@@ -34,7 +35,13 @@ import { roomTags } from './room.ts';
 import { personChips } from './person-chips.ts';
 import { assignmentGroups } from './overview-assignments.ts';
 import type { AssignmentHandlers } from './overview-assignments.ts';
-import { filterByPerson, groupByRound, recentActivity, upcomingDraws } from './overview-model.ts';
+import {
+  filterByPerson,
+  groupByRound,
+  isDue,
+  recentActivity,
+  upcomingDraws,
+} from './overview-model.ts';
 import { defineOnce } from '../components/define.ts';
 
 /** Übersicht: nächste Auslosung, offene Zuteilungen mit Erledigen und Tauschen, Punkte, Aktivität. */
@@ -151,7 +158,7 @@ export class TwOverviewView extends LitElement {
     const rounds = modelsOf(snapshot, 'rounds');
     const personById = indexById(persons);
     return html`
-      ${this.#nextDraw(upcomingDraws(schedules), tasks)}
+      ${this.#nextDraw(upcomingDraws(schedules), tasks, snapshot.now)}
       ${this.#assignments(persons, personById, indexById(tasks), schedules, assignments, rounds)}
       ${this.#pointsCard(personById)} ${this.#activityCard(personById, indexById(tasks))}
     `;
@@ -161,7 +168,11 @@ export class TwOverviewView extends LitElement {
     return translate(key, this.language, params);
   }
 
-  #nextDraw(draws: readonly ScheduleObject[], tasks: readonly TaskObject[]): TemplateResult {
+  #nextDraw(
+    draws: readonly ScheduleObject[],
+    tasks: readonly TaskObject[],
+    now: string,
+  ): TemplateResult {
     const index = Math.min(this._plan, Math.max(draws.length - 1, 0));
     const draw = draws[index];
     return html`
@@ -169,7 +180,7 @@ export class TwOverviewView extends LitElement {
         <h2>${this.#text('overview.next')}</h2>
         ${
           draw?.next_run
-            ? this.#drawDetails(draw, draws.length, index, tasks)
+            ? this.#drawDetails(draw, draws.length, index, tasks, now)
             : html`<p class="empty">${this.#text('overview.nextNone')}</p>`
         }
       </section>
@@ -181,6 +192,7 @@ export class TwOverviewView extends LitElement {
     count: number,
     index: number,
     tasks: readonly TaskObject[],
+    now: string,
   ): TemplateResult {
     const names = new Map(tasks.map((task) => [task.id, task.name]));
     const step = (delta: number): void => {
@@ -200,12 +212,7 @@ export class TwOverviewView extends LitElement {
           ‹
         </button>
         <div class="grow">
-          <div class="next-name">${draw.name}</div>
-          <div>${formatDateTime(draw.next_run ?? '', this.language)}</div>
-          <div class="muted">
-            ${this.#text('overview.nextTasks', { count: draw.task_ids.length })}:
-            ${draw.task_ids.map((id) => names.get(id) ?? '').join(', ')}
-          </div>
+          ${this.#drawText(draw, names, now)}
           <div class="muted">
             ${this.#text('overview.position', { position: index + 1, count })}
           </div>
@@ -221,6 +228,24 @@ export class TwOverviewView extends LitElement {
         >
           ›
         </button>
+      </div>
+    `;
+  }
+
+  /** Name, Termin (mit „fällig“), Periode und Aufgaben der nächsten Auslosung. */
+  #drawText(draw: ScheduleObject, names: ReadonlyMap<string, string>, now: string): TemplateResult {
+    return html`
+      <div class="next-name">${draw.name}</div>
+      <div>
+        ${formatDateTime(draw.next_run ?? '', this.language)}
+        ${isDue(draw, now) ? html`<strong>(${this.#text('overview.dueNow')})</strong>` : nothing}
+      </div>
+      <div class="muted">
+        ${this.#text('overview.nextPeriod', { period: draw.next_period + PERIOD_NUMBER_OFFSET })}
+      </div>
+      <div class="muted">
+        ${this.#text('overview.nextTasks', { count: draw.entries.length })}:
+        ${draw.entries.map((entry) => names.get(entry.task_id) ?? '').join(', ')}
       </div>
     `;
   }

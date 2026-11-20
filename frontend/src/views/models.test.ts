@@ -2,21 +2,33 @@ import { describe, expect, it } from 'vitest';
 
 import type { AssignmentObject, RoundHead, ScheduleObject, WeekRate } from '../api/index.ts';
 import { buildCsv, csvCell } from './csv.ts';
-import { groupByRound, swapTargets, recentActivity, upcomingDraws } from './overview-model.ts';
-import { barRows, chartPoints, chartSegments } from './statistics-model.ts';
+import {
+  groupByRound,
+  hasNewerDraw,
+  isDue,
+  swapTargets,
+  recentActivity,
+  upcomingDraws,
+} from './overview-model.ts';
+import {
+  barRows,
+  chartPoints,
+  chartSegments,
+  goalProgress,
+  goalState,
+} from './statistics-model.ts';
 
-function schedule(
-  id: string,
-  taskIds: string[],
-  extra: Partial<ScheduleObject> = {},
-): ScheduleObject {
+function schedule(id: string, extra: Partial<ScheduleObject> = {}): ScheduleObject {
   return {
     id,
     name: id,
-    task_ids: taskIds,
+    entries: [],
     enabled: true,
     archived: false,
+    automatic: true,
     next_run: null,
+    next_period: 0,
+    newest_period: null,
     ...extra,
   };
 }
@@ -49,13 +61,56 @@ describe('buildCsv', () => {
 describe('upcomingDraws', () => {
   it('nimmt aktive Zeitpläne mit Termin, den nächsten zuerst', () => {
     const result = upcomingDraws([
-      schedule('b', [], { next_run: '2026-12-01T00:00:00Z' }),
-      schedule('a', [], { next_run: '2026-11-01T00:00:00Z' }),
-      schedule('off', [], { next_run: '2026-11-01T00:00:00Z', enabled: false }),
-      schedule('old', [], { next_run: '2026-11-01T00:00:00Z', archived: true }),
-      schedule('manual', []),
+      schedule('b', { next_run: '2026-12-01T00:00:00Z' }),
+      schedule('a', { next_run: '2026-11-01T00:00:00Z' }),
+      schedule('off', { next_run: '2026-11-01T00:00:00Z', enabled: false }),
+      schedule('old', { next_run: '2026-11-01T00:00:00Z', archived: true }),
+      schedule('manual'),
     ]);
     expect(result.map((item) => item.id)).toEqual(['a', 'b']);
+  });
+});
+
+describe('isDue und hasNewerDraw', () => {
+  it('erkennt einen fälligen Termin', () => {
+    const now = '2026-11-03T12:00:00Z';
+    expect(isDue(schedule('a', { next_run: '2026-11-03T12:00:00Z' }), now)).toBe(true);
+    expect(isDue(schedule('a', { next_run: '2026-11-02T08:00:00Z' }), now)).toBe(true);
+    expect(isDue(schedule('a', { next_run: '2026-11-04T08:00:00Z' }), now)).toBe(false);
+    expect(isDue(schedule('a'), now)).toBe(false);
+  });
+
+  it('sperrt das Löschen, sobald es eine neuere Auslosung gibt', () => {
+    const plan = schedule('s1', { newest_period: 3 });
+    expect(hasNewerDraw({ period_index: 3 }, plan)).toBe(false);
+    expect(hasNewerDraw({ period_index: 2 }, plan)).toBe(true);
+    expect(hasNewerDraw({ period_index: 0 }, schedule('s1'))).toBe(false);
+    expect(hasNewerDraw({ period_index: 0 }, undefined)).toBe(false);
+  });
+});
+
+describe('goalState und goalProgress', () => {
+  const window = (assigned: number, elapsed: number) => ({
+    start: '2026-11-01',
+    end: '2026-11-30',
+    draws: 4,
+    elapsed,
+    assigned,
+    done: 0,
+  });
+
+  it('vergleicht einen abgeschlossenen Lauf mit dem ganzen Soll', () => {
+    expect(goalState(3, window(3, 4))).toBe('met');
+    expect(goalState(3, window(2, 4))).toBe('under');
+    expect(goalState(3, window(4, 4))).toBe('over');
+  });
+
+  it('vergleicht den laufenden Lauf mit dem abgerundeten anteiligen Soll', () => {
+    expect(goalProgress(3, window(0, 2))).toBe(1.5);
+    expect(goalState(3, window(1, 2))).toBe('met');
+    expect(goalState(3, window(0, 2))).toBe('under');
+    expect(goalState(3, window(0, 1))).toBe('met');
+    expect(goalState(3, window(4, 2))).toBe('over');
   });
 });
 
@@ -76,7 +131,7 @@ describe('groupByRound', () => {
         head('new', 'gone', '2026-11-01T00:00:00Z'),
         head('empty', 's1', '2026-11-02T00:00:00Z'),
       ],
-      [schedule('s1', [])],
+      [schedule('s1')],
     );
     expect(
       groups.map((g) => [g.round?.id, g.schedule?.id, g.assignments.map((a) => a.id)]),

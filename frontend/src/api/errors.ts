@@ -2,7 +2,7 @@
 
 export interface ApiFailure {
   readonly code: string;
-  /** Pfad des fehlerhaften Felds (`trigger.weekdays`); leer, wenn kein Feld gemeint ist. */
+  /** Pfad des fehlerhaften Felds (`interval.every`); leer, wenn kein Feld gemeint ist. */
   readonly field: string;
 }
 

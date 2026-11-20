@@ -2,8 +2,9 @@
 
 from ..const.keys import RESOURCE_ROUND
 from ..domain.enums import DONE_STATUSES
-from ..domain.errors import NotFoundError, RoundHasDoneError
+from ..domain.errors import NotFoundError, RoundHasDoneError, RoundNotNewestError
 from ..domain.models import Round
+from ..domain.plan.window import newest_period
 from ..domain.types import RoundId
 from .protocols import (
     AssignmentRecorder,
@@ -16,7 +17,7 @@ from .protocols import (
 
 
 class RoundService:
-    """Löscht eine Runde mit allen Zuteilungen, solange keine davon erledigt ist (KONZEPT §5.4)."""
+    """Löscht die jüngste Runde eines Zeitplans, solange keine Zuteilung erledigt ist (§5.4)."""
 
     def __init__(
         self,
@@ -36,11 +37,15 @@ class RoundService:
 
         Raises:
             NotFoundError: Die Runde gibt es nicht (mehr).
+            RoundNotNewestError: Es gibt eine jüngere Auslosung des Zeitplans (sonst entstünde eine
+                Lücke in den Perioden).
             RoundHasDoneError: Mindestens eine Zuteilung der Runde ist schon erledigt.
         """
         round_ = self._history.rounds.get(round_id)
         if round_ is None:
             raise NotFoundError(RESOURCE_ROUND, round_id)
+        if newest_period(self._history.rounds.values(), round_.schedule_id) != round_.period_index:
+            raise RoundNotNewestError(round_id)
         done = sum(item.status in DONE_STATUSES for item in round_.assignments)
         if done:
             raise RoundHasDoneError(round_id, done)

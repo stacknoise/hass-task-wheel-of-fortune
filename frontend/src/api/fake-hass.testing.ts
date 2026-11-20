@@ -19,7 +19,6 @@ export const EMPTY_SNAPSHOT: Snapshot = {
       id: 't1',
       name: 'Aufgabe',
       allowed: ['p1', 'p2'],
-      frequency: { kind: 'every_round' },
       points: 1,
       no_repeat: false,
       respect_absence: true,

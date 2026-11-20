@@ -1,20 +1,12 @@
 /** Formen der Nachrichten der WebSocket-API (KONZEPT §6.4). */
 
 import type { CollectionName } from '../constants/index.ts';
+import type { EntryWire, IntervalWire } from './config-types.ts';
 
 /** Ein Objekt der Sammlungen; weitere Felder sind je Art verschieden und werden in den Views typisiert. */
 export interface WireObject {
   readonly id: string;
   readonly [field: string]: unknown;
-}
-
-/** Wann die Aufgaben einer manuellen Auslosung gelten und wie lange sie Zeit haben (Pflicht). */
-export interface DrawWindowRequest {
-  readonly starts_at: string;
-  readonly duration: number;
-  readonly duration_unit: string;
-  /** Bestätigt, dass der nächste reguläre Lauf des Zeitplans entfällt. */
-  readonly replace_next: boolean;
 }
 
 export type Settings = Readonly<Record<string, unknown>>;
@@ -104,11 +96,15 @@ export interface PanelRoundWire {
   readonly id: string;
   readonly schedule_id: string;
   readonly expires_at: string;
+  /** Nummer der Periode (0 = erste), die diese Runde auslost, und ihr Zeitfenster (ISO). */
+  readonly period_index: number;
+  readonly period_start: string;
+  readonly period_end: string;
   readonly results: readonly TaskDrawWire[];
   readonly pending_task_ids: readonly string[];
   /** Vor dem Start: Aufgaben, die sich nicht alle vergeben lassen (je Person höchstens eine). */
   readonly unplaceable_task_ids: readonly string[];
-  /** Wer an der Runde teilnimmt: im Fristfenster anwesend, belastbar und für eine Aufgabe erlaubt. */
+  /** Wer an der Runde teilnimmt: im Zeitfenster der Periode anwesend, belastbar und für eine Aufgabe erlaubt. */
   readonly participant_ids: readonly string[];
 }
 
@@ -139,4 +135,42 @@ export interface SpinRestReply {
 
 export interface PreviewReply {
   readonly result: TaskDrawWire;
+}
+
+/** Die Planung eines Zeitplans, die das Backend bewertet (nur lesen). */
+export interface PlanPreviewRequest {
+  readonly interval: IntervalWire;
+  readonly run_days: number;
+  readonly entries: readonly EntryWire[];
+}
+
+/** Abstände einer Aufgabe: Auslosungen im Lauf (0-basiert) und kleinster/größter Abstand in Auslosungen. */
+export interface PlanTrackWire {
+  readonly task_id: string;
+  readonly every_draw: boolean;
+  readonly wanted: number;
+  readonly positions: readonly number[];
+  readonly gap_min: number;
+  readonly gap_max: number;
+}
+
+/** Hinweis zur Planung; nur `blocking` verhindert das Speichern, der Rest sind Warnungen. */
+export interface PlanIssueWire {
+  readonly code: string;
+  readonly blocking: boolean;
+  readonly params: Readonly<Record<string, number | string>>;
+}
+
+export interface PlanPreviewWire {
+  readonly draws_per_run: number;
+  readonly interval_hours: number;
+  /** Anzahl der Aufgaben je Person, die im Rad vorkommen kann (abgeleitet aus den erlaubten Personen). */
+  readonly persons: Readonly<Record<string, number>>;
+  readonly planned: number;
+  readonly capacity: number;
+  readonly empty_draws: number;
+  readonly overloaded_draws: number;
+  readonly peak: number;
+  readonly tracks: readonly PlanTrackWire[];
+  readonly issues: readonly PlanIssueWire[];
 }

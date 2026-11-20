@@ -33,6 +33,13 @@ export class AsyncValue<T> {
     }
   }
 
+  /** Verwirft den Wert und macht eine laufende Anfrage ungültig. */
+  reset(): void {
+    this.#run += 1;
+    this.value = undefined;
+    this.#set('idle');
+  }
+
   #set(status: AsyncStatus): void {
     this.status = status;
     this.#host.requestUpdate();

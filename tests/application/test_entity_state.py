@@ -4,16 +4,15 @@ from custom_components.task_wheel.application.assignment_service import Assignme
 from custom_components.task_wheel.application.entity_state import EntityStateService
 from custom_components.task_wheel.application.statistics_service import StatisticsService
 from custom_components.task_wheel.domain.enums import AssignmentStatus, RoundOrigin
-from custom_components.task_wheel.domain.models import OnceTrigger
 
 from ..domain import factories as f
-from .world import DAY, World
+from .world import DAY, ORDERED, World
 
 NOW = f.NOW
 
 
 def _setup(**settings: object) -> tuple[World, EntityStateService, AssignmentService]:
-    world = World(0.1, 0.9, **settings)
+    world = World(*ORDERED, **settings)
     state = EntityStateService(world.config, world.history, world.schedules)
     assignments = AssignmentService(
         world.config, world.history, StatisticsService(world.config, world.history)
@@ -26,9 +25,9 @@ def test_open_count_and_items_are_sorted_by_deadline() -> None:
     world, state, _ = _setup()
     assert (state.open_count("p1"), state.open_count("p2")) == (1, 1)
     (item,) = state.open_items("p1")
-    assert (item.task_name, item.points, item.due_at) == ("A", 5, NOW + 7 * DAY)
+    assert (item.task_name, item.points, item.due_at) == ("A", 5, NOW + DAY)
     assert state.open_count("unbekannt") == 0 and state.open_items("unbekannt") == ()
-    later = f.assignment(id="a9", round_id="r9", person_id="p1", due_at=NOW + DAY)
+    later = f.assignment(id="a9", round_id="r9", person_id="p1", due_at=NOW + DAY / 2)
     world.history.put_round(
         f.finished_round(id="r9", started_at=NOW, finished_at=NOW, assignments=(later,))
     )
@@ -56,11 +55,11 @@ def test_month_points_count_only_completed_work_with_factors() -> None:
     assert world.history.get_assignment(other.assignment_id).status is AssignmentStatus.LATE  # type: ignore[union-attr]
 
 
-def test_next_draw_follows_trigger_state() -> None:
+def test_next_draw_follows_mode_and_state() -> None:
     world, state, _ = _setup()
-    assert state.next_draw("s1", NOW) is None
+    assert state.next_draw("s1", NOW) == NOW + DAY  # manuell: Termin der offenen Periode 1
     assert state.next_draw("fehlt", NOW) is None
-    world.put_schedule(trigger=OnceTrigger(at=NOW + DAY), enabled=True)
+    world.put_schedule(start=NOW + DAY, automatic=True, enabled=True)
     assert state.next_draw("s1", NOW) == NOW + DAY
-    world.put_schedule(trigger=OnceTrigger(at=NOW + DAY), enabled=False)
+    world.put_schedule(start=NOW + DAY, automatic=True, enabled=False)
     assert state.next_draw("s1", NOW) is None

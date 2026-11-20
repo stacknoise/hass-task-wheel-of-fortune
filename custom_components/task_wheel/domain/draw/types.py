@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from ..availability.calendar import PersonAvailability
-from ..deadline import DeadlineWindow
 from ..enums import ExclusionReason
 from ..models import Person
+from ..plan.window import PeriodWindow
 from ..types import PersonId, TaskId
 
 
@@ -35,7 +35,7 @@ class DrawContext:
     points: Mapping[PersonId, float]
     last_holders: Mapping[TaskId, PersonId]
     fairness_window_days: int
-    window: DeadlineWindow
+    window: PeriodWindow
     round_holders: frozenset[PersonId] = frozenset()
 
 

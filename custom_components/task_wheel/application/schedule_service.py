@@ -1,26 +1,21 @@
-"""Zeitpläne: nächste Auslosung berechnen, Zeitgeber gezielt setzen, Erinnerungen (KONZEPT §5.5)."""
+"""Zeitpläne: Termine im Raster berechnen, Zeitgeber gezielt setzen, automatisch auslosen."""
 
 import datetime as dt
 import logging
 from typing import Final
 
-from ..const.defaults import REMINDER_HOUR
-from ..const.keys import ERR_NOTHING_DUE
+from ..const.keys import ERR_NOTHING_DUE, ERR_PERIOD_DRAWN
 from ..domain.enums import RoundOrigin
 from ..domain.errors import TaskWheelError
-from ..domain.models import OnceTrigger, Round, Schedule
-from ..domain.triggers.lifecycle import after_fired
-from ..domain.triggers.reminder import reminder_age
+from ..domain.models import Schedule
+from ..domain.plan.window import next_period_start, period_index_at, period_start
 from ..domain.types import ScheduleId
-from .daily import next_daily
 from .draw_service import DrawService
 from .protocols import ConfigRepository, HistoryRepository, NoEvents, RoundEvents, TimerPort
-from .runs import next_regular_run
 
 _LOGGER = logging.getLogger(__name__)
 
 TIMER_PREFIX: Final = "schedule:"
-TIMER_REMINDERS: Final = "reminders"
 
 
 def timer_key(schedule_id: ScheduleId) -> str:
@@ -47,57 +42,44 @@ class ScheduleService:
         self._events = events or NoEvents()
 
     def next_run(self, schedule: Schedule, after: dt.datetime) -> dt.datetime | None:
-        """Nächste automatische Auslosung nach `after`; `None` bei pausiert, archiviert, manuell."""
-        return next_regular_run(self._history, schedule, after)
+        """Nächste Auslosung zur Anzeige; `None` bei pausiert oder archiviert.
+
+        Automatisch: der nächste Termin im Raster. Manuell: der Termin der nächsten offenen
+        Periode (liegt er in der Vergangenheit, ist die Auslosung fällig).
+        """
+        if not schedule.enabled or schedule.archived:
+            return None
+        if schedule.automatic:
+            return next_period_start(schedule, after)
+        return period_start(schedule, self._draws.next_period(schedule.id))
 
     def arm(self, schedule_id: ScheduleId, now: dt.datetime) -> dt.datetime | None:
         """Setzt den Zeitgeber dieses Zeitplans neu (nur dieser) und liefert den Zeitpunkt.
 
-        Gibt es den Zeitplan nicht mehr oder steht nichts an, wird der Zeitgeber abgemeldet.
+        Der Zeitgeber läuft zu jedem Termin im Raster: automatische Zeitpläne losen dann aus,
+        manuelle erinnern. Gibt es den Zeitplan nicht mehr oder ist er pausiert oder archiviert,
+        wird der Zeitgeber abgemeldet.
         """
         schedule = self._config.schedules.get(schedule_id)
-        at = self.next_run(schedule, now) if schedule is not None else None
-        if at is None:
+        active = schedule is not None and schedule.enabled and not schedule.archived
+        if schedule is None or not active:
             self._timers.cancel(timer_key(schedule_id))
             return None
+        at = next_period_start(schedule, now)
         self._timers.schedule(
             timer_key(schedule_id), at, lambda fired: self._on_fire(schedule_id, at, fired)
         )
         return at
 
     def arm_all(self, now: dt.datetime) -> None:
-        """Holt verpasste einmalige Termine nach; setzt alle Zeitgeber und die Erinnerungen."""
-        for schedule in tuple(self._config.schedules.values()):
-            if self._missed_once(schedule, now):
-                self._draw_and_finish(schedule, now)
+        """Setzt die Zeitgeber aller Zeitpläne (verpasste Termine werden nicht nachgeholt)."""
         for schedule_id in self._config.schedules:
             self.arm(schedule_id, now)
-        self.arm_reminders(now)
-
-    def _missed_once(self, schedule: Schedule, now: dt.datetime) -> bool:
-        """Ein aktiver einmaliger Zeitplan, dessen Termin in der Ausfallzeit lag und noch fehlt."""
-        trigger = schedule.trigger
-        if not isinstance(trigger, OnceTrigger) or not schedule.enabled or schedule.archived:
-            return False
-        if trigger.at > now:
-            return False
-        last = self._last_drawn(schedule.id)
-        return last is None or last < trigger.at
 
     def save(self, schedule: Schedule, now: dt.datetime) -> None:
         """Legt den Zeitplan an oder ersetzt ihn und setzt seinen Zeitgeber neu."""
         self._config.put_schedule(schedule)
         self.arm(schedule.id, now)
-
-    def round_committed(self, round_: Round, now: dt.datetime) -> None:
-        """Nach einer manuellen Auslosung: ersetzten Lauf übergehen und den Zeitgeber neu setzen.
-
-        Ein einmaliger Zeitplan, dessen Termin die Auslosung vorgezogen hat, gilt als erledigt.
-        """
-        schedule = self._config.schedules.get(round_.schedule_id)
-        if schedule is not None and round_.replaces is not None:
-            self._finish_once(schedule)
-        self.arm(round_.schedule_id, now)
 
     def delete(self, schedule_id: ScheduleId) -> None:
         """Entfernt den Zeitplan und meldet seinen Zeitgeber ab."""
@@ -112,20 +94,6 @@ class ScheduleService:
         """Meldet alle Zeitgeber ab (Entladen der Integration)."""
         self._timers.cancel_all()
 
-    def arm_reminders(self, now: dt.datetime) -> None:
-        """Setzt die tägliche Erinnerungsprüfung auf das nächste Mal."""
-        at = next_daily(REMINDER_HOUR, now)
-        if at is not None:
-            self._timers.schedule(TIMER_REMINDERS, at, self.check_reminders)
-
-    def check_reminders(self, now: dt.datetime) -> None:
-        """Plant die nächste Prüfung (zuerst, damit ein Fehler sie nicht verliert) und meldet."""
-        self.arm_reminders(now)
-        for schedule in self._config.schedules.values():
-            age = reminder_age(schedule, self._last_drawn(schedule.id), now)
-            if age is not None:
-                self._events.reminder_due(schedule, age)
-
     def _last_drawn(self, schedule_id: ScheduleId) -> dt.datetime | None:
         """Beginn der jüngsten Runde des Zeitplans (jeder Herkunft)."""
         starts = [
@@ -134,34 +102,37 @@ class ScheduleService:
         return max(starts, default=None)
 
     def _on_fire(self, schedule_id: ScheduleId, planned: dt.datetime, fired: dt.datetime) -> None:
-        """Zeitgeber ausgelöst: auslosen, einmalige Pläne abschließen, immer neu setzen."""
+        """Zeitgeber ausgelöst: automatisch auslosen oder (manuell) erinnern; immer neu setzen."""
         now = max(fired, planned)
         schedule = self._config.schedules.get(schedule_id)
         if schedule is None:
             return
         try:
-            self._draw_and_finish(schedule, now)
+            if schedule.automatic:
+                self._draw(schedule, now)
+            else:
+                self._remind(schedule, now)
         finally:
             self.arm(schedule_id, now)
 
-    def _draw_and_finish(self, schedule: Schedule, now: dt.datetime) -> None:
-        """Löst aus; nur nach einer gelungenen Auslosung gilt ein einmaliger Plan als erledigt."""
+    def _draw(self, schedule: Schedule, now: dt.datetime) -> None:
+        """Löst die Periode dieses Termins aus; eine schon ausgloste oder gelöschte entfällt."""
+        index = period_index_at(schedule, now)
+        if index is None:
+            return
         try:
-            self._draws.draw(schedule.id, RoundOrigin.AUTO, now)
+            self._draws.draw(schedule.id, RoundOrigin.AUTO, now, index)
         except TaskWheelError as err:
-            if err.key == ERR_NOTHING_DUE:
-                _LOGGER.info("Auslosung übersprungen, nichts fällig: %s", schedule.slug)
+            if err.key in {ERR_NOTHING_DUE, ERR_PERIOD_DRAWN}:
+                _LOGGER.info("Auslosung übersprungen (%s): %s", err.key, schedule.slug)
                 return
             _LOGGER.warning(
                 "Automatische Auslosung fehlgeschlagen: %s", schedule.slug, exc_info=True
             )
-            return
-        self._finish_once(schedule)
 
-    def _finish_once(self, schedule: Schedule) -> None:
-        """Wendet an, was nach einem einmaligen Zeitplan gilt (behalten, archivieren, löschen)."""
-        updated = after_fired(schedule)
-        if updated is None:
-            self._config.remove_schedule(schedule.id)
-        elif updated != schedule:
-            self._config.put_schedule(updated)
+    def _remind(self, schedule: Schedule, now: dt.datetime) -> None:
+        """Erinnert an die fällige Auslosung eines manuellen Zeitplans (Tage seit der letzten)."""
+        if period_start(schedule, self._draws.next_period(schedule.id)) > now:
+            return
+        last = self._last_drawn(schedule.id)
+        self._events.reminder_due(schedule, 0 if last is None else (now.date() - last.date()).days)
