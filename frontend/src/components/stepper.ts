@@ -1,4 +1,4 @@
-import { LitElement, css, html } from 'lit';
+import { LitElement, css, html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 
 import { FORM_TAGS } from '../constants/index.ts';
@@ -18,6 +18,7 @@ export class TwStepper extends LitElement {
     value: { type: Number },
     min: { type: Number },
     max: { type: Number },
+    compact: { type: Boolean, reflect: true },
   };
 
   static override styles = [
@@ -38,6 +39,10 @@ export class TwStepper extends LitElement {
         background: var(--tw-color-surface);
         cursor: pointer;
       }
+      :host([compact]) button {
+        width: 32px;
+        height: 32px;
+      }
       button:disabled {
         opacity: 0.4;
         cursor: default;
@@ -54,6 +59,8 @@ export class TwStepper extends LitElement {
   declare value: number;
   declare min: number;
   declare max: number;
+  /** Ohne sichtbare Beschriftung und mit kleineren Knöpfen (für Zeilen in Listen). */
+  declare compact: boolean;
 
   constructor() {
     super();
@@ -61,11 +68,12 @@ export class TwStepper extends LitElement {
     this.value = 0;
     this.min = 0;
     this.max = Number.MAX_SAFE_INTEGER;
+    this.compact = false;
   }
 
   protected override render(): TemplateResult {
     return html`
-      <span class="label">${this.label}</span>
+      ${this.compact ? nothing : html`<span class="label">${this.label}</span>`}
       <div class="row" role="group" aria-label=${this.label}>
         <button
           type="button"

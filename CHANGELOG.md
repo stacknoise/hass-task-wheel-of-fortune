@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- **Geändert:** Der Zeitplan-Editor ist übersichtlicher und gliedert sich in vier Reiter: Ablauf, Aufgaben, Auswertung und Optionen. Die Reiter zeigen die Zahl der gewählten Aufgaben und der Hinweise; in der Fußzeile steht immer, ob der Plan passt, und ein Klick führt zu den Hinweisen. Die Aufgabenliste hat Suche, Filter (alle, gewählt, offen) und Raumfilter, ihre Zeilen sind kompakt und nennen den ungefähren Abstand links vor dem Zähler, sodass Zähler und „Jede“ in allen Zeilen untereinander stehen. Die Auswertung nennt die Hinweise zuerst (mit Sprung zur Aufgabe), zeigt die Personen als Balken und zunächst nur die auffälligen Abstände. Das Automations-Beispiel ist eingeklappt. Eigene Scrollkästen im Editor entfallen
+
 ## [0.7.2] – 2026-11-20
 
 - **Geändert:** Räume erscheinen überall als Chip (Kontur mit farbigem Punkt, eine Farbe je Raum, ohne Umbruch), auch in der Planvorschau „Abstände je Aufgabe“ unter dem Aufgabennamen; gelöschte Räume erscheinen grau

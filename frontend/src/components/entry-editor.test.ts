@@ -28,4 +28,20 @@ describe('Aufgabenliste des Zeitplans', () => {
     expect(rooms(rows[1])).toEqual([]);
     editor.remove();
   });
+
+  it('übernimmt einen vorgegebenen Suchtext', async () => {
+    const editor = document.createElement('tw-entry-editor') as TwEntryEditor;
+    editor.tasks = [
+      { id: 't1', label: 'Bad putzen' },
+      { id: 't2', label: 'Müll' },
+    ];
+    editor.query = 'müll';
+    document.body.append(editor);
+    await editor.updateComplete;
+    expect(editor.shadowRoot?.querySelectorAll('.row')).toHaveLength(1);
+    expect(editor.shadowRoot?.querySelector<HTMLInputElement>('input[type="search"]')?.value).toBe(
+      'müll',
+    );
+    editor.remove();
+  });
 });

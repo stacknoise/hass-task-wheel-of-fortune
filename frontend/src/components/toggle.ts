@@ -24,6 +24,7 @@ export class TwToggle extends LitElement {
         cursor: pointer;
       }
       input {
+        flex: none;
         width: 20px;
         height: 20px;
       }

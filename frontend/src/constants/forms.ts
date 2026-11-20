@@ -13,6 +13,7 @@ export const FORM_TAGS = {
   absenceEditor: 'tw-absence-editor',
   entryEditor: 'tw-entry-editor',
   planPreview: 'tw-plan-preview',
+  sectionTabs: 'tw-section-tabs',
 } as const;
 
 export const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
@@ -87,9 +88,15 @@ export const DEFAULT_MIN_COUNT = 1;
 export const DEFAULT_START_OFFSET_HOURS = 1;
 export const MS_PER_HOUR = 3_600_000;
 
-/** Sichtbare Zeilen im Zeitplan-Editor, danach scrollt der Bereich. */
-export const ENTRY_ROWS_VISIBLE = 6;
-export const TRACK_ROWS_VISIBLE = 4;
+/** Bereiche (Reiter) des Zeitplan-Editors in der Reihenfolge der Anzeige. */
+export const SCHEDULE_TABS = ['basics', 'tasks', 'review', 'options'] as const;
+export type ScheduleTab = (typeof SCHEDULE_TABS)[number];
+export const DEFAULT_SCHEDULE_TAB: ScheduleTab = 'basics';
+/** Filter der Aufgabenliste im Zeitplan-Editor: alle, gewählte, noch nicht gewählte. */
+export const ENTRY_FILTERS = ['all', 'selected', 'open'] as const;
+export type EntryFilter = (typeof ENTRY_FILTERS)[number];
+/** Ereignis der Auswertung: springt zu einer Aufgabe (`detail`: ihr Name). */
+export const EVENT_GOTO_TASK = 'tw-goto-task';
 /** Wartezeit nach der letzten Eingabe, bevor die Vorschau des Plans neu rechnet. */
 export const PLAN_PREVIEW_DEBOUNCE_MS = 300;
 /** Blasse Punkte am Ende der Spur zeigen den Anfang des nächsten Laufs: mindestens 2, sonst ein Drittel der Auslosungen. */

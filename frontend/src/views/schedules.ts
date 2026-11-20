@@ -3,8 +3,8 @@ import type { TemplateResult } from 'lit';
 
 import type { ScheduleWire, Snapshot } from '../api/index.ts';
 import { describeInterval, onChange } from '../components/index.ts';
-import type { ChipOption } from '../components/index.ts';
-import type { AnimationKind, IntervalUnit, ScheduleMode } from '../constants/index.ts';
+import type { ChipOption, SectionTab } from '../components/index.ts';
+import type { AnimationKind, IntervalUnit, ScheduleMode, ScheduleTab } from '../constants/index.ts';
 import { formatDateTime } from '../i18n/format.ts';
 import { translate } from '../i18n/index.ts';
 import type { TextKey } from '../i18n/index.ts';
@@ -13,10 +13,12 @@ import {
   ANIMATION_KINDS,
   DEFAULT_ANIMATIONS,
   DEFAULT_RUN_DAYS,
+  DEFAULT_SCHEDULE_TAB,
   EVENT_DRAWN_NAME,
   FORM_LIMITS,
   INTERVAL_UNITS,
   SCHEDULE_MODES,
+  SCHEDULE_TABS,
   SERVICE_DRAW,
   VIEW_TAGS,
 } from '../constants/index.ts';
@@ -43,11 +45,49 @@ const TEXTS: ConfigTexts = {
   edit: 'schedules.edit',
 };
 
-/** Zeitpläne: Beginn, Intervall, Lauf, Aufgaben mit Häufigkeit, Live-Auswertung, Optionen und ein Beispiel für Automationen. */
+/**
+ * Zeitpläne: Der Editor teilt sich in Reiter (Ablauf, Aufgaben, Auswertung, Optionen); in der
+ * Fußzeile steht immer der Stand der Auswertung. Ablauf: Beginn, Intervall, Lauf; Aufgaben mit
+ * Häufigkeit; Live-Auswertung; Optionen mit Animationen und einem Beispiel für Automationen.
+ */
 export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
+  static override properties = {
+    ...ConfigView.properties,
+    _tab: { state: true },
+    _taskQuery: { state: true },
+  };
+
   static override styles = [
     ...ConfigView.styles,
     css`
+      .status {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        min-width: 0;
+      }
+      .status button {
+        padding: var(--tw-space-xs) var(--tw-space-m);
+        border: 0;
+        border-radius: 1em;
+        background: color-mix(in srgb, var(--tw-color-success) 20%, transparent);
+        color: inherit;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .status button.warn {
+        background: color-mix(in srgb, var(--tw-color-warning) 25%, transparent);
+      }
+      .status button.blocking {
+        background: color-mix(in srgb, var(--tw-color-error) 20%, transparent);
+      }
+      details > summary {
+        cursor: pointer;
+        font-weight: 500;
+      }
+      details > pre {
+        margin-top: var(--tw-space-s);
+      }
       pre {
         margin: 0;
         padding: var(--tw-space-s);
@@ -64,6 +104,15 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
   protected readonly texts = TEXTS;
   readonly #plan = new PlanPreviewLoader(this);
   #planFor: ScheduleDraft | undefined;
+  declare _tab: ScheduleTab;
+  /** Suchtext, mit dem die Aufgabenliste nach einem Sprung aus der Auswertung öffnet. */
+  declare _taskQuery: string;
+
+  constructor() {
+    super();
+    this._tab = DEFAULT_SCHEDULE_TAB;
+    this._taskQuery = '';
+  }
 
   protected blank(snapshot: Snapshot): ScheduleDraft {
     return {
@@ -129,6 +178,8 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
     }
     if (!draft) {
       this.#planFor = undefined;
+      this._tab = DEFAULT_SCHEDULE_TAB;
+      this._taskQuery = '';
       this.#plan.reset();
     } else if (client) {
       this.#planFor = draft;
@@ -167,31 +218,115 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
     `;
   }
 
-  protected form(draft: ScheduleDraft, snapshot: Snapshot): TemplateResult {
-    const tasks = taskOptions(snapshot, this.store.areaNames(), this.text('common.unknownArea'));
-    return html`
-      ${this.nameField(draft.name, (name) => {
-        this.patch({ name });
+  protected override tabs(): TemplateResult {
+    const issues = this.#plan.value?.issues.length ?? 0;
+    const badges: Readonly<Record<ScheduleTab, Pick<SectionTab, 'badge' | 'warn'>>> = {
+      basics: {},
+      tasks: { badge: this._draft?.entries.length ?? 0 },
+      review: { badge: issues, warn: true },
+      options: {},
+    };
+    const tabs: readonly SectionTab[] = SCHEDULE_TABS.map((id) => ({
+      id,
+      label: this.text(`schedules.tab.${id}`),
+      ...badges[id],
+    }));
+    return html`<tw-section-tabs
+      slot="tabs"
+      .label=${this.text('schedules.tabs')}
+      .tabs=${tabs}
+      .active=${this._tab}
+      @tw-change=${onChange<ScheduleTab>((tab) => {
+        this.#show(tab);
       })}
-      ${this.#timing(draft)}
-      <tw-entry-editor
-        .language=${this.language}
-        .tasks=${tasks}
-        .value=${draft.entries}
-        .runDays=${draft.run_days}
-        .error=${this.fieldError('entries')}
-        @tw-change=${onChange<EntryWire[]>((entries) => {
-          this.patch({ entries });
-        })}
-      ></tw-entry-editor>
-      <tw-plan-preview
-        .language=${this.language}
-        .preview=${this.#plan.value}
-        .tasks=${tasks}
-        .people=${personOptions(snapshot)}
-        .runDays=${draft.run_days}
-        ?loading=${this.#plan.loading}
-      ></tw-plan-preview>
+    ></tw-section-tabs>`;
+  }
+
+  /** Stand der Auswertung in der Fußzeile; ein Klick führt zu den Hinweisen. */
+  protected override status(): TemplateResult | typeof nothing {
+    const plan = this.#plan.value;
+    if (!plan) {
+      return nothing;
+    }
+    const count = plan.issues.length;
+    const label =
+      count === 0
+        ? this.text('schedules.status.ok')
+        : translate(
+            count === 1 ? 'schedules.status.issue.one' : 'schedules.status.issue.other',
+            this.language,
+            { count },
+          );
+    const state = count === 0 ? '' : this.#plan.blocking ? 'blocking' : 'warn';
+    return html`<div class="status">
+      <button
+        type="button"
+        class=${state}
+        @click=${() => {
+          this.#show('review');
+        }}
+      >
+        ${label}
+      </button>
+    </div>`;
+  }
+
+  protected form(draft: ScheduleDraft, snapshot: Snapshot): TemplateResult {
+    switch (this._tab) {
+      case 'basics':
+        return this.#basics(draft);
+      case 'tasks':
+        return this.#tasks(draft, snapshot);
+      case 'review':
+        return this.#review(draft, snapshot);
+      case 'options':
+        return this.#options(draft);
+    }
+  }
+
+  #show(tab: ScheduleTab): void {
+    this._taskQuery = '';
+    this._tab = tab;
+  }
+
+  #basics(draft: ScheduleDraft): TemplateResult {
+    return html`${this.nameField(draft.name, (name) => {
+      this.patch({ name });
+    })}
+    ${this.#timing(draft)}`;
+  }
+
+  #tasks(draft: ScheduleDraft, snapshot: Snapshot): TemplateResult {
+    return html`<tw-entry-editor
+      .language=${this.language}
+      .tasks=${taskOptions(snapshot, this.store.areaNames(), this.text('common.unknownArea'))}
+      .value=${draft.entries}
+      .runDays=${draft.run_days}
+      .query=${this._taskQuery}
+      .error=${this.fieldError('entries')}
+      @tw-change=${onChange<EntryWire[]>((entries) => {
+        this.patch({ entries });
+      })}
+    ></tw-entry-editor>`;
+  }
+
+  #review(draft: ScheduleDraft, snapshot: Snapshot): TemplateResult {
+    return html`<tw-plan-preview
+      .language=${this.language}
+      .preview=${this.#plan.value}
+      .tasks=${taskOptions(snapshot, this.store.areaNames(), this.text('common.unknownArea'))}
+      .people=${personOptions(snapshot)}
+      .runDays=${draft.run_days}
+      ?loading=${this.#plan.loading}
+      @tw-goto-task=${(event: CustomEvent<string>) => {
+        this._taskQuery = event.detail;
+        this._tab = 'tasks';
+      }}
+    ></tw-plan-preview>`;
+  }
+
+  #options(draft: ScheduleDraft): TemplateResult {
+    return html`
       <div>
         ${this.toggle('schedules.enabled', 'enabled', draft.enabled)}
         ${this.toggle('schedules.notify', 'notify', draft.notify)}
@@ -311,8 +446,8 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
 
   #example(slug: string): TemplateResult {
     return html`
-      <div>
-        <span class="label">${this.text('schedules.example')}</span>
+      <details>
+        <summary>${this.text('schedules.example')}</summary>
         <pre>
 action: ${SERVICE_DRAW}
 data:
@@ -320,7 +455,7 @@ data:
         <pre>
 trigger: event
 event_type: ${EVENT_DRAWN_NAME}</pre>
-      </div>
+      </details>
     `;
   }
 }

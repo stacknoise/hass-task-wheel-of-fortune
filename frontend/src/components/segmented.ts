@@ -1,4 +1,4 @@
-import { LitElement, css, html } from 'lit';
+import { LitElement, css, html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 
@@ -60,7 +60,7 @@ export class TwSegmented extends LitElement {
 
   protected override render(): TemplateResult {
     return html`
-      <span class="label">${this.label}</span>
+      ${this.label ? html`<span class="label">${this.label}</span>` : nothing}
       <div class="bar" role="radiogroup" aria-label=${this.label}>
         ${repeat(
           this.options,
