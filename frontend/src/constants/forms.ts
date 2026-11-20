@@ -10,20 +10,15 @@ export const FORM_TAGS = {
   segmented: 'tw-segmented',
   select: 'tw-select',
   weekPreview: 'tw-week-preview',
-  timeline: 'tw-timeline',
   absenceEditor: 'tw-absence-editor',
-  frequencyEditor: 'tw-frequency-editor',
-  triggerEditor: 'tw-trigger-editor',
-  deadlineEditor: 'tw-deadline-editor',
-  durationInput: 'tw-duration-input',
-  drawStartDialog: 'tw-draw-start-dialog',
+  entryEditor: 'tw-entry-editor',
+  planPreview: 'tw-plan-preview',
+  sectionTabs: 'tw-section-tabs',
 } as const;
 
 export const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
 export const WEEKDAY_COUNT = WEEKDAYS.length;
-export const MS_PER_DAY = 86_400_000;
-export const TIME_INPUT_LENGTH = 5;
 export const DATE_LENGTH = 10;
 
 /** Standardfarbe neuer Personen (wie `DEFAULT_PERSON_COLOR` im Backend). */
@@ -54,51 +49,59 @@ export const FORM_LIMITS = {
   nameMax: 60,
   notifyMax: 255,
   points: { min: 1, max: 100 },
-  periodCount: { min: 1, max: 50 },
-  periodEvery: { min: 1, max: 12 },
-  intervalDays: { min: 1, max: 365 },
+  intervalEvery: { min: 1, max: 1000 },
+  runDays: { min: 1, max: 365 },
+  minCount: { min: 1, max: 1000 },
   rhythmCycle: { min: 1, max: 8 },
   recurrenceInterval: { min: 1, max: 52 },
-  everyNWeeks: { min: 1, max: 52 },
-  remindDays: { min: 1, max: 365 },
 } as const;
 
 export const ABSENCE_KINDS = ['once', 'weekly_days', 'week_rhythm', 'recurring'] as const;
 export type AbsenceKind = (typeof ABSENCE_KINDS)[number];
 
-export const FREQUENCY_KINDS = ['every_round', 'max_per_period', 'interval'] as const;
-export type FrequencyKind = (typeof FREQUENCY_KINDS)[number];
+/** Einheiten des Intervalls zwischen zwei Auslosungen (wie `IntervalUnit` im Backend). */
+export const INTERVAL_UNITS = ['hour', 'day', 'week'] as const;
+export type IntervalUnit = (typeof INTERVAL_UNITS)[number];
 
-export const PERIODS = ['day', 'week', 'month'] as const;
-export type Period = (typeof PERIODS)[number];
+/** Wie eine Aufgabe im Zeitplan vorkommt: mindestens n× je Lauf oder in jeder Auslosung. */
+export const ENTRY_MODES = ['min_count', 'every_draw'] as const;
+export type EntryMode = (typeof ENTRY_MODES)[number];
 
-export const TRIGGER_KINDS = ['recurring', 'once', 'manual'] as const;
-export type TriggerKind = (typeof TRIGGER_KINDS)[number];
+/** Auslösung eines Zeitplans: von selbst zu jedem Termin oder per Klick. */
+export const SCHEDULE_MODES = ['automatic', 'manual'] as const;
+export type ScheduleMode = (typeof SCHEDULE_MODES)[number];
 
-/** Ab wann die Zeit für die Aufgaben eines Zeitplans läuft (Frist, wie `DeadlineStart` im Backend). */
-export const DEADLINE_STARTS = ['now', 'offset', 'next_day', 'weekday'] as const;
-export type DeadlineStart = (typeof DEADLINE_STARTS)[number];
-
-export const DEADLINE_UNITS = ['hour', 'day', 'week', 'month'] as const;
-export type DeadlineUnit = (typeof DEADLINE_UNITS)[number];
-
-/** Größte Dauer je Einheit (das Backend begrenzt das ganze Fenster auf ein Jahr). */
-export const DEADLINE_AMOUNT_MAX: Readonly<Record<DeadlineUnit, number>> = {
-  hour: 8760,
-  day: 365,
-  week: 52,
-  month: 12,
+/** Länge einer Intervall-Einheit in Stunden (wie `INTERVAL_UNIT_HOURS` im Backend: Tag = 24, Woche = 168). */
+const HOURS_PER_DAY = 24;
+const HOURS_PER_WEEK = 168;
+export const INTERVAL_UNIT_HOURS: Readonly<Record<IntervalUnit, number>> = {
+  hour: 1,
+  day: HOURS_PER_DAY,
+  week: HOURS_PER_WEEK,
 };
-export const DEADLINE_OFFSET_MIN = 0;
-export const DEADLINE_DURATION_MIN = 1;
-export const DEFAULT_DEADLINE_DURATION = 7;
-export const DEFAULT_DEADLINE_TIME = '10:00';
-/** Wann die Aufgaben einer manuellen Auslosung gelten. */
-export const MANUAL_STARTS = ['now', 'custom'] as const;
-export type ManualStart = (typeof MANUAL_STARTS)[number];
+/** Perioden zählt das Backend ab 0, angezeigt wird ab 1 (Periode #1). */
+export const PERIOD_NUMBER_OFFSET = 1;
+export const DEFAULT_INTERVAL_EVERY = 7;
+export const DEFAULT_RUN_DAYS = 30;
+export const DEFAULT_MIN_COUNT = 1;
+/** Der erste Termin eines neuen Zeitplans liegt so viele Stunden nach „jetzt“, zur vollen Stunde. */
+export const DEFAULT_START_OFFSET_HOURS = 1;
+export const MS_PER_HOUR = 3_600_000;
 
-export const AFTER_ONCE = ['keep_manual', 'archive', 'delete'] as const;
-export type AfterOnce = (typeof AFTER_ONCE)[number];
+/** Bereiche (Reiter) des Zeitplan-Editors in der Reihenfolge der Anzeige. */
+export const SCHEDULE_TABS = ['basics', 'tasks', 'review', 'options'] as const;
+export type ScheduleTab = (typeof SCHEDULE_TABS)[number];
+export const DEFAULT_SCHEDULE_TAB: ScheduleTab = 'basics';
+/** Filter der Aufgabenliste im Zeitplan-Editor: alle, gewählte, noch nicht gewählte. */
+export const ENTRY_FILTERS = ['all', 'selected', 'open'] as const;
+export type EntryFilter = (typeof ENTRY_FILTERS)[number];
+/** Ereignis der Auswertung: springt zu einer Aufgabe (`detail`: ihr Name). */
+export const EVENT_GOTO_TASK = 'tw-goto-task';
+/** Wartezeit nach der letzten Eingabe, bevor die Vorschau des Plans neu rechnet. */
+export const PLAN_PREVIEW_DEBOUNCE_MS = 300;
+/** Blasse Punkte am Ende der Spur zeigen den Anfang des nächsten Laufs: mindestens 2, sonst ein Drittel der Auslosungen. */
+export const TRACK_GHOST_MIN = 2;
+export const TRACK_GHOST_DIVISOR = 3;
 
 export const LOADS = ['full', 'half', 'paused'] as const;
 export type Load = (typeof LOADS)[number];
@@ -107,32 +110,17 @@ export const DEFAULT_LOAD: Load = 'full';
 /** Mindest-Belastbarkeit einer Aufgabe, aufsteigend; `paused` heißt „egal“. */
 export const MIN_LOADS = ['paused', 'half', 'full'] as const satisfies readonly Load[];
 export const DEFAULT_MIN_LOAD: Load = 'paused';
-export const DEFAULT_TIME = '18:00';
 export const DEFAULT_TASK_POINTS = 1;
-export const DEFAULT_INTERVAL_DAYS = 7;
-export const DEFAULT_PERIOD_COUNT = 1;
-export const DEFAULT_PERIOD_EVERY = 1;
 export const DEFAULT_RHYTHM_CYCLE = 2;
 export const DEFAULT_RECURRENCE_INTERVAL = 2;
 /** Standard-Wochentag einer wiederkehrenden Abwesenheit: Mittwoch. */
 export const DEFAULT_RECURRING_ABSENCE_WEEKDAYS: readonly Weekday[] = [2];
 export const DEFAULT_RHYTHM_CHANGE_DAY: Weekday = 4;
 export const DEFAULT_ABSENT_WEEKDAYS: readonly Weekday[] = [5, 6];
-export const DEFAULT_RECURRING_WEEKDAYS: readonly Weekday[] = [0];
-export const DEFAULT_REMIND_DAYS = 7;
-export const DEFAULT_EVERY_N_WEEKS = 1;
 
-/** Zeitstrahl: höchstens so viele Tageszahlen an der Skala, in diesen Schrittweiten. */
-export const TIMELINE_SCALE_LABELS = 8;
-/** Bis zu dieser Zahl von Tagen trennen feine Linien die einzelnen Tage am Balken. */
-export const TIMELINE_GRID_MAX = 60;
-/** Ein Tag nimmt eine Zelle ein; Marken und Zahlen stehen in ihrer Mitte bzw. mit halbem Schrittabstand. */
-export const TIMELINE_HALF = 0.5;
-export const TIMELINE_SCALE_STEPS = [1, 2, 5, 10, 20, 50, 100, 200, 500] as const;
 export const NOTIFY_PREFIX = 'notify.';
 export const NOTIFY_DOMAIN = 'notify';
 /** Dienst, der zu den Entitäten führt und selbst kein Ziel ist. */
 export const NOTIFY_SEND_MESSAGE = 'send_message';
-export const ATTR_FRIENDLY_NAME = 'friendly_name';
 export const SERVICE_DRAW = 'task_wheel.draw';
 export const EVENT_DRAWN_NAME = 'task_wheel_drawn';

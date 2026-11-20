@@ -3,24 +3,21 @@
 import datetime as dt
 
 from custom_components.task_wheel.domain.enums import (
-    AfterOnce,
     AssignmentStatus,
+    EntryMode,
+    IntervalUnit,
     Load,
-    Period,
     RoundOrigin,
     WeightingKind,
 )
 from custom_components.task_wheel.domain.models import (
     Assignment,
     Interval,
-    ManualTrigger,
-    MaxPerPeriod,
     OnceAbsence,
-    OnceTrigger,
     Person,
-    Recurring,
     Round,
     Schedule,
+    ScheduleEntry,
     Settings,
     Swap,
     Task,
@@ -56,38 +53,31 @@ def task(**overrides: object) -> Task:
         "id": "t1",
         "name": "Müll",
         "allowed": frozenset({"p1", "p2"}),
-        "frequency": MaxPerPeriod(count=2, period=Period.WEEK),
         "points": 3,
     }
     return Task(**{**values, **overrides})  # type: ignore[arg-type]
 
 
-def interval_task() -> Task:
-    return task(frequency=Interval(days=14, tolerance=2))
+def entries(
+    *task_ids: str, every_draw: bool = True, min_count: int = 1
+) -> tuple[ScheduleEntry, ...]:
+    """Einträge für die Aufgaben (Standard: „jede Auslosung“)."""
+    mode = EntryMode.EVERY_DRAW if every_draw else EntryMode.MIN_COUNT
+    return tuple(ScheduleEntry(task_id=i, mode=mode, min_count=min_count) for i in task_ids)
 
 
 def schedule(**overrides: object) -> Schedule:
+    """Zeitplan; `task_ids` ist eine Abkürzung für Einträge „jede Auslosung“."""
+    task_ids = overrides.pop("task_ids", ("t1", "t2"))
     values: dict[str, object] = {
         "id": "s1",
         "name": "Wochenrunde",
         "slug": "wochenrunde",
-        "trigger": Recurring(
-            weekdays=frozenset({0, 3}),
-            time=dt.time(18, 30),
-            every_n_weeks=2,
-            anchor=TODAY,
-        ),
-        "task_ids": ("t1", "t2"),
+        "start": NOW,
+        "interval": Interval(unit=IntervalUnit.DAY, every=1),
+        "entries": entries(*task_ids),  # type: ignore[arg-type]
     }
     return Schedule(**{**values, **overrides})  # type: ignore[arg-type]
-
-
-def once_trigger() -> OnceTrigger:
-    return OnceTrigger(at=NOW, after=AfterOnce.ARCHIVE)
-
-
-def manual_trigger() -> ManualTrigger:
-    return ManualTrigger(remind_after_days=7)
 
 
 def swap() -> Swap:

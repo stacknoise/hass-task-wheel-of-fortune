@@ -14,7 +14,6 @@ export const insightsDe = {
   'common.unknownSchedule': 'Gelöschter Zeitplan',
   'common.none': '–',
   'overview.next': 'Nächste Auslosung',
-  'overview.nextNone': 'Keine automatische Auslosung geplant.',
   'overview.nextTasks': '{count} Aufgaben',
   'overview.prevPlan': 'Vorheriger Zeitplan',
   'overview.nextPlan': 'Nächster Zeitplan',
@@ -25,10 +24,7 @@ export const insightsDe = {
   'overview.filterAll': 'Alle',
   'overview.noAssignments': 'Keine offenen Zuteilungen.',
   'overview.noSchedule': 'Ohne Zeitplan',
-  'overview.roundMeta': '{date} · {open} von {total} offen',
   'round.delete': 'Auslosung löschen',
-  'round.deleteQuestion':
-    'Diese Auslosung mit {total} Zuteilungen löschen? Sie verschwindet auch aus Historie und Statistik. Das lässt sich nicht rückgängig machen.',
   'round.deleteBlocked': 'Nicht löschbar: {done} Aufgaben sind schon erledigt.',
   'overview.due': 'Frist {date}',
   'overview.points': '{points} Punkte',
@@ -90,8 +86,6 @@ export const insightsDe = {
   'statistics.weekly': 'Erledigungsquote pro Woche',
   'statistics.weeklyLabel': 'Erledigungsquote der letzten {weeks} Wochen, zuletzt {last}',
   'statistics.goals': 'Verlosungen je Aufgabe: Soll und Ist',
-  'statistics.goalsHint':
-    'Wie oft eine Aufgabe im Fenster ihrer Häufigkeit („n× in x Zeiträumen“) in einem Zeitplan verlost wurde, gegen das Soll; je Zeitplan getrennt gezählt und auf- und zuklappbar; links das laufende Fenster, rechts frühere',
   'statistics.goalRule': 'Regel',
   'statistics.goalCurrent': 'Laufend',
   'statistics.goalPast': 'Früher',
@@ -124,6 +118,10 @@ export const insightsDe = {
   'log.summary.unassigned': '{count} unvergeben',
   'log.taskAssigned': '{task} → {person}',
   'log.taskUnassigned': '{task} → niemand',
+  'log.note.filled': 'Zufällig nachgezogen (nicht fällig, füllt eine Lücke)',
+  'log.skipped.title': 'Nicht ausgelost',
+  'log.skipped.not_due': 'Noch nicht fällig',
+  'log.skipped.deferred': 'Zufällig zurückgestellt (mehr fällige Aufgaben als Personen)',
   'log.pill.winner': 'gezogen',
   'log.pill.inWheel': 'im Rad',
   'log.pill.excluded': 'ausgeschlossen',
@@ -137,4 +135,19 @@ export const insightsDe = {
   'log.exchange': 'Ein Admin tauschte „{task}“ gegen „{otherTask}“ in der Runde.',
   'log.beforeStart': 'vor dem Start',
   'log.afterStart': 'nach der Auslosung',
+  'overview.nextNone': 'Keine Auslosung geplant.',
+  'overview.nextPeriod': 'Periode {period}',
+  'overview.dueNow': 'fällig',
+  'overview.roundMeta': 'Periode {period} · {date} · {open} von {total} offen',
+  'round.deleteQuestion':
+    'Diese Auslosung (Periode {period}) mit {total} Zuteilungen löschen? Sie verschwindet auch aus Historie und Statistik. Das lässt sich nicht rückgängig machen.',
+  'round.deleteQuestionAutomatic':
+    'Diese Auslosung (Periode {period}) mit {total} Zuteilungen löschen? Sie verschwindet auch aus Historie und Statistik. Die Periode wird nicht automatisch noch einmal ausgelost: Willst du sie nachholen, lose sie manuell aus, bevor der nächste automatische Lauf stattfindet. Sonst wird sie übersprungen. Das lässt sich nicht rückgängig machen.',
+  'round.deleteNewer':
+    'Nicht löschbar: Es gibt eine neuere Auslosung dieses Zeitplans. Lösche zuerst diese.',
+  'statistics.goalsHint':
+    'Wie oft eine Aufgabe in einem Lauf ihres Zeitplans verlost wurde, gegen das Soll („mindestens n× je Lauf“); je Zeitplan getrennt gezählt und auf- und zuklappbar; links der laufende Lauf (mit anteiligem Soll), rechts frühere',
+  'statistics.goalMinCount': 'mind. {count}× je Lauf',
+  'statistics.goalEveryDraw': 'jede Auslosung',
+  'statistics.goalProgress': '{elapsed} von {draws} Auslosungen, anteiliges Soll {share}',
 } as const;

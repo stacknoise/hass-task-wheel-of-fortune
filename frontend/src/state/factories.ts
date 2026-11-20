@@ -1,24 +1,18 @@
-/** Fabriken der Standardwerte je Art (Abwesenheit, Häufigkeit, Auslöser); die Tabellen ersetzen Verzweigungen. */
+/** Fabriken der Standardwerte (Abwesenheit, Zeitplan-Eintrag, Intervall, Beginn); die Tabelle ersetzt Verzweigungen. */
 
-import type { AbsenceWire, DeadlineWire, FrequencyWire, TriggerWire } from '../api/index.ts';
+import type { AbsenceWire, EntryWire, IntervalWire } from '../api/index.ts';
 import {
-  DEADLINE_OFFSET_MIN,
   DEFAULT_ABSENT_WEEKDAYS,
-  DEFAULT_DEADLINE_DURATION,
-  DEFAULT_DEADLINE_TIME,
-  DEFAULT_EVERY_N_WEEKS,
-  DEFAULT_INTERVAL_DAYS,
-  DEFAULT_PERIOD_COUNT,
-  DEFAULT_PERIOD_EVERY,
+  DEFAULT_INTERVAL_EVERY,
+  DEFAULT_MIN_COUNT,
   DEFAULT_RECURRENCE_INTERVAL,
   DEFAULT_RECURRING_ABSENCE_WEEKDAYS,
-  DEFAULT_RECURRING_WEEKDAYS,
   DEFAULT_RHYTHM_CHANGE_DAY,
   DEFAULT_RHYTHM_CYCLE,
-  DEFAULT_TIME,
-  MS_PER_DAY,
+  DEFAULT_START_OFFSET_HOURS,
+  MS_PER_HOUR,
 } from '../constants/index.ts';
-import type { AbsenceKind, FrequencyKind, TriggerKind } from '../constants/index.ts';
+import type { AbsenceKind } from '../constants/index.ts';
 import { dayOf } from './dates.ts';
 
 const FIRST_WEEK = 0;
@@ -43,42 +37,18 @@ export const ABSENCE_BUILDERS: Readonly<Record<AbsenceKind, (today: string) => A
   }),
 };
 
-export const FREQUENCY_BUILDERS: Readonly<Record<FrequencyKind, () => FrequencyWire>> = {
-  every_round: () => ({ kind: 'every_round' }),
-  max_per_period: () => ({
-    kind: 'max_per_period',
-    count: DEFAULT_PERIOD_COUNT,
-    period: 'week',
-    every: DEFAULT_PERIOD_EVERY,
-  }),
-  interval: () => ({ kind: 'interval', days: DEFAULT_INTERVAL_DAYS, tolerance: 0 }),
-};
+/** Neuer Eintrag eines Zeitplans: die Aufgabe mindestens einmal je Lauf. */
+export function newEntry(taskId: string): EntryWire {
+  return { task_id: taskId, mode: 'min_count', min_count: DEFAULT_MIN_COUNT };
+}
 
-/** Neuer Auslöser je Art; `now` ist der aktuelle Zeitpunkt (ISO). */
-export const TRIGGER_BUILDERS: Readonly<Record<TriggerKind, (now: string) => TriggerWire>> = {
-  recurring: () => ({
-    kind: 'recurring',
-    weekdays: DEFAULT_RECURRING_WEEKDAYS,
-    time: DEFAULT_TIME,
-    every_n_weeks: DEFAULT_EVERY_N_WEEKS,
-    monthly: false,
-    anchor: null,
-  }),
-  once: (now) => ({
-    kind: 'once',
-    at: new Date(Date.parse(now) + MS_PER_DAY).toISOString(),
-    after: 'keep_manual',
-  }),
-  manual: () => ({ kind: 'manual', remind_after_days: null }),
-};
+/** Standard-Intervall neuer Zeitpläne: alle sieben Tage. */
+export const INTERVAL_DEFAULT: IntervalWire = { unit: 'day', every: DEFAULT_INTERVAL_EVERY };
 
-/** Frist neuer Zeitpläne: ab der Auslosung, eine Woche lang (wie im Backend). */
-export const DEADLINE_DEFAULT: DeadlineWire = {
-  start: 'now',
-  offset: DEADLINE_OFFSET_MIN,
-  offset_unit: 'hour',
-  time: DEFAULT_DEADLINE_TIME,
-  weekday: 0,
-  duration: DEFAULT_DEADLINE_DURATION,
-  duration_unit: 'day',
-};
+/** Erster Termin eines neuen Zeitplans: die nächste volle Stunde nach `now` (ISO). */
+export function defaultStart(now: string): string {
+  const next = Math.ceil(
+    (Date.parse(now) + MS_PER_HOUR * DEFAULT_START_OFFSET_HOURS) / MS_PER_HOUR,
+  );
+  return new Date(next * MS_PER_HOUR).toISOString();
+}

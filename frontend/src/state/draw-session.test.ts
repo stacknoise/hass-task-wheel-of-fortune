@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiClient } from '../api/index.ts';
-import type { DrawWindowRequest, PanelRoundWire, TaskDrawWire } from '../api/index.ts';
+import type { PanelRoundWire, TaskDrawWire } from '../api/index.ts';
 import { FakeHass } from '../api/fake-hass.testing.ts';
 import { DrawSession, canSkip, isIdle, needsConfirmation, shownCount } from './draw-session.ts';
 
@@ -22,19 +22,15 @@ function round(
     id: 'r1',
     schedule_id: 's1',
     expires_at: '2026-11-03T13:00:00+00:00',
+    period_index: 0,
+    period_start: '2026-11-03T10:00:00+00:00',
+    period_end: '2026-11-10T10:00:00+00:00',
     results,
     pending_task_ids: pending,
     unplaceable_task_ids: unplaceable,
     participant_ids: [],
   };
 }
-
-const WINDOW: DrawWindowRequest = {
-  starts_at: '2026-11-03T10:00:00+00:00',
-  duration: 3,
-  duration_unit: 'day',
-  replace_next: false,
-};
 
 let hass: FakeHass;
 let session: DrawSession;
@@ -53,7 +49,7 @@ describe('DrawSession', () => {
       result: draw('t1', 'p1'),
       panel_round: round([], []),
     });
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     expect(session.state).toMatchObject({ phase: 'ready', roundId: 'r1', taskIds: ['t1', 't2'] });
 
     await session.spin();
@@ -84,7 +80,7 @@ describe('DrawSession', () => {
       result: draw('t1', 'p1'),
       panel_round: round([], []),
     });
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     expect(session.state.preview?.task_id).toBe('t1');
     await session.spin();
     session.landed();
@@ -99,7 +95,7 @@ describe('DrawSession', () => {
       result: draw('t1', 'p1'),
       panel_round: round([], ['t2']),
     });
-    await session.begin('s1', WINDOW, false);
+    await session.begin('s1', false);
     expect(session.state).toMatchObject({ phase: 'ready', direct: true, unplaceable: ['t2'] });
     expect(needsConfirmation(session.state)).toBe(true);
     expect(canSkip(session.state)).toBe(false);
@@ -119,7 +115,7 @@ describe('DrawSession', () => {
     hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2'], ['t2']));
     hass.replies.set('task_wheel/draw/preview', { result: draw('t1', null) });
     hass.replies.set('task_wheel/draw/replace_task', { panel_round: round([], ['t1', 't3'], []) });
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     session.confirmUnplaceable();
     await session.replaceTask('t2', 't3');
     expect(session.state).toMatchObject({ unplaceable: [], confirmed: false });
@@ -128,7 +124,7 @@ describe('DrawSession', () => {
   it('kommt ohne Vorschau aus, wenn sie fehlschlägt', async () => {
     hass.replies.set('task_wheel/draw/begin', round([], ['t1']));
     hass.replies.set('task_wheel/draw/preview', new Error('x'));
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     expect(session.state).toMatchObject({ phase: 'ready', preview: undefined });
   });
 
@@ -138,7 +134,7 @@ describe('DrawSession', () => {
       results: [draw('t1', 'p1'), draw('t2', 'p2')],
       panel_round: round([], []),
     });
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     await session.drawRest();
     expect(session.state.phase).toBe('done');
     expect(session.state.results).toHaveLength(2);
@@ -146,7 +142,7 @@ describe('DrawSession', () => {
 
   it('schließt eine Runde ohne fällige Aufgaben sofort ab', async () => {
     hass.replies.set('task_wheel/draw/begin', round([], []));
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     expect(session.state).toMatchObject({ phase: 'done', results: [] });
   });
 
@@ -158,25 +154,25 @@ describe('DrawSession', () => {
 
   it('meldet Fehler der API mit ihrem Code und erlaubt danach einen neuen Anlauf', async () => {
     hass.replies.set('task_wheel/draw/begin', Object.assign(new Error('x'), { code: 'not_found' }));
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     expect(session.state).toMatchObject({ phase: 'error', errorCode: 'not_found' });
     hass.replies.set('task_wheel/draw/begin', new Error('ohne Code'));
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     expect(session.state.errorCode).toBe('unknown');
     hass.replies.set('task_wheel/draw/begin', round([], ['t1']));
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     expect(session.state.phase).toBe('ready');
   });
 
   it('verwirft die offene Runde beim Neustart, eine abgeschlossene nicht', async () => {
     hass.replies.set('task_wheel/draw/begin', round([], ['t1']));
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     await session.restart();
     expect(session.state.phase).toBe('choose');
     expect(hass.calls.at(-1)).toBe('task_wheel/draw/cancel');
 
     hass.replies.set('task_wheel/draw/begin', round([], []));
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     hass.calls.length = 0;
     await session.restart();
     expect(hass.calls).toEqual([]);
@@ -192,7 +188,7 @@ describe('DrawSession', () => {
     session.resume(round([], ['t1']));
     session.resume(round([], ['t2']));
     expect(session.state.taskIds).toEqual(['t1']);
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     expect(hass.calls).toEqual(['task_wheel/draw/preview']);
   });
 
@@ -205,7 +201,7 @@ describe('DrawSession', () => {
 
   it('verwirft die Antwort einer Anfrage, die einen Neustart überdauert', async () => {
     hass.replies.set('task_wheel/draw/begin', round([], ['t1']));
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     let answer: (value: unknown) => void = () => undefined;
     hass.replies.set(
       'task_wheel/draw/spin',
@@ -224,7 +220,7 @@ describe('DrawSession', () => {
   it('beschreibt Leerlauf, gezeigte Ergebnisse und Überspringen als reine Funktionen', async () => {
     expect(isIdle(session.state)).toBe(true);
     hass.replies.set('task_wheel/draw/begin', round([], ['t1', 't2']));
-    await session.begin('s1', WINDOW);
+    await session.begin('s1');
     expect(isIdle(session.state)).toBe(false);
     expect(canSkip(session.state)).toBe(true);
     expect(shownCount(session.state)).toBe(0);

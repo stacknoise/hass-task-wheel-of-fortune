@@ -41,6 +41,5 @@ export const SCRATCH_FOIL_HINT_Y = 140;
 export const SCRATCH_FOIL_NAME_FONT = '900 34px Roboto, sans-serif';
 export const SCRATCH_FOIL_HINT_FONT = '900 38px Roboto, sans-serif';
 export const SCRATCH_FOIL_WHITE = '#ffffff';
-export const SCRATCH_GOLD = '#f5c542';
 /** Zwei: Hälfte der Breite (Mitte) und gerade/ungerade Reihen der Münze. */
 export const SCRATCH_PAIR = 2;

@@ -51,5 +51,7 @@ export const KEY_TAB = 'Tab';
 export const ACTIVATION_KEYS: readonly string[] = ['Enter', ' '];
 export const KEY_ARROW_DOWN = 'ArrowDown';
 export const KEY_ARROW_UP = 'ArrowUp';
+export const KEY_ARROW_LEFT = 'ArrowLeft';
+export const KEY_ARROW_RIGHT = 'ArrowRight';
 export const KEY_HOME = 'Home';
 export const KEY_END = 'End';

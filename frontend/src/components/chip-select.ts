@@ -4,6 +4,7 @@ import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
 
 import { FORM_TAGS } from '../constants/index.ts';
+import type { RoomRef } from '../state/index.ts';
 import { emitChange } from './change.ts';
 import { formStyles } from './formStyles.ts';
 import { baseStyles, tokenStyles } from './styles.ts';
@@ -14,6 +15,8 @@ export interface ChipOption {
   readonly label: string;
   /** Optionale Farbe als Punkt vor dem Text (Farbe einer Person). */
   readonly color?: string;
+  /** Optionale Räume der Aufgabe, als Marken unter dem Text (nur in Listen, nicht in Chips). */
+  readonly rooms?: readonly RoomRef[];
 }
 
 /** Mehrfachauswahl aus Chips; meldet die gewählten Kennungen in der Reihenfolge der Optionen. */

@@ -36,18 +36,27 @@ export const SNAPSHOT: Snapshot = {
     {
       id: 's1',
       name: 'Wochenplan',
-      task_ids: ['t1', 't2'],
+      entries: [
+        { task_id: 't1', mode: 'min_count', min_count: 3 },
+        { task_id: 't2', mode: 'every_draw', min_count: 1 },
+      ],
       enabled: true,
       archived: false,
+      automatic: true,
       next_run: '2026-11-09T18:00:00+00:00',
+      next_period: 2,
+      newest_period: 1,
     },
     {
       id: 's2',
       name: 'Monatsplan',
-      task_ids: ['t2'],
+      entries: [{ task_id: 't1', mode: 'min_count', min_count: 3 }],
       enabled: true,
       archived: false,
+      automatic: false,
       next_run: '2026-12-01T09:00:00+00:00',
+      next_period: 0,
+      newest_period: null,
     },
   ],
   assignments: [
@@ -62,6 +71,7 @@ export const SNAPSHOT: Snapshot = {
       schedule_id: 's1',
       origin: 'manual',
       started_at: '2026-11-02T18:00:00+00:00',
+      period_index: 1,
       total: 4,
       done: 1,
     },
@@ -70,6 +80,7 @@ export const SNAPSHOT: Snapshot = {
       schedule_id: 'gone',
       origin: 'auto',
       started_at: '2026-11-01T18:00:00+00:00',
+      period_index: 0,
       total: 1,
       done: 0,
     },
@@ -145,6 +156,7 @@ export const DECISIONS: DecisionPage = {
             { person_id: 'p2', person_name: 'Ben', chance: 0.6 },
           ],
           excluded: [{ person_id: 'p3', person_name: 'Cara', reason: 'absent' }],
+          note: null,
         },
         {
           task_id: 't2',
@@ -152,6 +164,7 @@ export const DECISIONS: DecisionPage = {
           winner_id: 'p2',
           wheel: [{ person_id: 'p2', person_name: 'Ben', chance: 1 }],
           excluded: [{ person_id: 'p1', person_name: 'Anna', reason: 'taken' }],
+          note: 'filled',
         },
         {
           task_id: 't3',
@@ -159,7 +172,12 @@ export const DECISIONS: DecisionPage = {
           winner_id: null,
           wheel: [],
           excluded: [{ person_id: 'p3', person_name: 'Cara', reason: 'zukunft' }],
+          note: null,
         },
+      ],
+      skipped: [
+        { task_id: 't4', task_name: 'Fenster putzen', reason: 'not_due' },
+        { task_id: 't5', task_name: 'Keller', reason: 'deferred' },
       ],
     },
     {
@@ -171,6 +189,7 @@ export const DECISIONS: DecisionPage = {
       round_id: null,
       origin: null,
       tasks: [],
+      skipped: [],
       exchange: {
         person_id: null,
         person_name: null,
@@ -213,21 +232,27 @@ export const REPORT: StatisticsReport = {
       schedule_id: 's1',
       task_id: 't1',
       target: 3,
-      period: 'month',
-      every: 2,
       windows: [
-        { start: '2026-10-01', end: '2026-11-30', assigned: 2, done: 1 },
-        { start: '2026-08-01', end: '2026-09-30', assigned: 3, done: 3 },
-        { start: '2026-06-01', end: '2026-07-31', assigned: 1, done: 1 },
+        { start: '2026-10-01', end: '2026-10-28', draws: 4, elapsed: 4, assigned: 2, done: 1 },
+        { start: '2026-09-01', end: '2026-09-28', draws: 4, elapsed: 4, assigned: 3, done: 3 },
+        { start: '2026-08-01', end: '2026-08-28', draws: 4, elapsed: 4, assigned: 1, done: 1 },
+      ],
+    },
+    {
+      schedule_id: 's1',
+      task_id: 't2',
+      target: 4,
+      windows: [
+        { start: '2026-10-01', end: '2026-10-28', draws: 4, elapsed: 4, assigned: 4, done: 4 },
       ],
     },
     {
       schedule_id: 's2',
       task_id: 't1',
       target: 3,
-      period: 'month',
-      every: 2,
-      windows: [{ start: '2026-10-01', end: '2026-11-30', assigned: 0, done: 0 }],
+      windows: [
+        { start: '2026-10-01', end: '2026-10-28', draws: 4, elapsed: 2, assigned: 0, done: 0 },
+      ],
     },
   ],
 };

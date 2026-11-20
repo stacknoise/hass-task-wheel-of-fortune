@@ -27,7 +27,6 @@ from custom_components.task_wheel.const.keys import (
 )
 from custom_components.task_wheel.domain.enums import AssignmentStatus, RoundOrigin
 from custom_components.task_wheel.domain.errors import AmbiguousReferenceError, NotFoundError
-from custom_components.task_wheel.domain.models import Recurring
 from custom_components.task_wheel.infrastructure.repository.decision_store import DecisionStore
 from custom_components.task_wheel.infrastructure.repository.memory import MemoryStore
 from custom_components.task_wheel.runtime import compose
@@ -232,8 +231,7 @@ def test_maintenance_timer_fires_run_again() -> None:
 
 def test_schedule_save_arms_and_delete_disarms() -> None:
     world = World()
-    trigger = Recurring(weekdays=frozenset({1}), time=dt.time(8))
-    schedule = f.schedule(id="s2", slug="s2", trigger=trigger, task_ids=("t1",))
+    schedule = f.schedule(id="s2", slug="s2", task_ids=("t1",))
     world.schedules.save(schedule, f.NOW)
     assert world.config.schedules["s2"] == schedule
     assert timer_key("s2") in world.timers.timers

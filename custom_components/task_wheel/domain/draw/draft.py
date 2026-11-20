@@ -16,7 +16,7 @@ from ..models import Assignment, Round, Task
 from ..types import PersonId, RoundId, ScheduleId, TaskId
 from .engine import DrawEngine, capacities
 from .feasibility import participants, unassignable_tasks
-from .types import DrawContext, TaskDraw
+from .types import DrawContext, TaskDraw, TaskNote
 
 
 @dataclass(slots=True, frozen=True)
@@ -32,8 +32,9 @@ class RoundDraft:
     started_at: dt.datetime
     context: DrawContext
     tasks: tuple[Task, ...]
+    period_index: int
     results: tuple[TaskDraw, ...] = ()
-    replaces: dt.datetime | None = None
+    notes: tuple[TaskNote, ...] = ()
     # Ändern sich innerhalb einer Runde nicht und werden deshalb nur einmal berechnet:
     # Kapazität je Person und (als gemeinsamer Zwischenspeicher) die möglichen Personen je Aufgabe
     capacity: Mapping[PersonId, float] = field(default_factory=dict, compare=False, repr=False)
@@ -149,7 +150,7 @@ class RoundDraft:
             origin=self.origin,
             started_at=self.started_at,
             finished_at=finished_at,
-            replaces=self.replaces,
+            period_index=self.period_index,
             assignments=assignments,
         )
 

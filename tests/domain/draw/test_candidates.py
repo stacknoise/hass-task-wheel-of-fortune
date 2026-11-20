@@ -1,6 +1,5 @@
 import datetime as dt
 
-from custom_components.task_wheel.domain.deadline import DeadlineWindow
 from custom_components.task_wheel.domain.draw.candidates import (
     CandidateFilterFactory,
     CandidateSelector,
@@ -11,6 +10,7 @@ from custom_components.task_wheel.domain.draw.candidates import (
 )
 from custom_components.task_wheel.domain.enums import ExclusionReason, Load
 from custom_components.task_wheel.domain.models import OnceAbsence, RecurringAbsence
+from custom_components.task_wheel.domain.plan.window import PeriodWindow
 
 from ..factories import NOW, TODAY, task
 from .helpers import make_context, make_person
@@ -40,7 +40,7 @@ def test_person_is_candidate_if_present_on_any_day_of_the_window():
     back = OnceAbsence(start=TODAY, end=TODAY + dt.timedelta(days=2))
     ctx = make_context(
         [make_person("a", absences=(gone,)), make_person("b", absences=(back,))],
-        window=DeadlineWindow(NOW, NOW + dt.timedelta(days=7)),
+        window=PeriodWindow(NOW, NOW + dt.timedelta(days=7)),
     )
     selection = CandidateSelector().select(task(allowed=AB), ctx)
     assert [p.id for p in selection.candidates] == ["b"]
@@ -54,7 +54,7 @@ def test_only_the_days_of_the_window_count_not_the_day_of_the_draw():
     away = OnceAbsence(start=wednesday, end=wednesday)
     ctx = make_context(
         [make_person("a", absences=(away,)), make_person("b")],
-        window=DeadlineWindow(
+        window=PeriodWindow(
             dt.datetime(2026, 11, 4, 10, tzinfo=dt.UTC), dt.datetime(2026, 11, 4, 14, tzinfo=dt.UTC)
         ),
     )
@@ -69,7 +69,7 @@ def test_recurring_absence_excludes_person_when_the_window_is_that_one_day():
     )
     ctx = make_context(
         [make_person("a", absences=(recurring,)), make_person("b")],
-        window=DeadlineWindow(NOW, NOW + dt.timedelta(hours=2)),
+        window=PeriodWindow(NOW, NOW + dt.timedelta(hours=2)),
     )
     selection = CandidateSelector().select(task(allowed=AB), ctx)
     assert [p.id for p in selection.candidates] == ["b"]

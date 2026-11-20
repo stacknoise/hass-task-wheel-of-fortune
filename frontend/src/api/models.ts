@@ -1,6 +1,7 @@
 /** Typisierte Sicht auf die Objekte und Antworten der WebSocket-API (KONZEPT §6.4). */
 
-import type { AssignmentStatus, Period } from '../constants/index.ts';
+import type { AssignmentStatus } from '../constants/index.ts';
+import type { EntryWire } from './config-types.ts';
 import type { Snapshot, WireObject } from './types.ts';
 
 export interface PersonObject extends WireObject {
@@ -20,10 +21,17 @@ export interface TaskObject extends WireObject {
 
 export interface ScheduleObject extends WireObject {
   readonly name: string;
-  readonly task_ids: readonly string[];
+  readonly entries: readonly EntryWire[];
   readonly enabled: boolean;
   readonly archived: boolean;
+  /** Von selbst zu jedem Termin auslosen (sonst manuell). */
+  readonly automatic: boolean;
+  /** Automatisch: nächster Termin; manuell: Termin der nächsten offenen Periode (kann fällig in der Vergangenheit liegen). */
   readonly next_run: string | null;
+  /** Nummer der nächsten offenen Periode. */
+  readonly next_period: number;
+  /** Nummer der jüngsten ausgelosten Periode; `null`, solange nichts ausgelost wurde. Nur diese Auslosung lässt sich löschen. */
+  readonly newest_period: number | null;
 }
 
 export interface AssignmentObject extends WireObject {
@@ -44,6 +52,8 @@ export interface RoundHead extends WireObject {
   readonly schedule_id: string;
   readonly origin: string;
   readonly started_at: string;
+  /** Nummer der Periode (0 = erste), die diese Auslosung abdeckt. */
+  readonly period_index: number;
   readonly total: number;
   /** Erledigte (pünktlich oder verspätet) Zuteilungen; dann ist Löschen gesperrt. */
   readonly done: number;
@@ -53,6 +63,8 @@ export interface RoundObject extends WireObject {
   readonly schedule_id: string;
   readonly origin: string;
   readonly started_at: string;
+  /** Nummer der Periode (0 = erste), die diese Auslosung abdeckt. */
+  readonly period_index: number;
   readonly assignments: readonly AssignmentObject[];
 }
 
@@ -82,6 +94,15 @@ export interface DecisionTask {
   readonly winner_id: string | null;
   readonly wheel: readonly DecisionWheelEntry[];
   readonly excluded: readonly DecisionExcluded[];
+  /** `filled`: nicht fällig, vom Zufall nachgezogen, um eine Lücke zu füllen. */
+  readonly note: string | null;
+}
+
+/** Aufgabe des Zeitplans, die in der Auslosung nicht vorkam: `not_due` (noch nicht fällig) oder `deferred` (zurückgestellt). */
+export interface DecisionSkipped {
+  readonly task_id: string;
+  readonly task_name: string;
+  readonly reason: string;
 }
 
 /** Tausch zweier Personen oder Austausch einer Aufgabe; `before_start` markiert den Admin-Austausch vor dem Start. */
@@ -108,6 +129,7 @@ export interface DecisionRecord {
   readonly origin: string | null;
   readonly tasks: readonly DecisionTask[];
   readonly exchange: DecisionExchange | null;
+  readonly skipped: readonly DecisionSkipped[];
 }
 
 export interface DecisionPage {
@@ -163,9 +185,13 @@ export interface Highlights {
   readonly reliable: Reliable | null;
 }
 
+/** Ein Lauf eines Zeitplans mit den Zahlen für eine Aufgabe; im laufenden Lauf ist `elapsed` kleiner als `draws`. */
 export interface GoalWindow {
   readonly start: string;
   readonly end: string;
+  /** Auslosungen des Laufs und davon schon stattgefundene. */
+  readonly draws: number;
+  readonly elapsed: number;
   readonly assigned: number;
   readonly done: number;
 }
@@ -174,9 +200,8 @@ export interface TaskGoal {
   /** Zeitplan, in dem gezählt wird (eine Aufgabe kann in mehreren Zeitplänen stehen). */
   readonly schedule_id: string;
   readonly task_id: string;
+  /** Soll je Lauf (jede Auslosung: Zahl der Auslosungen des Laufs). */
   readonly target: number;
-  readonly period: Period;
-  readonly every: number;
   readonly windows: readonly GoalWindow[];
 }
 

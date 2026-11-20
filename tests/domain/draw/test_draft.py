@@ -5,7 +5,6 @@ from itertools import count
 
 import pytest
 
-from custom_components.task_wheel.domain.deadline import DeadlineWindow
 from custom_components.task_wheel.domain.draw import draft as draft_module
 from custom_components.task_wheel.domain.draw.candidates import CandidateSelector
 from custom_components.task_wheel.domain.draw.draft import RoundDraft
@@ -14,6 +13,7 @@ from custom_components.task_wheel.domain.draw.weighting import UniformWeighting
 from custom_components.task_wheel.domain.enums import RoundOrigin
 from custom_components.task_wheel.domain.errors import DrawRejectedError
 from custom_components.task_wheel.domain.models import WeeklyDaysAbsence
+from custom_components.task_wheel.domain.plan.window import PeriodWindow
 
 from ..factories import NOW, task
 from .helpers import FixedRandom, make_context, make_person
@@ -30,7 +30,9 @@ def ids():
 
 def draft(tasks, persons=None, **kwargs) -> RoundDraft:
     people = persons or [make_person("p1"), make_person("p2")]
-    return RoundDraft("s1", RoundOrigin.MANUAL, NOW, make_context(people, **kwargs), tuple(tasks))
+    return RoundDraft(
+        "s1", RoundOrigin.MANUAL, NOW, make_context(people, **kwargs), tuple(tasks), 0
+    )
 
 
 def tasks_ab():
@@ -86,18 +88,17 @@ def test_task_without_candidates_gets_no_assignment():
 
 
 def test_assignment_carries_the_window_of_the_round():
-    window = DeadlineWindow(NOW + dt.timedelta(hours=18), NOW + dt.timedelta(hours=22))
+    window = PeriodWindow(NOW + dt.timedelta(hours=18), NOW + dt.timedelta(hours=22))
     context = make_context([make_person("p1")], window=window)
-    one = RoundDraft("s1", RoundOrigin.AUTO, NOW, context, (task(id="t1"),))
+    one = RoundDraft("s1", RoundOrigin.AUTO, NOW, context, (task(id="t1"),), 0)
     assignment = one.spin_rest(engine(0.1)).to_round("r1", ids(), NOW).assignments[0]
     assert (assignment.starts_at, assignment.due_at) == (window.start, window.end)
 
 
-def test_round_remembers_the_regular_run_it_replaces():
+def test_round_remembers_its_period():
     context = make_context([make_person("p1")])
-    run = NOW + dt.timedelta(days=3)
-    one = RoundDraft("s1", RoundOrigin.MANUAL, NOW, context, (task(id="t1"),), replaces=run)
-    assert one.spin_rest(engine(0.1)).to_round("r1", ids(), NOW).replaces == run
+    one = RoundDraft("s1", RoundOrigin.MANUAL, NOW, context, (task(id="t1"),), 4)
+    assert one.spin_rest(engine(0.1)).to_round("r1", ids(), NOW).period_index == 4
 
 
 def test_capacity_and_reach_are_computed_once_and_shared_by_every_step(monkeypatch):

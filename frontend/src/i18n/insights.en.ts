@@ -16,7 +16,6 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'common.unknownSchedule': 'Deleted schedule',
   'common.none': '–',
   'overview.next': 'Next draw',
-  'overview.nextNone': 'No automatic draw planned.',
   'overview.nextTasks': '{count} tasks',
   'overview.prevPlan': 'Previous schedule',
   'overview.nextPlan': 'Next schedule',
@@ -27,10 +26,7 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'overview.filterAll': 'All',
   'overview.noAssignments': 'No open assignments.',
   'overview.noSchedule': 'No schedule',
-  'overview.roundMeta': '{date} · {open} of {total} open',
   'round.delete': 'Delete draw',
-  'round.deleteQuestion':
-    'Delete this draw with {total} assignments? It also disappears from history and statistics. This cannot be undone.',
   'round.deleteBlocked': 'Cannot be deleted: {done} tasks are already done.',
   'overview.due': 'Due {date}',
   'overview.points': '{points} points',
@@ -91,8 +87,6 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'statistics.weekly': 'Completion rate per week',
   'statistics.weeklyLabel': 'Completion rate of the last {weeks} weeks, latest {last}',
   'statistics.goals': 'Draws per task: target vs. actual',
-  'statistics.goalsHint':
-    'How often a task was drawn by a schedule in the window of its frequency ("n× in x periods") against the target; counted per schedule, each collapsible; current window first, then earlier ones',
   'statistics.goalRule': 'Rule',
   'statistics.goalCurrent': 'Current',
   'statistics.goalPast': 'Earlier',
@@ -125,6 +119,10 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'log.summary.unassigned': '{count} unassigned',
   'log.taskAssigned': '{task} → {person}',
   'log.taskUnassigned': '{task} → nobody',
+  'log.note.filled': 'Drawn at random (not due, fills a gap)',
+  'log.skipped.title': 'Not drawn',
+  'log.skipped.not_due': 'Not due yet',
+  'log.skipped.deferred': 'Deferred at random (more due tasks than people)',
   'log.pill.winner': 'drawn',
   'log.pill.inWheel': 'in the wheel',
   'log.pill.excluded': 'excluded',
@@ -138,4 +136,19 @@ export const insightsEn: Record<keyof typeof insightsDe, string> = {
   'log.exchange': 'An admin exchanged “{task}” for “{otherTask}” in the round.',
   'log.beforeStart': 'before the start',
   'log.afterStart': 'after the draw',
+  'overview.nextNone': 'No draw planned.',
+  'overview.nextPeriod': 'Period {period}',
+  'overview.dueNow': 'due',
+  'overview.roundMeta': 'Period {period} · {date} · {open} of {total} open',
+  'round.deleteQuestion':
+    'Delete this draw (period {period}) with {total} assignments? It also disappears from history and statistics. This cannot be undone.',
+  'round.deleteQuestionAutomatic':
+    'Delete this draw (period {period}) with {total} assignments? It also disappears from history and statistics. The period is not drawn again automatically: to catch up, draw it manually before the next automatic run takes place. Otherwise it is skipped. This cannot be undone.',
+  'round.deleteNewer':
+    'Cannot be deleted: there is a newer draw of this schedule. Delete that one first.',
+  'statistics.goalsHint':
+    'How often a task was drawn in a run of its schedule, against the target ("at least n× per run"); counted per schedule, each collapsible; current run first (with prorated target), then earlier ones',
+  'statistics.goalMinCount': 'at least {count}× per run',
+  'statistics.goalEveryDraw': 'every draw',
+  'statistics.goalProgress': '{elapsed} of {draws} draws, prorated target {share}',
 };

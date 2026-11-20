@@ -4,6 +4,7 @@ from enum import StrEnum
 from typing import Final
 
 from ..const.defaults import LOAD_FACTOR_FULL, LOAD_FACTOR_HALF, LOAD_FACTOR_PAUSED
+from ..const.limits import HOURS_PER_DAY, WEEKDAY_COUNT
 
 
 class Load(StrEnum):
@@ -43,54 +44,27 @@ class AbsenceKind(StrEnum):
     RECURRING = "recurring"
 
 
-class FrequencyKind(StrEnum):
-    """Art einer Häufigkeitsregel."""
-
-    EVERY_ROUND = "every_round"
-    MAX_PER_PERIOD = "max_per_period"
-    INTERVAL = "interval"
-
-
-class Period(StrEnum):
-    """Zeitraum einer Häufigkeitsregel."""
-
-    DAY = "day"
-    WEEK = "week"
-    MONTH = "month"
-
-
-class DeadlineUnit(StrEnum):
-    """Einheit einer Frist-Dauer oder eines Versatzes."""
+class IntervalUnit(StrEnum):
+    """Einheit des Auslosungs-Intervalls eines Zeitplans."""
 
     HOUR = "hour"
     DAY = "day"
     WEEK = "week"
-    MONTH = "month"
 
 
-class DeadlineStart(StrEnum):
-    """Ab wann die Zeit für die Aufgaben eines Zeitplans läuft."""
-
-    NOW = "now"
-    OFFSET = "offset"
-    NEXT_DAY = "next_day"
-    WEEKDAY = "weekday"
-
-
-class TriggerKind(StrEnum):
-    """Art eines Zeitplan-Auslösers."""
-
-    RECURRING = "recurring"
-    ONCE = "once"
-    MANUAL = "manual"
+# Nennlänge einer Intervall-Einheit in Stunden (Tag = 24, Woche = 168)
+INTERVAL_UNIT_HOURS: Final = {
+    IntervalUnit.HOUR: 1,
+    IntervalUnit.DAY: HOURS_PER_DAY,
+    IntervalUnit.WEEK: HOURS_PER_DAY * WEEKDAY_COUNT,
+}
 
 
-class AfterOnce(StrEnum):
-    """Verhalten eines einmaligen Zeitplans nach der Auslösung."""
+class EntryMode(StrEnum):
+    """Wie oft eine Aufgabe im Zeitplan vorkommt."""
 
-    KEEP_MANUAL = "keep_manual"
-    ARCHIVE = "archive"
-    DELETE = "delete"
+    MIN_COUNT = "min_count"
+    EVERY_DRAW = "every_draw"
 
 
 class RoundOrigin(StrEnum):

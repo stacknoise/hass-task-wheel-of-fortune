@@ -9,14 +9,13 @@ from custom_components.task_wheel.domain.decisions import DecisionFilter
 from custom_components.task_wheel.domain.enums import (
     DecisionKind,
     ExclusionReason,
-    Period,
     RoundOrigin,
 )
 from custom_components.task_wheel.domain.errors import ValidationError
-from custom_components.task_wheel.domain.models import EveryRound, MaxPerPeriod, WeeklyDaysAbsence
+from custom_components.task_wheel.domain.models import WeeklyDaysAbsence
 
 from ..domain import factories as f
-from .world import DAY, World
+from .world import DAY, ORDERED, World
 
 NOW = f.NOW
 
@@ -27,7 +26,7 @@ def _only(world: World):
 
 
 def test_draw_is_logged_per_task_with_wheel_and_winner():
-    world = World(0.1, 0.9)
+    world = World(*ORDERED)
     round_ = world.draws.draw("s1", RoundOrigin.AUTO, NOW)
     record = _only(world)
     assert (record.kind, record.round_id, record.origin) == (
@@ -47,19 +46,14 @@ def test_task_nobody_can_take_is_not_part_of_the_round_at_all():
     world = World(0.1)
     away = (WeeklyDaysAbsence(weekdays=frozenset(range(7))),)
     world.config.put_person(f.person(id="p1", slug="p1", name="p1", absences=away))
-    daily = MaxPerPeriod(count=1, period=Period.DAY, every=1)
-    world.config.put_task(
-        f.task(id="t1", name="A", allowed=frozenset({"p1"}), points=5, frequency=daily)
-    )
+    world.config.put_task(f.task(id="t1", name="A", allowed=frozenset({"p1"}), points=5))
     world.draws.draw("s1", RoundOrigin.AUTO, NOW)
     assert [item.task_id for item in _only(world).tasks] == ["t2"]
 
 
 def test_person_not_allowed_for_the_task_is_logged_with_that_reason():
-    world = World(0.1, 0.9)
-    world.config.put_task(
-        f.task(id="t1", name="A", allowed=frozenset({"p1"}), points=5, frequency=EveryRound())
-    )
+    world = World(*ORDERED)
+    world.config.put_task(f.task(id="t1", name="A", allowed=frozenset({"p1"}), points=5))
     world.draws.draw("s1", RoundOrigin.AUTO, NOW)
     first = _only(world).tasks[0]
     assert [(w.person_id) for w in first.wheel] == ["p1"]
@@ -67,7 +61,7 @@ def test_person_not_allowed_for_the_task_is_logged_with_that_reason():
 
 
 def test_log_keeps_names_after_rename_or_delete():
-    world = World(0.1, 0.9)
+    world = World(*ORDERED)
     world.draws.draw("s1", RoundOrigin.AUTO, NOW)
     world.config.remove_person("p1")
     record = _only(world)
@@ -75,7 +69,7 @@ def test_log_keeps_names_after_rename_or_delete():
 
 
 def test_swap_is_logged_with_both_people_and_tasks():
-    world = World(0.1, 0.9)
+    world = World(*ORDERED)
     round_ = world.draws.draw("s1", RoundOrigin.AUTO, NOW)
     swaps = SwapService(
         world.config,
@@ -106,7 +100,7 @@ def test_admin_replacement_is_logged_before_start_without_persons():
 
 
 def test_page_filters_and_pages_newest_first():
-    world = World(0.1, 0.9)
+    world = World(*ORDERED)
     for step in range(3):
         world.draws.draw("s1", RoundOrigin.AUTO, NOW + step * DAY)
     page = world.decisions.page(limit=2)
@@ -131,7 +125,7 @@ def test_page_rejects_bad_bounds(limit, offset):
 
 
 def test_purge_uses_the_retention_setting():
-    world = World(0.1, 0.9, decision_retention_days=7)
+    world = World(*ORDERED, decision_retention_days=7)
     world.draws.draw("s1", RoundOrigin.AUTO, NOW - 8 * DAY)
     world.draws.draw("s1", RoundOrigin.AUTO, NOW - 6 * DAY)
     assert world.decisions.purge(NOW) == 1
@@ -140,19 +134,50 @@ def test_purge_uses_the_retention_setting():
 
 def test_store_drops_the_oldest_over_the_limit(monkeypatch):
     monkeypatch.setattr("custom_components.task_wheel.const.limits.MAX_STORED_DECISIONS", 2)
-    world = World(0.1, 0.9)
+    world = World(*ORDERED)
     for step in range(3):
         world.draws.draw("s1", RoundOrigin.AUTO, NOW + step * DAY)
     assert [r.at for r in world.decision_store.records.values()] == [NOW + DAY, NOW + 2 * DAY]
 
 
 def test_deleting_a_round_removes_its_log_entries_only():
-    world = World(0.1, 0.9)
+    world = World(*ORDERED)
     first = world.draws.draw("s1", RoundOrigin.AUTO, NOW)
     second = world.draws.draw("s1", RoundOrigin.MANUAL, NOW + DAY)
     assert len(world.decision_store.records) == 2
     RoundService(
         world.history, StatisticsService(world.config, world.history), decisions=world.decisions
-    ).delete(first.id)
+    ).delete(second.id)
     (left,) = world.decision_store.records.values()
-    assert left.round_id == second.id
+    assert left.round_id == first.id
+
+
+def test_task_not_due_is_logged_as_skipped():
+    world = World(0.9)
+    entries = (*f.entries("t1"), *f.entries("t2", every_draw=False, min_count=1))
+    world.put_schedule(entries=entries)
+    world.draws.draw("s1", RoundOrigin.AUTO, NOW)
+    record = _only(world)
+    assert [(s.task_id, s.reason) for s in record.skipped] == [("t2", "not_due")]
+    assert [t.task_id for t in record.tasks] == ["t1"] and record.tasks[0].note is None
+
+
+def test_gap_filler_is_noted_on_its_task_and_not_listed_as_skipped():
+    world = World(0.9)
+    world.put_schedule(entries=f.entries("t1", "t2", every_draw=False, min_count=1))
+    world.draws.draw("s1", RoundOrigin.AUTO, NOW)
+    record = _only(world)
+    (task,) = record.tasks
+    assert task.note == "filled"
+    assert [s.reason for s in record.skipped] == ["not_due"]
+    assert record.skipped[0].task_id != task.task_id
+
+
+def test_due_tasks_beyond_the_people_are_logged_as_deferred():
+    world = World(0.1)
+    for ident in ("t1", "t2"):
+        world.config.put_task(f.task(id=ident, name=ident, allowed=frozenset({"p1"})))
+    world.put_schedule(entries=f.entries("t1", "t2"))
+    world.draws.draw("s1", RoundOrigin.AUTO, NOW)
+    record = _only(world)
+    assert [(s.reason) for s in record.skipped] == ["deferred"]

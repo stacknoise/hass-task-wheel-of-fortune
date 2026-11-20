@@ -134,6 +134,21 @@ export abstract class ConfigView<
   protected abstract card(item: Wire, snapshot: Snapshot): TemplateResult;
   protected abstract form(draft: Draft, snapshot: Snapshot): TemplateResult;
 
+  /** Ob der Entwurf gespeichert werden darf; das Backend prüft ihn beim Speichern ohnehin noch einmal. */
+  protected canSave(): boolean {
+    return true;
+  }
+
+  /** Reiterleiste über dem Inhalt des Dialogs (Element mit `slot="tabs"`); Standard: keine. */
+  protected tabs(): TemplateResult | typeof nothing {
+    return nothing;
+  }
+
+  /** Statuszeile links in der Fußzeile des Dialogs; Standard: keine. */
+  protected status(): TemplateResult | typeof nothing {
+    return nothing;
+  }
+
   protected text(key: TextKey): string {
     return translate(key, this.language);
   }
@@ -246,12 +261,14 @@ export abstract class ConfigView<
           this.#close();
         }}
       >
+        ${this.tabs()}
         <section class="editor">${this.form(draft, snapshot)} ${this.#banner()}</section>
         <div class="buttons" slot="actions">
+          ${this.status()}
           <button
             type="button"
             class="primary"
-            ?disabled=${this._busy}
+            ?disabled=${this._busy || !this.canSave()}
             @click=${() => {
               void this.#save();
             }}

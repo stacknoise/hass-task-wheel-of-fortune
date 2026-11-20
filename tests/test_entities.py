@@ -20,7 +20,6 @@ from custom_components.task_wheel.const.entities import (
     KEY_TODO_TASKS,
 )
 from custom_components.task_wheel.domain.enums import AssignmentStatus
-from custom_components.task_wheel.domain.models import OnceTrigger
 from custom_components.task_wheel.entities.base import device_name, unique_id
 from custom_components.task_wheel.runtime import TaskWheelData
 
@@ -63,7 +62,7 @@ async def test_entities_exist_for_persons_and_schedules(hass: HomeAssistant) -> 
         assert _state(hass, "sensor", person, KEY_SENSOR_OPEN) == "0"
         assert _state(hass, "sensor", person, KEY_SENSOR_POINTS) == "0"
         assert _state(hass, "todo", person, KEY_TODO_TASKS) == "0"
-    assert _state(hass, "sensor", "s1", KEY_SENSOR_NEXT_DRAW) == "unknown"
+    assert dt_util.parse_datetime(_state(hass, "sensor", "s1", KEY_SENSOR_NEXT_DRAW)) == f.NOW
     assert _entity_id(hass, "button", "s1", KEY_BUTTON_DRAW) is not None
 
 
@@ -139,14 +138,14 @@ async def test_swap_updates_both_persons(hass: HomeAssistant) -> None:
     assert _state(hass, "sensor", other, KEY_SENSOR_OPEN) == "1"
 
 
-async def test_next_draw_sensor_follows_the_trigger(hass: HomeAssistant) -> None:
+async def test_next_draw_sensor_follows_the_schedule(hass: HomeAssistant) -> None:
     _, data = await _setup(hass)
     at = (data.clock() + DAY).replace(microsecond=0)
-    data.schedules.save(f.schedule(trigger=OnceTrigger(at=at), task_ids=("t1",)), data.clock())
+    data.schedules.save(f.schedule(start=at, automatic=True, task_ids=("t1",)), data.clock())
     await hass.async_block_till_done()
     assert dt_util.parse_datetime(_state(hass, "sensor", "s1", KEY_SENSOR_NEXT_DRAW)) == at
     data.schedules.save(
-        f.schedule(trigger=OnceTrigger(at=at), task_ids=("t1",), enabled=False), data.clock()
+        f.schedule(start=at, automatic=True, task_ids=("t1",), enabled=False), data.clock()
     )
     await hass.async_block_till_done()
     assert _state(hass, "sensor", "s1", KEY_SENSOR_NEXT_DRAW) == "unknown"
@@ -189,7 +188,7 @@ async def test_archived_schedule_has_no_button(hass: HomeAssistant) -> None:
     data.schedules.save(
         f.schedule(
             task_ids=("t1",),
-            trigger=data.config.schedules["s1"].trigger,
+            automatic=False,
             enabled=False,
             archived=True,
         ),

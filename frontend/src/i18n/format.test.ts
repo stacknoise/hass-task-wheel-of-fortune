@@ -1,17 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  formatDate,
-  formatDateTime,
-  formatNumber,
-  formatPercent,
-  formatShortDate,
-} from './format.ts';
+import { formatDateTime, formatNumber, formatPercent, formatShortDate } from './format.ts';
 
 describe('Formatierung', () => {
   it('formatiert nach Sprache, bei leerer Sprache englisch', () => {
-    expect(formatDate('2026-11-03T12:00:00Z', 'de')).toBe('03.11.2026');
-    expect(formatDate('2026-11-03T12:00:00Z', '')).toBe('Nov 3, 2026');
+    expect(formatDateTime('2026-11-03T12:00:00Z', '')).toContain('Nov 3, 2026');
     expect(formatShortDate('2026-11-03T12:00:00Z', 'de')).toBe('3.11.');
     expect(formatDateTime('2026-11-03T12:00:00Z', 'de')).toContain('03.11.2026');
   });

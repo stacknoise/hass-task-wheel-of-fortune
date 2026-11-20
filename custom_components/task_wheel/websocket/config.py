@@ -13,15 +13,24 @@ from ..const.events import (
     WS_ACTION_DELETE,
     WS_ACTION_UPDATE,
     WS_PERSON_PREFIX,
+    WS_PLAN_PREVIEW,
     WS_SCHEDULE_PREFIX,
     WS_SETTINGS_UPDATE,
     WS_TASK_PREFIX,
 )
-from ..const.keys import WIRE_SETTINGS, WS_FIELD_PERSON_ID, WS_FIELD_SCHEDULE_ID, WS_FIELD_TASK_ID
-from ..domain.models import Person, Schedule, Settings, Task
+from ..const.keys import (
+    WIRE_SETTINGS,
+    WS_FIELD_ENTRIES,
+    WS_FIELD_INTERVAL,
+    WS_FIELD_PERSON_ID,
+    WS_FIELD_RUN_DAYS,
+    WS_FIELD_SCHEDULE_ID,
+    WS_FIELD_TASK_ID,
+)
+from ..domain.models import Interval, Person, Schedule, ScheduleEntry, Settings, Task
 from ..domain.serialization import Model
 from .command import Access, Command, Reply, Request
-from .schemas import ID, model_fields
+from .schemas import ID, INTEGER, model_fields
 
 type Create = Callable[[Request, Fields], Model]
 type Update = Callable[[Request, str, Fields], Model]
@@ -130,8 +139,31 @@ def _update_settings(request: Request) -> Reply:
     return Reply(to_json(request.data.configuration.update_settings(request.params[WIRE_SETTINGS])))
 
 
+def _plan_preview(request: Request) -> Reply:
+    """Bewertet den Plan aus dem Editor (Platz, Belegung, Abstände, Warnungen)."""
+    params = request.params
+    preview = request.data.configuration.preview_plan(
+        params[WS_FIELD_INTERVAL], params[WS_FIELD_RUN_DAYS], params[WS_FIELD_ENTRIES]
+    )
+    return Reply(to_json(preview))
+
+
 COMMANDS: Final = (
     *(command for resource in RESOURCES for command in _commands(resource)),
+    Command(
+        WS_PLAN_PREVIEW,
+        {
+            vol.Required(WS_FIELD_INTERVAL): vol.Schema(
+                model_fields(Interval, required=True), extra=vol.PREVENT_EXTRA
+            ),
+            vol.Required(WS_FIELD_RUN_DAYS): INTEGER,
+            vol.Required(WS_FIELD_ENTRIES): [
+                vol.Schema(model_fields(ScheduleEntry, required=True), extra=vol.PREVENT_EXTRA)
+            ],
+        },
+        _plan_preview,
+        Access.ADMIN,
+    ),
     Command(
         WS_SETTINGS_UPDATE,
         {

@@ -6,6 +6,9 @@ import {
   FIELD_MONTHS,
   FIELD_NEW_TASK_ID,
   FIELD_PANEL_ROUND_ID,
+  FIELD_ENTRIES,
+  FIELD_INTERVAL,
+  FIELD_RUN_DAYS,
   FIELD_SCHEDULE_ID,
   FIELD_TASK_ID,
   WS_ACTION_CREATE,
@@ -23,6 +26,7 @@ import {
   WS_ASSIGNMENT_SWAP,
   WS_ROUND_DELETE,
   WS_DRAW_BEGIN,
+  WS_PLAN_PREVIEW,
   WS_DRAW_CANCEL,
   WS_DRAW_COMMIT,
   WS_DRAW_PREVIEW,
@@ -51,10 +55,11 @@ import type {
 import type {
   Delta,
   AreaOption,
-  DrawWindowRequest,
   HassApi,
   NotifyTarget,
   PanelRoundWire,
+  PlanPreviewRequest,
+  PlanPreviewWire,
   PreviewReply,
   ReplaceTaskReply,
   ReplacementsReply,
@@ -245,12 +250,18 @@ export class ApiClient {
     };
   }
 
-  /** Beginnt eine Panel-Runde für den Zeitplan (Gilt-ab und Frist sind Pflicht); eine frühere desselben Plans entfällt. */
-  beginDraw(scheduleId: string, window: DrawWindowRequest): Promise<PanelRoundWire> {
-    return this.#hass.callWS<PanelRoundWire>({
-      type: WS_DRAW_BEGIN,
-      [FIELD_SCHEDULE_ID]: scheduleId,
-      ...window,
+  /** Beginnt eine Panel-Runde für die nächste offene Periode des Zeitplans; eine frühere offene Runde desselben Plans entfällt. */
+  beginDraw(scheduleId: string): Promise<PanelRoundWire> {
+    return this.#call(WS_DRAW_BEGIN, FIELD_SCHEDULE_ID, scheduleId);
+  }
+
+  /** Bewertet die Planung eines Zeitplans (nur Administratoren, nur lesen). */
+  planPreview(plan: PlanPreviewRequest): Promise<PlanPreviewWire> {
+    return this.#hass.callWS<PlanPreviewWire>({
+      type: WS_PLAN_PREVIEW,
+      [FIELD_INTERVAL]: plan.interval,
+      [FIELD_RUN_DAYS]: plan.run_days,
+      [FIELD_ENTRIES]: plan.entries,
     });
   }
 

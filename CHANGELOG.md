@@ -5,6 +5,24 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- **Geändert:** Der Zeitplan-Editor ist übersichtlicher und gliedert sich in vier Reiter: Ablauf, Aufgaben, Auswertung und Optionen. Die Reiter zeigen die Zahl der gewählten Aufgaben und der Hinweise; in der Fußzeile steht immer, ob der Plan passt, und ein Klick führt zu den Hinweisen. Die Aufgabenliste hat Suche, Filter (alle, gewählt, offen) und Raumfilter, ihre Zeilen sind kompakt und nennen den ungefähren Abstand links vor dem Zähler, sodass Zähler und „Jede“ in allen Zeilen untereinander stehen. Die Auswertung nennt die Hinweise zuerst (mit Sprung zur Aufgabe), zeigt die Personen als Balken und zunächst nur die auffälligen Abstände. Das Automations-Beispiel ist eingeklappt. Eigene Scrollkästen im Editor entfallen
+
+## [0.7.2] – 2026-11-20
+
+- **Geändert:** Räume erscheinen überall als Chip (Kontur mit farbigem Punkt, eine Farbe je Raum, ohne Umbruch), auch in der Planvorschau „Abstände je Aufgabe“ unter dem Aufgabennamen; gelöschte Räume erscheinen grau
+
+## [0.7.1] – 2026-11-20
+
+- **Geändert:** Der Zeitplan-Editor zeigt bei jeder Aufgabe die zugeordneten Räume, wie die Aufgabenliste und der Dialog „Aufgabe austauschen“
+
+## [0.7.0] – 2026-11-20
+
+- **Geändert:** Die Häufigkeit gehört jetzt dem Zeitplan statt der Aufgabe. Ein Zeitplan hat „Gültig ab“, ein Intervall (Stunden, Tage, Wochen), ist automatisch oder manuell und hat einen Lauf (Standard 30 Tage); je Aufgabe gilt „mindestens n× je Lauf“ oder „jede Auslosung“. Die Auslosung gleicht die Abstände zwischen den Zuteilungen einer Aufgabe aus, auch über Lauf-Grenzen; Überlast und Lücken sind nur Warnungen. Manuell wird immer die nächste offene Periode ausgelost, gelöscht werden darf nur die jüngste unerledigte Auslosung. Der Zeitplan-Editor zeigt eine Live-Vorschau (`schedule/plan_preview`), Soll/Ist in der Statistik gilt je Lauf. Häufigkeit, Frist, Auslöser und Zeitstrahl der alten Fassung sind samt ungenutztem Code entfernt; vorhandene Daten werden beim Laden migriert (1.5 → 1.6)
+- **Geändert:** Das Entscheidungslog nennt, warum eine Aufgabe nicht oder nur als Füllung vorkam: „noch nicht fällig“, „zufällig zurückgestellt“ (mehr fällige Aufgaben als Personen) und beim Gewinner „zufällig nachgezogen“. Alte Einträge laden unverändert
+- **Geändert:** Einheitliche Abstände im Zeitplan-Editor (Beschriftungen und Hinweise klebten am Inhalt)
+- Behoben: Gelöschte Aufgaben erscheinen nicht mehr in der Statistik (Matrix, Kennzahlen, Wochenquote); Historie und Übersicht nennen sie weiterhin
+- Abhängigkeiten aktualisiert: ruff 0.17.5, @playwright/test 1.65.1
+
 ## [0.6.4] – 2026-11-16
 
 - Behoben: In der Oscar-Animation verschwanden bei vielen Personen die Namen unter den Vorhängen. Die Namensleiste scrollt jetzt sanft mit, sodass die hervorgehobene Person immer mittig sichtbar ist
@@ -126,8 +144,11 @@ Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.
 - Fairness-Gewichtung, Tausch mit Joker, „Bleibt unerledigt“, Historie mit CSV-Export und Statistiken
 - Home-Assistant-Anbindung: Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen
 
-[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.4...HEAD
-[0.6.4]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.3...v0.6.4
+[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.1...v0.7.2
+[0.7.1]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.0...v0.7.1
+[0.7.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.3...v0.7.0
+[0.6.4]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.3...2cfd224
 [0.6.3]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.0...v0.6.1

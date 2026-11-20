@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from ..availability.calendar import PersonAvailability
-from ..deadline import DeadlineWindow
 from ..enums import ExclusionReason
 from ..models import Person
+from ..plan.window import PeriodWindow
 from ..types import PersonId, TaskId
 
 
@@ -35,7 +35,7 @@ class DrawContext:
     points: Mapping[PersonId, float]
     last_holders: Mapping[TaskId, PersonId]
     fairness_window_days: int
-    window: DeadlineWindow
+    window: PeriodWindow
     round_holders: frozenset[PersonId] = frozenset()
 
 
@@ -95,3 +95,16 @@ class TaskDraw:
     def distributable(self) -> bool:
         """Wahr, wenn eine Person gezogen wurde."""
         return self.winner_id is not None
+
+
+@dataclass(slots=True, frozen=True)
+class TaskNote:
+    """Warum eine Aufgabe der Auslosung nicht oder nur als Füllung dabei war (für das Log).
+
+    `not_due`: noch nicht fällig; `deferred`: fällig, aber der Zufall hat sie zurückgestellt
+    (mehr Aufgaben als Personen); `filled`: nicht fällig, vom Zufall nachgezogen, um eine Lücke zu
+    füllen.
+    """
+
+    task_id: TaskId
+    reason: str

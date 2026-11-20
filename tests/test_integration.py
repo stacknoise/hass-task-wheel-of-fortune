@@ -24,10 +24,7 @@ from custom_components.task_wheel.const.events import (
 from custom_components.task_wheel.domain.enums import AssignmentStatus
 from custom_components.task_wheel.domain.errors import InvalidNotifyTargetError
 from custom_components.task_wheel.domain.models import (
-    EveryRound,
-    ManualTrigger,
     OnceAbsence,
-    Recurring,
 )
 from custom_components.task_wheel.runtime import TaskWheelData
 
@@ -45,10 +42,8 @@ async def _setup(hass: HomeAssistant) -> tuple[ConfigEntry, TaskWheelData]:
     data: TaskWheelData = entry.runtime_data
     for ident, slug in (("p1", "anna"), ("p2", "ben")):
         data.config.put_person(f.person(id=ident, slug=slug, name=slug.title(), absences=()))
-    data.config.put_task(f.task(frequency=EveryRound()))
-    data.config.put_schedule(
-        f.schedule(trigger=ManualTrigger(), task_ids=("t1",), slug="wochenplan")
-    )
+    data.config.put_task(f.task())
+    data.config.put_schedule(f.schedule(automatic=False, task_ids=("t1",), slug="wochenplan"))
     return entry, data
 
 
@@ -242,8 +237,7 @@ async def test_timers_are_armed_on_save_and_cancelled_on_unload(hass: HomeAssist
     entry, data = await _setup(hass)
     drawn = async_capture_events(hass, EVENT_DRAWN)
     now = data.clock()
-    trigger = Recurring(weekdays=frozenset(range(7)), time=(now + dt.timedelta(hours=2)).time())
-    schedule = f.schedule(trigger=trigger, task_ids=("t1",))
+    schedule = f.schedule(start=now + dt.timedelta(hours=2), automatic=True, task_ids=("t1",))
     data.schedules.save(schedule, now)
     at = data.schedules.next_run(schedule, now)
     assert at is not None

@@ -5,6 +5,7 @@ export const WS_SNAPSHOT = `${WS_PREFIX}snapshot`;
 export const WS_SUBSCRIBE = `${WS_PREFIX}subscribe`;
 export const WS_AVAILABILITY_PREVIEW = `${WS_PREFIX}availability/preview`;
 export const WS_ROUND_DELETE = `${WS_PREFIX}round/delete`;
+export const WS_PLAN_PREVIEW = `${WS_PREFIX}schedule/plan_preview`;
 export const WS_DRAW_BEGIN = `${WS_PREFIX}draw/begin`;
 export const WS_DRAW_PREVIEW = `${WS_PREFIX}draw/preview`;
 export const WS_DRAW_REPLACEMENTS = `${WS_PREFIX}draw/replacements`;
@@ -15,15 +16,15 @@ export const WS_DRAW_COMMIT = `${WS_PREFIX}draw/commit`;
 export const WS_DRAW_CANCEL = `${WS_PREFIX}draw/cancel`;
 
 export const FIELD_ABSENCES = 'absences';
+export const FIELD_INTERVAL = 'interval';
+export const FIELD_RUN_DAYS = 'run_days';
+export const FIELD_ENTRIES = 'entries';
 export const FIELD_SCHEDULE_ID = 'schedule_id';
 export const FIELD_ROUND_ID = 'round_id';
 export const FIELD_PANEL_ROUND_ID = 'panel_round_id';
 export const FIELD_TASK_ID = 'task_id';
 export const FIELD_NEW_TASK_ID = 'new_task_id';
 export const REPLY_PRESENT = 'present';
-export const REPLY_RESULT = 'result';
-export const REPLY_RESULTS = 'results';
-export const REPLY_PANEL_ROUND = 'panel_round';
 
 export const COLLECTIONS = [
   'persons',

@@ -5,7 +5,11 @@ import datetime as dt
 import pytest
 
 from custom_components.task_wheel.application.round_service import RoundService
-from custom_components.task_wheel.domain.errors import NotFoundError, RoundHasDoneError
+from custom_components.task_wheel.domain.errors import (
+    NotFoundError,
+    RoundHasDoneError,
+    RoundNotNewestError,
+)
 from custom_components.task_wheel.domain.statistics.aggregate import recompute
 
 from ..domain import factories as f
@@ -59,13 +63,17 @@ def test_delete_keeps_other_rounds_in_the_statistics() -> None:
     later = f.NOW + dt.timedelta(hours=1)
     world.history.put_round(
         f.finished_round(
-            id="r2", started_at=later, finished_at=later, assignments=(_open("b1", round_id="r2"),)
+            id="r2",
+            started_at=later,
+            finished_at=later,
+            period_index=1,
+            assignments=(_open("b1", round_id="r2"),),
         )
     )
     for round_ in world.history.rounds.values():
         world.statistics.record_round(round_)
     service, _ = _service(world)
-    service.delete("r1")
+    service.delete("r2")
     assert dict(world.history.aggregates) == recompute(world.history.rounds.values())
     assert dict(world.history.aggregates) != {}
 
@@ -75,3 +83,32 @@ def test_delete_unknown_round() -> None:
     with pytest.raises(NotFoundError):
         service.delete("nope")
     assert events.deleted == []
+
+
+def test_only_the_newest_period_of_a_schedule_can_be_deleted() -> None:
+    world = World()
+    world.add_round(_open(), started=f.NOW)
+    later = f.NOW + dt.timedelta(hours=1)
+    world.history.put_round(
+        f.finished_round(
+            id="r2",
+            started_at=later,
+            finished_at=later,
+            period_index=1,
+            assignments=(_open("b1", round_id="r2"),),
+        )
+    )
+    other = f.finished_round(
+        id="r3",
+        schedule_id="s9",
+        period_index=0,
+        assignments=(_open("c1", round_id="r3", schedule_id="s9"),),
+    )
+    world.history.put_round(other)
+    service, events = _service(world)
+    with pytest.raises(RoundNotNewestError):
+        service.delete("r1")
+    service.delete("r3")  # jüngste ihres eigenen Zeitplans
+    service.delete("r2")
+    service.delete("r1")  # jetzt die jüngste
+    assert [r.id for r in events.deleted] == ["r3", "r2", "r1"]

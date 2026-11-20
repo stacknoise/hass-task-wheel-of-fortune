@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { areaNames, roomsOf } from './areas.ts';
+import { areaNames, roomRefsOf, roomsOf } from './areas.ts';
 
 const AREAS = areaNames([
   { id: 'kueche', label: 'Küche' },
@@ -20,6 +20,15 @@ describe('roomsOf', () => {
     expect(roomsOf(AREAS, ['kueche', 'keller'], 'Unbekannter Raum')).toEqual([
       'Küche',
       'Unbekannter Raum',
+    ]);
+  });
+});
+
+describe('roomRefsOf', () => {
+  it('markiert einen gelöschten Raum', () => {
+    expect(roomRefsOf(AREAS, ['kueche', 'keller'], '?')).toEqual([
+      { name: 'Küche', deleted: false },
+      { name: '?', deleted: true },
     ]);
   });
 });

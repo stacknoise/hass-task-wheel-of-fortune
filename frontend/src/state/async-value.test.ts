@@ -15,6 +15,23 @@ describe('AsyncValue', () => {
     expect([value.status, value.value, owner.updates]).toEqual(['ready', 1, 2]);
   });
 
+  it('setzt Wert und Status zurück und verwirft laufende Aufrufe', async () => {
+    const owner = host();
+    const value = new AsyncValue<number>(owner as never);
+    await value.run(() => Promise.resolve(1));
+    let finish: (result: number) => void = () => undefined;
+    const pending = value.run(
+      () =>
+        new Promise<number>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    value.reset();
+    finish(2);
+    await pending;
+    expect([value.status, value.value]).toEqual(['idle', undefined]);
+  });
+
   it('meldet einen Fehler und behält den alten Wert', async () => {
     const value = new AsyncValue<number>(host() as never);
     await value.run(() => Promise.resolve(1));

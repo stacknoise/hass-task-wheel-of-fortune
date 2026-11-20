@@ -7,6 +7,8 @@ import { callWS, signIn } from "../support/panel.ts";
 const PANEL = "/task-wheel";
 const OUT_DIR = process.env["SHOT_DIR"] ?? "../docs/screenshots";
 const READY_MS = 30_000;
+const HOUR_MS = 3_600_000;
+const WEEK_MS = 7 * 24 * HOUR_MS;
 const SETTLE_MS = 600;
 const SPIN_MS = 1500;
 
@@ -79,7 +81,6 @@ test("README screenshots", async ({ page, baseURL }) => {
         name,
         points,
         allowed: [],
-        frequency: { kind: "every_round" },
       },
     });
     taskIds.push(task.id);
@@ -88,15 +89,14 @@ test("README screenshots", async ({ page, baseURL }) => {
     type: "task_wheel/schedule/create",
     schedule: {
       name: "Weekly chores",
-      trigger: {
-        kind: "recurring",
-        weekdays: [5],
-        time: "18:00",
-        every_n_weeks: 1,
-        monthly: false,
-        anchor: null,
-      },
-      task_ids: taskIds,
+      start: new Date(Date.now() - 4 * WEEK_MS).toISOString(),
+      interval: { unit: "week", every: 1 },
+      automatic: false,
+      entries: taskIds.map((taskId) => ({
+        task_id: taskId,
+        mode: "min_count",
+        min_count: 2,
+      })),
       animations: ["wheel", "drum", "slot", "plinko", "spotlight"],
     },
   });
@@ -109,8 +109,13 @@ test("README screenshots", async ({ page, baseURL }) => {
       type: "task_wheel/schedule/create",
       schedule: {
         name,
-        trigger: { kind: "manual", remind_after_days: null },
-        task_ids: tasks,
+        start: new Date(Date.now() - HOUR_MS).toISOString(),
+        interval: { unit: "week", every: 1 },
+        automatic: false,
+        entries: tasks.map((taskId) => ({
+          task_id: taskId,
+          mode: "every_draw",
+        })),
         animations: [animation],
       },
     });
@@ -153,7 +158,6 @@ test("README screenshots", async ({ page, baseURL }) => {
     await page.locator("tw-draw-view").waitFor({ timeout: READY_MS });
     await page.getByRole("combobox").selectOption({ label: schedule });
     await page.getByRole("button", { name: "Start round" }).click();
-    await page.getByRole("button", { name: "Continue" }).click();
     await page.getByRole("button", { name: "Start the draw" }).click();
     await page.waitForTimeout(SPIN_MS);
     await shot(page, file);

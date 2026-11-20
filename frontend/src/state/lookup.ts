@@ -1,4 +1,5 @@
-import type { PanelRoundWire, Snapshot, WireObject } from '../api/index.ts';
+import { schedulesOf } from '../api/index.ts';
+import type { EntryWire, PanelRoundWire, Snapshot, WireObject } from '../api/index.ts';
 import { EMPTY_TEXT } from '../constants/index.ts';
 import type { AnimationKind } from '../constants/index.ts';
 import { animationsOf } from './animation.ts';
@@ -23,8 +24,10 @@ export interface ScheduleInfo {
   readonly id: string;
   readonly name: string;
   readonly archived: boolean;
-  /** Der nächste reguläre Lauf (ISO) oder `null` (nur manuell, pausiert, kein Termin mehr). */
+  /** Termin der nächsten offenen Periode (ISO) oder `null`; bei manuellen Plänen kann er in der Vergangenheit liegen (= fällig). */
   readonly nextRun: string | null;
+  /** Nummer der nächsten offenen Periode (0 = erste). */
+  readonly nextPeriod: number;
   /** Erlaubte Animationen; bei jeder Auslosung wird zufällig eine gewählt. */
   readonly animations: readonly AnimationKind[];
 }
@@ -73,6 +76,21 @@ export function tasksById(snapshot: Snapshot): ReadonlyMap<string, TaskInfo> {
   );
 }
 
+/** In welchen Zeitplänen eine Aufgabe vorkommt und wie. */
+export interface TaskUsage {
+  readonly scheduleId: string;
+  readonly scheduleName: string;
+  readonly entry: EntryWire;
+}
+
+export function taskUsage(snapshot: Snapshot, taskId: string): readonly TaskUsage[] {
+  return schedulesOf(snapshot).flatMap((schedule) =>
+    schedule.entries
+      .filter((entry) => entry.task_id === taskId)
+      .map((entry) => ({ scheduleId: schedule.id, scheduleName: schedule.name, entry })),
+  );
+}
+
 /** Zeitpläne, die sich auslosen lassen (nicht archiviert). */
 export function drawableSchedules(snapshot: Snapshot): readonly ScheduleInfo[] {
   return snapshot.schedules
@@ -81,6 +99,7 @@ export function drawableSchedules(snapshot: Snapshot): readonly ScheduleInfo[] {
       name: text(item, 'name', item.id),
       archived: item['archived'] === true,
       nextRun: typeof item['next_run'] === 'string' ? item['next_run'] : null,
+      nextPeriod: count(item, 'next_period'),
       animations: animationsOf(item['animations']),
     }))
     .filter((schedule) => !schedule.archived);

@@ -64,11 +64,6 @@ def to_date(value: object) -> dt.date:
     return _iso(dt.date.fromisoformat, value)
 
 
-def to_time(value: object) -> dt.time:
-    """Dekodiert eine ISO-Uhrzeit."""
-    return _iso(dt.time.fromisoformat, value)
-
-
 def to_datetime(value: object) -> dt.datetime:
     """Dekodiert einen ISO-Zeitpunkt."""
     return _iso(dt.datetime.fromisoformat, value)
@@ -228,7 +223,7 @@ class KindModel(Model):
 _ENCODERS: tuple[tuple[type | tuple[type, ...], Callable[[Any], object]], ...] = (
     (Model, lambda value: value.to_dict()),
     (StrEnum, lambda value: value.value),
-    ((dt.date, dt.time), lambda value: value.isoformat()),
+    (dt.date, lambda value: value.isoformat()),
     ((frozenset, set), lambda value: sorted((encode(item) for item in value), key=str)),
     ((tuple, list), lambda value: [encode(item) for item in value]),
 )

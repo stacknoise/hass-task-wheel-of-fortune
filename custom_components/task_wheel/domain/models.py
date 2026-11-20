@@ -3,23 +3,21 @@
 import datetime as dt
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import ClassVar, Final, cast
+from typing import ClassVar, Final
 
 from ..const import defaults, limits
 from ..const.keys import ERR_INCONSISTENT, ERR_ORDER, ERR_REQUIRED
-from .deadline import DEFAULT_DEADLINE, Deadline
 from .enums import (
     DONE_STATUSES,
+    INTERVAL_UNIT_HOURS,
     WITHOUT_DONE_AT_STATUSES,
     AbsenceKind,
-    AfterOnce,
     AnimationKind,
     AssignmentStatus,
-    FrequencyKind,
+    EntryMode,
+    IntervalUnit,
     Load,
-    Period,
     RoundOrigin,
-    TriggerKind,
     WeightingKind,
 )
 from .serialization import (
@@ -39,7 +37,6 @@ from .serialization import (
     to_float,
     to_int,
     to_str,
-    to_time,
     tuple_of,
     unique_tuple_of,
 )
@@ -142,124 +139,44 @@ ABSENCE_REGISTRY: Mapping[str, type[AbsenceConfig]] = registry_of(
 )
 decode_absence: Decoder[AbsenceConfig] = kind_model(ABSENCE_REGISTRY)
 
-# --- Häufigkeit ---------------------------------------------------------------------------------
+# --- Intervall und Aufgaben im Zeitplan ----------------------------------------------------------
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class EveryRound(KindModel):
-    """Aufgabe kommt in jeder Runde dran."""
+class Interval(Model):
+    """Abstand zwischen zwei Auslosungen: alle `every` Stunden, Tage oder Wochen."""
 
-    kind: ClassVar[FrequencyKind] = FrequencyKind.EVERY_ROUND
-
-
-@dataclass(slots=True, frozen=True, kw_only=True)
-class MaxPerPeriod(KindModel):
-    """Höchstens `count` Zuteilungen je `every` Tage, Wochen oder Monate (gleitendes Fenster)."""
-
-    kind: ClassVar[FrequencyKind] = FrequencyKind.MAX_PER_PERIOD
-    count: int = spec(to_int)
-    period: Period = spec(enum_of(Period))
-    every: int = spec(to_int, default=defaults.DEFAULT_PERIOD_EVERY)
+    unit: IntervalUnit = spec(enum_of(IntervalUnit), default=IntervalUnit.DAY)
+    every: int = spec(to_int, default=defaults.DEFAULT_INTERVAL_EVERY)
 
     def __post_init__(self) -> None:
-        """Prüft Anzahl und Länge des Zeitraums."""
-        ensure_range("count", self.count, limits.PERIOD_COUNT_MIN, limits.PERIOD_COUNT_MAX)
-        ensure_range("every", self.every, limits.PERIOD_EVERY_MIN, limits.PERIOD_EVERY_MAX)
+        """Prüft die Anzahl der Einheiten."""
+        ensure_range("every", self.every, limits.INTERVAL_EVERY_MIN, limits.INTERVAL_EVERY_MAX)
 
     @property
-    def is_daily(self) -> bool:
-        """Die Aufgabe fällt täglich an (je Kalendertag, nicht über mehrere Tage gerechnet)."""
-        return self.period is Period.DAY and self.every == limits.DAILY_EVERY
+    def hours(self) -> int:
+        """Nennlänge des Intervalls in Stunden (Tag = 24, Woche = 168)."""
+        return self.every * INTERVAL_UNIT_HOURS[self.unit]
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class Interval(KindModel):
-    """Frühestens nach `days` Tagen (abzüglich `tolerance`) erneut."""
+class ScheduleEntry(Model):
+    """Eine Aufgabe im Zeitplan: „mindestens n-mal je Lauf“ oder „in jeder Auslosung“."""
 
-    kind: ClassVar[FrequencyKind] = FrequencyKind.INTERVAL
-    days: int = spec(to_int)
-    tolerance: int = spec(to_int, default=defaults.DEFAULT_INTERVAL_TOLERANCE)
-
-    def __post_init__(self) -> None:
-        """Prüft Abstand und Toleranz (Toleranz kleiner als der Abstand)."""
-        ensure_range("days", self.days, limits.INTERVAL_DAYS_MIN, limits.INTERVAL_DAYS_MAX)
-        ensure_range("tolerance", self.tolerance, limits.INTERVAL_TOLERANCE_MIN, self.days - 1)
-
-
-type FrequencyConfig = EveryRound | MaxPerPeriod | Interval
-
-FREQUENCY_REGISTRY: Mapping[str, type[FrequencyConfig]] = registry_of(
-    EveryRound, MaxPerPeriod, Interval
-)
-decode_frequency: Decoder[FrequencyConfig] = kind_model(FREQUENCY_REGISTRY)
-DEFAULT_FREQUENCY: Final = cast("FrequencyConfig", EveryRound())
-
-# --- Auslöser -----------------------------------------------------------------------------------
-
-
-@dataclass(slots=True, frozen=True, kw_only=True)
-class Recurring(KindModel):
-    """Wiederkehrend an Wochentagen zu einer Uhrzeit, alle n Wochen (Ankerdatum) oder monatlich."""
-
-    kind: ClassVar[TriggerKind] = TriggerKind.RECURRING
-    weekdays: frozenset[Weekday] = spec(frozenset_of(to_int))
-    time: dt.time = spec(to_time)
-    every_n_weeks: int = spec(to_int, default=defaults.DEFAULT_EVERY_N_WEEKS)
-    monthly: bool = spec(to_bool, default=False)
-    anchor: dt.date | None = spec(optional(to_date), default=None)
+    task_id: TaskId = spec(to_str)
+    mode: EntryMode = spec(enum_of(EntryMode), default=EntryMode.MIN_COUNT)
+    min_count: int = spec(to_int, default=defaults.DEFAULT_MIN_COUNT)
 
     def __post_init__(self) -> None:
-        """Prüft Wochentage, Rhythmus und Ankerdatum."""
-        ensure_weekdays("weekdays", self.weekdays)
-        ensure_range(
-            "every_n_weeks", self.every_n_weeks, limits.EVERY_N_WEEKS_MIN, limits.EVERY_N_WEEKS_MAX
-        )
-        ensure(
-            not self.monthly or self.every_n_weeks == defaults.DEFAULT_EVERY_N_WEEKS,
-            "monthly",
-            ERR_INCONSISTENT,
-        )
-        needs_anchor = self.every_n_weeks > defaults.DEFAULT_EVERY_N_WEEKS
-        ensure(not needs_anchor or self.anchor is not None, "anchor", ERR_REQUIRED)
+        """Prüft Kennung und Mindestanzahl."""
+        ensure_id("task_id", self.task_id)
+        ensure_range("min_count", self.min_count, limits.MIN_COUNT_MIN, limits.MIN_COUNT_MAX)
 
+    @property
+    def every_draw(self) -> bool:
+        """Die Aufgabe ist in jeder Auslosung dabei (Ausnahme vom Abstandsausgleich)."""
+        return self.mode is EntryMode.EVERY_DRAW
 
-@dataclass(slots=True, frozen=True, kw_only=True)
-class OnceTrigger(KindModel):
-    """Einmalig zu einem Zeitpunkt; danach behalten (nur manuell), archivieren oder löschen."""
-
-    kind: ClassVar[TriggerKind] = TriggerKind.ONCE
-    at: dt.datetime = spec(to_datetime)
-    after: AfterOnce = spec(enum_of(AfterOnce), default=AfterOnce.KEEP_MANUAL)
-
-    def __post_init__(self) -> None:
-        """Prüft die Zeitzone."""
-        ensure_aware("at", self.at)
-
-
-@dataclass(slots=True, frozen=True, kw_only=True)
-class ManualTrigger(KindModel):
-    """Nur manuell; optional Erinnerung nach `remind_after_days` Tagen ohne Auslosung."""
-
-    kind: ClassVar[TriggerKind] = TriggerKind.MANUAL
-    remind_after_days: int | None = spec(optional(to_int), default=None)
-
-    def __post_init__(self) -> None:
-        """Prüft die Erinnerungsfrist."""
-        if self.remind_after_days is not None:
-            ensure_range(
-                "remind_after_days",
-                self.remind_after_days,
-                limits.REMIND_AFTER_DAYS_MIN,
-                limits.REMIND_AFTER_DAYS_MAX,
-            )
-
-
-type TriggerConfig = Recurring | OnceTrigger | ManualTrigger
-
-TRIGGER_REGISTRY: Mapping[str, type[TriggerConfig]] = registry_of(
-    Recurring, OnceTrigger, ManualTrigger
-)
-decode_trigger: Decoder[TriggerConfig] = kind_model(TRIGGER_REGISTRY)
 
 # --- Personen, Aufgaben, Zeitpläne --------------------------------------------------------------
 
@@ -290,7 +207,7 @@ class Person(Model):
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class Task(Model):
-    """Aufgabe mit Aufwand, erlaubten Personen und Regeln (die Frist gibt der Zeitplan vor).
+    """Aufgabe mit Aufwand, erlaubten Personen und Regeln (die Häufigkeit gibt der Zeitplan vor).
 
     Ohne erlaubte Personen (leere Menge) gilt die Aufgabe für alle.
     """
@@ -298,28 +215,12 @@ class Task(Model):
     id: TaskId = spec(to_str)
     name: str = spec(to_str)
     allowed: frozenset[PersonId] = spec(frozenset_of(to_str), default=frozenset())
-    frequency: FrequencyConfig = spec(decode_frequency, default=DEFAULT_FREQUENCY)
     points: int = spec(to_int, default=defaults.DEFAULT_TASK_POINTS)
     no_repeat: bool = spec(to_bool, default=False)
     respect_absence: bool = spec(to_bool, default=True)
     swap_allowed: bool = spec(to_bool, default=True)
     min_load: Load = spec(enum_of(Load), default=Load.PAUSED)
     area_ids: tuple[str, ...] = spec(unique_tuple_of(to_str), default=())
-
-    @property
-    def is_daily(self) -> bool:
-        """Die Aufgabe fällt täglich an und ist deshalb in jeder Runde dabei."""
-        return isinstance(self.frequency, MaxPerPeriod) and self.frequency.is_daily
-
-    @property
-    def every_round(self) -> bool:
-        """Die Aufgabe ist in jeder Runde fällig (Häufigkeit „in jeder Runde“)."""
-        return isinstance(self.frequency, EveryRound)
-
-    @property
-    def is_mandatory(self) -> bool:
-        """Die Aufgabe soll in jeder Runde dabei sein: „in jeder Runde“ oder täglich."""
-        return self.every_round or self.is_daily
 
     def __post_init__(self) -> None:
         """Prüft Kennung, Namen, Punkte, erlaubte Personen und Räume."""
@@ -347,18 +248,22 @@ DEFAULT_ANIMATIONS: Final = (AnimationKind.WHEEL,)
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class Schedule(Model):
-    """Zeitplan: Auslöser, Frist und die Aufgaben, die er verteilt.
+    """Zeitplan: Beginn, Intervall, Lauf und die Aufgaben mit ihrer Häufigkeit.
 
-    Die Frist gilt für alle Aufgaben einer Auslosung; bei einem nur manuellen Zeitplan wird sie
-    stattdessen bei jeder Auslosung angegeben.
+    Die Auslosungen („Perioden“) liegen im Raster `start + n · interval`; eine Zuteilung gilt bis
+    zur nächsten. Ein Lauf umfasst `run_days` Tage: so oft soll jede Aufgabe mindestens
+    vorkommen, wie ihr Eintrag verlangt. `automatic` steuert, ob zu jedem Termin von selbst
+    ausgelost wird.
     """
 
     id: ScheduleId = spec(to_str)
     name: str = spec(to_str)
     slug: str = spec(to_str)
-    trigger: TriggerConfig = spec(decode_trigger)
-    task_ids: tuple[TaskId, ...] = spec(tuple_of(to_str))
-    deadline: Deadline = spec(model_of(Deadline), default=DEFAULT_DEADLINE)
+    start: dt.datetime = spec(to_datetime)
+    interval: Interval = spec(model_of(Interval), default=Interval())
+    automatic: bool = spec(to_bool, default=True)
+    run_days: int = spec(to_int, default=defaults.DEFAULT_RUN_DAYS)
+    entries: tuple[ScheduleEntry, ...] = spec(tuple_of(model_of(ScheduleEntry)))
     enabled: bool = spec(to_bool, default=True)
     notify: bool = spec(to_bool, default=True)
     skip_absent: bool = spec(to_bool, default=True)
@@ -368,16 +273,37 @@ class Schedule(Model):
     )
 
     def __post_init__(self) -> None:
-        """Prüft Kennung, Namen, Slug, Aufgaben, Animationen und Archivierung."""
+        """Prüft Kennung, Namen, Slug, Beginn, Lauf, Aufgaben, Animationen und Archivierung."""
         ensure_id("id", self.id)
         ensure_name("name", self.name)
         ensure_length("slug", self.slug, 1, limits.SLUG_MAX_LENGTH)
         ensure_pattern("slug", self.slug, limits.SLUG_PATTERN)
-        ensure_size("task_ids", self.task_ids, 1, limits.MAX_TASKS_PER_SCHEDULE)
-        ensure_unique("task_ids", self.task_ids)
+        ensure_aware("start", self.start)
+        ensure_range("run_days", self.run_days, limits.RUN_DAYS_MIN, limits.RUN_DAYS_MAX)
+        ensure(
+            self.run_days * limits.HOURS_PER_DAY >= self.interval.hours,
+            "run_days",
+            ERR_INCONSISTENT,
+        )
+        ensure_size("entries", self.entries, 1, limits.MAX_TASKS_PER_SCHEDULE)
+        ensure_unique("entries", self.task_ids)
         ensure_size("animations", self.animations, 0, len(AnimationKind))
         ensure_unique("animations", self.animations)
         ensure(not (self.archived and self.enabled), "archived", ERR_INCONSISTENT)
+
+    @property
+    def task_ids(self) -> tuple[TaskId, ...]:
+        """Die Aufgaben des Zeitplans in der Reihenfolge der Einträge."""
+        return tuple(entry.task_id for entry in self.entries)
+
+    @property
+    def draws_per_run(self) -> int:
+        """Anzahl der Auslosungen je Lauf: Laufdauer geteilt durch das Intervall (abgerundet)."""
+        return self.run_days * limits.HOURS_PER_DAY // self.interval.hours
+
+    def entry_for(self, task_id: TaskId) -> ScheduleEntry | None:
+        """Der Eintrag der Aufgabe (`None`, wenn sie nicht zum Zeitplan gehört)."""
+        return next((entry for entry in self.entries if entry.task_id == task_id), None)
 
 
 # --- Runden und Zuteilungen ---------------------------------------------------------------------
@@ -439,8 +365,7 @@ class Assignment(Model):
 class Round(Model):
     """Eine Auslosung eines Zeitplans mit ihren Zuteilungen.
 
-    `replaces` ist der reguläre Lauf des Zeitplans, den eine manuelle Auslosung vorgezogen hat
-    (er entfällt).
+    `period_index` ist die Nummer der Periode im Raster des Zeitplans (0 = Beginn).
     """
 
     id: RoundId = spec(to_str)
@@ -448,7 +373,7 @@ class Round(Model):
     origin: RoundOrigin = spec(enum_of(RoundOrigin))
     started_at: dt.datetime = spec(to_datetime)
     finished_at: dt.datetime | None = spec(optional(to_datetime), default=None)
-    replaces: dt.datetime | None = spec(optional(to_datetime), default=None)
+    period_index: int = spec(to_int, default=limits.PERIOD_INDEX_MIN)
     assignments: tuple[Assignment, ...] = spec(tuple_of(model_of(Assignment)), default=())
 
     def __post_init__(self) -> None:
@@ -459,8 +384,9 @@ class Round(Model):
         if self.finished_at is not None:
             ensure_aware("finished_at", self.finished_at)
             ensure(self.started_at <= self.finished_at, "finished_at", ERR_ORDER)
-        if self.replaces is not None:
-            ensure_aware("replaces", self.replaces)
+        ensure_range(
+            "period_index", self.period_index, limits.PERIOD_INDEX_MIN, limits.PERIOD_INDEX_MAX
+        )
         ensure_size("assignments", self.assignments, 0, limits.MAX_ASSIGNMENTS_PER_ROUND)
         ensure_unique("assignments", (item.id for item in self.assignments))
         ensure(

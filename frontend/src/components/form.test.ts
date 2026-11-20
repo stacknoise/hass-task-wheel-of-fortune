@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { EVENT_CHANGE, FORM_TAGS } from '../constants/index.ts';
-import type { FrequencyWire, TriggerWire } from '../state/index.ts';
-import { describeFrequency, describeTrigger } from './summaries.ts';
+import { EVENT_CHANGE, EVENT_GOTO_TASK, FORM_TAGS } from '../constants/index.ts';
+import type { EntryWire, PlanPreviewWire } from '../state/index.ts';
+import { describeInterval, describeSpan } from './summaries.ts';
 import './index.ts';
 
 type El = HTMLElement & { updateComplete: Promise<boolean>; [key: string]: unknown };
@@ -124,19 +124,10 @@ describe('Formularbausteine', () => {
     expect(seen).toEqual(['x']);
   });
 
-  it('Wochenvorschau und Zeitstrahl zeigen ihre Werte', async () => {
+  it('Wochenvorschau zeigt ihre Werte', async () => {
     const preview = await mount(FORM_TAGS.weekPreview, { language: 'de', present: [true, false] });
     expect(preview.shadowRoot?.querySelectorAll('.day.absent')).toHaveLength(1);
     expect(preview.shadowRoot?.textContent).toContain('Mo');
-    const line = await mount(FORM_TAGS.timeline, { language: 'de', days: 7, tolerance: 2 });
-    expect(line.shadowRoot?.textContent).toContain('frühestens: 5');
-    expect(line.shadowRoot?.textContent).toContain('spätestens: 9');
-    expect(line.shadowRoot?.textContent).toContain('Ziel: 7');
-    const scale = (element: Element): string[] =>
-      [...(element.shadowRoot?.querySelectorAll('.days span') ?? [])].map((day) => day.textContent);
-    expect(scale(line)).toEqual(['1', '2', '4', '6', '8', '9']);
-    const long = await mount(FORM_TAGS.timeline, { language: 'de', days: 365, tolerance: 30 });
-    expect(scale(long)).toEqual(['1', '50', '100', '150', '200', '250', '300', '350', '395']);
   });
 });
 
@@ -201,118 +192,207 @@ describe('Editoren', () => {
     expect(seen.at(-1)).toMatchObject([{ end: null }]);
   });
 
-  it('Häufigkeit: Art wechseln und Werte ändern', async () => {
-    const editor = await mount(FORM_TAGS.frequencyEditor, {
+  it('Zeitplan-Aufgaben: wählen, Mindestanzahl und jede Auslosung ändern', async () => {
+    const tasks = [
+      { id: 'a', label: 'Bad' },
+      { id: 'b', label: 'Müll' },
+    ];
+    const editor = await mount(FORM_TAGS.entryEditor, {
       language: 'de',
-      value: { kind: 'every_round' } satisfies FrequencyWire,
+      tasks,
+      runDays: 30,
+      value: [{ task_id: 'b', mode: 'min_count', min_count: 2 }] satisfies EntryWire[],
     });
     const seen = changes(editor);
-    say(part(editor, 'tw-select'), 'max_per_period');
-    expect(seen.at(-1)).toEqual({ kind: 'max_per_period', count: 1, period: 'week', every: 1 });
+    const toggles = [...(editor.shadowRoot?.querySelectorAll('.name > tw-toggle') ?? [])] as El[];
+    say(toggles[0] as El, true);
+    expect(seen.at(-1)).toEqual([
+      { task_id: 'a', mode: 'min_count', min_count: 1 },
+      { task_id: 'b', mode: 'min_count', min_count: 2 },
+    ]);
+    say(toggles[1] as El, false);
+    expect(seen.at(-1)).toEqual([]);
 
-    editor.value = seen.at(-1);
-    await editor.updateComplete;
+    expect(editor.shadowRoot?.textContent).toContain('ca. alle 15 Tage');
     say(part(editor, 'tw-stepper'), 3);
-    say(part(editor, 'tw-segmented'), 'month');
-    expect(seen.slice(-2)).toEqual([
-      { kind: 'max_per_period', count: 3, period: 'week', every: 1 },
-      { kind: 'max_per_period', count: 1, period: 'month', every: 1 },
-    ]);
+    expect(seen.at(-1)).toEqual([{ task_id: 'b', mode: 'min_count', min_count: 3 }]);
+    part(editor, '.every').click();
+    expect(seen.at(-1)).toEqual([{ task_id: 'b', mode: 'every_draw', min_count: 2 }]);
 
-    editor.value = { kind: 'interval', days: 7, tolerance: 3 };
+    editor.value = [{ task_id: 'b', mode: 'every_draw', min_count: 2 }];
     await editor.updateComplete;
-    const [days, tolerance] = [
-      ...(editor.shadowRoot?.querySelectorAll('tw-stepper') ?? []),
-    ] as El[];
-    say(days as El, 2);
-    say(tolerance as El, 1);
-    expect(seen.slice(-2)).toEqual([
-      { kind: 'interval', days: 2, tolerance: 1 },
-      { kind: 'interval', days: 7, tolerance: 1 },
-    ]);
-    expect(editor.shadowRoot?.querySelector('tw-timeline')).not.toBeNull();
+    expect(editor.shadowRoot?.querySelector('tw-stepper')).toBeNull();
+    expect(editor.shadowRoot?.textContent).toContain('in jeder Auslosung');
+    part(editor, '.every').click();
+    expect(seen.at(-1)).toEqual([{ task_id: 'b', mode: 'min_count', min_count: 2 }]);
   });
 
-  it('Auslöser: wiederkehrend, einmalig, manuell', async () => {
-    const editor = await mount(FORM_TAGS.triggerEditor, {
+  it('Zeitplan-Aufgaben: suchen, filtern und nach Raum eingrenzen', async () => {
+    const room = (name: string): { name: string; deleted: boolean } => ({ name, deleted: false });
+    const editor = await mount(FORM_TAGS.entryEditor, {
       language: 'de',
-      now: '2026-11-03T12:00:00+00:00',
-      value: {
-        kind: 'recurring',
-        weekdays: [0],
-        time: '18:00:00',
-        every_n_weeks: 1,
-        monthly: false,
-        anchor: null,
-      } satisfies TriggerWire,
+      runDays: 30,
+      tasks: [
+        { id: 'a', label: 'Bad putzen', rooms: [room('Bad')] },
+        { id: 'b', label: 'Müll rausbringen', rooms: [room('Küche'), room('Flur')] },
+        { id: 'c', label: 'Staub wischen', rooms: [room('Flur')] },
+      ],
+      value: [{ task_id: 'b', mode: 'min_count', min_count: 2 }] satisfies EntryWire[],
     });
-    const seen = changes(editor);
-    say(part(editor, 'tw-chip-select'), ['1', '3']);
-    say(part(editor, 'tw-field'), '19:30');
-    say(part(editor, 'tw-stepper'), 2);
-    say(part(editor, 'tw-toggle'), true);
-    expect(seen).toMatchObject([
-      { weekdays: [1, 3] },
-      { time: '19:30' },
-      { every_n_weeks: 2, monthly: false },
-      { monthly: true, every_n_weeks: 1 },
-    ]);
+    const names = (): string[] =>
+      [...(editor.shadowRoot?.querySelectorAll('.row tw-toggle') ?? [])].map(
+        (toggle) => (toggle as unknown as { label: string }).label,
+      );
+    const search = part(editor, 'input[type="search"]') as unknown as HTMLInputElement;
+    expect(names()).toEqual(['Bad putzen', 'Müll rausbringen', 'Staub wischen']);
 
-    editor.value = { ...(editor.value as object), every_n_weeks: 2, anchor: null };
+    search.value = 'flur';
+    search.dispatchEvent(new Event('input'));
     await editor.updateComplete;
-    const fields = [...(editor.shadowRoot?.querySelectorAll('tw-field') ?? [])] as El[];
-    say(fields[1] as El, '2026-11-09');
-    say(fields[1] as El, '');
-    expect(seen.slice(-2)).toMatchObject([{ anchor: '2026-11-09' }, { anchor: null }]);
+    expect(names()).toEqual(['Müll rausbringen', 'Staub wischen']);
 
-    say(part(editor, 'tw-select'), 'once');
-    expect(seen.at(-1)).toMatchObject({ kind: 'once', at: '2026-11-04T12:00:00.000Z' });
-    editor.value = seen.at(-1);
+    search.value = '';
+    search.dispatchEvent(new Event('input'));
+    say(part(editor, 'tw-segmented'), 'selected');
     await editor.updateComplete;
-    say(part(editor, 'tw-field'), '2026-11-05T08:00');
-    say(part(editor, 'tw-select:nth-of-type(2)'), 'archive');
-    expect((seen.at(-2) as { at: string }).at.endsWith('Z')).toBe(true);
-    expect(seen.at(-1)).toMatchObject({ after: 'archive' });
+    expect(names()).toEqual(['Müll rausbringen']);
+    say(part(editor, 'tw-segmented'), 'open');
+    await editor.updateComplete;
+    expect(names()).toEqual(['Bad putzen', 'Staub wischen']);
+    say(part(editor, 'tw-segmented'), 'all');
 
-    say(part(editor, 'tw-select'), 'manual');
-    editor.value = seen.at(-1);
+    const rooms = [
+      ...(editor.shadowRoot?.querySelectorAll('.rooms button') ?? []),
+    ] as HTMLElement[];
+    expect(rooms.map((button) => button.textContent.trim())).toEqual(['Bad', 'Flur', 'Küche']);
+    rooms[1]?.click();
     await editor.updateComplete;
-    say(part(editor, 'tw-toggle'), true);
-    expect(seen.at(-1)).toMatchObject({ remind_after_days: 7 });
-    editor.value = seen.at(-1);
+    expect(names()).toEqual(['Müll rausbringen', 'Staub wischen']);
+    rooms[1]?.click();
+    search.value = 'kein Treffer';
+    search.dispatchEvent(new Event('input'));
     await editor.updateComplete;
-    say(part(editor, 'tw-stepper'), 3);
-    say(part(editor, 'tw-toggle'), false);
-    expect(seen.slice(-2)).toMatchObject([{ remind_after_days: 3 }, { remind_after_days: null }]);
+    expect(names()).toEqual([]);
+    expect(editor.shadowRoot?.textContent).toContain('Keine Aufgabe passt zu Suche und Filter.');
   });
 
-  it('Kurztexte für Karten', () => {
-    expect(describeFrequency({ kind: 'every_round' }, 'de')).toBe('jede Runde');
-    expect(
-      describeFrequency({ kind: 'max_per_period', count: 2, period: 'week', every: 1 }, 'de'),
-    ).toBe('max. 2× je Woche');
-    expect(
-      describeFrequency({ kind: 'max_per_period', count: 5, period: 'month', every: 2 }, 'de'),
-    ).toBe('max. 5× in 2 Monaten');
-    expect(describeFrequency({ kind: 'interval', days: 7, tolerance: 1 }, 'en')).toBe(
-      'every 7 days ± 1',
-    );
-    expect(
-      describeTrigger(
+  it('Reiter melden die Wahl, auch mit den Pfeiltasten', async () => {
+    const tabs = await mount(FORM_TAGS.sectionTabs, {
+      label: 'Bereiche',
+      active: 'b',
+      tabs: [
+        { id: 'a', label: 'A' },
+        { id: 'b', label: 'B', badge: 2, warn: true },
+        { id: 'c', label: 'C' },
+      ],
+    });
+    const seen = changes(tabs);
+    expect(tabs.shadowRoot?.querySelector('.badge.warn')?.textContent).toBe('2');
+    expect(part(tabs, '[aria-selected="true"]').textContent).toContain('B');
+    (part(tabs, '#c') as unknown as HTMLButtonElement).click();
+    expect(seen.at(-1)).toBe('c');
+    const key = (name: string): void => {
+      part(tabs, '.tabs').dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true }));
+    };
+    key('ArrowRight');
+    expect(seen.at(-1)).toBe('c');
+    key('ArrowLeft');
+    expect(seen.at(-1)).toBe('a');
+    key('x');
+    expect(seen).toHaveLength(3);
+    tabs.active = 'c';
+    await tabs.updateComplete;
+    seen.length = 0;
+    key('ArrowRight');
+    expect(seen).toEqual([]);
+  });
+
+  it('Auswertung zeigt Zahlen, Personen, Abstände und Hinweise', async () => {
+    const preview: PlanPreviewWire = {
+      draws_per_run: 4,
+      interval_hours: 168,
+      persons: { p1: 2 },
+      planned: 6,
+      capacity: 4,
+      empty_draws: 1,
+      overloaded_draws: 2,
+      peak: 3,
+      tracks: [
+        { task_id: 'a', every_draw: false, wanted: 2, positions: [0, 2], gap_min: 2, gap_max: 2 },
         {
-          kind: 'recurring',
-          weekdays: [0, 3],
-          time: '18:30:00',
-          every_n_weeks: 1,
-          monthly: false,
-          anchor: null,
+          task_id: 'b',
+          every_draw: true,
+          wanted: 4,
+          positions: [0, 1, 2, 3],
+          gap_min: 1,
+          gap_max: 1,
         },
-        'de',
-      ),
-    ).toBe('Mo Do um 18:30');
-    expect(describeTrigger({ kind: 'manual', remind_after_days: null }, 'de')).toBe('nur manuell');
-    expect(
-      describeTrigger({ kind: 'once', at: '2026-11-03T12:00:00Z', after: 'archive' }, 'en'),
-    ).toContain('once on');
+      ],
+      issues: [
+        { code: 'no_person', blocking: true, params: {} },
+        { code: 'too_often', blocking: false, params: { task_id: 'a', wanted: 9, draws: 4 } },
+        { code: 'unbekannt', blocking: false, params: {} },
+      ],
+    };
+    const element = await mount(FORM_TAGS.planPreview, {
+      language: 'de',
+      runDays: 30,
+      preview,
+      tasks: [
+        {
+          id: 'a',
+          label: 'Bad',
+          rooms: [
+            { name: 'Bad', deleted: false },
+            { name: 'Flur', deleted: false },
+          ],
+        },
+      ],
+      people: [{ id: 'p1', label: 'Anna', color: '#e03131' }],
+    });
+    const text = element.shadowRoot?.textContent ?? '';
+    expect(element.shadowRoot?.querySelectorAll('.kpi')).toHaveLength(3);
+    expect(element.shadowRoot?.querySelectorAll('.kpi.warn')).toHaveLength(2);
+    expect(element.shadowRoot?.querySelectorAll('.person')).toHaveLength(1);
+    expect(element.shadowRoot?.querySelector('.person')?.textContent).toMatch(/Anna\s+2/u);
+    expect(element.shadowRoot?.querySelector('.issue .go')).not.toBeNull();
+    // Zuerst nur die Aufgabe, die ein Hinweis nennt; „Alle“ zeigt auch die übrigen.
+    expect(element.shadowRoot?.querySelectorAll('.track')).toHaveLength(1);
+    expect(element.shadowRoot?.querySelectorAll('.track tw-room')).toHaveLength(2);
+    expect(text).toContain('2 Wochen');
+    say(part(element, 'tw-segmented'), 'all');
+    await element.updateComplete;
+    expect(element.shadowRoot?.textContent).toContain('jede Auslosung');
+    expect(element.shadowRoot?.querySelectorAll('.bar')).toHaveLength(2);
+    expect(element.shadowRoot?.querySelectorAll('.dot.ghost').length).toBeGreaterThan(0);
+    expect(element.shadowRoot?.querySelectorAll('.issue.blocking')).toHaveLength(1);
+    expect(text).toContain('„Bad“ steht auf mindestens 9×');
+    expect(text).toContain('Unbekannter Fehler.');
+    const goto: string[] = [];
+    element.addEventListener(EVENT_GOTO_TASK, (event) => {
+      goto.push((event as CustomEvent<string>).detail);
+    });
+    (part(element, '.issue .go') as unknown as HTMLButtonElement).click();
+    expect(goto).toEqual(['Bad']);
+
+    element.preview = { ...preview, issues: [], tracks: [], persons: {} };
+    await element.updateComplete;
+    expect(element.shadowRoot?.querySelector('.issue.ok')).not.toBeNull();
+    expect(element.shadowRoot?.textContent).toContain('Noch keine Aufgabe gewählt.');
+    element.preview = undefined;
+    await element.updateComplete;
+    expect(element.shadowRoot?.textContent.trim()).toBe('');
+  });
+
+  it('Kurztexte für Karten und Abstände', () => {
+    expect(describeInterval({ unit: 'day', every: 7 }, 'de')).toBe('alle 7 Tage');
+    expect(describeInterval({ unit: 'week', every: 1 }, 'de')).toBe('jede Woche');
+    expect(describeInterval({ unit: 'hour', every: 12 }, 'en')).toBe('every 12 hours');
+    expect(describeSpan(336, 'de')).toBe('2 Wochen');
+    expect(describeSpan(72, 'de')).toBe('3 Tage');
+    expect(describeSpan(60, 'de')).toBe('2,5 Tage');
+    expect(describeSpan(36, 'de')).toBe('36 Stunden');
+    expect(describeSpan(5, 'en')).toBe('5 hours');
+    expect(describeSpan(1, 'en')).toBe('1 hour');
   });
 });

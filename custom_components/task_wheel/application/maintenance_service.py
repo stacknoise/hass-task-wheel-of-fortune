@@ -45,9 +45,7 @@ class MaintenanceService:
 
     def run(self, now: dt.datetime) -> None:
         """Plant zuerst den nächsten Lauf (ein Fehler verliert ihn nicht), markiert und räumt."""
-        at = next_daily(MAINTENANCE_HOUR, now)
-        if at is not None:
-            self._timers.schedule(TIMER_MAINTENANCE, at, self.run)
+        self._timers.schedule(TIMER_MAINTENANCE, next_daily(MAINTENANCE_HOUR, now), self.run)
         self._assignments.mark_missed(now)
         if self._decisions is not None:
             self._decisions.purge(now)

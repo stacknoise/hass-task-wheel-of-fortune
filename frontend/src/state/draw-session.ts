@@ -1,10 +1,4 @@
-import type {
-  ApiClient,
-  DrawWindowRequest,
-  PanelRoundWire,
-  TaskDrawWire,
-  TaskReplacementWire,
-} from '../api/index.ts';
+import type { ApiClient, PanelRoundWire, TaskDrawWire, TaskReplacementWire } from '../api/index.ts';
 import { DRAW_PHASE, DRAW_UNKNOWN_ERROR } from '../constants/index.ts';
 import type { DrawPhase } from '../constants/index.ts';
 
@@ -119,24 +113,19 @@ export class DrawSession {
   }
 
   /**
-   * Beginnt eine neue Runde für den Zeitplan (eine offene desselben Plans entfällt im Backend);
-   * `window` sagt, ab wann die Aufgaben gelten und bis wann sie erledigt sein müssen.
+   * Beginnt eine neue Runde für die nächste offene Periode des Zeitplans (eine offene Runde
+   * desselben Plans entfällt im Backend).
    * Ohne Animation (`animated` falsch) wird sofort alles gezogen und die Runde abgeschlossen;
    * mit `prepare` bleibt die Runde stattdessen bereit (zum Austauschen von Aufgaben), bis der
    * Benutzer „direkt verteilen“ wählt. Lassen sich nicht alle Aufgaben vergeben, bleibt die Runde
    * ebenfalls bereit, bis der Benutzer entscheidet (`confirmUnplaceable` oder `restart`).
    */
-  async begin(
-    scheduleId: string,
-    window: DrawWindowRequest,
-    animated = true,
-    prepare = false,
-  ): Promise<void> {
+  async begin(scheduleId: string, animated = true, prepare = false): Promise<void> {
     if (!isIdle(this.#state)) {
       return;
     }
     await this.#run(async (alive) => {
-      const round = await this.#client.beginDraw(scheduleId, window);
+      const round = await this.#client.beginDraw(scheduleId);
       if (!alive()) {
         return;
       }
