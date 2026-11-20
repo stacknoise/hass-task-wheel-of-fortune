@@ -204,7 +204,7 @@ describe('Editoren', () => {
       value: [{ task_id: 'b', mode: 'min_count', min_count: 2 }] satisfies EntryWire[],
     });
     const seen = changes(editor);
-    const toggles = [...(editor.shadowRoot?.querySelectorAll('.row > tw-toggle') ?? [])] as El[];
+    const toggles = [...(editor.shadowRoot?.querySelectorAll('.name > tw-toggle') ?? [])] as El[];
     say(toggles[0] as El, true);
     expect(seen.at(-1)).toEqual([
       { task_id: 'a', mode: 'min_count', min_count: 1 },

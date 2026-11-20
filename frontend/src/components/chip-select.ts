@@ -14,6 +14,8 @@ export interface ChipOption {
   readonly label: string;
   /** Optionale Farbe als Punkt vor dem Text (Farbe einer Person). */
   readonly color?: string;
+  /** Optionale Räume der Aufgabe, als Marken unter dem Text (nur in Listen, nicht in Chips). */
+  readonly rooms?: readonly string[];
 }
 
 /** Mehrfachauswahl aus Chips; meldet die gewählten Kennungen in der Reihenfolge der Optionen. */

@@ -16,6 +16,7 @@ import { emitChange, onChange } from './change.ts';
 import type { ChipOption } from './chip-select.ts';
 import { formStyles, stackStyles } from './formStyles.ts';
 import { LocalizedElement } from './localized.ts';
+import './room.ts';
 import './stepper.ts';
 import { baseStyles, tokenStyles, viewStyles } from './styles.ts';
 import { describeSpan } from './summaries.ts';
@@ -23,7 +24,7 @@ import './toggle.ts';
 import { defineOnce } from './define.ts';
 
 /** Höhe einer Zeile in `em`; die Liste zeigt `ENTRY_ROWS_VISIBLE` Zeilen, danach erscheint die Bildlaufleiste. */
-const ROW_HEIGHT_EM = 5.5;
+const ROW_HEIGHT_EM = 6.5;
 
 /**
  * Die Aufgaben eines Zeitplans und wie häufig sie vorkommen: je Aufgabe „mindestens n× je Lauf“ oder
@@ -62,6 +63,11 @@ export class TwEntryEditor extends LocalizedElement {
       }
       .row.on {
         border-color: var(--tw-color-primary);
+      }
+      .name {
+        display: grid;
+        gap: var(--tw-space-xs);
+        justify-items: start;
       }
       .detail {
         grid-column: 1 / -1;
@@ -110,13 +116,16 @@ export class TwEntryEditor extends LocalizedElement {
 
   #row(task: ChipOption, entry: EntryWire | undefined): TemplateResult {
     return html`<div class="row ${entry ? 'on' : ''}">
-      <tw-toggle
-        .label=${task.label}
-        .checked=${entry !== undefined}
-        @tw-change=${onChange<boolean>((on) => {
-          this.#select(task.id, on);
-        })}
-      ></tw-toggle>
+      <div class="name">
+        <tw-toggle
+          .label=${task.label}
+          .checked=${entry !== undefined}
+          @tw-change=${onChange<boolean>((on) => {
+            this.#select(task.id, on);
+          })}
+        ></tw-toggle>
+        ${(task.rooms ?? []).map((name) => html`<tw-room .name=${name}></tw-room> `)}
+      </div>
       ${entry ? this.#detail(entry) : nothing}
     </div>`;
   }
