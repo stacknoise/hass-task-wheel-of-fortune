@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+## [0.8.0] – 2026-11-20
+
 - **Geändert:** Der Zeitplan-Editor ist übersichtlicher und gliedert sich in vier Reiter: Ablauf, Aufgaben, Auswertung und Optionen. Die Reiter zeigen die Zahl der gewählten Aufgaben und der Hinweise; in der Fußzeile steht immer, ob der Plan passt, und ein Klick führt zu den Hinweisen. Die Aufgabenliste hat Suche, Filter (alle, gewählt, offen) und Raumfilter, ihre Zeilen sind kompakt und nennen den ungefähren Abstand links vor dem Zähler, sodass Zähler und „Jede“ in allen Zeilen untereinander stehen. Die Auswertung nennt die Hinweise zuerst (mit Sprung zur Aufgabe), zeigt die Personen als Balken und zunächst nur die auffälligen Abstände. Das Automations-Beispiel ist eingeklappt. Eigene Scrollkästen im Editor entfallen
 
 ## [0.7.2] – 2026-11-20
@@ -144,7 +146,8 @@ Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.
 - Fairness-Gewichtung, Tausch mit Joker, „Bleibt unerledigt“, Historie mit CSV-Export und Statistiken
 - Home-Assistant-Anbindung: Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen
 
-[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.2...HEAD
+[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.6.3...v0.7.0
