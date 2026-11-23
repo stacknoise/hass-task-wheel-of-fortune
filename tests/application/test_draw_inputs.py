@@ -168,6 +168,35 @@ def test_a_gap_is_filled_with_one_spare_task():
     assert len(choose_tasks(ranking, _context(world))) == 1
 
 
+def _one_due_one_spare(world: World):
+    schedule = world.put_schedule(entries=f.entries("t1", "t2", every_draw=False, min_count=1))
+    add_round(world, "r1", NOW - 40 * DAY, item("a1", "r1"), period=0)
+    add_round(world, "r2", NOW - DAY, item("a2", "r2", task_id="t2"), period=39)
+    return _ranking(world, schedule, FixedRandom(0.5), period=40)
+
+
+def test_without_assign_everyone_only_due_tasks_are_drawn():
+    world = World()
+    ranking = _one_due_one_spare(world)
+    assert [t.id for t in choose_tasks(ranking, _context(world))] == ["t1"]
+
+
+def test_assign_everyone_fills_the_round_with_spare_tasks():
+    world = World()
+    ranking = _one_due_one_spare(world)
+    picked = choose_tasks(ranking, _context(world), assign_everyone=True)
+    assert {t.id for t in picked} == {"t1", "t2"}
+
+
+def test_assign_everyone_leaves_persons_empty_if_tasks_are_missing():
+    world = World()
+    schedule = world.put_schedule(entries=f.entries("t1"))
+    picked = choose_tasks(
+        _ranking(world, schedule, FixedRandom(0.5)), _context(world), assign_everyone=True
+    )
+    assert [t.id for t in picked] == ["t1"]
+
+
 def test_tasks_nobody_can_do_are_not_part_of_the_round():
     world = World()
     world.config.put_task(_only("t3", "gone"))

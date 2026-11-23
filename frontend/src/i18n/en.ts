@@ -86,6 +86,7 @@ export const en: Record<keyof typeof de, string> = {
   'schedules.enabled': 'Active',
   'schedules.notify': 'Send notification',
   'schedules.skip_absent': 'Skip absent persons',
+  'schedules.assign_everyone': 'Every present person gets a task',
   'schedules.animations': 'Draw animations',
   'schedules.animations.hint':
     'With several variants, one is picked at random for every draw. With none selected, the draw happens at once and the task list is shown.',

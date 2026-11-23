@@ -89,6 +89,7 @@ export interface ScheduleWire {
   readonly enabled: boolean;
   readonly notify: boolean;
   readonly skip_absent: boolean;
+  readonly assign_everyone: boolean;
   readonly archived: boolean;
   readonly animations: readonly AnimationKind[];
 }

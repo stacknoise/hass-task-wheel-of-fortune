@@ -309,7 +309,7 @@ class DrawService:
             self._config, self._history, recent, now, effective_window(schedule, period, now)
         )
         ranking = ranked_tasks(self._config, self._history, schedule, period, self._rng)
-        picked = choose_tasks(ranking, context)
+        picked = choose_tasks(ranking, context, assign_everyone=schedule.assign_everyone)
         tasks = shuffled(picked, self._rng)
         if not tasks:
             raise DrawRejectedError(ERR_NOTHING_DUE)

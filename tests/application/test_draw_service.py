@@ -97,11 +97,21 @@ def test_periods_are_drawn_in_order_and_each_only_once():
 
 def test_only_due_tasks_are_drawn_and_a_gap_is_filled_by_chance():
     world = World(0.01)
-    world.put_schedule(entries=f.entries("t1", "t2", every_draw=False, min_count=1))
+    world.put_schedule(
+        entries=f.entries("t1", "t2", every_draw=False, min_count=1), assign_everyone=False
+    )
     first = world.draws.draw("s1", AUTO, NOW)
     assert len(first.assignments) == 2  # ohne Vorgeschichte sind beide fällig (Zielabstand 30)
     gap = world.draws.draw("s1", AUTO, NOW + DAY)
     assert len(gap.assignments) == 1  # nichts fällig: der Zufall zieht eine Aufgabe nach
+
+
+def test_assign_everyone_fills_a_gap_so_that_every_person_gets_a_task():
+    world = World(0.01)
+    world.put_schedule(entries=f.entries("t1", "t2", every_draw=False, min_count=1))
+    world.draws.draw("s1", AUTO, NOW)
+    gap = world.draws.draw("s1", AUTO, NOW + DAY)
+    assert len(gap.assignments) == 2
 
 
 def test_nobody_available_means_nothing_can_be_drawn():

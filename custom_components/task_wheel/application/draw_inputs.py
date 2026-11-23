@@ -81,7 +81,9 @@ def shuffled(tasks: tuple[Task, ...], rng: RandomSource) -> tuple[Task, ...]:
     return tuple(tasks[i] for i in sorted(range(len(tasks)), key=keys.__getitem__))
 
 
-def choose_tasks(ranking: DueRanking, context: DrawContext) -> tuple[Task, ...]:
+def choose_tasks(
+    ranking: DueRanking, context: DrawContext, *, assign_everyone: bool = False
+) -> tuple[Task, ...]:
     """Wählt die Aufgaben der Auslosung so, dass sich alle vergeben lassen.
 
     Jede Person bekommt je Auslosung höchstens eine Aufgabe, und nicht jede darf, kann oder ist da
@@ -89,8 +91,15 @@ def choose_tasks(ranking: DueRanking, context: DrawContext) -> tuple[Task, ...]:
     „jede Auslosung“-Aufgaben und der fälligen, in dieser Reihenfolge: sind mehr fällig als
     Personen, entscheidet der gewichtete Zufall (Überlast). Ist nichts vergebbar fällig (Lücke),
     zieht der Zufall die erste vergebbare der übrigen Aufgaben nach.
+
+    Mit `assign_everyone` füllt die Auswahl danach die Runde mit den übrigen (noch nicht fälligen)
+    Aufgaben auf, solange sich alle vergeben lassen: jede Person, die etwas übernehmen kann,
+    bekommt eine Aufgabe. Gibt es weniger Aufgaben als Personen, bleiben Personen leer.
     """
     priority = ranking.priority
+    if assign_everyone:
+        everything = (*priority, *ranking.spare)
+        return pick_assignable(everything, context, range(len(everything)))
     picked = pick_assignable(priority, context, range(len(priority))) if priority else ()
     for spare in () if picked else ranking.spare:
         picked = pick_assignable((spare,), context, (0,))

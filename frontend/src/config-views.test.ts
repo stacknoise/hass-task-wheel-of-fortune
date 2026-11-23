@@ -52,6 +52,7 @@ const SNAPSHOT: Snapshot = {
       enabled: false,
       notify: true,
       skip_absent: true,
+      assign_everyone: true,
       archived: true,
     },
   ],
@@ -379,6 +380,7 @@ describe('Zeitpläne', () => {
       enabled: true,
       notify: true,
       skip_absent: true,
+      assign_everyone: true,
       archived: false,
       animations: [...DEFAULT_ANIMATIONS],
     });
