@@ -267,6 +267,7 @@ class Schedule(Model):
     enabled: bool = spec(to_bool, default=True)
     notify: bool = spec(to_bool, default=True)
     skip_absent: bool = spec(to_bool, default=True)
+    assign_everyone: bool = spec(to_bool, default=True)
     archived: bool = spec(to_bool, default=False)
     animations: tuple[AnimationKind, ...] = spec(
         tuple_of(enum_of(AnimationKind)), default=DEFAULT_ANIMATIONS

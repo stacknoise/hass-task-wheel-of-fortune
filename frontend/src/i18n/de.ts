@@ -85,6 +85,7 @@ export const de = {
   'schedules.enabled': 'Aktiv',
   'schedules.notify': 'Benachrichtigung senden',
   'schedules.skip_absent': 'Abwesende überspringen',
+  'schedules.assign_everyone': 'Jede anwesende Person bekommt eine Aufgabe',
   'schedules.animations': 'Animationen der Auslosung',
   'schedules.animations.hint':
     'Bei mehreren Varianten wird bei jeder Auslosung zufällig eine gewählt. Ohne Auswahl wird sofort ausgelost und die Aufgabenliste gezeigt.',

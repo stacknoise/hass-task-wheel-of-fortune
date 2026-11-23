@@ -125,6 +125,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
       enabled: true,
       notify: true,
       skip_absent: true,
+      assign_everyone: true,
       archived: false,
       animations: DEFAULT_ANIMATIONS,
       slug: '',
@@ -143,6 +144,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
       enabled: schedule.enabled,
       notify: schedule.notify,
       skip_absent: schedule.skip_absent,
+      assign_everyone: schedule.assign_everyone,
       archived: schedule.archived,
       animations: animationsOf(schedule.animations),
     };
@@ -159,6 +161,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
       enabled: draft.enabled,
       notify: draft.notify,
       skip_absent: draft.skip_absent,
+      assign_everyone: draft.assign_everyone,
       archived: draft.archived && !draft.enabled,
       animations: draft.animations,
     };
@@ -331,6 +334,7 @@ export class SchedulesView extends ConfigView<ScheduleWire, ScheduleDraft> {
         ${this.toggle('schedules.enabled', 'enabled', draft.enabled)}
         ${this.toggle('schedules.notify', 'notify', draft.notify)}
         ${this.toggle('schedules.skip_absent', 'skip_absent', draft.skip_absent)}
+        ${this.toggle('schedules.assign_everyone', 'assign_everyone', draft.assign_everyone)}
       </div>
       ${this.#animations(draft.animations)} ${draft.slug ? this.#example(draft.slug) : nothing}
     `;
