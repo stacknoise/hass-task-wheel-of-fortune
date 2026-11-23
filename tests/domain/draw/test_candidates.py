@@ -35,7 +35,7 @@ def test_task_without_allowed_persons_is_open_for_everyone_in_the_round():
     assert [p.id for p in selection.candidates] == ["a", "b"]
 
 
-def test_person_is_candidate_if_present_on_any_day_of_the_window():
+def test_person_absent_on_the_first_day_is_out_even_if_back_later():
     gone = OnceAbsence(start=TODAY, end=TODAY + dt.timedelta(days=30))
     back = OnceAbsence(start=TODAY, end=TODAY + dt.timedelta(days=2))
     ctx = make_context(
@@ -43,12 +43,12 @@ def test_person_is_candidate_if_present_on_any_day_of_the_window():
         window=PeriodWindow(NOW, NOW + dt.timedelta(days=7)),
     )
     selection = CandidateSelector().select(task(allowed=AB), ctx)
-    assert [p.id for p in selection.candidates] == ["b"]
-    assert reasons(selection) == {("a", ExclusionReason.ABSENT)}
+    assert selection.candidates == ()
+    assert reasons(selection) == {("a", ExclusionReason.ABSENT), ("b", ExclusionReason.ABSENT)}
 
 
-def test_only_the_days_of_the_window_count_not_the_day_of_the_draw():
-    # Dienstag 16:00 ausgelost, gilt ab Mittwoch 10:00 für 4 Stunden: wer am Mittwoch fehlt, kann
+def test_only_the_first_day_of_the_window_counts_not_the_day_of_the_draw():
+    # Dienstag 16:00 ausgelost, gilt ab Mittwoch 10:00: wer am Mittwoch fehlt, kann
     # nichts übernehmen, auch wenn er am Dienstag anwesend ist
     wednesday = TODAY + dt.timedelta(days=1)
     away = OnceAbsence(start=wednesday, end=wednesday)
