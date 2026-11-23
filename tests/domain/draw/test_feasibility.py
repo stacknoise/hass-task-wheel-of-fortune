@@ -30,17 +30,26 @@ def _context(window: PeriodWindow):
     return make_context(people, window=window)
 
 
-def test_present_on_any_day_of_the_window_is_enough():
+def test_present_on_the_first_day_of_the_window_is_enough():
     context = _context(PeriodWindow(NOW, NOW + 2 * DAY))
     assert feasible_persons(task(allowed=frozenset()), context) == {"a", "b", "c"}
 
 
-def test_absent_for_the_whole_window_is_not_feasible():
+def test_absent_on_the_first_day_is_not_feasible_even_if_back_later():
+    away_today = OnceAbsence(start=TODAY, end=TODAY)
+    context = make_context(
+        [make_person("a", absences=(away_today,)), make_person("b")],
+        window=PeriodWindow(NOW, NOW + 3 * DAY),
+    )
+    assert feasible_persons(task(allowed=frozenset()), context) == {"b"}
+
+
+def test_absent_on_the_first_day_of_the_window_is_not_feasible():
     window = PeriodWindow(NOW + DAY, NOW + DAY + dt.timedelta(hours=4))
     assert feasible_persons(task(allowed=frozenset()), _context(window)) == {"b", "c"}
 
 
-def test_participants_leave_out_persons_absent_for_the_whole_window():
+def test_participants_leave_out_persons_absent_on_the_first_day():
     window = PeriodWindow(NOW + DAY, NOW + DAY + dt.timedelta(hours=4))
     context = _context(window)
     tasks = [task(id="t1", allowed=frozenset({"a", "b"})), task(id="t2", allowed=frozenset())]
