@@ -72,7 +72,7 @@ class RoundDraft:
 
     @property
     def participants(self) -> frozenset[PersonId]:
-        """Personen der Runde: wer im Fristfenster mindestens eine ihrer Aufgaben übernehmen kann.
+        """Personen der Runde: wer am Auslosungstag mindestens eine ihrer Aufgaben übernehmen kann.
 
         Abwesende, pausierte oder zu wenig belastbare Personen gehören nicht dazu (Rad, Liste).
         """

@@ -1,9 +1,9 @@
 """Machbarkeit: wer kann eine Aufgabe im Zeitraum der Frist übernehmen (KONZEPT §5.2).
 
 Eine Person ist Kandidat, wenn sie die Aufgabe laut Konfiguration bekommen darf, nicht pausiert
-und belastbar genug ist und (sofern die Aufgabe Abwesenheit beachtet) irgendwann im Fenster
-`DrawContext.window` anwesend ist. Die Besetzung der Runde bleibt außen vor. Dieselbe Prüfung
-nutzen die Auslosung, der Entscheidungslog und der Austausch von Aufgaben.
+und belastbar genug ist und (sofern die Aufgabe Abwesenheit beachtet) am ersten Tag des Fensters
+`DrawContext.window` (dem Tag der Auslosung) anwesend ist. Die Besetzung der Runde bleibt außen
+vor. Dieselbe Prüfung nutzen die Auslosung, der Entscheidungslog und der Austausch von Aufgaben.
 """
 
 from collections.abc import Iterable, MutableMapping, Sequence

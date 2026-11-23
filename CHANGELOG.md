@@ -6,6 +6,7 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 ## [Unveröffentlicht]
 
 - **Neu:** Option „Jede anwesende Person bekommt eine Aufgabe“ am Zeitplan (Standard: an). Gibt es weniger fällige Aufgaben als anwesende Personen, füllt die Auslosung die Runde mit noch nicht fälligen Aufgaben des Zeitplans auf, solange sich alle vergeben lassen. Gibt es insgesamt weniger Aufgaben als Personen, bleiben einzelne Personen wie bisher ohne Aufgabe
+- Behoben: Wer am Tag der Auslosung abwesend ist, erscheint nicht mehr in „Wer ist dabei“ und im Rad und bekommt keine Aufgabe, auch wenn die Person später im Zeitraum des Zeitplans zurückkommt
 
 ## [0.8.0] – 2026-11-20
 
