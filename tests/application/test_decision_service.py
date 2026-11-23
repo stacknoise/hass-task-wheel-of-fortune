@@ -155,7 +155,7 @@ def test_deleting_a_round_removes_its_log_entries_only():
 def test_task_not_due_is_logged_as_skipped():
     world = World(0.9)
     entries = (*f.entries("t1"), *f.entries("t2", every_draw=False, min_count=1))
-    world.put_schedule(entries=entries)
+    world.put_schedule(entries=entries, assign_everyone=False)
     world.draws.draw("s1", RoundOrigin.AUTO, NOW)
     record = _only(world)
     assert [(s.task_id, s.reason) for s in record.skipped] == [("t2", "not_due")]
@@ -164,7 +164,9 @@ def test_task_not_due_is_logged_as_skipped():
 
 def test_gap_filler_is_noted_on_its_task_and_not_listed_as_skipped():
     world = World(0.9)
-    world.put_schedule(entries=f.entries("t1", "t2", every_draw=False, min_count=1))
+    world.put_schedule(
+        entries=f.entries("t1", "t2", every_draw=False, min_count=1), assign_everyone=False
+    )
     world.draws.draw("s1", RoundOrigin.AUTO, NOW)
     record = _only(world)
     (task,) = record.tasks
