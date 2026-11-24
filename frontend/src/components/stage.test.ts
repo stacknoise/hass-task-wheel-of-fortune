@@ -3,7 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ANIMATION_KINDS, STAGE_TAG, STAGE_TAGS } from '../constants/index.ts';
 import type { AnimationKind } from '../constants/index.ts';
 import './index.ts';
-import type { TwStage } from './stage.ts';
+import { TwStage } from './stage.ts';
+import { createElementOf } from './element.testing.ts';
 
 const SEGMENTS = [
   { id: 'a', label: 'Anna', color: '#c05600', chance: 0.6 },
@@ -11,7 +12,7 @@ const SEGMENTS = [
 ];
 
 async function mount(kind?: AnimationKind): Promise<TwStage> {
-  const stage = document.createElement(STAGE_TAG) as TwStage;
+  const stage = createElementOf(STAGE_TAG, TwStage);
   if (kind) {
     stage.kind = kind;
   }

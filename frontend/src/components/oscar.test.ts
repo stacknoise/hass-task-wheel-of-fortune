@@ -12,7 +12,8 @@ import {
   STAGE_TAGS,
 } from '../constants/index.ts';
 import './oscar.ts';
-import type { TwOscar } from './oscar.ts';
+import { TwOscar } from './oscar.ts';
+import { createElementOf } from './element.testing.ts';
 
 const SEGMENTS = [
   { id: 'a', label: 'Anna', color: '#c05600', chance: 0.6 },
@@ -28,7 +29,7 @@ const TOTAL_MS =
   OSCAR_HOLD_MS;
 
 async function mount(language = 'de'): Promise<TwOscar> {
-  const element = document.createElement(STAGE_TAGS.oscar) as TwOscar;
+  const element = createElementOf(STAGE_TAGS.oscar, TwOscar);
   element.segments = SEGMENTS;
   element.taskName = 'Bad putzen';
   element.language = language;
@@ -99,7 +100,7 @@ describe('tw-oscar', () => {
   });
 
   it('scrollt die Namensleiste bei vielen Personen zur hervorgehobenen Person', async () => {
-    const element = document.createElement(STAGE_TAGS.oscar) as TwOscar;
+    const element = createElementOf(STAGE_TAGS.oscar, TwOscar);
     element.segments = Array.from({ length: 12 }, (_, index) => ({
       id: `p${String(index)}`,
       label: `Person ${String(index)}`,

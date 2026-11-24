@@ -9,7 +9,8 @@ import {
   STAGE_TAGS,
 } from '../constants/index.ts';
 import './spotlight.ts';
-import type { TwSpotlight } from './spotlight.ts';
+import { TwSpotlight } from './spotlight.ts';
+import { createElementOf } from './element.testing.ts';
 
 const SEGMENTS = [
   { id: 'a', label: 'Anna', color: '#c05600', chance: 0.6 },
@@ -25,7 +26,7 @@ function reducedMotion(reduced: boolean): void {
 }
 
 async function mount(segments = SEGMENTS): Promise<TwSpotlight> {
-  const element = document.createElement(STAGE_TAGS.spotlight) as TwSpotlight;
+  const element = createElementOf(STAGE_TAGS.spotlight, TwSpotlight);
   element.segments = segments;
   document.body.append(element);
   await element.updateComplete;
@@ -156,7 +157,7 @@ describe('tw-spotlight', () => {
   });
 
   it('verwendet Math.random, wenn nichts ersetzt wurde', () => {
-    const element = document.createElement(STAGE_TAGS.spotlight) as TwSpotlight;
+    const element = createElementOf(STAGE_TAGS.spotlight, TwSpotlight);
     expect(element.random).toBe(Math.random);
   });
 });

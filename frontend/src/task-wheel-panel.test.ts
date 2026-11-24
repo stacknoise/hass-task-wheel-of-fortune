@@ -7,14 +7,15 @@ import {
 } from './constants/index.ts';
 import { FakeHass } from './api/fake-hass.testing.ts';
 import { assignment, fakeHass, text } from './views/fixtures.testing.ts';
-import type { TaskWheelPanel } from './task-wheel-panel.ts';
+import { TaskWheelPanel } from './task-wheel-panel.ts';
 import { VIEW_LOADERS } from './views/index.ts';
 import './task-wheel-panel.ts';
+import { createElementOf } from './components/element.testing.ts';
 
 const PREFIX = '/task-wheel';
 
 async function mount(hass?: FakeHass, path = ''): Promise<TaskWheelPanel> {
-  const element = document.createElement(PANEL_ELEMENT_NAME) as TaskWheelPanel;
+  const element = createElementOf(PANEL_ELEMENT_NAME, TaskWheelPanel);
   element.route = { prefix: PREFIX, path };
   if (hass) {
     element.hass = hass;

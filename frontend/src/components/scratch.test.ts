@@ -9,7 +9,8 @@ import {
   STAGE_TAGS,
 } from '../constants/index.ts';
 import './scratch.ts';
-import type { TwScratch } from './scratch.ts';
+import { TwScratch } from './scratch.ts';
+import { createElementOf } from './element.testing.ts';
 
 const SEGMENTS = [
   { id: 'a', label: 'Anna', color: '#c05600', chance: 0.6 },
@@ -35,7 +36,7 @@ function fakeContext(): unknown {
 }
 
 async function mount(language = 'de'): Promise<TwScratch> {
-  const element = document.createElement(STAGE_TAGS.scratch) as TwScratch;
+  const element = createElementOf(STAGE_TAGS.scratch, TwScratch);
   element.segments = SEGMENTS;
   element.language = language;
   document.body.append(element);

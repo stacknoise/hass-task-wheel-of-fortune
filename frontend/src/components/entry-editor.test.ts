@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import './entry-editor.ts';
-import type { TwEntryEditor } from './entry-editor.ts';
+import { TwEntryEditor } from './entry-editor.ts';
+import { createElementOf } from './element.testing.ts';
 
 describe('Aufgabenliste des Zeitplans', () => {
   it('zeigt die Räume der Aufgaben unter dem Namen', async () => {
-    const editor = document.createElement('tw-entry-editor') as TwEntryEditor;
+    const editor = createElementOf('tw-entry-editor', TwEntryEditor);
     editor.tasks = [
       {
         id: 't1',
@@ -30,7 +31,7 @@ describe('Aufgabenliste des Zeitplans', () => {
   });
 
   it('übernimmt einen vorgegebenen Suchtext', async () => {
-    const editor = document.createElement('tw-entry-editor') as TwEntryEditor;
+    const editor = createElementOf('tw-entry-editor', TwEntryEditor);
     editor.tasks = [
       { id: 't1', label: 'Bad putzen' },
       { id: 't2', label: 'Müll' },

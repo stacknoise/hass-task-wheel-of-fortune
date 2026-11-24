@@ -3,7 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EVENT_WHEEL_STOP, STAGE_TAGS } from '../constants/index.ts';
 import { MotionToken } from './motion.ts';
 import './plinko.ts';
-import type { TwPlinko } from './plinko.ts';
+import { TwPlinko } from './plinko.ts';
+import { createElementOf } from './element.testing.ts';
 
 const SEGMENTS = [
   { id: 'a', label: 'Anna', color: '#c05600', chance: 0.6 },
@@ -18,7 +19,7 @@ function reducedMotion(reduced: boolean): void {
 }
 
 async function mount(segments = SEGMENTS, random = (): number => 0.5): Promise<TwPlinko> {
-  const plinko = document.createElement(STAGE_TAGS.plinko) as TwPlinko;
+  const plinko = createElementOf(STAGE_TAGS.plinko, TwPlinko);
   plinko.random = random;
   plinko.label = 'Plinko';
   plinko.segments = segments;

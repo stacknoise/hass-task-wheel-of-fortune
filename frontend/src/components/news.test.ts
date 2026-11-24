@@ -11,7 +11,8 @@ import {
   STAGE_TAGS,
 } from '../constants/index.ts';
 import './news.ts';
-import type { TwNews } from './news.ts';
+import { TwNews } from './news.ts';
+import { createElementOf } from './element.testing.ts';
 
 const SEGMENTS = [
   { id: 'a', label: 'Anna', color: '#c05600', chance: 0.5 },
@@ -25,7 +26,7 @@ const TOTAL_MS =
   NEWS_END_HOLD_MS;
 
 async function mount(language = 'de'): Promise<TwNews> {
-  const element = document.createElement(STAGE_TAGS.news) as TwNews;
+  const element = createElementOf(STAGE_TAGS.news, TwNews);
   element.segments = SEGMENTS;
   element.taskName = 'Bad putzen';
   element.language = language;
