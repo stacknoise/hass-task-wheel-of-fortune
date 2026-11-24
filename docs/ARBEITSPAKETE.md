@@ -1,6 +1,6 @@
 # Arbeitspakete: Task Wheel of Fortune
 
-Stand: 2026-11-05 (AP-00 bis AP-19 umgesetzt, Nachträge bis Version 0.8.0 unten) · Grundlage: [KONZEPT.md](KONZEPT.md)
+Stand: 2026-11-05 (AP-00 bis AP-19 umgesetzt, Nachträge bis Version 0.9.0 unten) · Grundlage: [KONZEPT.md](KONZEPT.md)
 
 Größen: **S** ≈ bis 1 Tag · **M** ≈ 2–3 Tage · **L** ≈ 4–5 Tage (Richtwerte für eine Person).
 Jedes Paket gilt erst als fertig, wenn die **gemeinsame Definition of Done** erfüllt ist.
@@ -236,7 +236,7 @@ Parallelisierbar: AP-04/05 nach AP-02; AP-11/12/13 nach AP-09; AP-15/16/17 nach 
 
 ---
 
-## Nachträge nach AP-19 (Version 0.8.0 ergänzt)
+## Nachträge nach AP-19 (Version 0.9.0 ergänzt)
 
 Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. Details je Änderung stehen im Änderungsprotokoll in [CODE_DOKU.md](CODE_DOKU.md) §4.
 
@@ -370,3 +370,11 @@ Nach dem ersten Release kamen Änderungen auf Zuruf, ohne eigenes Arbeitspaket. 
 |---|---|
 | #147 | Zeitplan-Editor in Reiter gliedern, Aufgabenliste mit Suche und Filter |
 | – | Version 0.8.0 |
+
+### Version 0.9.0
+
+| PR | Inhalt |
+|---|---|
+| #149 | Abwesende am Tag der Auslosung nicht mehr als Teilnehmer führen |
+| #150 | Option am Zeitplan: Jede anwesende Person bekommt eine Aufgabe |
+| – | Version 0.9.0 |
