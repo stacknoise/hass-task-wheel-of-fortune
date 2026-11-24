@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EVENT_WHEEL_STOP, SLOT_RECOIL_MS, SLOT_SPIN_MS, STAGE_TAGS } from '../constants/index.ts';
 import './slot.ts';
-import type { TwSlot } from './slot.ts';
+import { TwSlot } from './slot.ts';
+import { createElementOf } from './element.testing.ts';
 
 const SEGMENTS = [
   { id: 'a', label: 'Anna', color: '#c05600', chance: 0.6 },
@@ -16,7 +17,7 @@ function reducedMotion(reduced: boolean): void {
 }
 
 async function mount(segments = SEGMENTS, random = (): number => 0.5): Promise<TwSlot> {
-  const slot = document.createElement(STAGE_TAGS.slot) as TwSlot;
+  const slot = createElementOf(STAGE_TAGS.slot, TwSlot);
   slot.random = random;
   slot.label = 'Walze';
   slot.segments = segments;

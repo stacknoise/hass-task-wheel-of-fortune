@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { COMPONENT_TAGS, EVENT_WHEEL_STOP, SPIN_DURATION_MS } from '../constants/index.ts';
 import './wheel.ts';
-import type { TwWheel } from './wheel.ts';
+import { TwWheel } from './wheel.ts';
+import { createElementOf } from './element.testing.ts';
 
 const SEGMENTS = [
   { id: 'a', label: 'Anna', color: '#c05600', chance: 0.6 },
@@ -15,7 +16,7 @@ function reducedMotion(reduced: boolean): void {
 }
 
 async function mount(segments = SEGMENTS): Promise<TwWheel> {
-  const wheel = document.createElement(COMPONENT_TAGS.wheel) as TwWheel;
+  const wheel = createElementOf(COMPONENT_TAGS.wheel, TwWheel);
   wheel.segments = segments;
   document.body.append(wheel);
   await wheel.updateComplete;

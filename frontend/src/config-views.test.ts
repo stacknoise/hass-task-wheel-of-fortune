@@ -9,8 +9,9 @@ import {
   PANEL_ELEMENT_NAME,
 } from './constants/index.ts';
 import type { ScheduleTab } from './constants/index.ts';
-import type { TaskWheelPanel } from './task-wheel-panel.ts';
+import { TaskWheelPanel } from './task-wheel-panel.ts';
 import './task-wheel-panel.ts';
+import { createElementOf } from './components/element.testing.ts';
 
 type El = HTMLElement & { updateComplete: Promise<boolean>; [key: string]: unknown };
 
@@ -80,7 +81,7 @@ async function open(path: string): Promise<{ hass: FakeHass; view: El }> {
   const hass = new FakeHass();
   hass.snapshot = SNAPSHOT;
   hass.replies.set('task_wheel/schedule/plan_preview', PLAN);
-  const panel = document.createElement(PANEL_ELEMENT_NAME) as TaskWheelPanel;
+  const panel = createElementOf(PANEL_ELEMENT_NAME, TaskWheelPanel);
   panel.route = { prefix: '/task-wheel', path };
   panel.hass = hass;
   document.body.append(panel);
