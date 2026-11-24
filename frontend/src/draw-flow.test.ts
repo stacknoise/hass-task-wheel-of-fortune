@@ -3,8 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FakeHass, EMPTY_SNAPSHOT } from './api/fake-hass.testing.ts';
 import type { PanelRoundWire, TaskDrawWire } from './api/index.ts';
 import { EVENT_LOCATION_CHANGED, PANEL_ELEMENT_NAME, ROUTES } from './constants/index.ts';
-import type { TaskWheelPanel } from './task-wheel-panel.ts';
+import { TaskWheelPanel } from './task-wheel-panel.ts';
 import './task-wheel-panel.ts';
+import { createElementOf } from './components/element.testing.ts';
 
 const PERSONS = [
   { id: 'p1', name: 'Anna', color: '#c05600' },
@@ -75,7 +76,7 @@ function hassWith(panelRounds: unknown[] = [], animations?: string[]): FakeHass 
 }
 
 async function mount(hass: FakeHass): Promise<{ panel: TaskWheelPanel; view: () => ParentNode }> {
-  const panel = document.createElement(PANEL_ELEMENT_NAME) as TaskWheelPanel;
+  const panel = createElementOf(PANEL_ELEMENT_NAME, TaskWheelPanel);
   panel.route = { prefix: '/task-wheel', path: ROUTES.draw };
   panel.language = 'de';
   panel.hass = hass;

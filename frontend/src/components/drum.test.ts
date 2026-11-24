@@ -3,7 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EVENT_WHEEL_STOP, STAGE_TAGS } from '../constants/index.ts';
 import { DRUM_TOTAL_MS } from './drum-geometry.ts';
 import './drum.ts';
-import type { TwDrum } from './drum.ts';
+import { TwDrum } from './drum.ts';
+import { createElementOf } from './element.testing.ts';
 
 const SEGMENTS = [
   { id: 'a', label: 'Anna', color: '#c05600', chance: 0.6 },
@@ -25,7 +26,7 @@ function seeded(seed: number): () => number {
 }
 
 async function mount(segments = SEGMENTS): Promise<TwDrum> {
-  const drum = document.createElement(STAGE_TAGS.drum) as TwDrum;
+  const drum = createElementOf(STAGE_TAGS.drum, TwDrum);
   drum.random = seeded(42);
   drum.segments = segments;
   document.body.append(drum);
@@ -151,7 +152,7 @@ describe('tw-drum', () => {
   });
 
   it('verwendet Math.random, wenn nichts ersetzt wurde', () => {
-    const drum = document.createElement(STAGE_TAGS.drum) as TwDrum;
+    const drum = createElementOf(STAGE_TAGS.drum, TwDrum);
     expect(drum.random).toBe(Math.random);
   });
 });

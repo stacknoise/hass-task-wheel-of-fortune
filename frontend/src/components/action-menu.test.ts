@@ -2,8 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { EVENT_ACTION } from '../constants/index.ts';
 import { press } from './press.testing.ts';
-import type { ActionItem, TwActionMenu } from './index.ts';
+import { type ActionItem, TwActionMenu } from './index.ts';
 import './index.ts';
+import { createElementOf } from './element.testing.ts';
 
 const ITEMS: readonly ActionItem[] = [
   { id: 'a', label: 'Eins' },
@@ -12,7 +13,7 @@ const ITEMS: readonly ActionItem[] = [
 ];
 
 async function mountMenu(): Promise<{ menu: TwActionMenu; actions: string[] }> {
-  const menu = document.createElement('tw-action-menu') as TwActionMenu;
+  const menu = createElementOf('tw-action-menu', TwActionMenu);
   menu.language = 'de';
   menu.label = 'Aktionen';
   menu.items = ITEMS;
