@@ -65,11 +65,13 @@ def period_window(schedule: Schedule, index: int) -> PeriodWindow:
 def effective_window(schedule: Schedule, index: int, now: dt.datetime) -> PeriodWindow:
     """Das Fenster der Zuteilungen einer Auslosung der Periode `index` zum Zeitpunkt `now`.
 
-    Wird eine Periode erst nach ihrem Beginn ausgelost (von Hand oder verspätet), gilt die
-    Zuteilung ab jetzt für die Länge der Periode, damit sie nicht schon abgelaufen ist.
+    Die Zuteilung gilt ab jetzt für die Länge der Periode. Das trifft auch auf Perioden zu, die
+    noch nicht begonnen haben (mehrere Auslosungen von Hand am selben Tag laufen den Perioden
+    voraus): sie betreffen den Tag der Auslosung, nicht den ihrer Nummer. Nur vor dem Beginn des
+    Zeitplans gilt das Fenster der Periode selbst.
     """
     window = period_window(schedule, index)
-    if now <= window.start:
+    if now <= schedule.start:
         return window
     return PeriodWindow(now, now + (window.end - window.start))
 
@@ -98,6 +100,15 @@ def next_open_period(rounds: Iterable[Round], schedule_id: ScheduleId) -> int:
     """Nummer der nächsten offenen Periode: die jüngste Auslosung plus eins, sonst die erste."""
     newest = newest_period(rounds, schedule_id)
     return 0 if newest is None else newest + 1
+
+
+def grid_period(schedule: Schedule, round_: Round) -> int:
+    """Periode der Runde im Raster: Runden vor dem Beginn des Zeitplans gehören zur ersten.
+
+    Ältere Daten (Umstellung auf Perioden) nummerierten alle Runden eines Zeitplans nach ihrer
+    Reihenfolge, auch die vor dem Beginn; die nächste Auslosung lag dann Tage in der Zukunft.
+    """
+    return 0 if round_.started_at < schedule.start else round_.period_index
 
 
 def newest_period(rounds: Iterable[Round], schedule_id: ScheduleId) -> int | None:
