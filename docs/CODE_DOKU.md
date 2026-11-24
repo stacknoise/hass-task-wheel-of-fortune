@@ -1,6 +1,6 @@
 # Code-Dokumentation: Task Wheel of Fortune
 
-Stand: 2026-11-04 · Code-Version: 0.9.0 · Vorlage: Code-Dokus „Detailed Energy Card“ und
+Stand: 2026-11-04 · Code-Version: 0.9.1 · Vorlage: Code-Dokus „Detailed Energy Card“ und
 „HASS Test Data Creator“
 
 Dieses Dokument erfasst den Code mit seinen **Metriken** und **Abhängigkeiten** und protokolliert **jede
@@ -212,6 +212,7 @@ CI: `tools/check_docs_changed.py` verlangt bei Änderungen an den oben genannten
 
 | Datum | Version | AP | Module | Änderung | Metriken / Abhängigkeiten |
 |---|---|---|---|---|---|
+| 2026-11-24 | 0.9.1 | Release 0.9.1 | `manifest.json`, `pyproject.toml`, `frontend/package.json`, `e2e/package.json`, Lockdateien, `CHANGELOG.md`, `docs/` | geändert: Version 0.9.1 (Auslosung von Hand gilt für heute, #155); Patch-Release, keine weitere Logikänderung | keine Code-Änderung; keine neuen Abhängigkeiten |
 | 2026-11-24 | 0.9.1 | Auslosung von Hand gilt für heute | `domain/plan/window.py` (`effective_window`: Fenster ab jetzt auch für Perioden, die noch nicht begonnen haben, nur vor „Gültig ab“ das der Periode; neu `grid_period`), `application/maintenance_service.py` (`_repair_periods` beim Start: Runden vor „Gültig ab“ gehören zur ersten Periode), `docs/KONZEPT.md` | behoben: Perioden eines manuellen Zeitplans liefen der Zeit voraus (mehrere Auslosungen am Tag; bei der Umstellung auf Perioden fortlaufend nummerierte Alt-Runden vor „Gültig ab“), und die Auslosung prüfte die Anwesenheit am Tag der späteren Periode, sodass heute Abwesende im Rad erschienen | keine neuen Abhängigkeiten; `MaintenanceService` nutzt `domain.plan.window` |
 | 2026-11-24 | 0.9.0 | Release 0.9.0 | `manifest.json`, `pyproject.toml`, `frontend/package.json`, `e2e/package.json`, Lockdateien, `CHANGELOG.md`, `docs/` | geändert: Version 0.9.0 (Option „Jede anwesende Person bekommt eine Aufgabe“ #150, Abwesende am Tag der Auslosung nicht mehr als Teilnehmer #149, Abhängigkeiten #136); Minor-Release wegen der neuen Zeitplan-Option | keine Code-Änderung; keine neuen Abhängigkeiten |
 | 2026-11-23 | 0.9.0 | Abwesende nicht in der Auslosung | `domain/draw/candidates.py` (`AbsenceFilter` prüft nur den ersten Tag des Fensters, `is_present` statt `present_in_window`), `domain/draw/feasibility.py`, `domain/draw/draft.py` (Docstrings), `docs/KONZEPT.md` (§5.2, §11) | behoben: Wer am Tag der Auslosung abwesend ist, erscheint nicht mehr in „Wer ist dabei“ und im Rad und gewinnt nichts, auch wenn die Person später im Zeitraum zurückkommt; Tausch behält das Fenster der Zuteilung | keine Metrik- oder Abhängigkeitsänderung (weniger Aufrufe von `present_in_window`) |

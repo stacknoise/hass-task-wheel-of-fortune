@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+## [0.9.1] – 2026-11-24
+
 - Behoben: Eine Auslosung von Hand gilt immer für den Tag der Auslosung. Liefen die Perioden eines manuellen Zeitplans der Zeit voraus (mehrere Auslosungen am Tag, oder alte Runden, die bei der Umstellung auf Perioden fortlaufend nummeriert wurden und vor „Gültig ab“ liegen), prüfte die Auslosung die Anwesenheit am Tag der späteren Periode, sodass Abwesende im Rad erschienen. Alte Runden vor „Gültig ab“ werden beim Start der ersten Periode zugeordnet
 
 ## [0.9.0] – 2026-11-24
@@ -153,7 +155,8 @@ Erste Veröffentlichung über HACS als benutzerdefiniertes Repository.
 - Fairness-Gewichtung, Tausch mit Joker, „Bleibt unerledigt“, Historie mit CSV-Export und Statistiken
 - Home-Assistant-Anbindung: Dienste, Events, Sensoren, To-do-Listen, Buttons, Benachrichtigungen
 
-[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.9.0...HEAD
+[Unveröffentlicht]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/stacknoise/hass-task-wheel-of-fortune/compare/v0.7.1...v0.7.2
