@@ -1,9 +1,10 @@
 """Perioden, Fälligkeit und Vorschau eines Zeitplans (reine Funktionen)."""
 
 import datetime as dt
+from dataclasses import replace
 
-from custom_components.task_wheel.domain.enums import IntervalUnit
-from custom_components.task_wheel.domain.models import Interval
+from custom_components.task_wheel.domain.enums import IntervalUnit, RoundOrigin
+from custom_components.task_wheel.domain.models import Interval, Round
 from custom_components.task_wheel.domain.plan.due import rank_tasks, timing_of
 from custom_components.task_wheel.domain.plan.preview import (
     ISSUE_GAPS,
@@ -15,6 +16,7 @@ from custom_components.task_wheel.domain.plan.preview import (
 )
 from custom_components.task_wheel.domain.plan.window import (
     effective_window,
+    grid_period,
     newest_period,
     next_open_period,
     next_period_start,
@@ -56,6 +58,25 @@ def test_a_late_draw_starts_now_but_keeps_the_length() -> None:
     assert window.start == f.NOW + 24 * HOUR
     assert window.end == f.NOW + 30 * HOUR
     assert effective_window(schedule, 1, f.NOW).start == f.NOW + 6 * HOUR
+
+
+def test_a_draw_ahead_of_its_period_still_starts_now() -> None:
+    schedule = _plan()
+    window = effective_window(schedule, 5, f.NOW + HOUR)
+    assert (window.start, window.end) == (f.NOW + HOUR, f.NOW + 7 * HOUR)
+
+
+def test_rounds_from_before_the_start_belong_to_the_first_period() -> None:
+    schedule = _plan()
+    old = Round(
+        id="r1",
+        schedule_id="s1",
+        origin=RoundOrigin.MANUAL,
+        started_at=f.NOW - HOUR,
+        period_index=8,
+    )
+    assert grid_period(schedule, old) == 0
+    assert grid_period(schedule, replace(old, started_at=f.NOW)) == 8
 
 
 def test_open_and_newest_period_come_from_the_rounds_of_one_schedule() -> None:

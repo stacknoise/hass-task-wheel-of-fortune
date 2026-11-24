@@ -3,9 +3,11 @@
 import datetime as dt
 import logging
 from collections.abc import Callable, Coroutine
+from dataclasses import replace
 from typing import Any, Final
 
 from ..const.defaults import MAINTENANCE_HOUR
+from ..domain.plan.window import grid_period
 from .assignment_service import AssignmentService
 from .daily import next_daily
 from .decision_service import DecisionService
@@ -41,7 +43,20 @@ class MaintenanceService:
 
     def start(self, now: dt.datetime) -> None:
         """Holt den Lauf einmal nach (z. B. nach einem Neustart) und plant den nächsten."""
+        self._repair_periods()
         self.run(now)
+
+    def _repair_periods(self) -> None:
+        """Rückt Runden, die eine Periode im Voraus belegen, auf die Periode ihres Beginns.
+
+        Nach der Umstellung auf Perioden bekamen alte Runden fortlaufende Nummern und liefen dem
+        Raster davon; die nächste Auslosung hätte dann eine künftige Periode getroffen.
+        """
+        for round_ in tuple(self._history.rounds.values()):
+            schedule = self._config.schedules.get(round_.schedule_id)
+            period = None if schedule is None else grid_period(schedule, round_)
+            if period is not None and period != round_.period_index:
+                self._history.put_round(replace(round_, period_index=period))
 
     def run(self, now: dt.datetime) -> None:
         """Plant zuerst den nächsten Lauf (ein Fehler verliert ihn nicht), markiert und räumt."""

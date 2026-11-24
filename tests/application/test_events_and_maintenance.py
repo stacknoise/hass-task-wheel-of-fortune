@@ -260,3 +260,30 @@ def test_compose_shares_statistics_and_events() -> None:
     assert isinstance(data.statistics, StatisticsService)
     done = data.assignments.complete(round_.assignments[0].id, f.NOW)
     assert events.completed == [done]
+
+
+def test_maintenance_pulls_rounds_from_before_the_start_back_to_the_first_period() -> None:
+    world = EventWorld()
+    world.config.put_schedule(f.schedule(id="s1", start=f.NOW))
+    old = f.finished_round(
+        id="r_old",
+        started_at=f.NOW - 3 * DAY,
+        finished_at=f.NOW - 3 * DAY,
+        period_index=8,
+        assignments=(),
+    )
+    current = f.finished_round(
+        id="r_cur",
+        started_at=f.NOW + DAY,
+        finished_at=f.NOW + DAY,
+        period_index=1,
+        assignments=(),
+    )
+    for item in (old, current):
+        world.history.put_round(item)
+    service, _timers, spawned = _maintenance(world)
+    service.start(f.NOW + 2 * DAY)
+    for pending in spawned:
+        pending.close()
+    periods = {r.id: r.period_index for r in world.history.rounds.values()}
+    assert periods == {"r_old": 0, "r_cur": 1}
