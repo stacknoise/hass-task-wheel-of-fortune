@@ -12,12 +12,11 @@ from ..domain.decisions import (
     DecisionRecord,
     Exchange,
     ExcludedEntry,
-    SkippedTask,
     TaskDecision,
     WheelEntry,
 )
 from ..domain.draw.draft import RoundDraft
-from ..domain.draw.types import TaskDraw, TaskNote
+from ..domain.draw.types import TaskDraw
 from ..domain.enums import DecisionKind
 from ..domain.models import Assignment, Round
 from ..domain.types import PersonId, RoundId, TaskId
@@ -54,8 +53,7 @@ class DecisionService:
 
     def record_draw(self, draft: RoundDraft, round_: Round) -> None:
         """Hält je Aufgabe der Runde fest: Gewinner, Rad und ausgeschlossene Personen."""
-        filled = {note.task_id for note in draft.notes if note.reason == NOTE_FILLED}
-        tasks = tuple(self._task_decision(result, filled) for result in draft.results)
+        tasks = tuple(self._task_decision(result, draft.filled) for result in draft.results)
         self._add(
             DecisionRecord(
                 id=self._new_id(),
@@ -66,7 +64,6 @@ class DecisionService:
                 round_id=round_.id,
                 origin=round_.origin,
                 tasks=tasks,
-                skipped=self._skipped(draft.notes, filled),
             )
         )
 
@@ -160,17 +157,7 @@ class DecisionService:
     def _add(self, record: DecisionRecord) -> None:
         self._decisions.add(record)
 
-    def _skipped(self, notes: tuple[TaskNote, ...], filled: set[TaskId]) -> tuple[SkippedTask, ...]:
-        """Aufgaben, die nicht vorkamen (die nachgezogenen stehen bei ihrer Aufgabe)."""
-        return tuple(
-            SkippedTask(
-                task_id=note.task_id, task_name=self._task_name(note.task_id), reason=note.reason
-            )
-            for note in notes
-            if note.task_id not in filled
-        )
-
-    def _task_decision(self, result: TaskDraw, filled: set[TaskId]) -> TaskDecision:
+    def _task_decision(self, result: TaskDraw, filled: frozenset[TaskId]) -> TaskDecision:
         """Gewinner, Rad und Ausschlüsse einer Aufgabe mit den heutigen Namen."""
         return TaskDecision(
             task_id=result.task_id,

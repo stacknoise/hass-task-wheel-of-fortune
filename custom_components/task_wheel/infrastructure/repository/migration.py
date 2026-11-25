@@ -11,6 +11,7 @@ from ...const.keys import (
     KEY_AREA_IDS,
     KEY_ASSIGNMENTS,
     KEY_DEADLINE,
+    KEY_DECISIONS,
     KEY_DUE_DAYS,
     KEY_FREQUENCY,
     KEY_PERIOD_INDEX,
@@ -19,6 +20,7 @@ from ...const.keys import (
     KEY_SCHEDULE_ID,
     KEY_SCHEDULES,
     KEY_SETTINGS,
+    KEY_SKIPPED,
     KEY_STARTED_AT,
     KEY_TASK_IDS,
     KEY_TASKS,
@@ -264,6 +266,17 @@ def _round_periods(data: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _drop_skipped(data: dict[str, object]) -> dict[str, object]:
+    """1.6 -> 1.7: Einträge ohne die Liste der nicht ausgelosten Aufgaben (`skipped`)."""
+    records = data.get(KEY_DECISIONS)
+    if not isinstance(records, list):
+        return data
+    return {
+        **data,
+        KEY_DECISIONS: [_without(item, {KEY_SKIPPED}, lambda _: {}) for item in records],
+    }
+
+
 # `von-Version -> (nach-Version, Funktion)`; bei Schemaänderungen hier ergänzen.
 CONFIG_MIGRATIONS: Final[Migrations] = MappingProxyType(
     {
@@ -272,6 +285,7 @@ CONFIG_MIGRATIONS: Final[Migrations] = MappingProxyType(
         (1, 3): ((1, 4), _retention_floor),
         (1, 4): ((1, 5), _drop_task_due_days),
         (1, 5): ((1, 6), _schedule_plan),
+        (1, 6): ((1, 7), _unchanged),
     }
 )
 HISTORY_MIGRATIONS: Final[Migrations] = MappingProxyType(
@@ -281,11 +295,16 @@ HISTORY_MIGRATIONS: Final[Migrations] = MappingProxyType(
         (1, 3): ((1, 4), _unchanged),
         (1, 4): ((1, 5), _unchanged),
         (1, 5): ((1, 6), _round_periods),
+        (1, 6): ((1, 7), _unchanged),
     }
 )
 # Das Entscheidungslog entstand mit Version 1.4 und kennt keine älteren Stände
 DECISION_MIGRATIONS: Final[Migrations] = MappingProxyType(
-    {(1, 4): ((1, 5), _unchanged), (1, 5): ((1, 6), _unchanged)}
+    {
+        (1, 4): ((1, 5), _unchanged),
+        (1, 5): ((1, 6), _unchanged),
+        (1, 6): ((1, 7), _drop_skipped),
+    }
 )
 
 

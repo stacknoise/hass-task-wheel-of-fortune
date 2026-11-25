@@ -98,13 +98,6 @@ export interface DecisionTask {
   readonly note: string | null;
 }
 
-/** Aufgabe des Zeitplans, die in der Auslosung nicht vorkam: `not_due` (noch nicht fällig) oder `deferred` (zurückgestellt). */
-export interface DecisionSkipped {
-  readonly task_id: string;
-  readonly task_name: string;
-  readonly reason: string;
-}
-
 /** Tausch zweier Personen oder Austausch einer Aufgabe; `before_start` markiert den Admin-Austausch vor dem Start. */
 export interface DecisionExchange {
   readonly person_id: string | null;
@@ -129,7 +122,6 @@ export interface DecisionRecord {
   readonly origin: string | null;
   readonly tasks: readonly DecisionTask[];
   readonly exchange: DecisionExchange | null;
-  readonly skipped: readonly DecisionSkipped[];
 }
 
 export interface DecisionPage {

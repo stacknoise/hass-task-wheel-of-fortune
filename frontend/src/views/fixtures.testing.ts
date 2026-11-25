@@ -175,10 +175,6 @@ export const DECISIONS: DecisionPage = {
           note: null,
         },
       ],
-      skipped: [
-        { task_id: 't4', task_name: 'Fenster putzen', reason: 'not_due' },
-        { task_id: 't5', task_name: 'Keller', reason: 'deferred' },
-      ],
     },
     {
       id: 'd2',
@@ -189,7 +185,6 @@ export const DECISIONS: DecisionPage = {
       round_id: null,
       origin: null,
       tasks: [],
-      skipped: [],
       exchange: {
         person_id: null,
         person_name: null,

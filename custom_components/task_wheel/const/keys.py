@@ -9,7 +9,7 @@ STORE_CONFIG: Final = f"{DOMAIN}.config"
 STORE_HISTORY: Final = f"{DOMAIN}.history"
 STORE_DECISIONS: Final = f"{DOMAIN}.decisions"
 STORE_VERSION: Final = 1
-STORE_MINOR_VERSION: Final = 6
+STORE_MINOR_VERSION: Final = 7
 
 KEY_PERSONS: Final = "persons"
 KEY_TASKS: Final = "tasks"
@@ -24,6 +24,7 @@ KEY_DUE_DAYS: Final = "due_days"
 KEY_FREQUENCY: Final = "frequency"
 KEY_TRIGGER: Final = "trigger"
 KEY_DEADLINE: Final = "deadline"
+KEY_SKIPPED: Final = "skipped"
 KEY_TASK_IDS: Final = "task_ids"
 KEY_REPLACES: Final = "replaces"
 KEY_PERIOD_INDEX: Final = "period_index"
@@ -185,9 +186,7 @@ WIRE_PRESENT: Final = "present"
 
 # Grund im Entscheidungslog, den die Filterkette nicht kennt: Aufgabe für die Person nicht erlaubt
 REASON_NOT_ALLOWED: Final = "not_allowed"
-# Gründe, warum eine Aufgabe in einer Auslosung nicht oder nur als Füllung vorkam (Entscheidungslog)
-NOTE_NOT_DUE: Final = "not_due"
-NOTE_DEFERRED: Final = "deferred"
+# Vermerk am Gewinner im Entscheidungslog: nicht fällige Aufgabe, vom Zufall nachgezogen
 NOTE_FILLED: Final = "filled"
 
 # Namen der Ressourcen in Fehlern (Platzhalter `resource`)

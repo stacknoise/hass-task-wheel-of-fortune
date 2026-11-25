@@ -95,16 +95,3 @@ class TaskDraw:
     def distributable(self) -> bool:
         """Wahr, wenn eine Person gezogen wurde."""
         return self.winner_id is not None
-
-
-@dataclass(slots=True, frozen=True)
-class TaskNote:
-    """Warum eine Aufgabe der Auslosung nicht oder nur als Füllung dabei war (für das Log).
-
-    `not_due`: noch nicht fällig; `deferred`: fällig, aber der Zufall hat sie zurückgestellt
-    (mehr Aufgaben als Personen); `filled`: nicht fällig, vom Zufall nachgezogen, um eine Lücke zu
-    füllen.
-    """
-
-    task_id: TaskId
-    reason: str
