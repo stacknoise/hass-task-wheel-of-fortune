@@ -5,6 +5,8 @@ Die Release-Notizen auf GitHub werden zusätzlich aus den Pull Requests erzeugt 
 
 ## [Unveröffentlicht]
 
+- **Geändert:** Das Entscheidungslog zeigt keine Aufgaben mehr, die in einer Auslosung nicht vorkamen (noch nicht fällig oder zurückgestellt). Der Vermerk „zufällig nachgezogen“ beim Gewinner bleibt. Alte Einträge laden weiter, das Feld wird beim Laden verworfen
+
 ## [0.9.1] – 2026-11-24
 
 - Behoben: Eine Auslosung von Hand gilt immer für den Tag der Auslosung. Liefen die Perioden eines manuellen Zeitplans der Zeit voraus (mehrere Auslosungen am Tag, oder alte Runden, die bei der Umstellung auf Perioden fortlaufend nummeriert wurden und vor „Gültig ab“ liegen), prüfte die Auslosung die Anwesenheit am Tag der späteren Periode, sodass Abwesende im Rad erschienen. Alte Runden vor „Gültig ab“ werden beim Start der ersten Periode zugeordnet

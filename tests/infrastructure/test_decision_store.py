@@ -53,3 +53,9 @@ def test_decision_migrations_only_step_to_the_current_version():
     assert migrate("task_wheel.decisions", {"decisions": []}, CURRENT_VERSION, DECISION_MIGRATIONS)
     with pytest.raises(StorageVersionError):
         migrate("task_wheel.decisions", {}, (1, 1), DECISION_MIGRATIONS)
+
+
+def test_migration_drops_the_list_of_undrawn_tasks_from_old_entries():
+    old = {"decisions": [{"id": "d1", "skipped": [{"task_id": "t1"}], "kind": "draw"}, "foreign"]}
+    migrated = migrate("task_wheel.decisions", old, (1, 6), DECISION_MIGRATIONS)
+    assert migrated == {"decisions": [{"id": "d1", "kind": "draw"}, "foreign"]}

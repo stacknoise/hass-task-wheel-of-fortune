@@ -13,8 +13,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from ...const.defaults import GAP_WEIGHT_FLOOR
-from ...const.keys import NOTE_DEFERRED, NOTE_FILLED, NOTE_NOT_DUE
-from ..draw.types import RandomSource, TaskNote
+from ..draw.types import RandomSource
 from ..models import Schedule, ScheduleEntry, Task
 from ..types import TaskId
 
@@ -115,11 +114,7 @@ def rank_tasks(
     )
 
 
-def task_notes(ranking: DueRanking, picked: Sequence[Task]) -> tuple[TaskNote, ...]:
-    """Die Vermerke zu allen Aufgaben, die nicht ganz regulär ausgelost wurden."""
+def filled_tasks(ranking: DueRanking, picked: Sequence[Task]) -> frozenset[TaskId]:
+    """Die nicht fälligen Aufgaben, die der Zufall nachgezogen hat, um eine Lücke zu füllen."""
     chosen = {task.id for task in picked}
-    notes = [TaskNote(task.id, NOTE_DEFERRED) for task in ranking.priority if task.id not in chosen]
-    for task in ranking.spare:
-        reason = NOTE_FILLED if task.id in chosen else NOTE_NOT_DUE
-        notes.append(TaskNote(task.id, reason))
-    return tuple(notes)
+    return frozenset(task.id for task in ranking.spare if task.id in chosen)

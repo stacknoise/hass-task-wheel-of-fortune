@@ -90,20 +90,6 @@ class TaskDecision(Model):
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
-class SkippedTask(Model):
-    """Eine Aufgabe des Zeitplans, die in dieser Auslosung nicht vorkam, mit dem Grund."""
-
-    task_id: TaskId = spec(to_str)
-    task_name: str = spec(to_str)
-    reason: str = spec(to_str)
-
-    def __post_init__(self) -> None:
-        """Prüft Kennung und Grund (Schlüssel `NOTE_*`)."""
-        ensure_id("task_id", self.task_id)
-        ensure_id("reason", self.reason)
-
-
-@dataclass(slots=True, frozen=True, kw_only=True)
 class Exchange(Model):
     """Ein Tausch oder Austausch.
 
@@ -152,7 +138,6 @@ class DecisionRecord(Model):
     origin: RoundOrigin | None = spec(optional(enum_of(RoundOrigin)), default=None)
     tasks: tuple[TaskDecision, ...] = spec(tuple_of(model_of(TaskDecision)), default=())
     exchange: Exchange | None = spec(optional(model_of(Exchange)), default=None)
-    skipped: tuple[SkippedTask, ...] = spec(tuple_of(model_of(SkippedTask)), default=())
 
     def __post_init__(self) -> None:
         """Prüft Kennungen, Zeitzone und dass die Art zum Inhalt passt."""
@@ -160,7 +145,6 @@ class DecisionRecord(Model):
         ensure_id("schedule_id", self.schedule_id)
         ensure_aware("at", self.at)
         ensure_size("tasks", self.tasks, 0, limits.MAX_ASSIGNMENTS_PER_ROUND)
-        ensure_size("skipped", self.skipped, 0, limits.MAX_TASKS)
         is_draw = self.kind is DecisionKind.DRAW
         ensure(is_draw == (self.exchange is None), "exchange", ERR_INCONSISTENT)
         ensure(is_draw or not self.tasks, "tasks", ERR_INCONSISTENT)

@@ -203,22 +203,8 @@ export class TwDecisionsView extends LitElement {
                 (task) => this.#task(task, persons),
               )
         }
-        ${exchange ? nothing : this.#skipped(record)}
       </details>
     `;
-  }
-
-  #skipped(record: DecisionRecord): TemplateResult | typeof nothing {
-    if (record.skipped.length === 0) return nothing;
-    return html`<div class="skipped">
-      <strong>${this.#text('log.skipped.title')}</strong>
-      ${record.skipped.map(
-        (item) =>
-          html`<p class="why">
-            ${item.task_name}: ${this.#text(`log.skipped.${item.reason}` as TextKey)}
-          </p>`,
-      )}
-    </div>`;
   }
 
   #task(task: DecisionTask, persons: ReadonlyMap<string, PersonObject>): TemplateResult {
