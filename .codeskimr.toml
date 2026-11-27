@@ -1,0 +1,83 @@
+# CodeSkimr-Schichten für das Projekt (Anleitung: docs/DEVELOPMENT.md, Abschnitt "CodeSkimr-Schichten").
+# Reihenfolge zählt: gehört ein Name mehreren Schichten, gewinnt die erste.
+
+# ---------- Backend (Python, custom_components/task_wheel) ----------
+# Entspricht den Schichten in docs/CODE_DOKU.md §2. Die Laufzeitdaten (runtime, entry_lookup) sind eine
+# eigene Schicht, weil Schnittstellen sie nutzen und der Einstieg sie aufbaut (sonst Zyklus Einstieg <-> Schnittstellen).
+
+[[layers]]
+name = "Konstanten"
+namespaces = ["custom_components.task_wheel.const"]
+may_use = []
+
+[[layers]]
+name = "Domäne"
+namespaces = ["custom_components.task_wheel.domain"]
+may_use = ["Konstanten"]
+
+[[layers]]
+name = "Anwendung"
+namespaces = ["custom_components.task_wheel.application"]
+may_use = ["Domäne", "Konstanten"]
+
+[[layers]]
+name = "Infrastruktur"
+namespaces = ["custom_components.task_wheel.infrastructure"]
+may_use = ["Anwendung", "Domäne", "Konstanten"]
+
+[[layers]]
+name = "Laufzeit"
+namespaces = [
+  "custom_components.task_wheel.runtime",
+  "custom_components.task_wheel.entry_lookup",
+]
+may_use = ["Anwendung", "Domäne", "Konstanten"]
+
+[[layers]]
+name = "Schnittstellen"
+namespaces = [
+  "custom_components.task_wheel.websocket",
+  "custom_components.task_wheel.entities",
+  "custom_components.task_wheel.services",
+  "custom_components.task_wheel.access",
+  "custom_components.task_wheel.service_errors",
+]
+may_use = ["Laufzeit", "Anwendung", "Domäne", "Konstanten"]
+
+# Einstieg: Rest des Pakets (__init__, config_flow, sensor, todo, button). Muss zuletzt stehen (erste Schicht gewinnt).
+[[layers]]
+name = "Einstieg"
+namespaces = ["custom_components.task_wheel"]
+may_use = ["Schnittstellen", "Laufzeit", "Infrastruktur", "Anwendung", "Domäne", "Konstanten"]
+
+# ---------- Frontend (TypeScript, frontend/src) ----------
+
+[[layers]]
+name = "Frontend Konstanten"
+namespaces = ["frontend.src.constants"]
+may_use = []
+
+[[layers]]
+name = "Frontend API"
+namespaces = ["frontend.src.api"]
+may_use = ["Frontend Konstanten"]
+
+[[layers]]
+name = "Frontend Texte"
+namespaces = ["frontend.src.i18n"]
+may_use = ["Frontend Konstanten"]
+
+[[layers]]
+name = "Frontend Zustand"
+namespaces = ["frontend.src.state"]
+may_use = ["Frontend API", "Frontend Konstanten"]
+
+[[layers]]
+name = "Frontend Komponenten"
+namespaces = ["frontend.src.components"]
+may_use = ["Frontend Zustand", "Frontend Texte", "Frontend Konstanten"]
+
+[[layers]]
+name = "Frontend Ansichten"
+namespaces = ["frontend.src.views", "frontend.src.task-wheel-panel"]
+may_use = ["Frontend Komponenten", "Frontend Zustand", "Frontend API", "Frontend Texte", "Frontend Konstanten"]

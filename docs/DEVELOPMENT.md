@@ -41,6 +41,10 @@ Pull requests and `main` run the jobs `hassfest`, `HACS validation`, `lint`, `ty
 Please report security vulnerabilities confidentially, see [SECURITY.md](../SECURITY.md).
 
 
+## CodeSkimr layers
+
+`.codeskimr.toml` in the repository root defines the layers for CodeSkimr (Python backend and TypeScript panel). They mirror the layers of `docs/CODE_DOKU.md` §2 and the `import-linter` and `eslint-plugin-boundaries` rules. Layers only apply to folder projects in CodeSkimr (not to git projects). After a change: rescan the folder and run `check_rules`; violations are reported, not fixed by loosening `may_use`. Keep the file in sync when a package is added, renamed or moved.
+
 ## Releasing (for developers)
 
 1. Raise the version in all places, via pull request to `main`: `custom_components/task_wheel/manifest.json`,
